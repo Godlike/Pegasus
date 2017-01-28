@@ -15,37 +15,37 @@ public:
 
     Vector3();
 
-    Vector3(const real x, const real y, const real z);
+    Vector3(real const x, real const y, real const z);
 
-    void operator*=(const real r);
+    void operator*=(real const r);
 
-    Vector3 operator*=(const real r) const;
+    Vector3 operator*=(real const r) const;
 
-    void operator+=(const Vector3 & v);
+    void operator+=(Vector3 const & v);
 
-    Vector3 operator+=(const Vector3 & v) const;
+    Vector3 operator+=(Vector3 const & v) const;
 
-    void operator-=(const Vector3 & v);
+    void operator-=(Vector3 const & v);
 
-    Vector3 operator-=(const Vector3 & v) const;
+    Vector3 operator-=(Vector3 const & v) const;
 
-    Vector3 operator-(const Vector3 & v) const;
+    Vector3 operator-(Vector3 const & v) const;
 
-    void addScaledVector(const Vector3 & v, const real s);
+    void addScaledVector(Vector3 const & v, real const s);
 
-    void componentProduct(const Vector3 & v);
+    void componentProduct(Vector3 const & v);
 
-    Vector3 componentProduct(const Vector3 & v) const;
+    Vector3 componentProduct(Vector3 const & v) const;
 
-    real scalarProduct(const Vector3 & v) const;
+    real scalarProduct(Vector3 const & v) const;
 
-    real operator*(const Vector3 & v) const;
+    real operator*(Vector3 const & v) const;
 
-    Vector3 vectorProduct(const Vector3 & v) const;
+    Vector3 vectorProduct(Vector3 const & v) const;
 
-    void operator%(const Vector3 & v);
+    void operator%(Vector3 const & v);
 
-    Vector3 operator%(const Vector3 & v) const;
+    Vector3 operator%(Vector3 const & v) const;
 
     void inverse();
 

@@ -6,102 +6,102 @@ pegas::Vector3::Vector3() : x(0), y(0), z(0)
 {
 }
 
-pegas::Vector3::Vector3(const pegas::real x, const pegas::real y, const pegas::real z) :
+pegas::Vector3::Vector3(pegas::real const x, pegas::real const y, pegas::real const z) :
     x(x), y(y), z(z)
 {
 }
 
-void pegas::Vector3::operator*=(const pegas::real r)
+void pegas::Vector3::operator*=(pegas::real const r)
 {
     x *= r;
     y *= r;
     z *= r;
 }
 
-pegas::Vector3 pegas::Vector3::operator*=(const pegas::real r) const
+pegas::Vector3 pegas::Vector3::operator*=(pegas::real const r) const
 {
     Vector3 v(*this);
     v *= r;
     return v;
 }
 
-void pegas::Vector3::operator+=(const pegas::Vector3 &v)
+void pegas::Vector3::operator+=(pegas::Vector3 const & v)
 {
     x += v.x;
     y += v.y;
     z += v.z;
 }
 
-pegas::Vector3 pegas::Vector3::operator+=(const pegas::Vector3 &v) const
+pegas::Vector3 pegas::Vector3::operator+=(pegas::Vector3 const & v) const
 {
     Vector3 new_v(*this);
     new_v += v;
     return new_v;
 }
 
-pegas::Vector3 pegas::Vector3::operator-=(const pegas::Vector3 &v) const
+pegas::Vector3 pegas::Vector3::operator-=(pegas::Vector3 const & v) const
 {
     Vector3 new_v(*this);
     new_v -= v;
     return new_v;
 }
 
-pegas::Vector3 pegas::Vector3::operator-(const pegas::Vector3 &v) const
+pegas::Vector3 pegas::Vector3::operator-(pegas::Vector3 const & v) const
 {
     Vector3 new_v(*this);
     new_v -= v;
     return new_v;
 }
 
-void pegas::Vector3::addScaledVector(const pegas::Vector3 &v, const pegas::real s)
+void pegas::Vector3::addScaledVector(pegas::Vector3 const & v, pegas::real const s)
 {
     x += v.x * s;
     y += v.y * s;
     z += v.z * s;
 }
 
-void pegas::Vector3::componentProduct(const pegas::Vector3 &v)
+void pegas::Vector3::componentProduct(pegas::Vector3 const & v)
 {
     x *= v.x;
     y *= v.y;
     z *= v.z;
 }
 
-pegas::Vector3 pegas::Vector3::componentProduct(const pegas::Vector3 &v) const
+pegas::Vector3 pegas::Vector3::componentProduct(pegas::Vector3 const & v) const
 {
     Vector3 new_v(*this);
     new_v.componentProduct(v);
     return v;
 }
 
-pegas::real pegas::Vector3::scalarProduct(const pegas::Vector3 &v) const
+pegas::real pegas::Vector3::scalarProduct(pegas::Vector3 const & v) const
 {
     return x * v.x + y * v.y + z * v.z;
 }
 
-pegas::real pegas::Vector3::operator*(const pegas::Vector3 &v) const
+pegas::real pegas::Vector3::operator*(pegas::Vector3 const & v) const
 {
     return scalarProduct(v);
 }
 
-pegas::Vector3 pegas::Vector3::vectorProduct(const pegas::Vector3 &v) const
+pegas::Vector3 pegas::Vector3::vectorProduct(pegas::Vector3 const & v) const
 {
     return Vector3(y*v.z - z*v.y,
                    z*v.x - x*v.z,
                    x*v.y - y*v.x);
 }
 
-void pegas::Vector3::operator%(const pegas::Vector3 &v)
+void pegas::Vector3::operator%(pegas::Vector3 const & v)
 {
     *this = vectorProduct(v);
 }
 
-pegas::Vector3 pegas::Vector3::operator%(const pegas::Vector3 &v) const
+pegas::Vector3 pegas::Vector3::operator%(pegas::Vector3 const & v) const
 {
     return vectorProduct(v);
 }
 
-void pegas::Vector3::operator-=(const pegas::Vector3 &v)
+void pegas::Vector3::operator-=(pegas::Vector3 const & v)
 {
     x -= v.x;
     y -= v.y;
