@@ -48,6 +48,7 @@ set(HEADERS
     ../include/particle.hpp
     ../include/math.hpp
     ../include/obb.hpp
+    ../include/obbtree.hpp
     ../demo/app.hpp
     ../demo/ogl_headers.hpp
     ../demo/timing.hpp
@@ -58,6 +59,7 @@ set(SOURCES
     ../src/particle.cpp
     ../src/math.cpp
     ../src/obb.cpp
+    ../src/obbtree.cpp
     ../demo/app.cpp
     ../demo/timing.cpp
     ../demo/ballistic.cpp
