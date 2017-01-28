@@ -26,6 +26,16 @@ if(NOT OPENGL_FOUND)
 endif(NOT OPENGL_FOUND)
 
 #########################################################
+# FIND EIGEN
+#########################################################
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+if(NOT EIGEN3_FOUND)
+    message(ERROR " EIGEN3 not found!")
+endif(NOT EIGEN3_FOUND)
+
+
+#########################################################
 # Include Files
 #########################################################
 include_directories (
@@ -37,6 +47,7 @@ set(HEADERS
     ../include/core.hpp
     ../include/particle.hpp
     ../include/math.hpp
+    ../include/obb.hpp
     ../demo/app.hpp
     ../demo/ogl_headers.hpp
     ../demo/timing.hpp
@@ -46,10 +57,11 @@ set(SOURCES
     ../src/core.cpp
     ../src/particle.cpp
     ../src/math.cpp
+    ../src/obb.cpp
     ../demo/app.cpp
     ../demo/timing.cpp
     ../demo/ballistic.cpp
-    ./main.cpp
+    ../demo/main.cpp
 )
 
 ########################################################
