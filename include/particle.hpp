@@ -9,41 +9,41 @@ namespace pegas {
 class Particle
 {
 public:
-    void integrate(const real duration);
+    void integrate(real const duration);
 
     Vector3 getPosition() const;
 
-    void setPosition(const Vector3 & position);
+    void setPosition(Vector3 const & position);
 
-    void setPosition(const real x, const real y, const real z);
+    void setPosition(real const x, real const y, real const z);
 
     Vector3 getVelocity() const;
 
-    void setVelocity(const Vector3 & velocity);
+    void setVelocity(Vector3 const & velocity);
 
-    void setVelocity(const real x, const real y, const real z);
+    void setVelocity(real const x, real const y, real const z);
 
     Vector3 getAcceleration() const;
 
-    void setAcceleration(const Vector3 & acceleration);
+    void setAcceleration(Vector3 const & acceleration);
 
-    void setAcceleration(const real x, const real y, const real z);
+    void setAcceleration(real const x, real const y, real const z);
 
     real getDamping() const;
 
-    void setDamping(const real damping);
+    void setDamping(real const damping);
 
     real getMass() const;
 
-    void setMass(const real mass);
+    void setMass(real const mass);
 
     bool hasFiniteMass() const;
 
     real getInverseMass() const;
 
-    void setInverseMass(const real inverseMass);
+    void setInverseMass(real const inverseMass);
 
-    void addForce(const Vector3 & force);
+    void addForce(Vector3 const & force);
 
     void clearForceAccum();
 
