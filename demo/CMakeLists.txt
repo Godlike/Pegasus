@@ -36,6 +36,7 @@ include_directories (
 set(HEADERS
     ../include/core.hpp
     ../include/particle.hpp
+    ../include/particleforcegenerator.hpp
     ../include/math.hpp
     ../demo/app.hpp
     ../demo/ogl_headers.hpp
@@ -45,6 +46,7 @@ set(HEADERS
 set(SOURCES
     ../src/core.cpp
     ../src/particle.cpp
+    ../src/particleforcegenerator.cpp
     ../src/math.cpp
     ../demo/app.cpp
     ../demo/timing.cpp

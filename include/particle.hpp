@@ -3,12 +3,16 @@
 
 #include "Pegas/include/core.hpp"
 #include "Pegas/include/math.hpp"
+#include <memory>
 
 namespace pegas {
 
 class Particle
 {
 public:
+    using Ptr = std::shared_ptr<Particle>;
+    using ConstPtr = std::shared_ptr<Particle const>;
+
     void integrate(real const duration);
 
     Vector3 getPosition() const;
