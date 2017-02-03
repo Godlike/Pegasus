@@ -44,17 +44,9 @@ namespace pegas
     class ParticleGravity : public ParticleForceGenerator
     {
     public:
-        ParticleGravity(Vector3 const & g)
-            : gravity(g)
-        {
-        }
+        ParticleGravity(Vector3 const & g);
 
-        virtual void updateForce(Particle::Ptr const & p) override
-        {
-            if (!p->hasFiniteMass()) return;
-
-            p->addForce(gravity * p->getMass());
-        }
+        virtual void updateForce(Particle::Ptr const & p) override;
 
     private:
         Vector3 const gravity;
@@ -64,22 +56,9 @@ namespace pegas
     class ParticleDrag : public ParticleForceGenerator
     {
     public:
-        ParticleDrag(real const k1, real const k2)
-            : k1(k1), k2(k2)
-        {
-        }
+        ParticleDrag(real const k1, real const k2);
 
-        virtual void updateForce(Particle::Ptr const & p) override
-        {
-            Vector3 force = p->getVelocity();
-
-            real dragCoeff = force.magnitude();
-            dragCoeff = k1 * dragCoeff + k2 * dragCoeff * dragCoeff;
-
-            force.normalize();
-            force *= -dragCoeff;
-            p->addForce(force);
-        }
+        virtual void updateForce(Particle::Ptr const & p) override;
 
     private:
         real const k1;
@@ -90,23 +69,9 @@ namespace pegas
     class ParticleSpring : public ParticleForceGenerator
     {
     public:
-        ParticleSpring(Particle::Ptr const & other, real const springConstant, real const restLenght)
-            : other(other), springConstant(springConstant), restLenght(restLenght)
-        {
-        }
+        ParticleSpring(Particle::Ptr const & other, real const springConstant, real const restLenght);
 
-        virtual void updateForce(Particle::Ptr const & p) override
-        {
-            Vector3 force = p->getPosition();
-            force -= other->getPosition();
-
-            real const magnitude
-                = springConstant * std::fabs(force.magnitude() - restLenght);
-
-            force.normalize();
-            force *= -magnitude;
-            p->addForce(force);
-        }
+        virtual void updateForce(Particle::Ptr const & p) override;
 
     private:
         Particle::Ptr const other;
@@ -118,23 +83,9 @@ namespace pegas
     class ParticleAnchoredSpring : public ParticleForceGenerator
     {
     public:
-        ParticleAnchoredSpring(Vector3 const & anchor, real const springConstant, real const restLenght)
-            : anchor(anchor), springConstant(springConstant), restLenght(restLenght)
-        {
-        }
+        ParticleAnchoredSpring(Vector3 const & anchor, real const springConstant, real const restLenght);
 
-        virtual void updateForce(Particle::Ptr const & p) override
-        {
-            Vector3 force = p->getPosition();
-            force -= anchor;
-
-            real const magnitude
-                = springConstant * std::fabs(force.magnitude() - restLenght);
-
-            force.normalize();
-            force *= -magnitude;
-            p->addForce(force);
-        }
+        virtual void updateForce(Particle::Ptr const & p) override;
 
     private:
         Vector3 const anchor;
@@ -146,25 +97,9 @@ namespace pegas
     class ParticleBungee : public ParticleForceGenerator
     {
     public:
-        ParticleBungee(Particle::Ptr const & other, real const springConstant, real const restLenght)
-            : other(other), springConstant(springConstant), restLenght(restLenght)
-        {
-        }
+        ParticleBungee(Particle::Ptr const & other, real const springConstant, real const restLenght);
 
-        virtual void updateForce(Particle::Ptr const & p) override
-        {
-            Vector3 force = p->getPosition();
-            force -= other->getPosition();
-
-            real magnitude = force.magnitude();
-            if (magnitude <= restLenght) return;
-
-            magnitude = springConstant * (magnitude - restLenght);
-
-            force.normalize();
-            force *= -magnitude;
-            p->addForce(force);
-        }
+        virtual void updateForce(Particle::Ptr const & p) override;
 
     private:
         Particle::Ptr const other;
@@ -176,29 +111,9 @@ namespace pegas
     class ParticleBuoyancy : public ParticleForceGenerator
     {
     public:
-        ParticleBuoyancy(real const maxDepth, real const volume, real const waterWight, real const liquidDensity)
-            : maxDepth(maxDepth), volume(volume), waterHeight(waterWight), liquidDensity(liquidDensity)
-        {
-        }
+        ParticleBuoyancy(real const maxDepth, real const volume, real const waterWight, real const liquidDensity);
 
-        virtual void updateForce(Particle::Ptr const & p) override
-        {
-            real const depth = p->getPosition().y;
-
-            if(depth >= waterHeight + maxDepth) return;
-
-            Vector3 force;
-            if(depth <= waterHeight - maxDepth)
-            {
-                force.y = liquidDensity * volume;
-            }
-            else
-            {
-                force.y = liquidDensity * volume *(depth - maxDepth - waterHeight) / 2.0f * maxDepth;
-            }
-
-            p->addForce(force);
-        }
+        virtual void updateForce(Particle::Ptr const & p) override;
 
     private:
         real const maxDepth;
@@ -211,32 +126,11 @@ namespace pegas
     class ParticleFakeSpring : public ParticleForceGenerator
     {
     public:
-        ParticleFakeSpring(Vector3 const & anchor, real const springConstant, real const damping)
-            : anchor(anchor), springConstant(springConstant), damping(damping), duration(0)
-        {
-        }
+        ParticleFakeSpring(Vector3 const & anchor, real const springConstant, real const damping);
 
-        void updateForce(Particle::Ptr const & p, real const duration)
-        {
-            if (!p->hasFiniteMass()) return;
+        void updateForce(Particle::Ptr const & p, real const duration);
 
-            Vector3 const position = p->getPosition() - anchor;
-            real const gamma = 0.5f * std::sqrt(4 * springConstant - damping * damping);
-
-            if (gamma == 0.0f) return;
-
-            Vector3 const c = position * (damping / (2.0f * gamma)) + p->getVelocity() * (1.0f / gamma);
-            Vector3 target = position * std::cos(gamma * duration) + c * std::sin(gamma * duration);
-            target *= std::exp(-0.5f * duration * damping);
-
-            Vector3 const accel = (target - position) * (1.0f / duration * duration) - p->getVelocity() * duration;
-            p->addForce(accel * p->getMass());
-        }
-
-        virtual void updateForce(Particle::Ptr const & p) override
-        {
-            updateForce(p, duration);
-        }
+        virtual void updateForce(Particle::Ptr const & p) override;
 
     private:
         Vector3 const anchor;
