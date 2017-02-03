@@ -25,6 +25,8 @@ public:
 
     Vector3 operator+=(Vector3 const & v) const;
 
+    Vector3 operator+(Vector3 const & v) const;
+
     void operator-=(Vector3 const & v);
 
     Vector3 operator-=(Vector3 const & v) const;
@@ -40,6 +42,8 @@ public:
     real scalarProduct(Vector3 const & v) const;
 
     real operator*(Vector3 const & v) const;
+
+    Vector3 operator*(real const & r) const;
 
     Vector3 vectorProduct(Vector3 const & v) const;
 

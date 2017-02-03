@@ -39,6 +39,11 @@ pegas::Vector3 pegas::Vector3::operator+=(pegas::Vector3 const & v) const
     return new_v;
 }
 
+pegas::Vector3 pegas::Vector3::operator+(const pegas::Vector3 & v) const
+{
+    return (*this) += v;
+}
+
 pegas::Vector3 pegas::Vector3::operator-=(pegas::Vector3 const & v) const
 {
     Vector3 new_v(*this);
@@ -82,6 +87,13 @@ pegas::real pegas::Vector3::scalarProduct(pegas::Vector3 const & v) const
 pegas::real pegas::Vector3::operator*(pegas::Vector3 const & v) const
 {
     return scalarProduct(v);
+}
+
+pegas::Vector3 pegas::Vector3::operator*(pegas::real const & r) const
+{
+    Vector3 new_v(*this);
+    new_v *= r;
+    return new_v;
 }
 
 pegas::Vector3 pegas::Vector3::vectorProduct(pegas::Vector3 const & v) const
