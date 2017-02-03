@@ -15,7 +15,7 @@ void pegas::ParticleForceRegistry::add(pegas::Particle::Ptr & p, pegas::Particle
     }
 }
 
-void pegas::ParticleForceRegistry::remove(const pegas::Particle::Ptr & p)
+void pegas::ParticleForceRegistry::remove(pegas::Particle::Ptr const & p)
 {
     if (!p)
     {
@@ -29,7 +29,7 @@ void pegas::ParticleForceRegistry::remove(const pegas::Particle::Ptr & p)
     }
 }
 
-void pegas::ParticleForceRegistry::remove(const pegas::Particle::Ptr & p, const pegas::ParticleForceGenerator::Ptr & pfg)
+void pegas::ParticleForceRegistry::remove(pegas::Particle::Ptr const & p, pegas::ParticleForceGenerator::Ptr const & pfg)
 {
     if (!p || !pfg)
     {
