@@ -8,8 +8,8 @@ void pegas::ParticleForceRegistry::add(pegas::Particle::Ptr & p, pegas::Particle
         throw std::invalid_argument("ParticleForceRegistry::add !p || !pfg");
     }
 
-    auto particle = registrations.find(p);
-    if (particle != registrations.end())
+    auto particle = mRegistrations.find(p);
+    if (particle != mRegistrations.end())
     {
         particle->second.insert(pfg);
     }
@@ -22,10 +22,10 @@ void pegas::ParticleForceRegistry::remove(pegas::Particle::Ptr const & p)
         throw std::invalid_argument("ParticleForceRegistry::remove !p");
     }
 
-    auto entry = registrations.find(p);
-    if (entry != registrations.end())
+    auto entry = mRegistrations.find(p);
+    if (entry != mRegistrations.end())
     {
-        registrations.erase(entry);
+        mRegistrations.erase(entry);
     }
 }
 
@@ -36,8 +36,8 @@ void pegas::ParticleForceRegistry::remove(pegas::Particle::Ptr const & p, pegas:
         throw std::invalid_argument("ParticleForceRegistry::remove !p || !pfg");
     }
 
-    auto entry = registrations.find(p);
-    if (entry != registrations.end())
+    auto entry = mRegistrations.find(p);
+    if (entry != mRegistrations.end())
     {
         auto force = entry->second.find(pfg);
         if (force != entry->second.end())
@@ -49,12 +49,12 @@ void pegas::ParticleForceRegistry::remove(pegas::Particle::Ptr const & p, pegas:
 
 void pegas::ParticleForceRegistry::clear()
 {
-    registrations.clear();
+    mRegistrations.clear();
 }
 
 void pegas::ParticleForceRegistry::updateForces()
 {
-    for (auto & entry : registrations)
+    for (auto & entry : mRegistrations)
     {
         for(auto & force : entry.second)
         {
@@ -65,7 +65,7 @@ void pegas::ParticleForceRegistry::updateForces()
 }
 
 pegas::ParticleGravity::ParticleGravity(pegas::Vector3 const & g)
-    : gravity(g)
+    : mGravity(g)
 {
 }
 
@@ -73,11 +73,11 @@ void pegas::ParticleGravity::updateForce(pegas::Particle::Ptr const & p)
 {
     if (!p->hasFiniteMass()) return;
 
-    p->addForce(gravity * p->getMass());
+    p->addForce(mGravity * p->getMass());
 }
 
 pegas::ParticleDrag::ParticleDrag(pegas::real const k1, pegas::real const k2)
-    : k1(k1), k2(k2)
+    : mK1(k1), mK2(k2)
 {
 }
 
@@ -86,7 +86,7 @@ void pegas::ParticleDrag::updateForce(pegas::Particle::Ptr const & p)
     Vector3 force = p->getVelocity();
 
     real dragCoeff = force.magnitude();
-    dragCoeff = k1 * dragCoeff + k2 * dragCoeff * dragCoeff;
+    dragCoeff = mK1 * dragCoeff + mK2 * dragCoeff * dragCoeff;
 
     force.normalize();
     force *= -dragCoeff;
@@ -94,17 +94,17 @@ void pegas::ParticleDrag::updateForce(pegas::Particle::Ptr const & p)
 }
 
 pegas::ParticleSpring::ParticleSpring(pegas::Particle::Ptr const & other, pegas::real const springConstant, pegas::real const restLenght)
-    : other(other), springConstant(springConstant), restLenght(restLenght)
+    : mOther(other), mSpringConstant(springConstant), mRestLenght(restLenght)
 {
 }
 
 void pegas::ParticleSpring::updateForce(pegas::Particle::Ptr const & p)
 {
     Vector3 force = p->getPosition();
-    force -= other->getPosition();
+    force -= mOther->getPosition();
 
     real const magnitude
-            = springConstant * std::fabs(force.magnitude() - restLenght);
+            = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
 
     force.normalize();
     force *= -magnitude;
@@ -112,17 +112,17 @@ void pegas::ParticleSpring::updateForce(pegas::Particle::Ptr const & p)
 }
 
 pegas::ParticleAnchoredSpring::ParticleAnchoredSpring(pegas::Vector3 const & anchor, pegas::real const springConstant, pegas::real const restLenght)
-    : anchor(anchor), springConstant(springConstant), restLenght(restLenght)
+    : mAnchor(anchor), mSpringConstant(springConstant), mRestLenght(restLenght)
 {
 }
 
 void pegas::ParticleAnchoredSpring::updateForce(pegas::Particle::Ptr const & p)
 {
     Vector3 force = p->getPosition();
-    force -= anchor;
+    force -= mAnchor;
 
     real const magnitude
-            = springConstant * std::fabs(force.magnitude() - restLenght);
+            = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
 
     force.normalize();
     force *= -magnitude;
@@ -130,19 +130,19 @@ void pegas::ParticleAnchoredSpring::updateForce(pegas::Particle::Ptr const & p)
 }
 
 pegas::ParticleBungee::ParticleBungee(pegas::Particle::Ptr const & other, pegas::real const springConstant, pegas::real const restLenght)
-    : other(other), springConstant(springConstant), restLenght(restLenght)
+    : mOther(other), mSpringConstant(springConstant), mRestLenght(restLenght)
 {
 }
 
 void pegas::ParticleBungee::updateForce(pegas::Particle::Ptr const & p)
 {
     Vector3 force = p->getPosition();
-    force -= other->getPosition();
+    force -= mOther->getPosition();
 
     real magnitude = force.magnitude();
-    if (magnitude <= restLenght) return;
+    if (magnitude <= mRestLenght) return;
 
-    magnitude = springConstant * (magnitude - restLenght);
+    magnitude = mSpringConstant * (magnitude - mRestLenght);
 
     force.normalize();
     force *= -magnitude;
@@ -150,7 +150,7 @@ void pegas::ParticleBungee::updateForce(pegas::Particle::Ptr const & p)
 }
 
 pegas::ParticleBuoyancy::ParticleBuoyancy(pegas::real const maxDepth, pegas::real const volume, pegas::real const waterWight, pegas::real const liquidDensity)
-    : maxDepth(maxDepth), volume(volume), waterHeight(waterWight), liquidDensity(liquidDensity)
+    : mMaxDepth(maxDepth), mVolume(volume), mWaterHeight(waterWight), mLiquidDensity(liquidDensity)
 {
 }
 
@@ -158,23 +158,23 @@ void pegas::ParticleBuoyancy::updateForce(pegas::Particle::Ptr const & p)
 {
     real const depth = p->getPosition().y;
 
-    if(depth >= waterHeight + maxDepth) return;
+    if(depth >= mWaterHeight + mMaxDepth) return;
 
     Vector3 force;
-    if(depth <= waterHeight - maxDepth)
+    if(depth <= mWaterHeight - mMaxDepth)
     {
-        force.y = liquidDensity * volume;
+        force.y = mLiquidDensity * mVolume;
     }
     else
     {
-        force.y = liquidDensity * volume *(depth - maxDepth - waterHeight) / 2.0f * maxDepth;
+        force.y = mLiquidDensity * mVolume *(depth - mMaxDepth - mWaterHeight) / 2.0f * mMaxDepth;
     }
 
     p->addForce(force);
 }
 
 pegas::ParticleFakeSpring::ParticleFakeSpring(pegas::Vector3 const & anchor, pegas::real const springConstant, pegas::real const damping)
-    : anchor(anchor), springConstant(springConstant), damping(damping), duration(0)
+    : mAnchor(anchor), mSpringConstant(springConstant), mDamping(damping), mDuration(0)
 {
 }
 
@@ -182,14 +182,14 @@ void pegas::ParticleFakeSpring::updateForce(pegas::Particle::Ptr const & p, pega
 {
     if (!p->hasFiniteMass()) return;
 
-    Vector3 const position = p->getPosition() - anchor;
-    real const gamma = 0.5f * std::sqrt(4 * springConstant - damping * damping);
+    Vector3 const position = p->getPosition() - mAnchor;
+    real const gamma = 0.5f * std::sqrt(4 * mSpringConstant - mDamping * mDamping);
 
     if (gamma == 0.0f) return;
 
-    Vector3 const c = position * (damping / (2.0f * gamma)) + p->getVelocity() * (1.0f / gamma);
+    Vector3 const c = position * (mDamping / (2.0f * gamma)) + p->getVelocity() * (1.0f / gamma);
     Vector3 target = position * std::cos(gamma * duration) + c * std::sin(gamma * duration);
-    target *= std::exp(-0.5f * duration * damping);
+    target *= std::exp(-0.5f * duration * mDamping);
 
     Vector3 const accel = (target - position) * (1.0f / duration * duration) - p->getVelocity() * duration;
     p->addForce(accel * p->getMass());
@@ -197,5 +197,5 @@ void pegas::ParticleFakeSpring::updateForce(pegas::Particle::Ptr const & p, pega
 
 void pegas::ParticleFakeSpring::updateForce(pegas::Particle::Ptr const & p)
 {
-    updateForce(p, duration);
+    updateForce(p, mDuration);
 }

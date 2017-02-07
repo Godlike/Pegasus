@@ -6,7 +6,7 @@ pegas::ParticleContact::ParticleContact(
         pegas::Particle::Ptr const & b,
         pegas::real const restitution,
         pegas::Vector3 const & contactNormal
-    ) : a(a), b(b), restitution(restitution), contactNormal(contactNormal)
+    ) : mA(a), mB(b), mRestitution(restitution), mContactNormal(contactNormal)
 {
 }
 
@@ -18,13 +18,13 @@ void pegas::ParticleContact::resolve(pegas::real const duration)
 
 pegas::real pegas::ParticleContact::calculateSeparatingVelocity() const
 {
-    Vector3 relativeVelocity = a->getVelocity();
-    if (b)
+    Vector3 relativeVelocity = mA->getVelocity();
+    if (mB)
     {
-        relativeVelocity -= b->getVelocity();
+        relativeVelocity -= mB->getVelocity();
     }
 
-    return relativeVelocity * contactNormal;
+    return relativeVelocity * mContactNormal;
 }
 
 void pegas::ParticleContact::resolveVelocity(pegas::real const duration)
@@ -36,16 +36,16 @@ void pegas::ParticleContact::resolveVelocity(pegas::real const duration)
     }
 
 
-    real newSepVelocity = -separatingVelocity * restitution;
-    Vector3 accCausedVelocity = a->getAcceleration();
-    if (b)
+    real newSepVelocity = -separatingVelocity * mRestitution;
+    Vector3 accCausedVelocity = mA->getAcceleration();
+    if (mB)
     {
-        accCausedVelocity -= b->getAcceleration();
+        accCausedVelocity -= mB->getAcceleration();
     }
-    real const accCausedSepVelocity = accCausedVelocity * contactNormal * duration;
+    real const accCausedSepVelocity = accCausedVelocity * mContactNormal * duration;
     if (accCausedSepVelocity < 0)
     {
-        newSepVelocity += restitution * accCausedSepVelocity;
+        newSepVelocity += mRestitution * accCausedSepVelocity;
 
         if (newSepVelocity < 0)
         {
@@ -55,10 +55,10 @@ void pegas::ParticleContact::resolveVelocity(pegas::real const duration)
     real const deltaVelocity = newSepVelocity - separatingVelocity;
 
 
-    real totalInverseMass = a->getInverseMass();
-    if (b)
+    real totalInverseMass = mA->getInverseMass();
+    if (mB)
     {
-        totalInverseMass += b->getInverseMass();
+        totalInverseMass += mB->getInverseMass();
     }
 
     if(totalInverseMass <= 0)
@@ -67,26 +67,26 @@ void pegas::ParticleContact::resolveVelocity(pegas::real const duration)
     }
 
     real const impulse = deltaVelocity / totalInverseMass;
-    Vector3 const impulsePerIMass = contactNormal * impulse;
+    Vector3 const impulsePerIMass = mContactNormal * impulse;
 
-    a->setVelocity(a->getVelocity() + impulsePerIMass * a->getInverseMass());
-    if (b)
+    mA->setVelocity(mA->getVelocity() + impulsePerIMass * mA->getInverseMass());
+    if (mB)
     {
-        b->setVelocity(b->getVelocity() + impulsePerIMass * -b->getInverseMass());
+        mB->setVelocity(mB->getVelocity() + impulsePerIMass * -mB->getInverseMass());
     }
 }
 
 void pegas::ParticleContact::resolveInterpenetration(pegas::real const duration)
 {
-    if (penetration <= 0)
+    if (mPenetration <= 0)
     {
         return;
     }
 
-    real totalInverseMass = a->getInverseMass();
-    if (b)
+    real totalInverseMass = mA->getInverseMass();
+    if (mB)
     {
-        totalInverseMass += b->getInverseMass();
+        totalInverseMass += mB->getInverseMass();
     }
 
     if (totalInverseMass <= 0)
@@ -94,11 +94,11 @@ void pegas::ParticleContact::resolveInterpenetration(pegas::real const duration)
         return;
     }
 
-    Vector3 const movePerIMass = contactNormal * (-penetration / totalInverseMass);
-    a->setPosition(a->getPosition() + movePerIMass * a->getInverseMass());
-    if (b)
+    Vector3 const movePerIMass = mContactNormal * (-mPenetration / totalInverseMass);
+    mA->setPosition(mA->getPosition() + movePerIMass * mA->getInverseMass());
+    if (mB)
     {
-        b->setPosition(b->getPosition() + movePerIMass * b->getInverseMass());
+        mB->setPosition(mB->getPosition() + movePerIMass * mB->getInverseMass());
     }
 }
 
