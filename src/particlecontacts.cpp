@@ -76,7 +76,7 @@ void pegas::ParticleContact::resolveVelocity(pegas::real const duration)
     }
 }
 
-void pegas::ParticleContact::resolveInterpenetration(const pegas::real duration)
+void pegas::ParticleContact::resolveInterpenetration(pegas::real const duration)
 {
     if (penetration <= 0)
     {
@@ -99,5 +99,30 @@ void pegas::ParticleContact::resolveInterpenetration(const pegas::real duration)
     if (b)
     {
         b->setPosition(b->getPosition() + movePerIMass * b->getInverseMass());
+    }
+}
+
+pegas::ParticleContactResolver::ParticleContactResolver(unsigned int const iterations)
+    : mIterations(iterations)
+{
+}
+
+void pegas::ParticleContactResolver::setIterations(unsigned int const iterations)
+{
+    mIterations = iterations;
+}
+
+void pegas::ParticleContactResolver::resolveContacts(pegas::ParticleContactsArray const & contacts, pegas::real const duration)
+{
+    mIterationsUsed = 0;
+
+    while (mIterationsUsed < mIterations)
+    {
+        //todo: keep it sorted
+        auto max_it = std::max_element(contacts.begin(), contacts.end(),
+                                       [](ParticleContact::Ptr const & a, ParticleContact::Ptr const & b){
+                return a->calculateSeparatingVelocity() < b->calculateSeparatingVelocity();
+        });
+        (*max_it)->resolve(duration);
     }
 }
