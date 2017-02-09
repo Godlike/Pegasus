@@ -1,17 +1,28 @@
 #include "Pegas/include/particlecontacts.hpp"
 
+#include <algorithm>
 
 pegas::ParticleContact::ParticleContact(
         pegas::Particle::Ptr const & a,
         pegas::Particle::Ptr const & b,
         pegas::real const restitution,
-        pegas::Vector3 const & contactNormal
-    ) : mA(a), mB(b), mRestitution(restitution), mContactNormal(contactNormal)
+        pegas::Vector3 const & contactNormal,
+        pegas::real const penetration
+    ) : mA(a), mB(b), mRestitution(restitution), mContactNormal(contactNormal), mPenetration(penetration)
 {
+    if (!mA || !mB)
+    {
+        throw std::invalid_argument("ParticleContact::ParticleContact !mA || !mB");
+    }
 }
 
 void pegas::ParticleContact::resolve(pegas::real const duration)
 {
+    if (duration < 0)
+    {
+        throw std::invalid_argument("ParticleContact::resolve duration < 0");
+    }
+
     resolveVelocity(duration);
     resolveInterpenetration(duration);
 }

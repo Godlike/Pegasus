@@ -1,5 +1,7 @@
 #include "Pegas/include/particleforcegenerator.hpp"
+
 #include <stdexcept>
+#include <cmath>
 
 void pegas::ParticleForceRegistry::add(pegas::Particle::Ptr & p, pegas::ParticleForceGenerator::Ptr & pfg)
 {

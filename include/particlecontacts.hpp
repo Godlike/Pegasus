@@ -3,7 +3,6 @@
 
 #include "Pegas/include/particle.hpp"
 #include <vector>
-#include <algorithm>
 
 namespace pegas
 {
@@ -12,16 +11,16 @@ namespace pegas
     public:
         using Ptr = std::shared_ptr<ParticleContact>;
 
-        ParticleContact(Particle::Ptr const & mA, Particle::Ptr const & mB, real const mRestitution, Vector3 const & mContactNormal);
+        ParticleContact(Particle::Ptr const & a, Particle::Ptr const & b, real const restitution, Vector3 const & contactNormal, real const penetration);
 
         void resolve(real const duration);
 
         real calculateSeparatingVelocity() const;
 
     private:
-        Particle::Ptr const mA;
-        Particle::Ptr const mB;
-        real const mRestitution;
+        Particle::Ptr mA;
+        Particle::Ptr mB;
+        real mRestitution;
         Vector3 const mContactNormal;
         real mPenetration;
 
