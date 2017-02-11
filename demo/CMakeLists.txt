@@ -39,6 +39,7 @@ set(HEADERS
     ../include/particleforcegenerator.hpp
     ../include/particlecontacts.hpp
     ../include/particlelinks.hpp
+    ../include/particleworld.hpp
     ../include/math.hpp
     ../demo/app.hpp
     ../demo/ogl_headers.hpp
@@ -51,6 +52,7 @@ set(SOURCES
     ../src/particleforcegenerator.cpp
     ../src/particlecontacts.cpp
     ../src/particlelinks.cpp
+    ../src/particleworld.cpp
     ../src/math.cpp
     ../demo/app.cpp
     ../demo/timing.cpp
