@@ -137,3 +137,7 @@ void pegas::ParticleContactResolver::resolveContacts(pegas::ParticleContactsArra
         (*max_it)->resolve(duration);
     }
 }
+
+pegas::ParticleContactGenerator::~ParticleContactGenerator()
+{
+}

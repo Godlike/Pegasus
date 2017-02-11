@@ -34,7 +34,7 @@ namespace pegas
     class ParticleContactResolver
     {
     public:
-        ParticleContactResolver(unsigned int const iterations);
+        ParticleContactResolver(unsigned int const iterations = 0);
 
         void setIterations(unsigned int const iterations);
 
@@ -43,6 +43,15 @@ namespace pegas
     private:
         unsigned int mIterations;
         unsigned int mIterationsUsed;
+    };
+
+    class ParticleContactGenerator
+    {
+    public:
+        using Ptr = std::shared_ptr<ParticleContactGenerator>;
+
+        virtual ~ParticleContactGenerator();
+        virtual unsigned int addContact(ParticleContact::Ptr & contact, unsigned int const limit) const = 0;
     };
 }//namespace pegas
 
