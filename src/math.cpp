@@ -32,11 +32,10 @@ void pegas::Vector3::operator+=(pegas::Vector3 const & v)
     z += v.z;
 }
 
-pegas::Vector3 pegas::Vector3::operator+=(pegas::Vector3 const & v) const
+pegas::Vector3 pegas::Vector3::operator+=(pegas::Vector3 v) const
 {
-    Vector3 new_v(*this);
-    new_v += v;
-    return new_v;
+    v += *this;
+    return v;
 }
 
 pegas::Vector3 pegas::Vector3::operator+(const pegas::Vector3 & v) const
@@ -76,7 +75,7 @@ pegas::Vector3 pegas::Vector3::componentProduct(pegas::Vector3 const & v) const
 {
     Vector3 new_v(*this);
     new_v.componentProduct(v);
-    return v;
+    return new_v;
 }
 
 pegas::real pegas::Vector3::scalarProduct(pegas::Vector3 const & v) const
@@ -89,7 +88,7 @@ pegas::real pegas::Vector3::operator*(pegas::Vector3 const & v) const
     return scalarProduct(v);
 }
 
-pegas::Vector3 pegas::Vector3::operator*(pegas::real const & r) const
+pegas::Vector3 pegas::Vector3::operator*(pegas::real const r) const
 {
     Vector3 new_v(*this);
     new_v *= r;
@@ -146,7 +145,7 @@ pegas::real pegas::Vector3::squareMagnitude() const
 
 void pegas::Vector3::normalize()
 {
-    const real l = magnitude();
+    real const l = magnitude();
     if (l > 0)
     {
         (*this) *= (real(1) / l);
