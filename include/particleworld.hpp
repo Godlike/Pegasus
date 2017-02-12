@@ -18,25 +18,30 @@ namespace pegas
 
         ParticleWorld(unsigned int maxContacts, unsigned int iterations = 0);
 
-        ~ParticleWorld();
-
-        unsigned int generateContacts();
-
-        void integrate(real const duration);
-
         void runPhysics(real const duration);
 
         void startFrame();
 
-    private:
-        Particles particles;
-        ParticleForceRegistry registry;
-        ParticleContacts contacts;
-        ParticleContactResolver resolver;
-        ParticleContactGenerators generatos;
+        void setParticles(Particles particles);
 
-        bool calculateIterations;
-        unsigned int maxContacts;
+        void setParticleForcesRegistry(ParticleForceRegistry registry);
+
+        void setParticleContactGenerators(ParticleContactGenerators generators);
+
+    private:
+        Particles mParticles;
+        ParticleContacts mContacts;
+
+        ParticleForceRegistry mRegistry;
+        ParticleContactGenerators mGeneratos;
+        ParticleContactResolver mResolver;
+
+        bool mCalculateIterations;
+        unsigned int mMaxContacts;
+
+        unsigned int generateContacts();
+
+        void integrate(real const duration);
     };
 
 } //namespace pegas
