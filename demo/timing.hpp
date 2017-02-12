@@ -15,12 +15,11 @@ struct TimingData
 
     bool isPaused;
 
-
     double averageFrameDuration;
 
     float fps;
 
-    static TimingData& get();
+    static TimingData &get();
 
     static void update();
 
@@ -32,14 +31,10 @@ struct TimingData
 
     static unsigned long getClock();
 
-
-private:
+  private:
     TimingData() {}
     TimingData(const TimingData &) {}
-    TimingData& operator=(const TimingData &);
+    TimingData &operator=(const TimingData &);
 };
 
-
 #endif // CYCLONE_DEMO_TIMING_H
-
-

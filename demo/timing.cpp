@@ -3,38 +3,36 @@
 static bool qpcFlag;
 
 #ifndef __WIN32
-	#define TIMING_UNIX	1
+#define TIMING_UNIX 1
 
-	#include <stdlib.h>
-	#include <sys/time.h>
+#include <stdlib.h>
+#include <sys/time.h>
 
-	// assume unix based OS
-	typedef unsigned long long	LONGLONG;
+// assume unix based OS
+typedef unsigned long long LONGLONG;
 #else
-	#define TIMING_WINDOWS	1
+#define TIMING_WINDOWS 1
 
-	#include <windows.h>
-	#include <mmsystem.h>
+#include <windows.h>
+#include <mmsystem.h>
 
-	static double qpcFrequency;
+static double qpcFrequency;
 #endif
-
-
 
 // Internal time and clock access functions
 unsigned systemTime()
 {
 #if TIMING_UNIX
-	struct timeval tv;
-	gettimeofday(&tv, 0);
+    struct timeval tv;
+    gettimeofday(&tv, 0);
 
-	return tv.tv_sec * 1000 + tv.tv_usec/1000;
+    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 
 #else
-    if(qpcFlag)
+    if (qpcFlag)
     {
         static LONGLONG qpcMillisPerTick;
-        QueryPerformanceCounter((LARGE_INTEGER*)&qpcMillisPerTick);
+        QueryPerformanceCounter((LARGE_INTEGER *)&qpcMillisPerTick);
         return (unsigned)(qpcMillisPerTick * qpcFrequency);
     }
     else
@@ -42,7 +40,6 @@ unsigned systemTime()
         return unsigned(timeGetTime());
     }
 #endif
-
 }
 
 unsigned TimingData::getTime()
@@ -63,10 +60,10 @@ unsigned long TimingData::getClock()
 {
 
 #if TIMING_UNIX
-	struct timeval tv;
-	gettimeofday(&tv, 0);
+    struct timeval tv;
+    gettimeofday(&tv, 0);
 
-	return tv.tv_sec * 1000 + tv.tv_usec/1000;
+    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 #else
     return systemClock();
 #endif
@@ -80,28 +77,29 @@ void initTime()
 #else
     LONGLONG time;
 
-    qpcFlag = (QueryPerformanceFrequency((LARGE_INTEGER*)&time) > 0);
+    qpcFlag = (QueryPerformanceFrequency((LARGE_INTEGER *)&time) > 0);
 
     // Check if we have access to the performance counter at this
     // resolution.
-    if (qpcFlag) qpcFrequency = 1000.0 / time;
+    if (qpcFlag)
+        qpcFrequency = 1000.0 / time;
 #endif
 }
-
 
 // Holds the global frame time that is passed around
 static TimingData *timingData = NULL;
 
 // Retrieves the global frame info instance
-TimingData& TimingData::get()
+TimingData &TimingData::get()
 {
-    return (TimingData&)*timingData;
+    return (TimingData &)*timingData;
 }
 
 // Updates the global frame information. Should be called once per frame.
 void TimingData::update()
 {
-    if (!timingData) return;
+    if (!timingData)
+        return;
 
     // Advance the frame number.
     if (!timingData->isPaused)
@@ -112,17 +110,18 @@ void TimingData::update()
     // Update the timing information.
     unsigned thisTime = systemTime();
     timingData->lastFrameDuration = thisTime -
-        timingData->lastFrameTimestamp;
+                                    timingData->lastFrameTimestamp;
     timingData->lastFrameTimestamp = thisTime;
 
     // Update the tick information.
     unsigned long thisClock = getClock();
     timingData->lastFrameClockTicks =
-    thisClock - timingData->lastFrameClockstamp;
+        thisClock - timingData->lastFrameClockstamp;
     timingData->lastFrameClockstamp = thisClock;
 
     // Update the RWA frame rate if we are able to.
-    if (timingData->frameNumber > 1) {
+    if (timingData->frameNumber > 1)
+    {
         if (timingData->averageFrameDuration <= 0)
         {
             timingData->averageFrameDuration =
@@ -137,7 +136,7 @@ void TimingData::update()
 
             // Invert to get FPS
             timingData->fps =
-                (float)(1000.0/timingData->averageFrameDuration);
+                (float)(1000.0 / timingData->averageFrameDuration);
         }
     }
 }
@@ -148,7 +147,8 @@ void TimingData::init()
     initTime();
 
     // Create the frame info object
-    if (!timingData) timingData = new TimingData();
+    if (!timingData)
+        timingData = new TimingData();
 
     // Set up the frame info structure.
     timingData->frameNumber = 0;
@@ -167,6 +167,6 @@ void TimingData::init()
 
 void TimingData::deinit()
 {
-        delete timingData;
-        timingData = NULL;
+    delete timingData;
+    timingData = NULL;
 }

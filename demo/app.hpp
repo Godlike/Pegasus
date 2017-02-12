@@ -28,7 +28,7 @@ public:
 
     virtual void mouseDrag(int x, int y);
 
-    void renderText(float x, float y, const char *text, void* font=NULL);
+    void renderText(float x, float y, const char *text, void* font=nullptr);
 };
 
 #endif //PEGAS_DEMO_APP_HPP

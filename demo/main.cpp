@@ -1,16 +1,16 @@
-#include "Pegas/demo/ogl_headers.hpp"
 #include "Pegas/demo/app.hpp"
+#include "Pegas/demo/ogl_headers.hpp"
 #include "Pegas/demo/timing.hpp"
 
-extern Application* getApplication();
+extern Application *getApplication();
 
-Application* app;
+Application *app;
 
-void createWindow(const char* title)
+void createWindow(const char *title)
 {
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(640,320);
-    glutInitWindowPosition(0,0);
+    glutInitWindowSize(640, 320);
+    glutInitWindowPosition(0, 0);
     glutCreateWindow(title);
 }
 
@@ -50,8 +50,7 @@ void motion(int x, int y)
     app->mouseDrag(x, y);
 }
 
-
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     // Set up GLUT and the timers
     glutInit(&argc, argv);
