@@ -42,8 +42,9 @@ set(HEADERS
     ../include/particleworld.hpp
     ../include/math.hpp
     ../demo/app.hpp
-    ../demo/ogl_headers.hpp
     ../demo/timing.hpp
+    ../demo/random.hpp
+    ../demo/ogl_headers.hpp
 )
 
 set(SOURCES
@@ -56,7 +57,9 @@ set(SOURCES
     ../src/math.cpp
     ../demo/app.cpp
     ../demo/timing.cpp
+    ../demo/random.cpp
     ../demo/ballistic.cpp
+    ../demo/blob.cpp
     ./main.cpp
 )
 

@@ -48,9 +48,10 @@ private:
 class ParticleContactGenerator {
 public:
   using Ptr = std::shared_ptr<ParticleContactGenerator>;
+  using Contacts = std::vector<pegas::ParticleContact::Ptr>;
 
   virtual ~ParticleContactGenerator();
-  virtual unsigned int addContact(ParticleContact::Ptr &contact,
+  virtual unsigned int addContact(Contacts &contacts,
                                   unsigned int const limit) const = 0;
 };
 } // namespace pegas

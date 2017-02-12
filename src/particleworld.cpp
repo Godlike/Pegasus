@@ -46,13 +46,8 @@ unsigned int pegas::ParticleWorld::generateContacts() {
   mContacts.clear();
 
   for (auto const &g : mGeneratos) {
-    ParticleContact::Ptr contact;
-    auto const used = g->addContact(contact, limit);
+    auto const used = g->addContact(mContacts, limit);
     limit -= used;
-
-    if (used) {
-      mContacts.push_back(contact);
-    }
 
     if (limit == 0) {
       break;
