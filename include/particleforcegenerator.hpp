@@ -2,143 +2,129 @@
 #define PEGAS_PARTICLE_FORCE_GENERATOR_HPP
 
 #include "Pegas/include/particle.hpp"
-#include <memory>
 #include <map>
+#include <memory>
 #include <set>
 
+namespace pegas {
+class ParticleForceGenerator {
+public:
+  using Ptr = std::shared_ptr<ParticleForceGenerator>;
+  using ConstPtr = std::shared_ptr<ParticleForceGenerator const>;
 
+  virtual ~ParticleForceGenerator() {}
 
-namespace pegas
-{
-    class ParticleForceGenerator
-    {
-    public:
-        using Ptr = std::shared_ptr<ParticleForceGenerator>;
-        using ConstPtr = std::shared_ptr<ParticleForceGenerator const>;
+  virtual void updateForce(Particle::Ptr const &p) = 0;
+};
 
-        virtual ~ParticleForceGenerator() {}
+class ParticleForceRegistry {
+public:
+  void add(Particle::Ptr &p, ParticleForceGenerator::Ptr &pfg);
 
-        virtual void updateForce(Particle::Ptr const & p) = 0;
-    };
+  void remove(Particle::Ptr const &p);
 
+  void remove(Particle::Ptr const &p, ParticleForceGenerator::Ptr const &pfg);
 
-    class ParticleForceRegistry
-    {
-    public:
-        void add(Particle::Ptr & p, ParticleForceGenerator::Ptr & pfg);
+  void clear();
 
-        void remove(Particle::Ptr const & p);
+  void updateForces();
 
-        void remove(Particle::Ptr const & p, ParticleForceGenerator::Ptr const & pfg);
+private:
+  using Registry =
+      std::map<Particle::Ptr, std::set<ParticleForceGenerator::Ptr>>;
+  Registry mRegistrations;
+};
 
-        void clear();
+class ParticleGravity : public ParticleForceGenerator {
+public:
+  ParticleGravity(Vector3 const &g);
 
-        void updateForces();
+  virtual void updateForce(Particle::Ptr const &p) override;
 
-    private:
-        using Registry = std::map< Particle::Ptr, std::set<ParticleForceGenerator::Ptr> >;
-        Registry mRegistrations;
-    };
+private:
+  Vector3 const mGravity;
+};
 
+class ParticleDrag : public ParticleForceGenerator {
+public:
+  ParticleDrag(real const mK1, real const mK2);
 
-    class ParticleGravity : public ParticleForceGenerator
-    {
-    public:
-        ParticleGravity(Vector3 const & g);
+  virtual void updateForce(Particle::Ptr const &p) override;
 
-        virtual void updateForce(Particle::Ptr const & p) override;
+private:
+  real const mK1;
+  real const mK2;
+};
 
-    private:
-        Vector3 const mGravity;
-    };
+class ParticleSpring : public ParticleForceGenerator {
+public:
+  ParticleSpring(Particle::Ptr const &mOther, real const mSpringConstant,
+                 real const mRestLenght);
 
+  virtual void updateForce(Particle::Ptr const &p) override;
 
-    class ParticleDrag : public ParticleForceGenerator
-    {
-    public:
-        ParticleDrag(real const mK1, real const mK2);
+private:
+  Particle::Ptr const mOther;
+  real const mSpringConstant;
+  real const mRestLenght;
+};
 
-        virtual void updateForce(Particle::Ptr const & p) override;
+class ParticleAnchoredSpring : public ParticleForceGenerator {
+public:
+  ParticleAnchoredSpring(Vector3 const &mAnchor, real const mSpringConstant,
+                         real const mRestLenght);
 
-    private:
-        real const mK1;
-        real const mK2;
-    };
+  virtual void updateForce(Particle::Ptr const &p) override;
 
+private:
+  Vector3 const mAnchor;
+  real const mSpringConstant;
+  real const mRestLenght;
+};
 
-    class ParticleSpring : public ParticleForceGenerator
-    {
-    public:
-        ParticleSpring(Particle::Ptr const & mOther, real const mSpringConstant, real const mRestLenght);
+class ParticleBungee : public ParticleForceGenerator {
+public:
+  ParticleBungee(Particle::Ptr const &mOther, real const mSpringConstant,
+                 real const mRestLenght);
 
-        virtual void updateForce(Particle::Ptr const & p) override;
+  virtual void updateForce(Particle::Ptr const &p) override;
 
-    private:
-        Particle::Ptr const mOther;
-        real const mSpringConstant;
-        real const mRestLenght;
-    };
+private:
+  Particle::Ptr const mOther;
+  real const mSpringConstant;
+  real const mRestLenght;
+};
 
+class ParticleBuoyancy : public ParticleForceGenerator {
+public:
+  ParticleBuoyancy(real const mMaxDepth, real const mVolume,
+                   real const waterWight, real const mLiquidDensity);
 
-    class ParticleAnchoredSpring : public ParticleForceGenerator
-    {
-    public:
-        ParticleAnchoredSpring(Vector3 const & mAnchor, real const mSpringConstant, real const mRestLenght);
+  virtual void updateForce(Particle::Ptr const &p) override;
 
-        virtual void updateForce(Particle::Ptr const & p) override;
+private:
+  real const mMaxDepth;
+  real const mVolume;
+  real const mWaterHeight;
+  real const mLiquidDensity;
+};
 
-    private:
-        Vector3 const mAnchor;
-        real const mSpringConstant;
-        real const mRestLenght;
-    };
+class ParticleFakeSpring : public ParticleForceGenerator {
+public:
+  ParticleFakeSpring(Vector3 const &mAnchor, real const mSpringConstant,
+                     real const mDamping);
 
+  void updateForce(Particle::Ptr const &p, real const mDuration);
 
-    class ParticleBungee : public ParticleForceGenerator
-    {
-    public:
-        ParticleBungee(Particle::Ptr const & mOther, real const mSpringConstant, real const mRestLenght);
+  virtual void updateForce(Particle::Ptr const &p) override;
 
-        virtual void updateForce(Particle::Ptr const & p) override;
+private:
+  Vector3 const mAnchor;
+  real const mSpringConstant;
+  real const mDamping;
+  real mDuration;
+};
 
-    private:
-        Particle::Ptr const mOther;
-        real const mSpringConstant;
-        real const mRestLenght;
-    };
+} // namespace pegas
 
-
-    class ParticleBuoyancy : public ParticleForceGenerator
-    {
-    public:
-        ParticleBuoyancy(real const mMaxDepth, real const mVolume, real const waterWight, real const mLiquidDensity);
-
-        virtual void updateForce(Particle::Ptr const & p) override;
-
-    private:
-        real const mMaxDepth;
-        real const mVolume;
-        real const mWaterHeight;
-        real const mLiquidDensity;
-    };
-
-
-    class ParticleFakeSpring : public ParticleForceGenerator
-    {
-    public:
-        ParticleFakeSpring(Vector3 const & mAnchor, real const mSpringConstant, real const mDamping);
-
-        void updateForce(Particle::Ptr const & p, real const mDuration);
-
-        virtual void updateForce(Particle::Ptr const & p) override;
-
-    private:
-        Vector3 const mAnchor;
-        real const mSpringConstant;
-        real const mDamping;
-        real mDuration;
-    };
-
-}// namespace pegas
-
-#endif// PEGAS_PARTICLE_FORCE_GENERATOR_HPP
+#endif // PEGAS_PARTICLE_FORCE_GENERATOR_HPP

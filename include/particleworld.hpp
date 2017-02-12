@@ -6,44 +6,42 @@
 #include "Pegas/include/particleforcegenerator.hpp"
 #include <vector>
 
-namespace pegas
-{
+namespace pegas {
 
-    class ParticleWorld
-    {
-    public:
-        using Particles = std::vector<Particle::Ptr>;
-        using ParticleContacts = std::vector<ParticleContact::Ptr>;
-        using ParticleContactGenerators = std::vector<ParticleContactGenerator::Ptr>;
+class ParticleWorld {
+public:
+  using Particles = std::vector<Particle::Ptr>;
+  using ParticleContacts = std::vector<ParticleContact::Ptr>;
+  using ParticleContactGenerators = std::vector<ParticleContactGenerator::Ptr>;
 
-        ParticleWorld(unsigned int maxContacts, unsigned int iterations = 0);
+  ParticleWorld(unsigned int maxContacts, unsigned int iterations = 0);
 
-        void runPhysics(real const duration);
+  void runPhysics(real const duration);
 
-        void startFrame();
+  void startFrame();
 
-        void setParticles(Particles particles);
+  void setParticles(Particles particles);
 
-        void setParticleForcesRegistry(ParticleForceRegistry registry);
+  void setParticleForcesRegistry(ParticleForceRegistry registry);
 
-        void setParticleContactGenerators(ParticleContactGenerators generators);
+  void setParticleContactGenerators(ParticleContactGenerators generators);
 
-    private:
-        Particles mParticles;
-        ParticleContacts mContacts;
+private:
+  Particles mParticles;
+  ParticleContacts mContacts;
 
-        ParticleForceRegistry mRegistry;
-        ParticleContactGenerators mGeneratos;
-        ParticleContactResolver mResolver;
+  ParticleForceRegistry mRegistry;
+  ParticleContactGenerators mGeneratos;
+  ParticleContactResolver mResolver;
 
-        bool mCalculateIterations;
-        unsigned int mMaxContacts;
+  bool mCalculateIterations;
+  unsigned int mMaxContacts;
 
-        unsigned int generateContacts();
+  unsigned int generateContacts();
 
-        void integrate(real const duration);
-    };
+  void integrate(real const duration);
+};
 
-} //namespace pegas
+} // namespace pegas
 
-#endif //PEGAS_PARTICLE_WORLD_HPP
+#endif // PEGAS_PARTICLE_WORLD_HPP
