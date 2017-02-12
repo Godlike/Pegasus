@@ -16,7 +16,7 @@ void pegas::ParticleWorld::setParticles(
 }
 
 void pegas::ParticleWorld::setParticleForcesRegistry(
-    pegas::ParticleForceRegistry registry) {
+    pegas::ParticleForceRegistry::Ptr registry) {
   mRegistry = registry;
 }
 
@@ -26,7 +26,7 @@ void pegas::ParticleWorld::setParticleContactGenerators(
 }
 
 void pegas::ParticleWorld::runPhysics(pegas::real const duration) {
-  mRegistry.updateForces();
+  mRegistry->updateForces();
 
   integrate(duration);
 
