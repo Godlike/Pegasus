@@ -63,6 +63,8 @@ public:
 
   Vector3 normalize() const;
 
+  Vector3 unit() const;
+
 private:
   real pad;
 };
