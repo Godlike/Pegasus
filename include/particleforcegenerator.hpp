@@ -19,6 +19,8 @@ public:
 
 class ParticleForceRegistry {
 public:
+  using Ptr = std::shared_ptr<ParticleForceRegistry>;
+
   void add(Particle::Ptr &p, ParticleForceGenerator::Ptr &pfg);
 
   void remove(Particle::Ptr const &p);

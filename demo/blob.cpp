@@ -88,10 +88,12 @@ public:
   unsigned int maxFloat;
   real maxDistance;
 
+  BlobForceGenerator(std::vector<Particle::Ptr> &particles)
+      : particles(particles) {}
+
   virtual void updateForce(Particle::Ptr const &particle) {
     unsigned joinCount = 0;
     for (unsigned i = 0; i < particles.size(); ++i) {
-      // Don't attract yourself
       if (particles[i] == particle)
         continue;
 
@@ -142,8 +144,9 @@ public:
 private:
   std::vector<pegas::Particle::Ptr> blobs;
   std::vector<pegas::Platform::Ptr> platforms;
+  pegas::BlobForceGenerator::Ptr blobForceGenerator;
+  pegas::ParticleForceRegistry::Ptr forceRegistry;
   pegas::ParticleWorld world;
-  pegas::BlobForceGenerator blobForceGenerator;
 
   float xAxis;
   float yAxis;
@@ -153,21 +156,25 @@ private:
 
 // Method definitions
 BlobDemo::BlobDemo()
-    : xAxis(0), yAxis(0), world(PLATFORM_COUNT + BLOB_COUNT, PLATFORM_COUNT) {
+    : blobForceGenerator(std::make_shared<pegas::BlobForceGenerator>(blobs)),
+      forceRegistry(std::make_shared<pegas::ParticleForceRegistry>()),
+      world(PLATFORM_COUNT + BLOB_COUNT, PLATFORM_COUNT), xAxis(0), yAxis(0) {
   pegas::Random r;
 
   // Create the force generator
-  blobForceGenerator.particles = blobs;
-  blobForceGenerator.maxAttraction = 20.0f;
-  blobForceGenerator.maxReplusion = 10.0f;
-  blobForceGenerator.minNaturalDistance = BLOB_RADIUS * 0.75f;
-  blobForceGenerator.maxNaturalDistance = BLOB_RADIUS * 1.5f;
-  blobForceGenerator.maxDistance = BLOB_RADIUS * 2.5f;
-  blobForceGenerator.maxFloat = 2;
-  blobForceGenerator.floatHead = 8.0f;
+  pegas::BlobForceGenerator &blobForce =
+      *static_cast<pegas::BlobForceGenerator *>(blobForceGenerator.get());
+  blobForce.particles = blobs;
+  blobForce.maxAttraction = 20.0f;
+  blobForce.maxReplusion = 10.0f;
+  blobForce.minNaturalDistance = BLOB_RADIUS * 0.75f;
+  blobForce.maxNaturalDistance = BLOB_RADIUS * 1.5f;
+  blobForce.maxDistance = BLOB_RADIUS * 2.5f;
+  blobForce.maxFloat = 2;
+  blobForce.floatHead = 8.0f;
 
   // Create the platforms
-  for (unsigned i = 0; i < PLATFORM_COUNT; i++) {
+  for (unsigned int i = 0; i < PLATFORM_COUNT; ++i) {
     pegas::Vector3 start =
         pegas::Vector3(pegas::real(i % 2) * 10.0f - 5.0f,
                        pegas::real(i) * 4.0f + ((i % 2) ? 0.0f : 2.0f), 0);
@@ -183,41 +190,46 @@ BlobDemo::BlobDemo()
     platforms.push_back(std::make_shared<pegas::Platform>(start, end, blobs));
   }
 
-  world.setParticleContactGenerators(platforms);
-
   // Create the blobs.
-  Platform *p = platforms + (PLATFORM_COUNT - 2);
+  pegas::Platform &p =
+      *static_cast<pegas::Platform *>(platforms[PLATFORM_COUNT - 2].get());
   pegas::real fraction = (pegas::real)1.0 / BLOB_COUNT;
-  pegas::Vector3 delta = p->end - p->start;
-  for (unsigned i = 0; i < BLOB_COUNT; i++) {
-    unsigned me = (i + BLOB_COUNT / 2) % BLOB_COUNT;
-    blobs[i].setPosition(p->start +
-                         delta * (pegas::real(me) * 0.8f * fraction + 0.1f) +
-                         pegas::Vector3(0, 1.0f + r.randomReal(), 0));
+  pegas::Vector3 delta = p.end - p.start;
+
+  for (unsigned int i = 0; i < BLOB_COUNT; ++i) {
+    auto const me = (i + BLOB_COUNT / 2) % BLOB_COUNT;
+    blobs[i]->setPosition(p.start +
+                          delta * (pegas::real(me) * 0.8f * fraction + 0.1f) +
+                          pegas::Vector3(0, 1.0f + r.randomReal(), 0));
 
     blobs[i]->setVelocity(0, 0, 0);
     blobs[i]->setDamping(0.2f);
-    blobs[i]->setAcceleration(Vector3(0, -9.8, 0) * 0.4f);
+    blobs[i]->setAcceleration(pegas::Vector3(0, -9.8, 0) * 0.4f);
     blobs[i]->setMass(1.0f);
     blobs[i]->clearForceAccum();
-
-    world.getParticles().push_back(blobs + i);
-    world.getForceRegistry().add(blobs + i, &blobForceGenerator);
   }
+
+  for (auto &blob : blobs) {
+    forceRegistry->add(blob, blobForceGenerator);
+  }
+
+  world.setParticleContactGenerators(platforms);
+  world.setParticles(blobs);
+  world.setParticleForcesRegistry(forceRegistry);
 }
 
 void BlobDemo::reset() {
   pegas::Random r;
-  Platform *p = platforms + (PLATFORM_COUNT - 2);
+  auto p = static_cast<pegas::Platform *>(platforms[PLATFORM_COUNT - 2].get());
   pegas::real fraction = (pegas::real)1.0 / BLOB_COUNT;
   pegas::Vector3 delta = p->end - p->start;
   for (unsigned i = 0; i < BLOB_COUNT; i++) {
     unsigned me = (i + BLOB_COUNT / 2) % BLOB_COUNT;
-    blobs[i].setPosition(p->start +
-                         delta * (pegas::real(me) * 0.8f * fraction + 0.1f) +
-                         pegas::Vector3(0, 1.0f + r.randomReal(), 0));
-    blobs[i].setVelocity(0, 0, 0);
-    blobs[i].clearAccumulator();
+    blobs[i]->setPosition(p->start +
+                          delta * (pegas::real(me) * 0.8f * fraction + 0.1f) +
+                          pegas::Vector3(0, 1.0f + r.randomReal(), 0));
+    blobs[i]->setVelocity(0, 0, 0);
+    blobs[i]->clearForceAccum();
   }
 }
 
