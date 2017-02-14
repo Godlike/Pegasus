@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cmath>
 #include <stdio.h>
+#include <cstdlib>
 
 #define BLOB_COUNT 5
 #define PLATFORM_COUNT 10
@@ -17,11 +18,11 @@
 namespace pegas {
 class Platform : public ParticleContactGenerator {
 public:
-  Vector3 &start;
-  Vector3 &end;
+  Vector3 start;
+  Vector3 end;
   std::vector<Particle::Ptr> &particles;
 
-  Platform(Vector3 &start, Vector3 &end, std::vector<Particle::Ptr> &particles)
+  Platform(Vector3 start, Vector3 end, std::vector<Particle::Ptr> &particles)
       : start(start), end(end), particles(particles) {}
 
   virtual unsigned int addContact(Contacts &contacts,
@@ -30,8 +31,9 @@ public:
 
     unsigned int used = 0;
     for (unsigned int i = 0; i < particles.size(); ++i) {
-      if (used >= limit)
+      if (used >= limit) {
         break;
+      }
 
       Vector3 toParticle = particles[i]->getPosition() - start;
       Vector3 const lineDirection = end - start;
@@ -175,41 +177,37 @@ BlobDemo::BlobDemo()
 
   // Create the platforms
   for (unsigned int i = 0; i < PLATFORM_COUNT; ++i) {
-    pegas::Vector3 start =
+    auto const start =
         pegas::Vector3(pegas::real(i % 2) * 10.0f - 5.0f,
                        pegas::real(i) * 4.0f + ((i % 2) ? 0.0f : 2.0f), 0);
-    start.x += r.randomBinomial(2.0f);
-    start.y += r.randomBinomial(2.0f);
 
-    pegas::Vector3 end =
+    auto const end =
         pegas::Vector3(pegas::real(i % 2) * 10.0f + 5.0f,
                        pegas::real(i) * 4.0f + ((i % 2) ? 2.0f : 0.0f), 0);
-    end.x += r.randomBinomial(2.0f);
-    end.y += r.randomBinomial(2.0f);
 
     platforms.push_back(std::make_shared<pegas::Platform>(start, end, blobs));
   }
 
-  // Create the blobs.
   pegas::Platform &p =
-      *static_cast<pegas::Platform *>(platforms[PLATFORM_COUNT - 2].get());
-  pegas::real fraction = (pegas::real)1.0 / BLOB_COUNT;
+      *static_cast<pegas::Platform *>(platforms.back().get());
+  pegas::real const fraction = pegas::real(1.0) / BLOB_COUNT;
   pegas::Vector3 delta = p.end - p.start;
 
   for (unsigned int i = 0; i < BLOB_COUNT; ++i) {
+    auto blob = std::make_shared<pegas::Particle>();
     auto const me = (i + BLOB_COUNT / 2) % BLOB_COUNT;
-    blobs[i]->setPosition(p.start +
-                          delta * (pegas::real(me) * 0.8f * fraction + 0.1f) +
-                          pegas::Vector3(0, 1.0f + r.randomReal(), 0));
+    blob->setPosition(p.start +
+                      delta * (pegas::real(me) * 0.8f * fraction + 0.1f));
 
-    blobs[i]->setVelocity(0, 0, 0);
-    blobs[i]->setDamping(0.2f);
-    blobs[i]->setAcceleration(pegas::Vector3(0, -9.8, 0) * 0.4f);
-    blobs[i]->setMass(1.0f);
-    blobs[i]->clearForceAccum();
+    blob->setVelocity(0, 0, 0);
+    blob->setDamping(0.2f);
+    blob->setAcceleration(pegas::Vector3(0, -9.8, 0) * 0.4f);
+    blob->setMass(1.0f);
+    blob->clearForceAccum();
+    blobs.push_back(blob);
   }
 
-  for (auto &blob : blobs) {
+  for (auto & blob : blobs) {
     forceRegistry->add(blob, blobForceGenerator);
   }
 
@@ -219,15 +217,13 @@ BlobDemo::BlobDemo()
 }
 
 void BlobDemo::reset() {
-  pegas::Random r;
-  auto p = static_cast<pegas::Platform *>(platforms[PLATFORM_COUNT - 2].get());
+  auto p = static_cast<pegas::Platform *>(platforms.back().get());
   pegas::real fraction = (pegas::real)1.0 / BLOB_COUNT;
   pegas::Vector3 delta = p->end - p->start;
   for (unsigned i = 0; i < BLOB_COUNT; i++) {
     unsigned me = (i + BLOB_COUNT / 2) % BLOB_COUNT;
     blobs[i]->setPosition(p->start +
-                          delta * (pegas::real(me) * 0.8f * fraction + 0.1f) +
-                          pegas::Vector3(0, 1.0f + r.randomReal(), 0));
+                      delta * (pegas::real(me) * 0.8f * fraction + 0.1f));
     blobs[i]->setVelocity(0, 0, 0);
     blobs[i]->clearForceAccum();
   }
@@ -299,6 +295,9 @@ void BlobDemo::update() {
 
   // Move the controlled blob
   blobs[0]->addForce(pegas::Vector3(xAxis, yAxis, 0) * 10.0f);
+  for (auto & blob : blobs) {
+      blob->addForce(pegas::Vector3(std::rand() % 2, std::rand() % 2 , 0));
+  }
 
   // Run the simulation
   world.runPhysics(duration);
