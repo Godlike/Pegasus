@@ -13,7 +13,8 @@ void pegas::ParticleForceRegistry::add(
   if (particle != mRegistrations.end()) {
     particle->second.insert(pfg);
   } else {
-    mRegistrations.insert(std::make_pair(p, std::set<ParticleForceGenerator::Ptr>({pfg})));
+    mRegistrations.insert(
+        std::make_pair(p, std::set<ParticleForceGenerator::Ptr>({pfg})));
   }
 }
 

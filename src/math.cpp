@@ -132,7 +132,7 @@ pegas::Vector3 pegas::Vector3::normalize() const {
 }
 
 pegas::Vector3 pegas::Vector3::unit() const {
-    Vector3 result = *this;
-    result.normalize();
-    return result;
+  Vector3 result = *this;
+  result.normalize();
+  return result;
 }
