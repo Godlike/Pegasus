@@ -30,13 +30,12 @@ void pegas::ParticleWorld::runPhysics(pegas::real const duration) {
 
   integrate(duration);
 
-  unsigned usedContacts = generateContacts();
+  unsigned int usedContacts = generateContacts();
 
   if (usedContacts) {
     if (mCalculateIterations) {
       mResolver.setIterations(usedContacts * 2);
     }
-    mResolver.setIterations(usedContacts);
     mResolver.resolveContacts(mContacts, duration);
   }
 }
