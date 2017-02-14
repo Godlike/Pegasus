@@ -9,8 +9,8 @@ pegas::ParticleContact::ParticleContact(pegas::Particle::Ptr const &a,
                                         pegas::real const penetration)
     : mA(a), mB(b), mRestitution(restitution), mContactNormal(contactNormal),
       mPenetration(penetration) {
-  if (!mA || !mB) {
-    throw std::invalid_argument("ParticleContact::ParticleContact !mA || !mB");
+  if (!mA && !mB) {
+    throw std::invalid_argument("ParticleContact::ParticleContact !mA && !mB");
   }
 }
 
@@ -109,7 +109,7 @@ void pegas::ParticleContactResolver::resolveContacts(
     pegas::ParticleContactsArray const &contacts, pegas::real const duration) {
   mIterationsUsed = 0;
 
-  while (mIterationsUsed < mIterations) {
+  while (mIterationsUsed++ < mIterations) {
     // todo: keep it sorted
     auto max_it = std::max_element(
         contacts.begin(), contacts.end(),
