@@ -9,61 +9,61 @@ namespace pegas {
 
 class Particle {
 public:
-  using Ptr = std::shared_ptr<Particle>;
-  using ConstPtr = std::shared_ptr<Particle const>;
+    using Ptr = std::shared_ptr<Particle>;
+    using ConstPtr = std::shared_ptr<Particle const>;
 
-  void integrate(real const duration);
+    void integrate(real const duration);
 
-  Vector3 getPosition() const;
+    Vector3 getPosition() const;
 
-  void setPosition(Vector3 const &position);
+    void setPosition(Vector3 const& position);
 
-  void setPosition(real const x, real const y, real const z);
+    void setPosition(real const x, real const y, real const z);
 
-  Vector3 getVelocity() const;
+    Vector3 getVelocity() const;
 
-  void setVelocity(Vector3 const &velocity);
+    void setVelocity(Vector3 const& velocity);
 
-  void setVelocity(real const x, real const y, real const z);
+    void setVelocity(real const x, real const y, real const z);
 
-  Vector3 getAcceleration() const;
+    Vector3 getAcceleration() const;
 
-  void setAcceleration(Vector3 const &acceleration);
+    void setAcceleration(Vector3 const& acceleration);
 
-  void setAcceleration(real const x, real const y, real const z);
+    void setAcceleration(real const x, real const y, real const z);
 
-  real getDamping() const;
+    real getDamping() const;
 
-  void setDamping(real const damping);
+    void setDamping(real const damping);
 
-  real getMass() const;
+    real getMass() const;
 
-  void setMass(real const mass);
+    void setMass(real const mass);
 
-  bool hasFiniteMass() const;
+    bool hasFiniteMass() const;
 
-  real getInverseMass() const;
+    real getInverseMass() const;
 
-  void setInverseMass(real const inverseMass);
+    void setInverseMass(real const inverseMass);
 
-  void addForce(Vector3 const &force);
+    void addForce(Vector3 const& force);
 
-  void clearForceAccum();
+    void clearForceAccum();
 
 private:
-  Vector3 mPosition;
+    Vector3 mPosition;
 
-  Vector3 mVelocity;
+    Vector3 mVelocity;
 
-  Vector3 mAcceleration;
+    Vector3 mAcceleration;
 
-  real mDamping;
+    real mDamping;
 
-  real mMass;
+    real mMass;
 
-  real mInverseMass;
+    real mInverseMass;
 
-  Vector3 mForceAccum;
+    Vector3 mForceAccum;
 };
 
 } // namespace pegas
