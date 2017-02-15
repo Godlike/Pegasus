@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
   glutIdleFunc(update);
   glutMouseFunc(mouse);
   glutMotionFunc(motion);
+  glutTimerFunc( 100, [](int const t){glutPostRedisplay();}, 0);
 
   // Run the application
   app->initGraphics();

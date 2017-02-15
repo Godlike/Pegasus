@@ -177,6 +177,7 @@ BlobDemo::BlobDemo()
 
   // Create the platforms
   for (unsigned int i = 0; i < PLATFORM_COUNT; ++i) {
+
     auto const start =
         pegas::Vector3(pegas::real(i % 2) * 10.0f - 5.0f,
                        pegas::real(i) * 4.0f + ((i % 2) ? 0.0f : 2.0f), 0);
@@ -197,7 +198,7 @@ BlobDemo::BlobDemo()
     auto blob = std::make_shared<pegas::Particle>();
     auto const me = (i + BLOB_COUNT / 2) % BLOB_COUNT;
     blob->setPosition(p.start +
-                      delta * (pegas::real(me) * 0.8f * fraction + 0.1f));
+                      delta * (pegas::real(me) * 0.8f * fraction + 0.1f) + pegas::Vector3(0, 1, 0));
 
     blob->setVelocity(0, 0, 0);
     blob->setDamping(0.2f);
@@ -223,7 +224,7 @@ void BlobDemo::reset() {
   for (unsigned i = 0; i < BLOB_COUNT; i++) {
     unsigned me = (i + BLOB_COUNT / 2) % BLOB_COUNT;
     blobs[i]->setPosition(p->start +
-                      delta * (pegas::real(me) * 0.8f * fraction + 0.1f));
+                      delta * (pegas::real(me) * 0.8f * fraction + 0.1f) + pegas::Vector3(0, 1, 0));
     blobs[i]->setVelocity(0, 0, 0);
     blobs[i]->clearForceAccum();
   }
@@ -235,7 +236,7 @@ void BlobDemo::display() {
   // Clear the view port and set the camera direction
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
-  gluLookAt(pos.x, pos.y, 6.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
+  gluLookAt(pos.x + 6.0, pos.y, 6.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
 
   glColor3f(0, 0, 0);
 
@@ -251,10 +252,11 @@ void BlobDemo::display() {
   }
   glEnd();
 
-  glColor3f(1, 0, 0);
   for (unsigned i = 0; i < BLOB_COUNT; i++) {
     const pegas::Vector3 &p = blobs[i]->getPosition();
     glPushMatrix();
+    pegas::Vector3 v(pegas::real(std::rand()) / RAND_MAX, pegas::real(std::rand()) / RAND_MAX, pegas::real(std::rand()) / RAND_MAX);
+    glColor3f(v.x, v.y, v.z);
     glTranslatef(p.x, p.y, p.z);
     glutSolidSphere(BLOB_RADIUS, 12, 12);
     glPopMatrix();
@@ -295,9 +297,6 @@ void BlobDemo::update() {
 
   // Move the controlled blob
   blobs[0]->addForce(pegas::Vector3(xAxis, yAxis, 0) * 10.0f);
-  for (auto & blob : blobs) {
-      blob->addForce(pegas::Vector3(std::rand() % 2, std::rand() % 2 , 0));
-  }
 
   // Run the simulation
   world.runPhysics(duration);
