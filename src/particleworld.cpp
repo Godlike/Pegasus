@@ -61,7 +61,6 @@ unsigned int pegas::ParticleWorld::generateContacts()
             break;
         }
     }
-
     // Return the number of contacts used.
     return mMaxContacts - limit;
 }
