@@ -1,69 +1,79 @@
 #include "Pegas/include/particleworld.hpp"
 
 pegas::ParticleWorld::ParticleWorld(unsigned int maxContacts,
-                                    unsigned int iterations)
-    : mResolver(iterations), mMaxContacts(maxContacts) {}
+    unsigned int iterations)
+    : mResolver(iterations)
+    , mMaxContacts(maxContacts)
+{
+}
 
-void pegas::ParticleWorld::startFrame() {
-  for (auto const &p : mParticles) {
-    p->clearForceAccum();
-  }
+void pegas::ParticleWorld::startFrame()
+{
+    for (auto const& p : mParticles) {
+        p->clearForceAccum();
+    }
 }
 
 void pegas::ParticleWorld::setParticles(
-    pegas::ParticleWorld::Particles particles) {
-  mParticles = particles;
+    pegas::ParticleWorld::Particles particles)
+{
+    mParticles = particles;
 }
 
 void pegas::ParticleWorld::setParticleForcesRegistry(
-    pegas::ParticleForceRegistry registry) {
-  mRegistry = registry;
+    pegas::ParticleForceRegistry registry)
+{
+    mRegistry = registry;
 }
 
 void pegas::ParticleWorld::setParticleContactGenerators(
-    pegas::ParticleWorld::ParticleContactGenerators generators) {
-  mGeneratos = generators;
+    pegas::ParticleWorld::ParticleContactGenerators generators)
+{
+    mGeneratos = generators;
 }
 
-void pegas::ParticleWorld::runPhysics(pegas::real const duration) {
-  mRegistry.updateForces();
+void pegas::ParticleWorld::runPhysics(pegas::real const duration)
+{
+    mRegistry.updateForces();
 
-  integrate(duration);
+    integrate(duration);
 
-  unsigned int usedContacts = generateContacts();
+    unsigned int usedContacts = generateContacts();
 
-  if (usedContacts) {
-    if (mCalculateIterations) {
-      mResolver.setIterations(usedContacts * 2);
+    if (usedContacts) {
+        if (mCalculateIterations) {
+            mResolver.setIterations(usedContacts * 2);
+        }
+        mResolver.resolveContacts(mContacts, duration);
     }
-    mResolver.resolveContacts(mContacts, duration);
-  }
 }
 
-unsigned int pegas::ParticleWorld::generateContacts() {
-  auto limit = mMaxContacts;
-  mContacts.clear();
+unsigned int pegas::ParticleWorld::generateContacts()
+{
+    auto limit = mMaxContacts;
+    mContacts.clear();
 
-  for (auto const &g : mGeneratos) {
-    ParticleContact::Ptr contact;
-    auto const used = g->addContact(contact, limit);
-    limit -= used;
+    for (auto const& g : mGeneratos) {
+        ParticleContact::Ptr contact;
+        auto const used = g->addContact(contact, limit);
+        limit -= used;
 
-    if (used) {
-      mContacts.push_back(contact);
+        if (used) {
+            mContacts.push_back(contact);
+        }
+
+        if (limit == 0) {
+            break;
+        }
     }
 
-    if (limit == 0) {
-      break;
-    }
-  }
-
-  // Return the number of contacts used.
-  return mMaxContacts - limit;
+    // Return the number of contacts used.
+    return mMaxContacts - limit;
 }
 
-void pegas::ParticleWorld::integrate(pegas::real const duration) {
-  for (auto const &p : mParticles) {
-    p->integrate(duration);
-  }
+void pegas::ParticleWorld::integrate(pegas::real const duration)
+{
+    for (auto const& p : mParticles) {
+        p->integrate(duration);
+    }
 }

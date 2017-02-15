@@ -7,66 +7,66 @@ namespace pegas {
 
 class Vector3 {
 public:
-  real x;
+    real x;
 
-  real y;
+    real y;
 
-  real z;
+    real z;
 
-  Vector3();
+    Vector3();
 
-  Vector3(real const x, real const y, real const z);
+    Vector3(real const x, real const y, real const z);
 
-  void operator*=(real const r);
+    void operator*=(real const r);
 
-  Vector3 operator*=(real const r) const;
+    Vector3 operator*=(real const r) const;
 
-  void operator+=(Vector3 const &v);
+    void operator+=(Vector3 const& v);
 
-  Vector3 operator+=(Vector3 v) const;
+    Vector3 operator+=(Vector3 v) const;
 
-  Vector3 operator+(Vector3 const &v) const;
+    Vector3 operator+(Vector3 const& v) const;
 
-  void operator-=(Vector3 const &v);
+    void operator-=(Vector3 const& v);
 
-  Vector3 operator-=(Vector3 const &v) const;
+    Vector3 operator-=(Vector3 const& v) const;
 
-  Vector3 operator-(Vector3 const &v) const;
+    Vector3 operator-(Vector3 const& v) const;
 
-  void addScaledVector(Vector3 const &v, real const s);
+    void addScaledVector(Vector3 const& v, real const s);
 
-  void componentProduct(Vector3 const &v);
+    void componentProduct(Vector3 const& v);
 
-  Vector3 componentProduct(Vector3 const &v) const;
+    Vector3 componentProduct(Vector3 const& v) const;
 
-  real scalarProduct(Vector3 const &v) const;
+    real scalarProduct(Vector3 const& v) const;
 
-  real operator*(Vector3 const &v) const;
+    real operator*(Vector3 const& v) const;
 
-  Vector3 operator*(real const r) const;
+    Vector3 operator*(real const r) const;
 
-  Vector3 vectorProduct(Vector3 const &v) const;
+    Vector3 vectorProduct(Vector3 const& v) const;
 
-  void operator%(Vector3 const &v);
+    void operator%(Vector3 const& v);
 
-  Vector3 operator%(Vector3 const &v) const;
+    Vector3 operator%(Vector3 const& v) const;
 
-  void inverse();
+    void inverse();
 
-  Vector3 inverse() const;
+    Vector3 inverse() const;
 
-  real magnitude() const;
+    real magnitude() const;
 
-  real squareMagnitude() const;
+    real squareMagnitude() const;
 
-  void normalize();
+    void normalize();
 
-  Vector3 normalize() const;
+    Vector3 normalize() const;
 
-  Vector3 unit() const;
+    Vector3 unit() const;
 
 private:
-  real pad;
+    real pad;
 };
 }
 

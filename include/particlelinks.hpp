@@ -7,32 +7,32 @@
 namespace pegas {
 class ParticleLink {
 public:
-  virtual ~ParticleLink();
+    virtual ~ParticleLink();
 
-  virtual unsigned int fillContact(ParticleContact::Ptr &contact,
-                                   unsigned int const limit) const = 0;
+    virtual unsigned int fillContact(ParticleContact::Ptr& contact,
+        unsigned int const limit) const = 0;
 
-  real currentLenght() const;
+    real currentLenght() const;
 
-  Particle::Ptr a;
-  Particle::Ptr b;
+    Particle::Ptr a;
+    Particle::Ptr b;
 };
 
 class ParticleCabel : public ParticleLink {
 public:
-  real maxLength;
-  real restitution;
+    real maxLength;
+    real restitution;
 
-  virtual unsigned int fillContact(ParticleContact::Ptr &contact,
-                                   unsigned int const limit) const override;
+    virtual unsigned int fillContact(ParticleContact::Ptr& contact,
+        unsigned int const limit) const override;
 };
 
 class ParticleRod : public ParticleLink {
 public:
-  real length;
+    real length;
 
-  virtual unsigned int fillContact(ParticleContact::Ptr &contact,
-                                   unsigned int const limit) const override;
+    virtual unsigned int fillContact(ParticleContact::Ptr& contact,
+        unsigned int const limit) const override;
 };
 
 } // namespace pegas
