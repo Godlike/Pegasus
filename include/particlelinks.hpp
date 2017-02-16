@@ -5,34 +5,55 @@
 #include "Pegas/include/particlecontacts.hpp"
 
 namespace pegas {
-class ParticleLink {
+class ParticleLink : public ParticleContactGenerator {
 public:
-    virtual ~ParticleLink();
+    using Ptr = std::shared_ptr<ParticleLink>;
 
-    virtual unsigned int fillContact(ParticleContact::Ptr& contact,
-        unsigned int const limit) const = 0;
+    ParticleLink(Particle::Ptr& a, Particle::Ptr& b)
+        : mA(a)
+        , mB(b)
+    {
+        if (!mA || !mB) {
+            throw std::invalid_argument("ParticleLink::ParticleLink !mA || !mB");
+        }
+    }
+
+    virtual unsigned int addContact(Contacts& contacts,
+        unsigned int const limit) const override = 0;
 
     real currentLenght() const;
 
-    Particle::Ptr a;
-    Particle::Ptr b;
+protected:
+    Particle::Ptr& mA;
+    Particle::Ptr& mB;
 };
 
 class ParticleCabel : public ParticleLink {
 public:
+    using Ptr = std::shared_ptr<ParticleCabel>;
+
+    ParticleCabel(
+        Particle::Ptr & a, Particle::Ptr & b, real const maxLength, real const restutuition);
+
+    virtual unsigned int addContact(Contacts& contacts,
+        unsigned int const limit) const override;
+
+private:
     real maxLength;
     real restitution;
-
-    virtual unsigned int fillContact(ParticleContact::Ptr& contact,
-        unsigned int const limit) const override;
 };
 
 class ParticleRod : public ParticleLink {
 public:
-    real length;
+    using Ptr = std::shared_ptr<ParticleRod>;
 
-    virtual unsigned int fillContact(ParticleContact::Ptr& contact,
+    ParticleRod(Particle::Ptr & a, Particle::Ptr & b, real const length);
+
+    virtual unsigned int addContact(Contacts& contacts,
         unsigned int const limit) const override;
+
+private:
+    real length;
 };
 
 } // namespace pegas
