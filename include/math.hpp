@@ -65,6 +65,8 @@ public:
 
     Vector3 unit() const;
 
+    void trim(real const size);
+
 private:
     real pad;
 };

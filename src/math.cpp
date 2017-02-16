@@ -169,3 +169,13 @@ pegas::Vector3 pegas::Vector3::unit() const
     result.normalize();
     return result;
 }
+
+void pegas::Vector3::trim(pegas::real const size)
+{
+    if (squareMagnitude() > size * size) {
+        normalize();
+        x *= size;
+        y *= size;
+        z *= size;
+    }
+}

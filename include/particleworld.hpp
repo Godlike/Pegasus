@@ -22,7 +22,7 @@ public:
 
     void setParticles(Particles particles);
 
-    void setParticleForcesRegistry(ParticleForceRegistry registry);
+    void setParticleForcesRegistry(ParticleForceRegistry::Ptr registry);
 
     void setParticleContactGenerators(ParticleContactGenerators generators);
 
@@ -30,7 +30,7 @@ private:
     Particles mParticles;
     ParticleContacts mContacts;
 
-    ParticleForceRegistry mRegistry;
+    ParticleForceRegistry::Ptr mRegistry;
     ParticleContactGenerators mGeneratos;
     ParticleContactResolver mResolver;
 
