@@ -1,6 +1,4 @@
 #include "timing.hpp"
-#include <intrin.h>
-#include <windows.h>
 
 static bool qpcFlag;
 
@@ -15,8 +13,9 @@ typedef unsigned long long LONGLONG;
 #else
 #define TIMING_WINDOWS 1
 
-#include <mmsystem.h>
+#include <intrin.h>
 #include <windows.h>
+#include <mmsystem.h>
 
 static double qpcFrequency;
 #endif
