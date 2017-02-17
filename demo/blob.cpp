@@ -3,6 +3,7 @@
 #include "Pegas/demo/random.hpp"
 #include "Pegas/demo/timing.hpp"
 #include "Pegas/include/particlecontacts.hpp"
+#include "Pegas/include/particlelinks.hpp"
 #include "Pegas/include/particleforcegenerator.hpp"
 #include "Pegas/include/particleworld.hpp"
 
@@ -13,7 +14,7 @@
 
 #define BLOB_COUNT 5
 #define PLATFORM_COUNT 10
-#define BLOB_RADIUS 0.4f
+#define BLOB_RADIUS 0.3f
 
 namespace pegas {
 class Platform : public ParticleContactGenerator {
@@ -147,7 +148,7 @@ public:
 
 private:
     std::vector<pegas::Particle::Ptr> blobs;
-    std::vector<pegas::Platform::Ptr> platforms;
+    std::vector<pegas::ParticleContactGenerator::Ptr> contactGenerators;
     pegas::BlobForceGenerator::Ptr blobForceGenerator;
     pegas::ParticleForceRegistry::Ptr forceRegistry;
     pegas::ParticleWorld world;
@@ -162,7 +163,7 @@ private:
 BlobDemo::BlobDemo()
     : blobForceGenerator(std::make_shared<pegas::BlobForceGenerator>(blobs))
     , forceRegistry(std::make_shared<pegas::ParticleForceRegistry>())
-    , world(PLATFORM_COUNT + BLOB_COUNT, PLATFORM_COUNT)
+    , world(PLATFORM_COUNT + BLOB_COUNT + 1, PLATFORM_COUNT + 1)
     , xAxis(0)
     , yAxis(0)
 {
@@ -181,17 +182,16 @@ BlobDemo::BlobDemo()
 
     // Create the platforms
     for (unsigned int i = 0; i < PLATFORM_COUNT; ++i) {
-
         auto const start = pegas::Vector3(pegas::real(i % 2) * 10.0f - 5.0f,
             pegas::real(i) * 4.0f + ((i % 2) ? 0.0f : 2.0f), 0);
 
         auto const end = pegas::Vector3(pegas::real(i % 2) * 10.0f + 5.0f,
             pegas::real(i) * 4.0f + ((i % 2) ? 2.0f : 0.0f), 0);
 
-        platforms.push_back(std::make_shared<pegas::Platform>(start, end, blobs));
+        contactGenerators.push_back(std::make_shared<pegas::Platform>(start, end, blobs));
     }
 
-    pegas::Platform& p = *static_cast<pegas::Platform*>(platforms.back().get());
+    pegas::Platform& p = *static_cast<pegas::Platform*>(contactGenerators.back().get());
     pegas::real const fraction = pegas::real(1.0) / BLOB_COUNT;
     pegas::Vector3 delta = p.end - p.start;
 
@@ -212,14 +212,18 @@ BlobDemo::BlobDemo()
         forceRegistry->add(blob, blobForceGenerator);
     }
 
-    world.setParticleContactGenerators(platforms);
+    contactGenerators.push_back(
+        std::make_shared<pegas::ParticleRod>(
+            blobs[0], blobs[1], (blobs[1]->getPosition() - blobs[0]->getPosition()).magnitude()));
+
+    world.setParticleContactGenerators(contactGenerators);
     world.setParticles(blobs);
     world.setParticleForcesRegistry(forceRegistry);
 }
 
 void BlobDemo::reset()
 {
-    auto p = static_cast<pegas::Platform*>(platforms.back().get());
+    auto p = static_cast<pegas::Platform*>(contactGenerators.back().get());
     pegas::real fraction = (pegas::real)1.0 / BLOB_COUNT;
     pegas::Vector3 delta = p->end - p->start;
     for (unsigned i = 0; i < BLOB_COUNT; i++) {
@@ -237,25 +241,31 @@ void BlobDemo::display()
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(pos.x + 6.0, pos.y, 6.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x, pos.y, 6.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
 
     glColor3f(0, 0, 0);
 
     glBegin(GL_LINES);
     glColor3f(0, 0, 1);
     for (unsigned i = 0; i < PLATFORM_COUNT; i++) {
-        const pegas::Vector3& p0 = static_cast<pegas::Platform*>(platforms[i].get())->start;
-        const pegas::Vector3& p1 = static_cast<pegas::Platform*>(platforms[i].get())->end;
+        const pegas::Vector3& p0 = static_cast<pegas::Platform*>(contactGenerators[i].get())->start;
+        const pegas::Vector3& p1 = static_cast<pegas::Platform*>(contactGenerators[i].get())->end;
         glVertex3f(p0.x, p0.y, p0.z);
         glVertex3f(p1.x, p1.y, p1.z);
     }
     glEnd();
 
-    for (unsigned i = 0; i < BLOB_COUNT; i++) {
+    pegas::Vector3 pos1 = blobs[1]->getPosition();
+    glBegin(GL_LINES);
+    glColor3f(0, 0, 0);
+    glVertex3f(pos.x, pos.y, pos.z);
+    glVertex3f(pos1.x, pos1.y, pos1.z);
+    glEnd();
+
+    for (pegas::real i = 0; i < BLOB_COUNT; i++) {
         const pegas::Vector3& p = blobs[i]->getPosition();
         glPushMatrix();
-        pegas::Vector3 v(pegas::real(std::rand()) / RAND_MAX, pegas::real(std::rand()) / RAND_MAX, pegas::real(std::rand()) / RAND_MAX);
-        glColor3f(v.x, v.y, v.z);
+        glColor3f((i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT);
         glTranslatef(p.x, p.y, p.z);
         glutSolidSphere(BLOB_RADIUS, 12, 12);
         glPopMatrix();
