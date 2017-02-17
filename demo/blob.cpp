@@ -214,7 +214,7 @@ BlobDemo::BlobDemo()
 
     contactGenerators.push_back(
         std::make_shared<pegas::ParticleRod>(
-            blobs[0], blobs[1], (blobs[1]->getPosition() - blobs[0]->getPosition()).magnitude()));
+            blobs.front(), blobs.back(), (blobs.back()->getPosition() - blobs.front()->getPosition()).magnitude()));
 
     world.setParticleContactGenerators(contactGenerators);
     world.setParticles(blobs);
@@ -236,7 +236,7 @@ void BlobDemo::reset()
 
 void BlobDemo::display()
 {
-    pegas::Vector3 pos = blobs[0]->getPosition();
+    pegas::Vector3 pos = blobs.front()->getPosition();
 
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -255,7 +255,7 @@ void BlobDemo::display()
     }
     glEnd();
 
-    pegas::Vector3 pos1 = blobs[1]->getPosition();
+    pegas::Vector3 pos1 = blobs.back()->getPosition();
     glBegin(GL_LINES);
     glColor3f(0, 0, 0);
     glVertex3f(pos.x, pos.y, pos.z);
@@ -271,8 +271,8 @@ void BlobDemo::display()
         glPopMatrix();
     }
 
-    pegas::Vector3 p = blobs[0]->getPosition();
-    pegas::Vector3 v = blobs[0]->getVelocity() * 0.05f;
+    pegas::Vector3 p = blobs.front()->getPosition();
+    pegas::Vector3 v = blobs.front()->getVelocity() * 0.05f;
     v.trim(BLOB_RADIUS * 0.5f);
     p = p + v;
     glPushMatrix();
@@ -306,7 +306,7 @@ void BlobDemo::update()
     yAxis *= pow(0.1f, duration);
 
     // Move the controlled blob
-    blobs[0]->addForce(pegas::Vector3(xAxis, yAxis, 0) * 10.0f);
+    blobs.front()->addForce(pegas::Vector3(xAxis, yAxis, 0) * 10.0f);
 
     // Run the simulation
     world.runPhysics(duration);
