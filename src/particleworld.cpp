@@ -34,9 +34,11 @@ void pegas::ParticleWorld::setParticleContactGenerators(
 
 void pegas::ParticleWorld::runPhysics(pegas::real const duration)
 {
+    pegas::real const duration_ = 0.005;
+
     mRegistry->updateForces();
 
-    integrate(duration);
+    integrate(duration_);
 
     unsigned int usedContacts = generateContacts();
 
@@ -44,7 +46,7 @@ void pegas::ParticleWorld::runPhysics(pegas::real const duration)
         if (mCalculateIterations) {
             mResolver.setIterations(usedContacts * 2);
         }
-        mResolver.resolveContacts(mContacts, duration);
+        mResolver.resolveContacts(mContacts, duration_);
     }
 }
 

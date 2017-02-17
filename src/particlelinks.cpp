@@ -27,7 +27,7 @@ pegas::ParticleCabel::addContact(Contacts& contacts,
         return 0;
     }
 
-    Vector3 normal = (mB->getPosition() - mB->getPosition());
+    Vector3 normal = (mB->getPosition() - mA->getPosition());
     normal.normalize();
 
     contacts.push_back(std::make_shared<ParticleContact>(mA, mB, restitution, normal,
@@ -52,7 +52,7 @@ pegas::ParticleRod::addContact(Contacts& contacts,
         return 0;
     }
 
-    Vector3 normal = (mB->getPosition() - mB->getPosition());
+    Vector3 normal = (mB->getPosition() - mA->getPosition());
     normal.normalize();
 
     contacts.push_back(std::make_shared<ParticleContact>(
