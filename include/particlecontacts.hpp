@@ -54,6 +54,19 @@ public:
     virtual unsigned int addContact(Contacts& contacts,
         unsigned int const limit) const = 0;
 };
+
+class Platform : public ParticleContactGenerator {
+public:
+    Vector3 start;
+    Vector3 end;
+    std::vector<Particle::Ptr>& particles;
+    real const blobRadius;
+
+    Platform(Vector3 start, Vector3 end, std::vector<Particle::Ptr>& particles, real const blobRadius);
+
+    virtual unsigned int addContact(Contacts& contacts,
+        unsigned limit) const override;
+};
 } // namespace pegas
 
 #endif // PEGAS_PARTICLE_CONTACTS_HPP

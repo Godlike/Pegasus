@@ -4,6 +4,7 @@
 #include "Pegas/include/particle.hpp"
 #include <map>
 #include <memory>
+#include <vector>
 #include <set>
 
 namespace pegas {
@@ -124,6 +125,21 @@ private:
     real const mSpringConstant;
     real const mDamping;
     real mDuration;
+};
+
+class BlobForceGenerator : public ParticleForceGenerator {
+public:
+    std::vector<Particle::Ptr>& particles;
+    real maxReplusion;
+    real maxAttraction;
+    real minNaturalDistance, maxNaturalDistance;
+    real floatHead;
+    unsigned int maxFloat;
+    real maxDistance;
+
+    BlobForceGenerator(std::vector<Particle::Ptr>& particles);
+
+    virtual void updateForce(Particle::Ptr const& particle);
 };
 
 } // namespace pegas

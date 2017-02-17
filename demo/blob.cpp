@@ -16,124 +16,6 @@
 #define PLATFORM_COUNT 10
 #define BLOB_RADIUS 0.3f
 
-namespace pegas {
-class Platform : public ParticleContactGenerator {
-public:
-    Vector3 start;
-    Vector3 end;
-    std::vector<Particle::Ptr>& particles;
-
-    Platform(Vector3 start, Vector3 end, std::vector<Particle::Ptr>& particles)
-        : start(start)
-        , end(end)
-        , particles(particles)
-    {
-    }
-
-    virtual unsigned int addContact(Contacts& contacts,
-        unsigned limit) const override
-    {
-        const static real restitution = 0.0f;
-
-        unsigned int used = 0;
-        for (unsigned int i = 0; i < particles.size(); ++i) {
-            if (used >= limit) {
-                break;
-            }
-
-            Vector3 toParticle = particles[i]->getPosition() - start;
-            Vector3 const lineDirection = end - start;
-            real const projected = toParticle * lineDirection;
-            real const platformSqLength = lineDirection.squareMagnitude();
-
-            if (projected <= 0) {
-                if (toParticle.squareMagnitude() < BLOB_RADIUS * BLOB_RADIUS) {
-                    auto contactNormal = toParticle.unit();
-                    contactNormal.z = 0;
-                    auto const penetration = BLOB_RADIUS - toParticle.magnitude();
-                    contacts.push_back(std::make_shared<ParticleContact>(
-                        particles[i], nullptr, restitution, contactNormal, penetration));
-                    ++used;
-                }
-
-            } else if (projected >= platformSqLength) {
-                toParticle = particles[i]->getPosition() - end;
-                if (toParticle.squareMagnitude() < BLOB_RADIUS * BLOB_RADIUS) {
-                    auto contactNormal = toParticle.unit();
-                    contactNormal.z = 0;
-                    auto const penetration = BLOB_RADIUS - toParticle.magnitude();
-                    contacts.push_back(std::make_shared<ParticleContact>(
-                        particles[i], nullptr, restitution, contactNormal, penetration));
-                    ++used;
-                }
-            } else {
-                real distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
-                if (distanceToPlatform < BLOB_RADIUS * BLOB_RADIUS) {
-                    Vector3 closestPoint = start + lineDirection * (projected / platformSqLength);
-                    auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
-                    contactNormal.z = 0;
-                    auto const penetration = BLOB_RADIUS - std::sqrt(distanceToPlatform);
-                    contacts.push_back(std::make_shared<ParticleContact>(
-                        particles[i], nullptr, restitution, contactNormal, penetration));
-                    ++used;
-                }
-            }
-        }
-        return used;
-    }
-};
-
-class BlobForceGenerator : public ParticleForceGenerator {
-public:
-    std::vector<Particle::Ptr>& particles;
-    real maxReplusion;
-    real maxAttraction;
-    real minNaturalDistance, maxNaturalDistance;
-    real floatHead;
-    unsigned int maxFloat;
-    real maxDistance;
-
-    BlobForceGenerator(std::vector<Particle::Ptr>& particles)
-        : particles(particles)
-    {
-    }
-
-    virtual void updateForce(Particle::Ptr const& particle)
-    {
-        unsigned joinCount = 0;
-        for (unsigned i = 0; i < particles.size(); ++i) {
-            if (particles[i] == particle)
-                continue;
-
-            // Work out the separation distance
-            Vector3 separation = particles[i]->getPosition() - particle->getPosition();
-            separation.z = 0.0f;
-            real distance = separation.magnitude();
-
-            if (distance < minNaturalDistance) {
-                // Use a repulsion force.
-                distance = 1.0f - distance / minNaturalDistance;
-                particle->addForce(separation.unit() * (1.0f - distance) * maxReplusion * -1.0f);
-                joinCount++;
-            } else if (distance > maxNaturalDistance && distance < maxDistance) {
-                // Use an attraction force.
-                distance = (distance - maxNaturalDistance) / (maxDistance - maxNaturalDistance);
-                particle->addForce(separation.unit() * distance * maxAttraction);
-                joinCount++;
-            }
-        }
-
-        // If the particle is the head, and we've got a join count, then float it.
-        if (particle == particles.front() && joinCount > 0 && maxFloat > 0) {
-            real force = real(joinCount / maxFloat) * floatHead;
-            if (force > floatHead)
-                force = floatHead;
-            particle->addForce(Vector3(0, force, 0));
-        }
-    }
-};
-} // namespace pegas
-
 class BlobDemo : public Application {
 public:
     BlobDemo();
@@ -167,8 +49,6 @@ BlobDemo::BlobDemo()
     , xAxis(0)
     , yAxis(0)
 {
-    pegas::Random r;
-
     // Create the force generator
     pegas::BlobForceGenerator& blobForce = *static_cast<pegas::BlobForceGenerator*>(blobForceGenerator.get());
     blobForce.particles = blobs;
@@ -188,7 +68,7 @@ BlobDemo::BlobDemo()
         auto const end = pegas::Vector3(pegas::real(i % 2) * 10.0f + 5.0f,
             pegas::real(i) * 4.0f + ((i % 2) ? 2.0f : 0.0f), 0);
 
-        contactGenerators.push_back(std::make_shared<pegas::Platform>(start, end, blobs));
+        contactGenerators.push_back(std::make_shared<pegas::Platform>(start, end, blobs, BLOB_RADIUS));
     }
 
     pegas::Platform& p = *static_cast<pegas::Platform*>(contactGenerators.back().get());

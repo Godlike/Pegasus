@@ -131,3 +131,62 @@ void pegas::ParticleContactResolver::resolveContacts(
 }
 
 pegas::ParticleContactGenerator::~ParticleContactGenerator() {}
+
+pegas::Platform::Platform(pegas::Vector3 start, pegas::Vector3 end, std::vector<pegas::Particle::Ptr> & particles, const real blobRadius)
+    : start(start)
+    , end(end)
+    , particles(particles)
+    , blobRadius(blobRadius)
+{
+}
+
+unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contacts & contacts, unsigned limit) const
+{
+    const static real restitution = 0.0f;
+
+    unsigned int used = 0;
+    for (unsigned int i = 0; i < particles.size(); ++i) {
+        if (used >= limit) {
+            break;
+        }
+
+        Vector3 toParticle = particles[i]->getPosition() - start;
+        Vector3 const lineDirection = end - start;
+        real const projected = toParticle * lineDirection;
+        real const platformSqLength = lineDirection.squareMagnitude();
+
+        if (projected <= 0) {
+            if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
+                auto contactNormal = toParticle.unit();
+                contactNormal.z = 0;
+                auto const penetration = blobRadius - toParticle.magnitude();
+                contacts.push_back(std::make_shared<ParticleContact>(
+                                       particles[i], nullptr, restitution, contactNormal, penetration));
+                ++used;
+            }
+
+        } else if (projected >= platformSqLength) {
+            toParticle = particles[i]->getPosition() - end;
+            if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
+                auto contactNormal = toParticle.unit();
+                contactNormal.z = 0;
+                auto const penetration = blobRadius - toParticle.magnitude();
+                contacts.push_back(std::make_shared<ParticleContact>(
+                                       particles[i], nullptr, restitution, contactNormal, penetration));
+                ++used;
+            }
+        } else {
+            real distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
+            if (distanceToPlatform < blobRadius * blobRadius) {
+                Vector3 closestPoint = start + lineDirection * (projected / platformSqLength);
+                auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
+                contactNormal.z = 0;
+                auto const penetration = blobRadius - std::sqrt(distanceToPlatform);
+                contacts.push_back(std::make_shared<ParticleContact>(
+                                       particles[i], nullptr, restitution, contactNormal, penetration));
+                ++used;
+            }
+        }
+    }
+    return used;
+}

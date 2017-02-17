@@ -219,3 +219,42 @@ void pegas::ParticleFakeSpring::updateForce(pegas::Particle::Ptr const& p)
 {
     updateForce(p, mDuration);
 }
+
+pegas::BlobForceGenerator::BlobForceGenerator(std::vector<pegas::Particle::Ptr> & particles)
+    : particles(particles)
+{
+}
+
+void pegas::BlobForceGenerator::updateForce(const pegas::Particle::Ptr & particle)
+{
+    unsigned joinCount = 0;
+    for (unsigned i = 0; i < particles.size(); ++i) {
+        if (particles[i] == particle)
+            continue;
+
+        // Work out the separation distance
+        Vector3 separation = particles[i]->getPosition() - particle->getPosition();
+        separation.z = 0.0f;
+        real distance = separation.magnitude();
+
+        if (distance < minNaturalDistance) {
+            // Use a repulsion force.
+            distance = 1.0f - distance / minNaturalDistance;
+            particle->addForce(separation.unit() * (1.0f - distance) * maxReplusion * -1.0f);
+            joinCount++;
+        } else if (distance > maxNaturalDistance && distance < maxDistance) {
+            // Use an attraction force.
+            distance = (distance - maxNaturalDistance) / (maxDistance - maxNaturalDistance);
+            particle->addForce(separation.unit() * distance * maxAttraction);
+            joinCount++;
+        }
+    }
+
+    // If the particle is the head, and we've got a join count, then float it.
+    if (particle == particles.front() && joinCount > 0 && maxFloat > 0) {
+        real force = real(joinCount / maxFloat) * floatHead;
+        if (force > floatHead)
+            force = floatHead;
+        particle->addForce(Vector3(0, force, 0));
+    }
+}
