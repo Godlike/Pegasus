@@ -33,7 +33,7 @@ public:
     using Ptr = std::shared_ptr<ParticleCabel>;
 
     ParticleCabel(
-        Particle::Ptr & a, Particle::Ptr & b, real const maxLength, real const restutuition);
+        Particle::Ptr& a, Particle::Ptr& b, real const maxLength, real const restutuition);
 
     virtual unsigned int addContact(Contacts& contacts,
         unsigned int const limit) const override;
@@ -47,7 +47,7 @@ class ParticleRod : public ParticleLink {
 public:
     using Ptr = std::shared_ptr<ParticleRod>;
 
-    ParticleRod(Particle::Ptr & a, Particle::Ptr & b, real const length);
+    ParticleRod(Particle::Ptr& a, Particle::Ptr& b, real const length);
 
     virtual unsigned int addContact(Contacts& contacts,
         unsigned int const limit) const override;

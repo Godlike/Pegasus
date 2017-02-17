@@ -1,6 +1,6 @@
 #include "timing.hpp"
-#include <windows.h>
 #include <intrin.h>
+#include <windows.h>
 
 static bool qpcFlag;
 
@@ -46,7 +46,7 @@ unsigned TimingData::getTime() { return systemTime(); }
 #if TIMING_WINDOWS
 unsigned long systemClock()
 {
-	return __rdtsc();
+    return __rdtsc();
 }
 #endif
 

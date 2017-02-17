@@ -37,7 +37,7 @@ public:
 
     void setIterations(unsigned int const iterations);
 
-    void resolveContacts(ParticleContactsArray & contacts,
+    void resolveContacts(ParticleContactsArray& contacts,
         real const duration);
 
 private:

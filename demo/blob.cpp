@@ -3,8 +3,8 @@
 #include "Pegas/demo/random.hpp"
 #include "Pegas/demo/timing.hpp"
 #include "Pegas/include/particlecontacts.hpp"
-#include "Pegas/include/particlelinks.hpp"
 #include "Pegas/include/particleforcegenerator.hpp"
+#include "Pegas/include/particlelinks.hpp"
 #include "Pegas/include/particleworld.hpp"
 
 #include <cassert>

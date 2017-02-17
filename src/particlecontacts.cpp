@@ -114,14 +114,14 @@ void pegas::ParticleContactResolver::setIterations(
 }
 
 void pegas::ParticleContactResolver::resolveContacts(
-    pegas::ParticleContactsArray & contacts, pegas::real const duration)
+    pegas::ParticleContactsArray& contacts, pegas::real const duration)
 {
     mIterationsUsed = 0;
 
     std::sort(contacts.begin(), contacts.end(),
-              [](ParticleContact::Ptr const& a, ParticleContact::Ptr const& b) {
-                  return a->calculateSeparatingVelocity() < b->calculateSeparatingVelocity();
-              });
+        [](ParticleContact::Ptr const& a, ParticleContact::Ptr const& b) {
+            return a->calculateSeparatingVelocity() < b->calculateSeparatingVelocity();
+        });
 
     while (mIterationsUsed++ < mIterations && !contacts.empty()) {
         auto maxSepVelocityContact = contacts.back();
