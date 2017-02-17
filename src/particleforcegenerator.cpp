@@ -220,12 +220,12 @@ void pegas::ParticleFakeSpring::updateForce(pegas::Particle::Ptr const& p)
     updateForce(p, mDuration);
 }
 
-pegas::BlobForceGenerator::BlobForceGenerator(std::vector<pegas::Particle::Ptr> & particles)
+pegas::BlobForceGenerator::BlobForceGenerator(std::vector<pegas::Particle::Ptr>& particles)
     : particles(particles)
 {
 }
 
-void pegas::BlobForceGenerator::updateForce(const pegas::Particle::Ptr & particle)
+void pegas::BlobForceGenerator::updateForce(const pegas::Particle::Ptr& particle)
 {
     unsigned joinCount = 0;
     for (unsigned i = 0; i < particles.size(); ++i) {

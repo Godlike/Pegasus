@@ -132,7 +132,7 @@ void pegas::ParticleContactResolver::resolveContacts(
 
 pegas::ParticleContactGenerator::~ParticleContactGenerator() {}
 
-pegas::Platform::Platform(pegas::Vector3 start, pegas::Vector3 end, std::vector<pegas::Particle::Ptr> & particles, const real blobRadius)
+pegas::Platform::Platform(pegas::Vector3 start, pegas::Vector3 end, std::vector<pegas::Particle::Ptr>& particles, const real blobRadius)
     : start(start)
     , end(end)
     , particles(particles)
@@ -140,7 +140,7 @@ pegas::Platform::Platform(pegas::Vector3 start, pegas::Vector3 end, std::vector<
 {
 }
 
-unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contacts & contacts, unsigned limit) const
+unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contacts& contacts, unsigned limit) const
 {
     const static real restitution = 0.0f;
 
@@ -161,7 +161,7 @@ unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contac
                 contactNormal.z = 0;
                 auto const penetration = blobRadius - toParticle.magnitude();
                 contacts.push_back(std::make_shared<ParticleContact>(
-                                       particles[i], nullptr, restitution, contactNormal, penetration));
+                    particles[i], nullptr, restitution, contactNormal, penetration));
                 ++used;
             }
 
@@ -172,7 +172,7 @@ unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contac
                 contactNormal.z = 0;
                 auto const penetration = blobRadius - toParticle.magnitude();
                 contacts.push_back(std::make_shared<ParticleContact>(
-                                       particles[i], nullptr, restitution, contactNormal, penetration));
+                    particles[i], nullptr, restitution, contactNormal, penetration));
                 ++used;
             }
         } else {
@@ -183,7 +183,7 @@ unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contac
                 contactNormal.z = 0;
                 auto const penetration = blobRadius - std::sqrt(distanceToPlatform);
                 contacts.push_back(std::make_shared<ParticleContact>(
-                                       particles[i], nullptr, restitution, contactNormal, penetration));
+                    particles[i], nullptr, restitution, contactNormal, penetration));
                 ++used;
             }
         }

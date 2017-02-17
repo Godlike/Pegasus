@@ -4,8 +4,8 @@
 #include "Pegas/include/particle.hpp"
 #include <map>
 #include <memory>
-#include <vector>
 #include <set>
+#include <vector>
 
 namespace pegas {
 class ParticleForceGenerator {

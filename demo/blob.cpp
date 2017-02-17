@@ -1,6 +1,5 @@
 #include "Pegas/demo/app.hpp"
 #include "Pegas/demo/ogl_headers.hpp"
-#include "Pegas/demo/random.hpp"
 #include "Pegas/demo/timing.hpp"
 #include "Pegas/include/particlecontacts.hpp"
 #include "Pegas/include/particleforcegenerator.hpp"
