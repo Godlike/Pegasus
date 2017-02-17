@@ -12,9 +12,9 @@
 #include <cstdlib>
 #include <stdio.h>
 
-#define BLOB_COUNT 2
-#define PLATFORM_COUNT 1
-#define BLOB_RADIUS 0.4f
+#define BLOB_COUNT 5
+#define PLATFORM_COUNT 10
+#define BLOB_RADIUS 0.3f
 
 namespace pegas {
 class Platform : public ParticleContactGenerator {
@@ -209,7 +209,7 @@ BlobDemo::BlobDemo()
     }
 
     for (auto& blob : blobs) {
-        //forceRegistry->add(blob, blobForceGenerator);
+        forceRegistry->add(blob, blobForceGenerator);
     }
 
     contactGenerators.push_back(
@@ -241,7 +241,7 @@ void BlobDemo::display()
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(pos.x + 6.0, pos.y, 6.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x, pos.y, 6.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
 
     glColor3f(0, 0, 0);
 
@@ -255,11 +255,17 @@ void BlobDemo::display()
     }
     glEnd();
 
-    for (unsigned i = 0; i < BLOB_COUNT; i++) {
+    pegas::Vector3 pos1 = blobs[1]->getPosition();
+    glBegin(GL_LINES);
+    glColor3f(0, 0, 0);
+    glVertex3f(pos.x, pos.y, pos.z);
+    glVertex3f(pos1.x, pos1.y, pos1.z);
+    glEnd();
+
+    for (pegas::real i = 0; i < BLOB_COUNT; i++) {
         const pegas::Vector3& p = blobs[i]->getPosition();
         glPushMatrix();
-        pegas::Vector3 v(pegas::real(std::rand()) / RAND_MAX, pegas::real(std::rand()) / RAND_MAX, pegas::real(std::rand()) / RAND_MAX);
-        glColor3f(v.x, v.y, v.z);
+        glColor3f((i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT);
         glTranslatef(p.x, p.y, p.z);
         glutSolidSphere(BLOB_RADIUS, 12, 12);
         glPopMatrix();
