@@ -5,15 +5,17 @@
 #include "Pegas/include/particleforcegenerator.hpp"
 #include "Pegas/include/particlelinks.hpp"
 #include "Pegas/include/particleworld.hpp"
+#include "Pegas/include/mechanics.hpp"
+#include "Pegas/include/geometry.hpp"
 
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <stdio.h>
 
-#define BLOB_COUNT 5
-#define PLATFORM_COUNT 10
-#define BLOB_RADIUS 0.3f
+#define BLOB_COUNT 50
+#define PLATFORM_COUNT 1
+#define BLOB_RADIUS 0.5f
 
 class BlobDemo : public Application {
 public:
@@ -28,6 +30,7 @@ public:
     virtual void key(unsigned char key) override;
 
 private:
+	pegas::RigidBodies rBodies;
     std::vector<pegas::Particle::Ptr> blobs;
     std::vector<pegas::ParticleContactGenerator::Ptr> contactGenerators;
     pegas::BlobForceGenerator::Ptr blobForceGenerator;
@@ -62,10 +65,10 @@ BlobDemo::BlobDemo()
     // Create the platforms
     for (unsigned int i = 0; i < PLATFORM_COUNT; ++i) {
         auto const start = pegas::Vector3(pegas::real(i % 2) * 10.0f - 5.0f,
-            pegas::real(i) * 4.0f + ((i % 2) ? 0.0f : 2.0f), 0);
+            pegas::real(i) * 4.0f + ((i % 2) ? 0.0f : 0.0f), 0);
 
         auto const end = pegas::Vector3(pegas::real(i % 2) * 10.0f + 5.0f,
-            pegas::real(i) * 4.0f + ((i % 2) ? 2.0f : 0.0f), 0);
+            pegas::real(i) * 4.0f + ((i % 2) ? 0.0f : 0.0f), 0);
 
         contactGenerators.push_back(std::make_shared<pegas::Platform>(start, end, blobs, BLOB_RADIUS));
     }
@@ -76,8 +79,8 @@ BlobDemo::BlobDemo()
 
     for (unsigned int i = 0; i < BLOB_COUNT; ++i) {
         auto blob = std::make_shared<pegas::Particle>();
-        auto const me = (i + BLOB_COUNT / 2) % BLOB_COUNT;
-        blob->setPosition(p.start + delta * (pegas::real(me) * 0.8f * fraction + 0.1f) + pegas::Vector3(0, 1, 0));
+        //blob->setPosition(p.start + delta * (pegas::real(me) * 0.8f * fraction + 0.1f) + pegas::Vector3(0, 1, 0));
+		blob->setPosition(p.start + pegas::Vector3(5 + (std::rand() % 50) / 100.0f , i * 2 + BLOB_RADIUS * 2, 0));
 
         blob->setVelocity(0, 0, 0);
         blob->setDamping(0.2f);
@@ -85,15 +88,13 @@ BlobDemo::BlobDemo()
         blob->setMass(1.0f);
         blob->clearForceAccum();
         blobs.push_back(blob);
+
+		rBodies.push_back(std::make_shared<pegas::RigidBody>(blob, std::make_shared<pegas::Sphere>(blob->getPosition(), BLOB_RADIUS)));
     }
 
-    for (auto& blob : blobs) {
-        forceRegistry->add(blob, blobForceGenerator);
-    }
-
-    contactGenerators.push_back(
-        std::make_shared<pegas::ParticleRod>(
-            blobs.front(), blobs.back(), (blobs.back()->getPosition() - blobs.front()->getPosition()).magnitude()));
+	for (auto body : rBodies) {
+		contactGenerators.push_back(std::make_shared<pegas::SphereContactGenerator>(body, rBodies, 0));
+	}
 
     world.setParticleContactGenerators(contactGenerators);
     world.setParticles(blobs);
@@ -120,7 +121,7 @@ void BlobDemo::display()
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(pos.x, pos.y, 6.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x + 2.0, pos.y, 10.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
 
     glColor3f(0, 0, 0);
 
@@ -132,13 +133,6 @@ void BlobDemo::display()
         glVertex3f(p0.x, p0.y, p0.z);
         glVertex3f(p1.x, p1.y, p1.z);
     }
-    glEnd();
-
-    pegas::Vector3 pos1 = blobs.back()->getPosition();
-    glBegin(GL_LINES);
-    glColor3f(0, 0, 0);
-    glVertex3f(pos.x, pos.y, pos.z);
-    glVertex3f(pos1.x, pos1.y, pos1.z);
     glEnd();
 
     for (pegas::real i = 0; i < BLOB_COUNT; i++) {
@@ -174,6 +168,10 @@ void BlobDemo::update()
 {
     // Clear accumulators
     world.startFrame();
+
+	for (auto body : rBodies) {
+		body->s->setCenterOfMass(body->p->getPosition());
+	}
 
     // Find the duration of the last frame in seconds
     float duration = (float)TimingData::get().lastFrameDuration * 0.001f;

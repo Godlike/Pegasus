@@ -2,6 +2,8 @@
 #define PEGAS_PARTICLE_CONTACTS_HPP
 
 #include "Pegas/include/particle.hpp"
+#include "Pegas/include/geometry.hpp"
+#include "Pegas/include/mechanics.hpp"
 #include <vector>
 
 namespace pegas {
@@ -59,14 +61,55 @@ class Platform : public ParticleContactGenerator {
 public:
     Vector3 start;
     Vector3 end;
-    std::vector<Particle::Ptr>& particles;
+	Particles& particles;
     real const blobRadius;
 
-    Platform(Vector3 start, Vector3 end, std::vector<Particle::Ptr>& particles, real const blobRadius);
+    Platform(Vector3 start, Vector3 end, Particles& particles, real const blobRadius);
 
     virtual unsigned int addContact(Contacts& contacts,
         unsigned limit) const override;
 };
+
+class SphereContactGenerator : public ParticleContactGenerator {
+public:
+	using Spheres = std::vector<Sphere::Ptr>;
+
+	SphereContactGenerator(RigidBody::Ptr const rBody, RigidBodies const & rBodies, real const restitution)
+		: mRigidBody(rBody), mRigidBodies(rBodies), mRestitution(restitution)
+	{
+	}
+
+	virtual unsigned int addContact(Contacts& contacts, unsigned limit) const override
+	{
+		unsigned int used = 0;
+
+		for (auto body : mRigidBodies)
+		{
+			if (body == mRigidBody)
+				continue;
+
+			if (used++ > limit) {
+				break;
+			}
+
+			if (mRigidBody->s->overlap(body->s)) {
+				contacts.push_back(std::make_shared<ParticleContact>(
+					mRigidBody->p, body->p, mRestitution, 
+					body->s->calculateContactNormal(mRigidBody->s),
+					body->s->calculatePenetration(mRigidBody->s)));
+			}
+		}
+
+		return used;
+	}
+
+private:
+	RigidBody::Ptr const mRigidBody;
+	RigidBodies const & mRigidBodies;
+	real const mRestitution;
+
+};
+
 } // namespace pegas
 
 #endif // PEGAS_PARTICLE_CONTACTS_HPP

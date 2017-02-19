@@ -4,6 +4,7 @@
 #include "Pegas/include/core.hpp"
 #include "Pegas/include/math.hpp"
 #include <memory>
+#include <vector>
 
 namespace pegas {
 
@@ -65,6 +66,8 @@ private:
 
     Vector3 mForceAccum;
 };
+
+using Particles = std::vector<Particle::Ptr>;
 
 } // namespace pegas
 
