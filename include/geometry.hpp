@@ -85,7 +85,9 @@ public:
 	{
 		Vector3 const cm1 = getCenterOfMass();
 		Vector3 const cm2 = other->getCenterOfMass();
-		return cm2 - cm1;
+		Vector3 result(cm2 - cm1);
+		result.normalize();
+		return result;
 	}
 
 	real calculatePenetration(Sphere::Ptr const & other) const
