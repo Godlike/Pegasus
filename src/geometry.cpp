@@ -38,7 +38,7 @@ pegas::Vector3 pegas::Plane::getNormal() const
     return mNormal;
 }
 
-pegas::Triangle::Triangle(pegas::Vector3 const & a, pegas::Vector3 const & b, pegas::Vector3 const & c)
+pegas::Triangle::Triangle(pegas::Vector3 const& a, pegas::Vector3 const& b, pegas::Vector3 const& c)
     : SimpleShape((a + b + c) * real(1.0f / 3.0f))
     , mA(a)
     , mB(b)
@@ -46,7 +46,7 @@ pegas::Triangle::Triangle(pegas::Vector3 const & a, pegas::Vector3 const & b, pe
 {
 }
 
-void pegas::Triangle::setAxes(pegas::Vector3 const & a, pegas::Vector3 const & b, pegas::Vector3 const & c)
+void pegas::Triangle::setAxes(pegas::Vector3 const& a, pegas::Vector3 const& b, pegas::Vector3 const& c)
 {
     mA = a;
     mB = b;
@@ -76,7 +76,7 @@ pegas::real pegas::Sphere::getRadius() const
     return mR;
 }
 
-pegas::Cone::Cone(pegas::Vector3 const & centerOfMass, pegas::Vector3 const & a, pegas::real const h, pegas::real const r)
+pegas::Cone::Cone(pegas::Vector3 const& centerOfMass, pegas::Vector3 const& a, pegas::real const h, pegas::real const r)
     : SimpleShape(centerOfMass)
     , mA(a)
     , mH(h)
@@ -84,7 +84,7 @@ pegas::Cone::Cone(pegas::Vector3 const & centerOfMass, pegas::Vector3 const & a,
 {
 }
 
-void pegas::Cone::setAppex(pegas::Vector3 const & a)
+void pegas::Cone::setAppex(pegas::Vector3 const& a)
 {
     mA = a;
 }
@@ -114,14 +114,14 @@ pegas::real pegas::Cone::getRadius() const
     return mR;
 }
 
-pegas::Capsule::Capsule(pegas::Vector3 const & centerOfMass, pegas::Vector3 const & halfHeight, pegas::real const r)
+pegas::Capsule::Capsule(pegas::Vector3 const& centerOfMass, pegas::Vector3 const& halfHeight, pegas::real const r)
     : SimpleShape(centerOfMass)
     , mHalfHeight(halfHeight)
     , mR(r)
 {
 }
 
-void pegas::Capsule::setHalfHeight(pegas::Vector3 const & halfHeight)
+void pegas::Capsule::setHalfHeight(pegas::Vector3 const& halfHeight)
 {
     mHalfHeight = halfHeight;
 }
@@ -141,7 +141,7 @@ pegas::real pegas::Capsule::getRadius() const
     return mR;
 }
 
-pegas::Box::Box(pegas::Vector3 const & centerOfMass, pegas::Vector3 const & a, pegas::Vector3 const & b, pegas::Vector3 const & c)
+pegas::Box::Box(pegas::Vector3 const& centerOfMass, pegas::Vector3 const& a, pegas::Vector3 const& b, pegas::Vector3 const& c)
     : SimpleShape(centerOfMass)
     , mA(a)
     , mB(b)
@@ -149,7 +149,7 @@ pegas::Box::Box(pegas::Vector3 const & centerOfMass, pegas::Vector3 const & a, p
 {
 }
 
-void pegas::Box::setAxes(pegas::Vector3 const & a, pegas::Vector3 const & b, pegas::Vector3 const & c)
+void pegas::Box::setAxes(pegas::Vector3 const& a, pegas::Vector3 const& b, pegas::Vector3 const& c)
 {
     mA = a;
     mB = b;

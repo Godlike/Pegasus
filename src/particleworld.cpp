@@ -34,7 +34,7 @@ void pegas::ParticleWorld::setParticleContactGenerators(
 
 void pegas::ParticleWorld::runPhysics(pegas::real const duration)
 {
-    pegas::real const duration_ = 0.005f;
+    pegas::real const duration_ = duration;
 
     mRegistry->updateForces();
 

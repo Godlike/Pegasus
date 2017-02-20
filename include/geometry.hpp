@@ -8,12 +8,10 @@
 
 namespace pegas {
 
-
 class Geometry {
 public:
     virtual ~Geometry();
 };
-
 
 class Shape : public Geometry {
 public:
@@ -27,12 +25,10 @@ private:
     Vector3 mCenterOfMass;
 };
 
-
 class SimpleShape : public Shape {
 public:
     SimpleShape(Vector3 const& centerOfMass);
 };
-
 
 class Plane : public SimpleShape {
 public:
@@ -45,7 +41,6 @@ public:
 private:
     Vector3 mNormal;
 };
-
 
 class Triangle : public SimpleShape {
 public:
@@ -61,10 +56,9 @@ private:
     Vector3 mC;
 };
 
-
 class Sphere : public SimpleShape {
 public:
-	using Ptr = std::shared_ptr<Sphere>;
+    using Ptr = std::shared_ptr<Sphere>;
 
     Sphere(Vector3 const& centerOfMass, real const r);
 
@@ -72,36 +66,34 @@ public:
 
     real getRadius() const;
 
-	bool overlap(Sphere::Ptr const & other) const
-	{
-		Vector3 const & cm1 = getCenterOfMass();
-		Vector3 const & cm2 = other->getCenterOfMass();
-		auto const a = (cm2 - cm1).squareMagnitude();
-		auto const b = (mR + other->mR) * (mR + other->mR);
-		return b > a;
-	}
+    bool overlap(Sphere::Ptr const& other) const
+    {
+        Vector3 const& cm1 = getCenterOfMass();
+        Vector3 const& cm2 = other->getCenterOfMass();
+        auto const a = (cm2 - cm1).squareMagnitude();
+        auto const b = (mR + other->mR) * (mR + other->mR);
+        return b > a;
+    }
 
-	Vector3 calculateContactNormal(Sphere::Ptr const & other) const
-	{
-		Vector3 const cm1 = getCenterOfMass();
-		Vector3 const cm2 = other->getCenterOfMass();
-		Vector3 result(cm2 - cm1);
-		result.normalize();
-		return result;
-	}
+    Vector3 calculateContactNormal(Sphere::Ptr const& other) const
+    {
+        Vector3 const cm1 = getCenterOfMass();
+        Vector3 const cm2 = other->getCenterOfMass();
+        Vector3 result(cm2 - cm1);
+        result.normalize();
+        return result;
+    }
 
-	real calculatePenetration(Sphere::Ptr const & other) const
-	{
-		Vector3 const & cm1 = getCenterOfMass();
-		Vector3 const & cm2 = other->getCenterOfMass();
-		return mR + other->mR - (cm2 - cm1).magnitude();
-	}
+    real calculatePenetration(Sphere::Ptr const& other) const
+    {
+        Vector3 const& cm1 = getCenterOfMass();
+        Vector3 const& cm2 = other->getCenterOfMass();
+        return mR + other->mR - (cm2 - cm1).magnitude();
+    }
 
 private:
-	real mR;
-
+    real mR;
 };
-
 
 class Cone : public SimpleShape {
 public:
@@ -125,7 +117,6 @@ private:
     real mR;
 };
 
-
 class Capsule : public SimpleShape {
 public:
     Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r);
@@ -142,7 +133,6 @@ private:
     Vector3 mHalfHeight;
     real mR;
 };
-
 
 class Box : public SimpleShape {
 public:
