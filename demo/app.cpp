@@ -1,6 +1,5 @@
 #include "app.hpp"
 #include "ogl_headers.hpp"
-#include "timing.hpp"
 #include <cstring>
 
 void Application::initGraphics()
@@ -16,7 +15,7 @@ void Application::setView()
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0, (double)width / (double)height, 1.0, 500.0);
+    gluPerspective(60.0, static_cast<double>(width) / static_cast<double>(height), 1.0, 500.0);
     glMatrixMode(GL_MODELVIEW);
 }
 
@@ -56,7 +55,7 @@ void Application::mouse(int button, int state, int x, int y) {}
 void Application::mouseDrag(int x, int y) {}
 
 // The following methods aren't intended to be overloaded
-void Application::renderText(float x, float y, const char* text, void* font)
+void Application::renderText(float x, float y, const char* text, void* font) const
 {
     glDisable(GL_DEPTH_TEST);
 
@@ -64,7 +63,7 @@ void Application::renderText(float x, float y, const char* text, void* font)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0.0, (double)width, 0.0, (double)height, -1.0, 1.0);
+    glOrtho(0.0, static_cast<double>(width), 0.0, static_cast<double>(height), -1.0, 1.0);
 
     // Move to modelview mode.
     glMatrixMode(GL_MODELVIEW);
@@ -72,7 +71,7 @@ void Application::renderText(float x, float y, const char* text, void* font)
     glLoadIdentity();
 
     // Ensure we have a font
-    if (font == NULL) {
+    if (font == nullptr) {
         font = GLUT_BITMAP_HELVETICA_10;
     }
 

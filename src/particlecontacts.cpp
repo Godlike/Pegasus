@@ -18,7 +18,7 @@ pegas::ParticleContact::ParticleContact(pegas::Particle::Ptr const& a,
     }
 }
 
-void pegas::ParticleContact::resolve(pegas::real const duration)
+void pegas::ParticleContact::resolve(pegas::real const duration) const
 {
     if (duration < 0) {
         throw std::invalid_argument("ParticleContact::resolve duration < 0");
@@ -38,19 +38,19 @@ pegas::real pegas::ParticleContact::calculateSeparatingVelocity() const
     return relativeVelocity * mContactNormal;
 }
 
-void pegas::ParticleContact::resolveVelocity(pegas::real const duration)
+void pegas::ParticleContact::resolveVelocity(pegas::real const duration) const
 {
-    real const separatingVelocity = calculateSeparatingVelocity();
+    auto const separatingVelocity = calculateSeparatingVelocity();
     if (separatingVelocity > 0) {
         return;
     }
 
-    real newSepVelocity = -separatingVelocity * mRestitution;
-    Vector3 accCausedVelocity = mA->getAcceleration();
+    auto newSepVelocity = -separatingVelocity * mRestitution;
+    auto accCausedVelocity = mA->getAcceleration();
     if (mB) {
         accCausedVelocity -= mB->getAcceleration();
     }
-    real const accCausedSepVelocity = accCausedVelocity * mContactNormal * duration;
+    auto const accCausedSepVelocity = accCausedVelocity * mContactNormal * duration;
     if (accCausedSepVelocity < 0) {
         newSepVelocity += mRestitution * accCausedSepVelocity;
 
@@ -58,9 +58,9 @@ void pegas::ParticleContact::resolveVelocity(pegas::real const duration)
             newSepVelocity = 0;
         }
     }
-    real const deltaVelocity = newSepVelocity - separatingVelocity;
+    auto const deltaVelocity = newSepVelocity - separatingVelocity;
 
-    real totalInverseMass = mA->getInverseMass();
+    auto totalInverseMass = mA->getInverseMass();
     if (mB) {
         totalInverseMass += mB->getInverseMass();
     }
@@ -69,8 +69,8 @@ void pegas::ParticleContact::resolveVelocity(pegas::real const duration)
         return;
     }
 
-    real const impulse = deltaVelocity / totalInverseMass;
-    Vector3 const impulsePerIMass = mContactNormal * impulse;
+    auto const impulse = deltaVelocity / totalInverseMass;
+    auto const impulsePerIMass = mContactNormal * impulse;
 
     mA->setVelocity(mA->getVelocity() + impulsePerIMass * mA->getInverseMass());
     if (mB) {
@@ -79,13 +79,13 @@ void pegas::ParticleContact::resolveVelocity(pegas::real const duration)
 }
 
 void pegas::ParticleContact::resolveInterpenetration(
-    pegas::real const duration)
+    pegas::real const duration) const
 {
     if (mPenetration <= 0) {
         return;
     }
 
-    real totalInverseMass = mA->getInverseMass();
+    auto totalInverseMass = mA->getInverseMass();
     if (mB) {
         totalInverseMass += mB->getInverseMass();
     }
@@ -94,16 +94,16 @@ void pegas::ParticleContact::resolveInterpenetration(
         return;
     }
 
-    Vector3 const movePerIMass = mContactNormal * (mPenetration / totalInverseMass);
+    auto const movePerIMass = mContactNormal * (mPenetration / totalInverseMass);
     mA->setPosition(mA->getPosition() + movePerIMass * mA->getInverseMass());
     if (mB) {
         mB->setPosition(mB->getPosition() + movePerIMass * mB->getInverseMass());
     }
 }
 
-pegas::ParticleContactResolver::ParticleContactResolver(
-    unsigned int const iterations)
-    : mIterations(iterations)
+pegas::ParticleContactResolver::ParticleContactResolver(unsigned int const iterations)
+	: mIterations(iterations)
+	, mIterationsUsed(0)
 {
 }
 
@@ -132,7 +132,8 @@ void pegas::ParticleContactResolver::resolveContacts(
 
 pegas::ParticleContactGenerator::~ParticleContactGenerator() {}
 
-pegas::Platform::Platform(pegas::Vector3 start, pegas::Vector3 end, std::vector<pegas::Particle::Ptr>& particles, const real blobRadius)
+pegas::Platform::Platform(
+		pegas::Vector3 start, pegas::Vector3 end, Particles& particles, const real blobRadius)
     : start(start)
     , end(end)
     , particles(particles)
@@ -140,9 +141,9 @@ pegas::Platform::Platform(pegas::Vector3 start, pegas::Vector3 end, std::vector<
 {
 }
 
-unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contacts& contacts, unsigned limit) const
+unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contacts& contacts, unsigned int limit) const
 {
-    const static real restitution = 0.0f;
+    static auto const restitution = 0.0f;
 
     unsigned int used = 0;
     for (unsigned int i = 0; i < particles.size(); ++i) {
@@ -150,10 +151,10 @@ unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contac
             break;
         }
 
-        Vector3 toParticle = particles[i]->getPosition() - start;
-        Vector3 const lineDirection = end - start;
-        real const projected = toParticle * lineDirection;
-        real const platformSqLength = lineDirection.squareMagnitude();
+        auto toParticle = particles[i]->getPosition() - start;
+		auto const lineDirection = end - start;
+		auto const projected = toParticle * lineDirection;
+		auto const platformSqLength = lineDirection.squareMagnitude();
 
         if (projected <= 0) {
             if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
@@ -176,9 +177,9 @@ unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contac
                 ++used;
             }
         } else {
-            real distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
+			auto distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
             if (distanceToPlatform < blobRadius * blobRadius) {
-                Vector3 closestPoint = start + lineDirection * (projected / platformSqLength);
+				auto closestPoint = start + lineDirection * (projected / platformSqLength);
                 auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
                 contactNormal.z = 0;
                 auto const penetration = blobRadius - std::sqrt(distanceToPlatform);

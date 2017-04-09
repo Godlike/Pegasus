@@ -6,17 +6,20 @@
 #include "Pegas/include/mechanics.hpp"
 #include <vector>
 
-namespace pegas {
-class ParticleContact {
+namespace pegas 
+{
+
+class ParticleContact 
+{
 public:
     using Ptr = std::shared_ptr<ParticleContact>;
 
+public:
     ParticleContact(Particle::Ptr const& a, Particle::Ptr const& b,
         real const restitution, Vector3 const& contactNormal,
         real const penetration);
 
-    void resolve(real const duration);
-
+    void resolve(real const duration) const;
     real calculateSeparatingVelocity() const;
 
 private:
@@ -26,9 +29,10 @@ private:
     Vector3 const mContactNormal;
     real mPenetration;
 
-    void resolveVelocity(real const duration);
+private:
+    void resolveVelocity(real const duration) const;
 
-    void resolveInterpenetration(real const duration);
+    void resolveInterpenetration(real const duration) const;
 };
 
 using ParticleContactsArray = std::vector<ParticleContact::Ptr>;
@@ -52,6 +56,7 @@ public:
     using Ptr = std::shared_ptr<ParticleContactGenerator>;
     using Contacts = std::vector<pegas::ParticleContact::Ptr>;
 
+public:
     virtual ~ParticleContactGenerator();
     virtual unsigned int addContact(Contacts& contacts,
         unsigned int const limit) const = 0;
@@ -66,20 +71,19 @@ public:
 
     Platform(Vector3 start, Vector3 end, Particles& particles, real const blobRadius);
 
-    virtual unsigned int addContact(Contacts& contacts,
-        unsigned limit) const override;
+	unsigned int addContact(Contacts& contacts, unsigned int const limit) const override;
 };
 
 class SphereContactGenerator : public ParticleContactGenerator {
 public:
-	using Spheres = std::vector<Sphere::Ptr>;
+	using Spheres = std::vector<gmt::Sphere::Ptr>;
 
 	SphereContactGenerator(RigidBody::Ptr const rBody, RigidBodies const & rBodies, real const restitution)
 		: mRigidBody(rBody), mRigidBodies(rBodies), mRestitution(restitution)
 	{
 	}
 
-	virtual unsigned int addContact(Contacts& contacts, unsigned limit) const override
+	unsigned int addContact(Contacts& contacts, unsigned int const limit) const override
 	{
 		unsigned int used = 0;
 
@@ -92,11 +96,11 @@ public:
 				break;
 			}
 
-			if (mRigidBody->s->overlap(body->s)) {
+			if (gmt::overlap(*mRigidBody->s, *body->s)) {
 				contacts.push_back(std::make_shared<ParticleContact>(
 					mRigidBody->p, body->p, mRestitution, 
-					body->s->calculateContactNormal(mRigidBody->s),
-					body->s->calculatePenetration(mRigidBody->s)));
+					gmt::calculateContactNormal(*mRigidBody->s, *body->s),
+					gmt::calculatePenetration(*mRigidBody->s, *body->s)));
 			}
 		}
 

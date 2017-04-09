@@ -3,6 +3,7 @@
 pegas::ParticleWorld::ParticleWorld(unsigned int maxContacts,
     unsigned int iterations)
     : mResolver(iterations)
+	, mCalculateIterations(false)
     , mMaxContacts(maxContacts)
 {
 }
@@ -14,8 +15,7 @@ void pegas::ParticleWorld::startFrame()
     }
 }
 
-void pegas::ParticleWorld::setParticles(
-    pegas::ParticleWorld::Particles particles)
+void pegas::ParticleWorld::setParticles(Particles particles)
 {
     mParticles = particles;
 }
@@ -27,26 +27,24 @@ void pegas::ParticleWorld::setParticleForcesRegistry(
 }
 
 void pegas::ParticleWorld::setParticleContactGenerators(
-    pegas::ParticleWorld::ParticleContactGenerators generators)
+	ParticleContactGenerators generators)
 {
     mGeneratos = generators;
 }
 
 void pegas::ParticleWorld::runPhysics(pegas::real const duration)
 {
-    pegas::real const duration_ = 0.005f;
-
     mRegistry->updateForces();
 
-    integrate(duration_);
+    integrate(duration);
 
-    unsigned int usedContacts = generateContacts();
+    auto usedContacts = generateContacts();
 
     if (usedContacts) {
         if (mCalculateIterations) {
             mResolver.setIterations(usedContacts * 2);
         }
-        mResolver.resolveContacts(mContacts, duration_);
+        mResolver.resolveContacts(mContacts, duration);
     }
 }
 

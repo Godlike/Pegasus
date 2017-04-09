@@ -2,7 +2,7 @@
 
 pegas::real pegas::ParticleLink::currentLenght() const
 {
-    Vector3 const relativePos = mA->getPosition() - mB->getPosition();
+    auto const relativePos = mA->getPosition() - mB->getPosition();
     return relativePos.magnitude();
 }
 
@@ -21,13 +21,13 @@ unsigned int
 pegas::ParticleCabel::addContact(Contacts& contacts,
     unsigned int const limit) const
 {
-    real const length = currentLenght();
+    auto const length = currentLenght();
 
     if (length < maxLength) {
         return 0;
     }
 
-    Vector3 normal = (mB->getPosition() - mA->getPosition());
+	auto normal = (mB->getPosition() - mA->getPosition());
     normal.normalize();
 
     contacts.push_back(std::make_shared<ParticleContact>(mA, mB, restitution, normal,
@@ -46,13 +46,13 @@ unsigned int
 pegas::ParticleRod::addContact(Contacts& contacts,
     unsigned int const limit) const
 {
-    real const currentLen = currentLenght();
+	auto const currentLen = currentLenght();
 
     if (currentLen == length) {
         return 0;
     }
 
-    Vector3 normal = (mB->getPosition() - mA->getPosition());
+	auto normal = (mB->getPosition() - mA->getPosition());
     normal.normalize();
 
     contacts.push_back(std::make_shared<ParticleContact>(

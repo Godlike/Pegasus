@@ -80,9 +80,9 @@ pegas::ParticleDrag::ParticleDrag(pegas::real const k1, pegas::real const k2)
 
 void pegas::ParticleDrag::updateForce(pegas::Particle::Ptr const& p)
 {
-    Vector3 force = p->getVelocity();
+	auto force = p->getVelocity();
 
-    real dragCoeff = force.magnitude();
+	auto dragCoeff = force.magnitude();
     dragCoeff = mK1 * dragCoeff + mK2 * dragCoeff * dragCoeff;
 
     force.normalize();
@@ -101,10 +101,10 @@ pegas::ParticleSpring::ParticleSpring(pegas::Particle::Ptr const& other,
 
 void pegas::ParticleSpring::updateForce(pegas::Particle::Ptr const& p)
 {
-    Vector3 force = p->getPosition();
+	auto force = p->getPosition();
     force -= mOther->getPosition();
 
-    real const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
+	auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
 
     force.normalize();
     force *= -magnitude;
@@ -122,10 +122,10 @@ pegas::ParticleAnchoredSpring::ParticleAnchoredSpring(
 
 void pegas::ParticleAnchoredSpring::updateForce(pegas::Particle::Ptr const& p)
 {
-    Vector3 force = p->getPosition();
+	auto force = p->getPosition();
     force -= mAnchor;
 
-    real const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
+	auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
 
     force.normalize();
     force *= -magnitude;
@@ -143,10 +143,10 @@ pegas::ParticleBungee::ParticleBungee(pegas::Particle::Ptr const& other,
 
 void pegas::ParticleBungee::updateForce(pegas::Particle::Ptr const& p)
 {
-    Vector3 force = p->getPosition();
+    auto force = p->getPosition();
     force -= mOther->getPosition();
 
-    real magnitude = force.magnitude();
+    auto magnitude = force.magnitude();
     if (magnitude <= mRestLenght)
         return;
 
@@ -170,7 +170,7 @@ pegas::ParticleBuoyancy::ParticleBuoyancy(pegas::real const maxDepth,
 
 void pegas::ParticleBuoyancy::updateForce(pegas::Particle::Ptr const& p)
 {
-    real const depth = p->getPosition().y;
+	auto const depth = p->getPosition().y;
 
     if (depth >= mWaterHeight + mMaxDepth)
         return;
@@ -196,22 +196,22 @@ pegas::ParticleFakeSpring::ParticleFakeSpring(pegas::Vector3 const& anchor,
 }
 
 void pegas::ParticleFakeSpring::updateForce(pegas::Particle::Ptr const& p,
-    pegas::real const duration)
+    pegas::real const duration) const
 {
     if (!p->hasFiniteMass())
         return;
 
-    Vector3 const position = p->getPosition() - mAnchor;
-    real const gamma = 0.5f * std::sqrt(4 * mSpringConstant - mDamping * mDamping);
+	auto const position = p->getPosition() - mAnchor;
+	auto const gamma = 0.5f * std::sqrt(4 * mSpringConstant - mDamping * mDamping);
 
     if (gamma == 0.0f)
         return;
 
-    Vector3 const c = position * (mDamping / (2.0f * gamma)) + p->getVelocity() * (1.0f / gamma);
-    Vector3 target = position * std::cos(gamma * duration) + c * std::sin(gamma * duration);
+	auto const c = position * (mDamping / (2.0f * gamma)) + p->getVelocity() * (1.0f / gamma);
+	auto target = position * std::cos(gamma * duration) + c * std::sin(gamma * duration);
     target *= std::exp(-0.5f * duration * mDamping);
 
-    Vector3 const accel = (target - position) * (1.0f / duration * duration) - p->getVelocity() * duration;
+	auto const accel = (target - position) * (1.0f / duration * duration) - p->getVelocity() * duration;
     p->addForce(accel * p->getMass());
 }
 
@@ -221,7 +221,14 @@ void pegas::ParticleFakeSpring::updateForce(pegas::Particle::Ptr const& p)
 }
 
 pegas::BlobForceGenerator::BlobForceGenerator(std::vector<pegas::Particle::Ptr>& particles)
-    : particles(particles)
+	: particles(particles)
+	, maxReplusion(0)
+	, maxAttraction(0)
+	, minNaturalDistance(0)
+	, maxNaturalDistance(0)
+	, floatHead(0)
+	, maxFloat(0)
+	, maxDistance(0)
 {
 }
 
@@ -233,9 +240,9 @@ void pegas::BlobForceGenerator::updateForce(const pegas::Particle::Ptr& particle
             continue;
 
         // Work out the separation distance
-        Vector3 separation = particles[i]->getPosition() - particle->getPosition();
+		auto separation = particles[i]->getPosition() - particle->getPosition();
         separation.z = 0.0f;
-        real distance = separation.magnitude();
+		auto distance = separation.magnitude();
 
         if (distance < minNaturalDistance) {
             // Use a repulsion force.
@@ -252,7 +259,7 @@ void pegas::BlobForceGenerator::updateForce(const pegas::Particle::Ptr& particle
 
     // If the particle is the head, and we've got a join count, then float it.
     if (particle == particles.front() && joinCount > 0 && maxFloat > 0) {
-        real force = real(joinCount / maxFloat) * floatHead;
+		auto force = real(joinCount / maxFloat) * floatHead;
         if (force > floatHead)
             force = floatHead;
         particle->addForce(Vector3(0, force, 0));

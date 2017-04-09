@@ -7,8 +7,10 @@
 #include <vector>
 #include <memory>
 
-namespace pegas {
-	class Body {
+namespace pegas 
+{
+	class Body 
+	{
 	public:
 		virtual ~Body() {}
 	};
@@ -18,13 +20,13 @@ namespace pegas {
 	public:
 		using Ptr = std::shared_ptr<RigidBody>;
 
-		RigidBody(Particle::Ptr const & p, Sphere::Ptr const & s)
+		RigidBody(Particle::Ptr const & p, gmt::Sphere::Ptr const & s)
 			: p(p), s(s)
 		{
 		}
 
 		Particle::Ptr const p;
-		Sphere::Ptr const s;
+		gmt::Sphere::Ptr const s;
 	};
 
 	using RigidBodies = std::vector<RigidBody::Ptr>;

@@ -1,5 +1,4 @@
 #include "Pegas/demo/random.hpp"
-#include <cstdlib>
 #include <ctime>
 
 using namespace pegas;
@@ -11,7 +10,7 @@ Random::Random(unsigned seed) { Random::seed(seed); }
 void Random::seed(unsigned s)
 {
     if (s == 0) {
-        s = (unsigned)clock();
+        s = static_cast<unsigned>(clock());
     }
 
     // Fill the buffer with some basic random numbers
@@ -26,7 +25,7 @@ void Random::seed(unsigned s)
     p2 = 10;
 }
 
-unsigned Random::rotl(unsigned n, unsigned r)
+unsigned Random::rotl(unsigned n, unsigned r) const
 {
     return (n << r) | (n >> (32 - r));
 }
@@ -77,13 +76,13 @@ real Random::randomReal()
 real Random::randomReal()
 {
     // Get the random number
-    unsigned bits = randomBits();
+	auto bits = randomBits();
 
     // Set up a reinterpret structure for manipulation
     union {
         real value;
         unsigned words[2];
-    } convert;
+    } convert = {};
 
     // Now assign the bits to the words. This works by fixing the ieee
     // sign and exponent bits (so that the size of the result is 1-2)

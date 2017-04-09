@@ -17,7 +17,7 @@ public:
    * left bitwise rotation
    */
 
-    unsigned rotl(unsigned n, unsigned r);
+    unsigned rotl(unsigned n, unsigned r) const;
     /**
    * right bitwise rotation
    */

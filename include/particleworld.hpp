@@ -14,7 +14,7 @@ public:
     using ParticleContacts = std::vector<ParticleContact::Ptr>;
     using ParticleContactGenerators = std::vector<ParticleContactGenerator::Ptr>;
 
-    ParticleWorld(unsigned int maxContacts, unsigned int iterations = 0);
+    explicit ParticleWorld(unsigned int maxContacts, unsigned int iterations = 0);
 
     void runPhysics(real const duration);
 
