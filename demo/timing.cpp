@@ -45,7 +45,7 @@ unsigned TimingData::getTime() { return systemTime(); }
 #if TIMING_WINDOWS
 unsigned long systemClock()
 {
-    return __rdtsc();
+    return static_cast<unsigned long>(__rdtsc());
 }
 #endif
 

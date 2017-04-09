@@ -1,7 +1,6 @@
 #include "Pegas/include/particleworld.hpp"
 
-pegas::ParticleWorld::ParticleWorld(unsigned int maxContacts,
-    unsigned int iterations)
+pegas::ParticleWorld::ParticleWorld(unsigned int maxContacts, unsigned int iterations)
     : mResolver(iterations)
 	, mCalculateIterations(false)
     , mMaxContacts(maxContacts)

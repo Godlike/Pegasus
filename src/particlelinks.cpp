@@ -56,7 +56,7 @@ pegas::ParticleRod::addContact(Contacts& contacts,
     normal.normalize();
 
     contacts.push_back(std::make_shared<ParticleContact>(
-        mA, mB, 0, (currentLen > length ? normal : normal * -1),
+        mA, mB, static_cast<real>(0), (currentLen > length ? normal : normal * -1),
         (currentLen > length ? currentLen - length : length - currentLen)));
 
     return 1;

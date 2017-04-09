@@ -1,9 +1,9 @@
 #ifndef PEGAS_PARTICLE_CONTACTS_HPP
 #define PEGAS_PARTICLE_CONTACTS_HPP
 
-#include "Pegas/include/particle.hpp"
 #include "Pegas/include/geometry.hpp"
 #include "Pegas/include/mechanics.hpp"
+#include "Pegas/include/particle.hpp"
 #include <vector>
 
 namespace pegas 
@@ -66,7 +66,7 @@ class Platform : public ParticleContactGenerator {
 public:
     Vector3 start;
     Vector3 end;
-	Particles& particles;
+    Particles& particles;
     real const blobRadius;
 
     Platform(Vector3 start, Vector3 end, Particles& particles, real const blobRadius);
@@ -108,10 +108,9 @@ public:
 	}
 
 private:
-	RigidBody::Ptr const mRigidBody;
-	RigidBodies const & mRigidBodies;
-	real const mRestitution;
-
+    RigidBody::Ptr const mRigidBody;
+    RigidBodies const& mRigidBodies;
+    real const mRestitution;
 };
 
 } // namespace pegas

@@ -1,11 +1,11 @@
 #include "Pegas/demo/app.hpp"
 #include "Pegas/demo/ogl_headers.hpp"
 #include "Pegas/demo/timing.hpp"
+#include "Pegas/include/geometry.hpp"
+#include "Pegas/include/mechanics.hpp"
 #include "Pegas/include/particlecontacts.hpp"
 #include "Pegas/include/particleforcegenerator.hpp"
 #include "Pegas/include/particleworld.hpp"
-#include "Pegas/include/mechanics.hpp"
-#include "Pegas/include/geometry.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -29,7 +29,7 @@ public:
     void key(unsigned char key) override;
 
 private:
-	pegas::RigidBodies rBodies;
+    pegas::RigidBodies rBodies;
     std::vector<pegas::Particle::Ptr> blobs;
     std::vector<pegas::ParticleContactGenerator::Ptr> contactGenerators;
     pegas::BlobForceGenerator::Ptr blobForceGenerator;
@@ -76,7 +76,7 @@ BlobDemo::BlobDemo()
 
     for (unsigned int i = 0; i < BLOB_COUNT; ++i) {
         auto blob = std::make_shared<pegas::Particle>();
-		blob->setPosition(p.start + pegas::Vector3(5 + (std::rand() % 50) / 100.0f , i * 2 + BLOB_RADIUS * 2, 0));
+        blob->setPosition(p.start + pegas::Vector3(5 + (std::rand() % 50) / 100.0f, i * 2 + BLOB_RADIUS * 2, 0));
 
         blob->setVelocity(0, 0, 0);
         blob->setDamping(0.2f);
@@ -125,7 +125,7 @@ void BlobDemo::display()
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(pos.x + 2.0, pos.y, 50.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x + 50.0, pos.y + 25.0, 50.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
 
     glColor3f(0, 0, 0);
 
@@ -188,9 +188,9 @@ void BlobDemo::update()
     // Run the simulation
     world.runPhysics(duration);
 
-	for (auto body : rBodies) {
-		body->s->setCenterOfMass(body->p->getPosition());
-	}
+    for (auto body : rBodies) {
+        body->s->setCenterOfMass(body->p->getPosition());
+    }
 
     Application::update();
 }

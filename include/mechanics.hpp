@@ -4,8 +4,8 @@
 #include "Pegas/include/geometry.hpp"
 #include "Pegas/include/particle.hpp"
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace pegas 
 {

@@ -155,6 +155,7 @@ pegas::gmt::Box::Box(pegas::Vector3 const & centerOfMass, pegas::Vector3 const &
 {
 }
 
+
 void pegas::gmt::Box::setAxes(pegas::Vector3 const & a, pegas::Vector3 const & b, pegas::Vector3 const & c)
 {
     mA = a;

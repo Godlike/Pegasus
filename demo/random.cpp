@@ -92,7 +92,7 @@ real Random::randomReal()
     convert.words[1] = (bits >> 12) | 0x3FF00000; // And the bottom 20
 
     // And return the value
-    return convert.value - 1.0;
+    return convert.value - static_cast<real>(1);
 }
 #endif
 
