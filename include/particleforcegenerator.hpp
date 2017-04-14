@@ -22,7 +22,7 @@ public:
 class ParticleForceRegistry {
 public:
     using Ptr = std::shared_ptr<ParticleForceRegistry>;
-	using Registry = std::map<Particle::Ptr, std::set<ParticleForceGenerator::Ptr> >;
+    using Registry = std::map<Particle::Ptr, std::set<ParticleForceGenerator::Ptr> >;
 
 public:
     void add(Particle::Ptr& p, ParticleForceGenerator::Ptr& pfg);
@@ -35,13 +35,13 @@ public:
 
     void updateForces();
 
-private:   
+private:
     Registry mRegistrations;
 };
 
 class ParticleGravity : public ParticleForceGenerator {
 public:
-	explicit ParticleGravity(Vector3 const& g);
+    explicit ParticleGravity(Vector3 const& g);
 
     void updateForce(Particle::Ptr const& p) override;
 
@@ -139,7 +139,7 @@ public:
     unsigned int maxFloat;
     real maxDistance;
 
-	explicit BlobForceGenerator(std::vector<Particle::Ptr>& particles);
+    explicit BlobForceGenerator(std::vector<Particle::Ptr>& particles);
 
     void updateForce(Particle::Ptr const& particle) override;
 };

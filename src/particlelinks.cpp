@@ -27,7 +27,7 @@ pegas::ParticleCabel::addContact(Contacts& contacts,
         return 0;
     }
 
-	auto normal = (mB->getPosition() - mA->getPosition());
+    auto normal = (mB->getPosition() - mA->getPosition());
     normal.normalize();
 
     contacts.push_back(std::make_shared<ParticleContact>(mA, mB, restitution, normal,
@@ -46,13 +46,13 @@ unsigned int
 pegas::ParticleRod::addContact(Contacts& contacts,
     unsigned int const limit) const
 {
-	auto const currentLen = currentLenght();
+    auto const currentLen = currentLenght();
 
     if (currentLen == length) {
         return 0;
     }
 
-	auto normal = (mB->getPosition() - mA->getPosition());
+    auto normal = (mB->getPosition() - mA->getPosition());
     normal.normalize();
 
     contacts.push_back(std::make_shared<ParticleContact>(

@@ -18,7 +18,7 @@
 class BlobDemo : public Application {
 public:
     BlobDemo();
-	virtual ~BlobDemo();
+    virtual ~BlobDemo();
 
     const char* getTitle() override;
 
@@ -72,7 +72,7 @@ BlobDemo::BlobDemo()
         contactGenerators.push_back(std::make_shared<pegas::Platform>(start, end, blobs, BLOB_RADIUS));
     }
 
-    auto & p = *static_cast<pegas::Platform*>(contactGenerators.back().get());
+    auto& p = *static_cast<pegas::Platform*>(contactGenerators.back().get());
 
     for (unsigned int i = 0; i < BLOB_COUNT; ++i) {
         auto blob = std::make_shared<pegas::Particle>();
@@ -81,20 +81,20 @@ BlobDemo::BlobDemo()
         blob->setVelocity(0, 0, 0);
         blob->setDamping(0.2f);
         blob->setAcceleration(pegas::Vector3(pegas::real(0), pegas::real(-9.8), pegas::real(0)) * pegas::real(0.4));
-		blob->setMass(1.0f);
+        blob->setMass(1.0f);
         blobs.push_back(blob);
 
-		rBodies.push_back(std::make_shared<pegas::RigidBody>(blob, 
-			std::make_shared<pegas::gmt::Sphere>(blob->getPosition(), BLOB_RADIUS)));
+        rBodies.push_back(std::make_shared<pegas::RigidBody>(blob,
+            std::make_shared<pegas::gmt::Sphere>(blob->getPosition(), BLOB_RADIUS)));
     }
 
-	for (auto blob : blobs) {
-		forceRegistry->add(blob, blobForceGenerator);
-	}
+    for (auto blob : blobs) {
+        forceRegistry->add(blob, blobForceGenerator);
+    }
 
-	for (auto body : rBodies) {
-		contactGenerators.push_back(std::make_shared<pegas::SphereContactGenerator>(body, rBodies, static_cast<pegas::real>(0)));
-	}
+    for (auto body : rBodies) {
+        contactGenerators.push_back(std::make_shared<pegas::SphereContactGenerator>(body, rBodies, static_cast<pegas::real>(0)));
+    }
 
     world.setParticleContactGenerators(contactGenerators);
     world.setParticles(blobs);
@@ -132,15 +132,15 @@ void BlobDemo::display()
     glBegin(GL_LINES);
     glColor3f(0, 0, 1);
     for (unsigned i = 0; i < PLATFORM_COUNT; i++) {
-        auto const & p0 = static_cast<pegas::Platform*>(contactGenerators[i].get())->start;
-        auto const & p1 = static_cast<pegas::Platform*>(contactGenerators[i].get())->end;
+        auto const& p0 = static_cast<pegas::Platform*>(contactGenerators[i].get())->start;
+        auto const& p1 = static_cast<pegas::Platform*>(contactGenerators[i].get())->end;
         glVertex3f(p0.x, p0.y, p0.z);
         glVertex3f(p1.x, p1.y, p1.z);
     }
     glEnd();
 
     for (pegas::real i = 0; i < BLOB_COUNT; i++) {
-        auto const & p = blobs[static_cast<int>(i)]->getPosition();
+        auto const& p = blobs[static_cast<int>(i)]->getPosition();
         glPushMatrix();
         glColor3f((i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT);
         glTranslatef(p.x, p.y, p.z);
@@ -220,8 +220,8 @@ void BlobDemo::key(unsigned char key)
     case 'R':
         reset();
         break;
-	default:
-		break;
+    default:
+        break;
     }
 }
 

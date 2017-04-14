@@ -102,8 +102,8 @@ void pegas::ParticleContact::resolveInterpenetration(
 }
 
 pegas::ParticleContactResolver::ParticleContactResolver(unsigned int const iterations)
-	: mIterations(iterations)
-	, mIterationsUsed(0)
+    : mIterations(iterations)
+    , mIterationsUsed(0)
 {
 }
 
@@ -133,7 +133,7 @@ void pegas::ParticleContactResolver::resolveContacts(
 pegas::ParticleContactGenerator::~ParticleContactGenerator() {}
 
 pegas::Platform::Platform(
-		pegas::Vector3 start, pegas::Vector3 end, Particles& particles, const real blobRadius)
+    pegas::Vector3 start, pegas::Vector3 end, Particles& particles, const real blobRadius)
     : start(start)
     , end(end)
     , particles(particles)
@@ -152,9 +152,9 @@ unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contac
         }
 
         auto toParticle = particles[i]->getPosition() - start;
-		auto const lineDirection = end - start;
-		auto const projected = toParticle * lineDirection;
-		auto const platformSqLength = lineDirection.squareMagnitude();
+        auto const lineDirection = end - start;
+        auto const projected = toParticle * lineDirection;
+        auto const platformSqLength = lineDirection.squareMagnitude();
 
         if (projected <= 0) {
             if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
@@ -177,9 +177,9 @@ unsigned int pegas::Platform::addContact(pegas::ParticleContactGenerator::Contac
                 ++used;
             }
         } else {
-			auto distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
+            auto distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
             if (distanceToPlatform < blobRadius * blobRadius) {
-				auto closestPoint = start + lineDirection * (projected / platformSqLength);
+                auto closestPoint = start + lineDirection * (projected / platformSqLength);
                 auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
                 contactNormal.z = 0;
                 auto const penetration = blobRadius - std::sqrt(distanceToPlatform);

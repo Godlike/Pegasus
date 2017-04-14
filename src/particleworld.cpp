@@ -2,7 +2,7 @@
 
 pegas::ParticleWorld::ParticleWorld(unsigned int maxContacts, unsigned int iterations)
     : mResolver(iterations)
-	, mCalculateIterations(false)
+    , mCalculateIterations(false)
     , mMaxContacts(maxContacts)
 {
 }
@@ -26,7 +26,7 @@ void pegas::ParticleWorld::setParticleForcesRegistry(
 }
 
 void pegas::ParticleWorld::setParticleContactGenerators(
-	ParticleContactGenerators generators)
+    ParticleContactGenerators generators)
 {
     mGeneratos = generators;
 }

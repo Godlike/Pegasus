@@ -6,11 +6,9 @@
 #include "Pegas/include/particle.hpp"
 #include <vector>
 
-namespace pegas 
-{
+namespace pegas {
 
-class ParticleContact 
-{
+class ParticleContact {
 public:
     using Ptr = std::shared_ptr<ParticleContact>;
 
@@ -71,41 +69,42 @@ public:
 
     Platform(Vector3 start, Vector3 end, Particles& particles, real const blobRadius);
 
-	unsigned int addContact(Contacts& contacts, unsigned int const limit) const override;
+    unsigned int addContact(Contacts& contacts, unsigned int const limit) const override;
 };
 
 class SphereContactGenerator : public ParticleContactGenerator {
 public:
-	using Spheres = std::vector<gmt::Sphere::Ptr>;
+    using Spheres = std::vector<gmt::Sphere::Ptr>;
 
-	SphereContactGenerator(RigidBody::Ptr const rBody, RigidBodies const & rBodies, real const restitution)
-		: mRigidBody(rBody), mRigidBodies(rBodies), mRestitution(restitution)
-	{
-	}
+    SphereContactGenerator(RigidBody::Ptr const rBody, RigidBodies const& rBodies, real const restitution)
+        : mRigidBody(rBody)
+        , mRigidBodies(rBodies)
+        , mRestitution(restitution)
+    {
+    }
 
-	unsigned int addContact(Contacts& contacts, unsigned int const limit) const override
-	{
-		unsigned int used = 0;
+    unsigned int addContact(Contacts& contacts, unsigned int const limit) const override
+    {
+        unsigned int used = 0;
 
-		for (auto body : mRigidBodies)
-		{
-			if (body == mRigidBody)
-				continue;
+        for (auto body : mRigidBodies) {
+            if (body == mRigidBody)
+                continue;
 
-			if (used++ > limit) {
-				break;
-			}
+            if (used++ > limit) {
+                break;
+            }
 
-			if (gmt::overlap(*mRigidBody->s, *body->s)) {
-				contacts.push_back(std::make_shared<ParticleContact>(
-					mRigidBody->p, body->p, mRestitution, 
-					gmt::calculateContactNormal(*mRigidBody->s, *body->s),
-					gmt::calculatePenetration(*mRigidBody->s, *body->s)));
-			}
-		}
+            if (gmt::overlap(*mRigidBody->s, *body->s)) {
+                contacts.push_back(std::make_shared<ParticleContact>(
+                    mRigidBody->p, body->p, mRestitution,
+                    gmt::calculateContactNormal(*mRigidBody->s, *body->s),
+                    gmt::calculatePenetration(*mRigidBody->s, *body->s)));
+            }
+        }
 
-		return used;
-	}
+        return used;
+    }
 
 private:
     RigidBody::Ptr const mRigidBody;

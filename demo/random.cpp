@@ -76,7 +76,7 @@ real Random::randomReal()
 real Random::randomReal()
 {
     // Get the random number
-	auto bits = randomBits();
+    auto bits = randomBits();
 
     // Set up a reinterpret structure for manipulation
     union {
