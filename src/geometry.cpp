@@ -1,5 +1,7 @@
 #include "Pegas/include/geometry.hpp"
 
+#include <algorithm>
+#include <array>
 #include <limits>
 #include <cmath>
 
@@ -177,9 +179,7 @@ bool pegas::gmt::overlap(Plane const& a, Plane const& b)
 
 pegas::Vector3 pegas::gmt::calculateContactNormal(Plane const& a, Plane const& b)
 {
-    auto result(a.getNormal() - b.getNormal());
-    result.normalize();
-    return result;
+    return b.getNormal();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Plane const& a, Plane const& b)
@@ -194,23 +194,92 @@ bool pegas::gmt::overlap(Plane const& p, Sphere const& s)
 
 pegas::Vector3 pegas::gmt::calculateContactNormal(Plane const& p, Sphere const& s)
 {
-    auto const& pNormal = p.getNormal();
-    auto const& pPoint = p.getCenterOfMass();
-    auto const& sMassCenter = s.getCenterOfMass();
-
-    auto result(pNormal * pPoint.magnitude() - sMassCenter);
-    result.normalize();
-    return result;
+	auto const normal = p.getNormal() - s.getCenterOfMass();
+    return normal.unit();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Plane const& p, Sphere const& s)
 {
-    auto const& sMassCenter = s.getCenterOfMass();
-    auto const& pNormal = p.getNormal();
-    auto const dist = (pNormal.x * sMassCenter.x + pNormal.y * sMassCenter.y + pNormal.z * sMassCenter.z)
-        + p.getCenterOfMass().magnitude();
+    auto const pNormal = p.getNormal();
+	auto const a = s.getCenterOfMass() * pNormal;
+	auto const b = p.getCenterOfMass() * pNormal;
 
-    return -dist;
+    return a - b;
+}
+
+bool pegas::gmt::overlap(Plane const& p, Triangle const& t)
+{
+	auto const pNormal = p.getNormal();
+	auto const d = p.getCenterOfMass() * pNormal;
+
+	Vector3 a, b, c;
+	t.getAxes(a, b, c);
+
+	return (a * pNormal < d) || (b * pNormal < d) || (c * pNormal < d);
+}
+
+pegas::Vector3 pegas::gmt::calculateContactNormal(Plane const& p, Triangle const& t)
+{
+	Vector3 a, b, c;
+	t.getAxes(a, b, c);
+
+	auto const dB = b - a;
+	auto const dC = c - a;
+	auto const tNormal = dB % dC;
+
+	return tNormal.unit();
+}
+
+pegas::real pegas::gmt::calculatePenetration(Plane const& p, Triangle const& t)
+{
+	Vector3 a, b, c;
+	t.getAxes(a, b, c);
+
+	auto const pNormal = p.getNormal();
+	auto const d = {pNormal * a, pNormal * b, pNormal * c};
+
+	return *std::min_element(d.begin(), d.end());
+}
+
+bool pegas::gmt::overlap(Plane const& p, Box const& b)
+{
+	Vector3 i, j, k;
+	b.getAxes(i, j, k);
+
+	std::array<Vector3, 8> points{(i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k)};
+
+	auto const pNormal = p.getNormal();
+	auto const d = p.getCenterOfMass() * pNormal;
+
+	return std::find_if(points.begin(), points.end(), [&d, &pNormal](auto const& point) { return point * pNormal < d; }) != points.end();
+}
+
+pegas::Vector3 pegas::gmt::calculateContactNormal(Plane const& p, Box const& b)
+{
+	std::array<Vector3, 6> axes;
+	b.getAxes(axes[0], axes[1], axes[2]);
+	axes[3] = axes[0] * -1;
+	axes[4] = axes[1] * -1;
+	axes[5] = axes[2] * -1;
+
+	auto const pNormal = p.getNormal();
+	auto const d = {axes[0] * pNormal, axes[1] * pNormal, axes[2] * pNormal, axes[3] * pNormal, axes[4] * pNormal, axes[5] * pNormal};
+
+	return axes[std::distance(d.begin(), std::min_element(d.begin(), d.end()))].unit();
+}
+
+pegas::real pegas::gmt::calculatePenetration(Plane const& p, Box const& b)
+{
+	Vector3 i, j, k;
+	b.getAxes(i, j, k);
+
+	auto const pNormal = p.getNormal();
+	std::array<Vector3, 8> points{(i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k)};
+
+	std::array<real, 8> d;
+	std::transform(points.begin(), points.end(), d.begin(), [&pNormal](auto const& p) { return p * pNormal; });
+
+	return (*std::min_element(d.begin(), d.end())) * -1;
 }
 
 bool pegas::gmt::overlap(Sphere const& a, Sphere const& b)
@@ -226,9 +295,7 @@ pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& a, Sphere const&
 {
     auto const& aMassCenter = a.getCenterOfMass();
     auto const& bMassCenter = b.getCenterOfMass();
-    auto result(aMassCenter - bMassCenter);
-    result.normalize();
-    return result;
+    return (aMassCenter - bMassCenter).unit();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Sphere const& a, Sphere const& b)
