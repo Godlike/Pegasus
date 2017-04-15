@@ -32,7 +32,6 @@ private:
     pegas::RigidBodies rBodies;
     std::vector<pegas::Particle::Ptr> blobs;
     std::vector<pegas::ParticleContactGenerator::Ptr> contactGenerators;
-    pegas::BlobForceGenerator::Ptr blobForceGenerator;
     pegas::ParticleForceRegistry::Ptr forceRegistry;
     pegas::ParticleWorld world;
 
@@ -44,23 +43,11 @@ private:
 
 // Method definitions
 BlobDemo::BlobDemo()
-    : blobForceGenerator(std::make_shared<pegas::BlobForceGenerator>(blobs))
-    , forceRegistry(std::make_shared<pegas::ParticleForceRegistry>())
+    : forceRegistry(std::make_shared<pegas::ParticleForceRegistry>())
     , world(PLATFORM_COUNT + BLOB_COUNT + 1, PLATFORM_COUNT + 1)
     , xAxis(0)
     , yAxis(0)
 {
-    // Create the force generator
-    pegas::BlobForceGenerator& blobForce = *static_cast<pegas::BlobForceGenerator*>(blobForceGenerator.get());
-    blobForce.particles = blobs;
-    blobForce.maxAttraction = 20.0f;
-    blobForce.maxReplusion = 10.0f;
-    blobForce.minNaturalDistance = BLOB_RADIUS * 0.75f;
-    blobForce.maxNaturalDistance = BLOB_RADIUS * 1.5f;
-    blobForce.maxDistance = BLOB_RADIUS * 2.5f;
-    blobForce.maxFloat = 2;
-    blobForce.floatHead = 8.0f;
-
     // Create the platforms
     for (unsigned int i = 0; i < PLATFORM_COUNT; ++i) {
         auto const start = pegas::Vector3(pegas::real(i % 2) * 10.0f - 5.0f,
@@ -86,10 +73,6 @@ BlobDemo::BlobDemo()
 
         rBodies.push_back(std::make_shared<pegas::RigidBody>(blob,
             std::make_shared<pegas::gmt::Sphere>(blob->getPosition(), BLOB_RADIUS)));
-    }
-
-    for (auto blob : blobs) {
-        forceRegistry->add(blob, blobForceGenerator);
     }
 
     for (auto body : rBodies) {
@@ -125,7 +108,7 @@ void BlobDemo::display()
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(pos.x + 50.0, pos.y + 25.0, 50.0, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x, pos.y, 5, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
 
     glColor3f(0, 0, 0);
 
