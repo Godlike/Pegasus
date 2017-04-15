@@ -12,10 +12,12 @@ static bool qpcFlag;
 typedef unsigned long long LONGLONG;
 #else
 #define TIMING_WINDOWS 1
+#include <windows.h>
 
+#ifdef TIMING_WINDOWS
 #include <intrin.h>
 #include <mmsystem.h>
-#include <windows.h>
+#endif 
 
 static double qpcFrequency;
 #endif
