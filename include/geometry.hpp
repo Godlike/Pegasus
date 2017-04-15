@@ -29,6 +29,7 @@ namespace gmt {
         explicit SimpleShape(Vector3 const& centerOfMass);
     };
 
+
     class Plane : public SimpleShape {
     public:
         Plane(Vector3 const& centerOfMass, Vector3 const& normal);
@@ -101,6 +102,15 @@ namespace gmt {
         real mR;
     };
 
+	class Cylinder : public Capsule{
+	public:
+		Cylinder(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r)
+			: Capsule(centerOfMass, halfHeight, r)
+		{
+		}
+
+	};
+
     class Box : public SimpleShape {
     public:
         Box(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c);
@@ -118,21 +128,33 @@ namespace gmt {
     Vector3 calculateContactNormal(Plane const& p, Plane const& s);
     real calculatePenetration(Plane const& p, Plane const& s);
 
-    bool overlap(Plane const& p, Sphere const& s);
-    Vector3 calculateContactNormal(Plane const& p, Sphere const& s);
-    real calculatePenetration(Plane const& p, Sphere const& s);
-
 	bool overlap(Plane const& p, Triangle const& t);
 	Vector3 calculateContactNormal(Plane const& p, Triangle const& t);
 	real calculatePenetration(Plane const& p, Triangle const& t);
+
+	bool overlap(Plane const& p, Sphere const& s);
+	Vector3 calculateContactNormal(Plane const& p, Sphere const& s);
+	real calculatePenetration(Plane const& p, Sphere const& s);
 
 	bool overlap(Plane const& p, Box const& b);
 	Vector3 calculateContactNormal(Plane const& p, Box const& b);
 	real calculatePenetration(Plane const& p, Box const& b);
 
-    bool overlap(Sphere const& a, Sphere const& b);
-    Vector3 calculateContactNormal(Sphere const& a, Sphere const& b);
-    real calculatePenetration(Sphere const& a, Sphere const& b);
+	bool overlap(Triangle const& t, Plane const& p);
+	Vector3 calculateContactNormal(Triangle const& t, Plane const& p);
+	real calculatePenetration(Triangle const& t, Plane const& p);
+
+	bool overlap(Sphere const& s, Plane const& p);
+	Vector3 calculateContactNormal(Sphere const& s, Plane const& p);
+	real calculatePenetration(Sphere const& s, Plane const& p);
+
+	bool overlap(Sphere const& a, Sphere const& b);
+	Vector3 calculateContactNormal(Sphere const& a, Sphere const& b);
+	real calculatePenetration(Sphere const& a, Sphere const& b);
+
+	bool overlap(Box const& b, Plane const& p);
+	Vector3 calculateContactNormal(Box const& b, Plane const& p);
+	real calculatePenetration(Box const& b, Plane const& p);
 
 } // namespace gmt
 } // namespace pegas
