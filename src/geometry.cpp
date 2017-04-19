@@ -246,7 +246,8 @@ bool pegas::gmt::overlap(Plane const& p, Box const& b)
     Vector3 i, j, k;
     b.getAxes(i, j, k);
 
-    std::array<Vector3, 8> points{ (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
+	std::array<Vector3, 8> points{(i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k)};
+	std::for_each(points.begin(), points.end(), [&b](auto & n) { n += b.getCenterOfMass(); });
 
     auto const pNormal = p.getNormal();
     auto const d = p.getCenterOfMass() * pNormal;
@@ -273,13 +274,15 @@ pegas::real pegas::gmt::calculatePenetration(Plane const& p, Box const& b)
     Vector3 i, j, k;
     b.getAxes(i, j, k);
 
-    auto const pNormal = p.getNormal();
-    std::array<Vector3, 8> points{ (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
+	auto const pNormal = p.getNormal();
+	std::array<Vector3, 8> points{(i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k)};
+	std::for_each(points.begin(), points.end(), [&b](auto & n) { n += b.getCenterOfMass(); });
 
-    std::array<real, 8> d;
-    std::transform(points.begin(), points.end(), d.begin(), [&pNormal](auto const& p) { return p * pNormal; });
+	std::array<real, 8> penetrations;
+	auto const d = p.getCenterOfMass() * p.getNormal();
+	std::transform(points.begin(), points.end(), penetrations.begin(), [&pNormal, &d](auto const& p) { return p * pNormal - d; });
 
-    return (*std::min_element(d.begin(), d.end())) * -1;
+	return (*std::min_element(penetrations.begin(), penetrations.end())) * -1;
 }
 
 bool pegas::gmt::overlap(Triangle const& t, Plane const& p)
