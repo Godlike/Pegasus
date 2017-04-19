@@ -97,7 +97,7 @@ public:
 
             if (gmt::overlap(*body->s, *mRigidBody->s)) {
                 contacts.push_back(std::make_shared<ParticleContact>(
-					body->p, mRigidBody->p, mRestitution,
+                    body->p, mRigidBody->p, mRestitution,
                     calculateContactNormal(*body->s, *mRigidBody->s),
                     calculatePenetration(*body->s, *mRigidBody->s)));
             }

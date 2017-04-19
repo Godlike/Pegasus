@@ -3,7 +3,7 @@
 #include <algorithm>
 
 pegas::ParticleContact::ParticleContact(
-	pegas::Particle::Ptr const& a,
+    pegas::Particle::Ptr const& a,
     pegas::Particle::Ptr const& b,
     pegas::real const restitution,
     pegas::Vector3 const& contactNormal,

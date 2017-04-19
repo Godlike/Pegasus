@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <array>
-#include <limits>
 #include <cmath>
+#include <limits>
 
 pegas::gmt::Geometry::~Geometry() {}
 
@@ -189,36 +189,36 @@ pegas::real pegas::gmt::calculatePenetration(Plane const& a, Plane const& b)
 
 bool pegas::gmt::overlap(Plane const& p, Triangle const& t)
 {
-	auto const pNormal = p.getNormal();
-	auto const d = p.getCenterOfMass() * pNormal;
+    auto const pNormal = p.getNormal();
+    auto const d = p.getCenterOfMass() * pNormal;
 
-	Vector3 a, b, c;
-	t.getAxes(a, b, c);
+    Vector3 a, b, c;
+    t.getAxes(a, b, c);
 
-	return (a * pNormal < d) || (b * pNormal < d) || (c * pNormal < d);
+    return (a * pNormal < d) || (b * pNormal < d) || (c * pNormal < d);
 }
 
 pegas::Vector3 pegas::gmt::calculateContactNormal(Plane const& p, Triangle const& t)
 {
-	Vector3 a, b, c;
-	t.getAxes(a, b, c);
+    Vector3 a, b, c;
+    t.getAxes(a, b, c);
 
-	auto const dB = b - a;
-	auto const dC = c - a;
-	auto const tNormal = dB % dC;
+    auto const dB = b - a;
+    auto const dC = c - a;
+    auto const tNormal = dB % dC;
 
-	return tNormal.unit();
+    return tNormal.unit();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Plane const& p, Triangle const& t)
 {
-	Vector3 a, b, c;
-	t.getAxes(a, b, c);
+    Vector3 a, b, c;
+    t.getAxes(a, b, c);
 
-	auto const pNormal = p.getNormal();
-	auto const d = { pNormal * a, pNormal * b, pNormal * c };
+    auto const pNormal = p.getNormal();
+    auto const d = { pNormal * a, pNormal * b, pNormal * c };
 
-	return *std::min_element(d.begin(), d.end());
+    return *std::min_element(d.begin(), d.end());
 }
 
 bool pegas::gmt::overlap(Plane const& p, Sphere const& s)
@@ -228,88 +228,120 @@ bool pegas::gmt::overlap(Plane const& p, Sphere const& s)
 
 pegas::Vector3 pegas::gmt::calculateContactNormal(Plane const& p, Sphere const& s)
 {
-	auto const normal = p.getNormal() - s.getCenterOfMass();
+    auto const normal = p.getNormal() - s.getCenterOfMass();
     return normal.unit();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Plane const& p, Sphere const& s)
 {
     auto const pNormal = p.getNormal();
-	auto const a = s.getCenterOfMass() * pNormal;
-	auto const b = p.getCenterOfMass() * pNormal;
+    auto const a = s.getCenterOfMass() * pNormal;
+    auto const b = p.getCenterOfMass() * pNormal;
 
     return a - b;
 }
 
 bool pegas::gmt::overlap(Plane const& p, Box const& b)
 {
-	Vector3 i, j, k;
-	b.getAxes(i, j, k);
+    Vector3 i, j, k;
+    b.getAxes(i, j, k);
 
-	std::array<Vector3, 8> points{(i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k)};
+    std::array<Vector3, 8> points{ (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
 
-	auto const pNormal = p.getNormal();
-	auto const d = p.getCenterOfMass() * pNormal;
+    auto const pNormal = p.getNormal();
+    auto const d = p.getCenterOfMass() * pNormal;
 
-	return std::find_if(points.begin(), points.end(), [&d, &pNormal](auto const& point) { return point * pNormal < d; }) != points.end();
+    return std::find_if(points.begin(), points.end(), [&d, &pNormal](auto const& point) { return point * pNormal < d; }) != points.end();
 }
 
 pegas::Vector3 pegas::gmt::calculateContactNormal(Plane const& p, Box const& b)
 {
-	std::array<Vector3, 6> axes;
-	b.getAxes(axes[0], axes[1], axes[2]);
-	axes[3] = axes[0] * -1;
-	axes[4] = axes[1] * -1;
-	axes[5] = axes[2] * -1;
+    std::array<Vector3, 6> axes;
+    b.getAxes(axes[0], axes[1], axes[2]);
+    axes[3] = axes[0] * -1;
+    axes[4] = axes[1] * -1;
+    axes[5] = axes[2] * -1;
 
-	auto const pNormal = p.getNormal();
-	auto const d = {axes[0] * pNormal, axes[1] * pNormal, axes[2] * pNormal, axes[3] * pNormal, axes[4] * pNormal, axes[5] * pNormal};
+    auto const pNormal = p.getNormal();
+    auto const d = { axes[0] * pNormal, axes[1] * pNormal, axes[2] * pNormal, axes[3] * pNormal, axes[4] * pNormal, axes[5] * pNormal };
 
-	return axes[std::distance(d.begin(), std::min_element(d.begin(), d.end()))].unit();
+    return axes[std::distance(d.begin(), std::min_element(d.begin(), d.end()))].unit();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Plane const& p, Box const& b)
 {
-	Vector3 i, j, k;
-	b.getAxes(i, j, k);
+    Vector3 i, j, k;
+    b.getAxes(i, j, k);
 
-	auto const pNormal = p.getNormal();
-	std::array<Vector3, 8> points{(i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k)};
+    auto const pNormal = p.getNormal();
+    std::array<Vector3, 8> points{ (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
 
-	std::array<real, 8> d;
-	std::transform(points.begin(), points.end(), d.begin(), [&pNormal](auto const& p) { return p * pNormal; });
+    std::array<real, 8> d;
+    std::transform(points.begin(), points.end(), d.begin(), [&pNormal](auto const& p) { return p * pNormal; });
 
-	return (*std::min_element(d.begin(), d.end())) * -1;
+    return (*std::min_element(d.begin(), d.end())) * -1;
 }
 
 bool pegas::gmt::overlap(Triangle const& t, Plane const& p)
 {
-	return overlap(p, t);
+    return overlap(p, t);
 }
 
 pegas::Vector3 pegas::gmt::calculateContactNormal(Triangle const& t, Plane const& p)
 {
-	return p.getNormal();
+    return p.getNormal();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Triangle const& t, Plane const& p)
 {
-	return calculatePenetration(p, t);
+    return calculatePenetration(p, t);
 }
 
 bool pegas::gmt::overlap(Sphere const& s, Plane const& p)
 {
-	return overlap(p, s);
+    return overlap(p, s);
 }
 
 pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Plane const& p)
 {
-	return p.getNormal();
+    return p.getNormal();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Plane const& p)
 {
-	return calculatePenetration(p, s);
+    return calculatePenetration(p, s);
+}
+
+bool pegas::gmt::overlap(const Sphere& s, const Triangle& t)
+{
+    std::array<Vector3, 3> tPoints;
+    t.getAxes(tPoints[0], tPoints[1], tPoints[2]);
+    auto const tMassCenter = t.getCenterOfMass();
+    std::for_each(tPoints.begin(), tPoints.end(), [&tMassCenter](auto& p) { p += tMassCenter; });
+
+    auto const sMassCenter = s.getCenterOfMass();
+    std::array<real, 3> tPointDistances;
+    std::transform(tPoints.begin(), tPoints.end(), tPointDistances.begin(),
+        [&sMassCenter](auto const& p) { return (p - sMassCenter).squareMagnitude(); });
+
+    std::sort(tPointDistances.begin(), tPointDistances.end());
+    if (tPointDistances.front() < std::pow(s.getRadius(), 2)) {
+        return true;
+    }
+
+    Plane p(t.getCenterOfMass(), (tPoints[1] - tPoints[0]).vectorProduct(tPoints[2] - tPoints[0]).unit());
+
+    return false;
+}
+
+pegas::Vector3 pegas::gmt::calculateContactNormal(const Sphere& s, const Triangle& p)
+{
+    return pegas::Vector3();
+}
+
+pegas::real pegas::gmt::calculatePenetration(const Sphere& s, const Triangle& p)
+{
+    return real();
 }
 
 bool pegas::gmt::overlap(Sphere const& a, Sphere const& b)
@@ -337,15 +369,15 @@ pegas::real pegas::gmt::calculatePenetration(Sphere const& a, Sphere const& b)
 
 bool pegas::gmt::overlap(Box const& b, Plane const& p)
 {
-	return overlap(p, b);
+    return overlap(p, b);
 }
 
 pegas::Vector3 pegas::gmt::calculateContactNormal(Box const& b, Plane const& p)
 {
-	return p.getNormal();
+    return p.getNormal();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Box const& b, Plane const& p)
 {
-	return calculatePenetration(p, b);
+    return calculatePenetration(p, b);
 }

@@ -17,7 +17,7 @@ typedef unsigned long long LONGLONG;
 #ifdef TIMING_WINDOWS
 #include <intrin.h>
 #include <mmsystem.h>
-#endif 
+#endif
 
 static double qpcFrequency;
 #endif
