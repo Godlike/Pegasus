@@ -119,6 +119,7 @@ namespace gmt {
         Vector3 mC;
     };
 
+    //Plane tests
     bool overlap(Plane const& p, Plane const& s);
     Vector3 calculateContactNormal(Plane const& p, Plane const& s);
     real calculatePenetration(Plane const& p, Plane const& s);
@@ -135,10 +136,12 @@ namespace gmt {
     Vector3 calculateContactNormal(Plane const& p, Box const& b);
     real calculatePenetration(Plane const& p, Box const& b);
 
+    //Triangle tests
     bool overlap(Triangle const& t, Plane const& p);
     Vector3 calculateContactNormal(Triangle const& t, Plane const& p);
     real calculatePenetration(Triangle const& t, Plane const& p);
 
+    //Sphere tests
     bool overlap(Sphere const& s, Plane const& p);
     Vector3 calculateContactNormal(Sphere const& s, Plane const& p);
     real calculatePenetration(Sphere const& s, Plane const& p);
@@ -155,6 +158,7 @@ namespace gmt {
     Vector3 calculateContactNormal(Sphere const& s, Cone const& c);
     real calculatePenetration(Sphere const& s, Cone const& c);
 
+    //Box tests
     bool overlap(Box const& b, Plane const& p);
     Vector3 calculateContactNormal(Box const& b, Plane const& p);
     real calculatePenetration(Box const& b, Plane const& p);
