@@ -7,12 +7,12 @@
 
 pegas::gmt::Geometry::~Geometry() {}
 
-pegas::gmt::Shape::Shape(pegas::Vector3 const& centerOfMass)
+pegas::gmt::Shape::Shape(Vector3 const& centerOfMass)
     : mCenterOfMass(centerOfMass)
 {
 }
 
-void pegas::gmt::Shape::setCenterOfMass(pegas::Vector3 const& centerOfMass)
+void pegas::gmt::Shape::setCenterOfMass(Vector3 const& centerOfMass)
 {
     mCenterOfMass = centerOfMass;
 }
@@ -22,18 +22,18 @@ pegas::Vector3 pegas::gmt::Shape::getCenterOfMass() const
     return mCenterOfMass;
 }
 
-pegas::gmt::SimpleShape::SimpleShape(pegas::Vector3 const& centerOfMass)
+pegas::gmt::SimpleShape::SimpleShape(Vector3 const& centerOfMass)
     : Shape(centerOfMass)
 {
 }
 
-pegas::gmt::Plane::Plane(pegas::Vector3 const& centerOfMass, pegas::Vector3 const& normal)
+pegas::gmt::Plane::Plane(Vector3 const& centerOfMass, Vector3 const& normal)
     : SimpleShape(centerOfMass)
     , mNormal(normal)
 {
 }
 
-void pegas::gmt::Plane::setNormal(pegas::Vector3 const& normal)
+void pegas::gmt::Plane::setNormal(Vector3 const& normal)
 {
     mNormal = normal;
 }
@@ -43,35 +43,35 @@ pegas::Vector3 pegas::gmt::Plane::getNormal() const
     return mNormal;
 }
 
-pegas::gmt::Triangle::Triangle(pegas::Vector3 const& a, pegas::Vector3 const& b, pegas::Vector3 const& c)
-    : SimpleShape((a + b + c) * static_cast<real>(1.0f / 3.0f))
+pegas::gmt::Triangle::Triangle(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c)
+    : SimpleShape(centerOfMass)
     , mA(a)
     , mB(b)
     , mC(c)
 {
 }
 
-void pegas::gmt::Triangle::setAxes(pegas::Vector3 const& a, pegas::Vector3 const& b, pegas::Vector3 const& c)
+void pegas::gmt::Triangle::setAxes(Vector3 const& a, Vector3 const& b, Vector3 const& c)
 {
     mA = a;
     mB = b;
     mC = c;
 }
 
-void pegas::gmt::Triangle::getAxes(pegas::Vector3& a, pegas::Vector3& b, pegas::Vector3& c) const
+void pegas::gmt::Triangle::getAxes(Vector3& a, Vector3& b, Vector3& c) const
 {
     a = mA;
     b = mB;
     c = mC;
 }
 
-pegas::gmt::Sphere::Sphere(pegas::Vector3 const& centerOfMass, pegas::real const r)
+pegas::gmt::Sphere::Sphere(Vector3 const& centerOfMass, real const r)
     : SimpleShape(centerOfMass)
     , mR(r)
 {
 }
 
-void pegas::gmt::Sphere::setRadius(pegas::real const r)
+void pegas::gmt::Sphere::setRadius(real const r)
 {
     mR = r;
 }
@@ -81,15 +81,14 @@ pegas::real pegas::gmt::Sphere::getRadius() const
     return mR;
 }
 
-pegas::gmt::Cone::Cone(pegas::Vector3 const& centerOfMass, pegas::Vector3 const& a, pegas::real const h, pegas::real const r)
+pegas::gmt::Cone::Cone(Vector3 const& centerOfMass, Vector3 const& a, real const r)
     : SimpleShape(centerOfMass)
     , mA(a)
-    , mH(h)
     , mR(r)
 {
 }
 
-void pegas::gmt::Cone::setAppex(pegas::Vector3 const& a)
+void pegas::gmt::Cone::setAppex(Vector3 const& a)
 {
     mA = a;
 }
@@ -99,17 +98,7 @@ pegas::Vector3 pegas::gmt::Cone::getAppex() const
     return mA;
 }
 
-void pegas::gmt::Cone::setHeight(pegas::real const h)
-{
-    mH = h;
-}
-
-pegas::real pegas::gmt::Cone::getHeight() const
-{
-    return mH;
-}
-
-void pegas::gmt::Cone::setRadius(pegas::real const r)
+void pegas::gmt::Cone::setRadius(real const r)
 {
     mR = r;
 }
@@ -119,14 +108,14 @@ pegas::real pegas::gmt::Cone::getRadius() const
     return mR;
 }
 
-pegas::gmt::Capsule::Capsule(pegas::Vector3 const& centerOfMass, pegas::Vector3 const& halfHeight, pegas::real const r)
+pegas::gmt::Capsule::Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r)
     : SimpleShape(centerOfMass)
     , mHalfHeight(halfHeight)
     , mR(r)
 {
 }
 
-void pegas::gmt::Capsule::setHalfHeight(pegas::Vector3 const& halfHeight)
+void pegas::gmt::Capsule::setHalfHeight(Vector3 const& halfHeight)
 {
     mHalfHeight = halfHeight;
 }
@@ -136,7 +125,7 @@ pegas::Vector3 pegas::gmt::Capsule::getHalfHeight() const
     return mHalfHeight;
 }
 
-void pegas::gmt::Capsule::setRadius(pegas::real const r)
+void pegas::gmt::Capsule::setRadius(real const r)
 {
     mR = r;
 }
@@ -146,7 +135,7 @@ pegas::real pegas::gmt::Capsule::getRadius() const
     return mR;
 }
 
-pegas::gmt::Box::Box(pegas::Vector3 const& centerOfMass, pegas::Vector3 const& a, pegas::Vector3 const& b, pegas::Vector3 const& c)
+pegas::gmt::Box::Box(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c)
     : SimpleShape(centerOfMass)
     , mA(a)
     , mB(b)
@@ -154,14 +143,14 @@ pegas::gmt::Box::Box(pegas::Vector3 const& centerOfMass, pegas::Vector3 const& a
 {
 }
 
-void pegas::gmt::Box::setAxes(pegas::Vector3 const& a, pegas::Vector3 const& b, pegas::Vector3 const& c)
+void pegas::gmt::Box::setAxes(Vector3 const& a, Vector3 const& b, Vector3 const& c)
 {
     mA = a;
     mB = b;
     mC = c;
 }
 
-void pegas::gmt::Box::getAxes(pegas::Vector3& a, pegas::Vector3& b, pegas::Vector3& c) const
+void pegas::gmt::Box::getAxes(Vector3& a, Vector3& b, Vector3& c) const
 {
     a = mA;
     b = mB;
@@ -246,8 +235,8 @@ bool pegas::gmt::overlap(Plane const& p, Box const& b)
     Vector3 i, j, k;
     b.getAxes(i, j, k);
 
-    std::array<Vector3, 8> points{(i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k)};
-    std::for_each(points.begin(), points.end(), [&b](auto & n) { n += b.getCenterOfMass(); });
+    std::array<Vector3, 8> points{ (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
+    std::for_each(points.begin(), points.end(), [&b](auto& n) { n += b.getCenterOfMass(); });
 
     auto const pNormal = p.getNormal();
     auto const d = p.getCenterOfMass() * pNormal;
@@ -275,8 +264,8 @@ pegas::real pegas::gmt::calculatePenetration(Plane const& p, Box const& b)
     b.getAxes(i, j, k);
 
     auto const pNormal = p.getNormal();
-    std::array<Vector3, 8> points{(i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k)};
-    std::for_each(points.begin(), points.end(), [&b](auto & n) { n += b.getCenterOfMass(); });
+    std::array<Vector3, 8> points{ (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
+    std::for_each(points.begin(), points.end(), [&b](auto& n) { n += b.getCenterOfMass(); });
 
     std::array<real, 8> penetrations;
     auto const d = p.getCenterOfMass() * p.getNormal();
@@ -325,7 +314,7 @@ bool pegas::gmt::overlap(Sphere const& s, Triangle const& t)
     auto const sphereMassCenter = s.getCenterOfMass();
     std::array<real, 3> trianglePointsToSphereSqrDistances;
     std::transform(trianglePoints.begin(), trianglePoints.end(), trianglePointsToSphereSqrDistances.begin(),
-                   [&sphereMassCenter](auto const& p) { return (p - sphereMassCenter).squareMagnitude(); });
+        [&sphereMassCenter](auto const& p) { return (p - sphereMassCenter).squareMagnitude(); });
 
     std::sort(trianglePointsToSphereSqrDistances.begin(), trianglePointsToSphereSqrDistances.end());
     if (trianglePointsToSphereSqrDistances.front() < std::pow(s.getRadius(), 2)) {
@@ -334,15 +323,14 @@ bool pegas::gmt::overlap(Sphere const& s, Triangle const& t)
 
     auto const planeNormal = (trianglePoints[1] - trianglePoints[0]) % (trianglePoints[2] - trianglePoints[0]);
     auto const spherePlaneScalarProjection = trianglePoints[0] * planeNormal.unit() - sphereMassCenter * planeNormal.unit();
-    if (std::abs(spherePlaneScalarProjection) < s.getRadius())
-    {
+    if (std::abs(spherePlaneScalarProjection) < s.getRadius()) {
         return true;
     }
 
     auto const c = planeNormal * (trianglePoints[0] - sphereMassCenter) / planeNormal.squareMagnitude();
     auto const sphereCenterPlaneProjection = sphereMassCenter + planeNormal * c;
 
-    static auto sameSide = [](auto const & p1, auto const &p2, auto const &a, auto const &b) {
+    static auto sameSide = [](auto const& p1, auto const& p2, auto const& a, auto const& b) {
         auto const ab = b - a;
         auto const cp1 = ab.vectorProduct(p1 - a);
         auto const cp2 = ab.vectorProduct(p2 - a);
@@ -354,7 +342,7 @@ bool pegas::gmt::overlap(Sphere const& s, Triangle const& t)
         && sameSide(sphereCenterPlaneProjection, trianglePoints[2], trianglePoints[0], trianglePoints[1]);
 }
 
-pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Triangle const & t)
+pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Triangle const& t)
 {
     std::array<Vector3, 3> trianglePoints;
     t.getAxes(trianglePoints[0], trianglePoints[1], trianglePoints[2]);
@@ -368,6 +356,7 @@ pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Triangle cons
 
 pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Triangle const& t)
 {
+    //Note: Works as a plane penetration test, but should it work like that?
     std::array<Vector3, 3> trianglePoints;
     t.getAxes(trianglePoints[0], trianglePoints[1], trianglePoints[2]);
 
@@ -399,6 +388,60 @@ pegas::real pegas::gmt::calculatePenetration(Sphere const& a, Sphere const& b)
     auto const& aMassCenter = a.getCenterOfMass();
     auto const& bMassCenter = b.getCenterOfMass();
     return (a.getRadius() + b.getRadius() - (aMassCenter - bMassCenter).magnitude());
+}
+
+bool pegas::gmt::overlap(Sphere const & s, Cone const & c)
+{
+    auto const coneAppex = c.getAppex();
+    auto const sphereRadius = s.getRadius();
+    auto const planeNormal = (coneAppex % (coneAppex % s.getCenterOfMass().unit())).unit();
+
+    return overlap(s, Triangle(c.getCenterOfMass(), planeNormal * sphereRadius, planeNormal * -sphereRadius, coneAppex));
+}
+
+pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const & s, Cone const & c)
+{
+    auto const coneAppex = c.getAppex();
+    auto const sphereRadius = s.getRadius();
+    auto const trianglePlaneNormal = (coneAppex % s.getCenterOfMass()).unit();
+    auto const contactPlaneVector = (coneAppex % trianglePlaneNormal).unit();
+
+    std::array<Vector3, 3> trianglePoints{ contactPlaneVector * sphereRadius, contactPlaneVector * -sphereRadius, coneAppex };
+
+    auto const t = trianglePlaneNormal * (trianglePoints[0] - s.getCenterOfMass()) / trianglePlaneNormal.squareMagnitude();
+    auto const sphereCenterPlaneProjection = s.getCenterOfMass() + trianglePlaneNormal * t;
+
+    static auto sameSide = [](auto const& p1, auto const& p2, auto const& a, auto const& b) {
+        auto const ab = b - a;
+        auto const cp1 = ab.vectorProduct(p1 - a);
+        auto const cp2 = ab.vectorProduct(p2 - a);
+        return cp1.scalarProduct(cp2) >= 0;
+    };
+
+    if (!sameSide(sphereCenterPlaneProjection, trianglePoints[0], trianglePoints[1], trianglePoints[2])) {
+        return (trianglePlaneNormal % (trianglePoints[2] - trianglePoints[1])).unit();
+    }
+    if (!sameSide(sphereCenterPlaneProjection, trianglePoints[1], trianglePoints[0], trianglePoints[2])) {
+        return ((trianglePoints[2] - trianglePoints[0]) % trianglePlaneNormal).unit();
+    }
+
+    return coneAppex.unit() * -1;
+}
+
+pegas::real pegas::gmt::calculatePenetration(Sphere const & s, Cone const & c)
+{
+    auto const coneAppex = c.getAppex();
+    auto const coneMassCenter = c.getCenterOfMass();
+    auto const contactNormal = calculateContactNormal(s, c);
+
+    if ((contactNormal % coneAppex).squareMagnitude() == static_cast<real>(0)) {
+        return (s.getRadius() - (s.getCenterOfMass() - c.getCenterOfMass()).magnitude()) - coneAppex.magnitude() * real(0.25);
+    }
+
+    auto const edgeDistance = (coneAppex + coneMassCenter) * contactNormal;
+    auto const sphereDistance = s.getCenterOfMass() * contactNormal;
+
+    return edgeDistance - (sphereDistance - s.getRadius());
 }
 
 bool pegas::gmt::overlap(Box const& b, Plane const& p)

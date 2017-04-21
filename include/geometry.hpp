@@ -43,7 +43,7 @@ namespace gmt {
 
     class Triangle : public SimpleShape {
     public:
-        Triangle(Vector3 const& a, Vector3 const& b, Vector3 const& c);
+        Triangle(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c);
 
         void setAxes(Vector3 const& a, Vector3 const& b, Vector3 const& c);
         void getAxes(Vector3& a, Vector3& b, Vector3& c) const;
@@ -70,20 +70,16 @@ namespace gmt {
 
     class Cone : public SimpleShape {
     public:
-        Cone(Vector3 const& centerOfMass, Vector3 const& a, real const h, real const r);
+        Cone(Vector3 const& centerOfMass, Vector3 const& a, real const r);
 
         void setAppex(Vector3 const& a);
         Vector3 getAppex() const;
-
-        void setHeight(real const h);
-        real getHeight() const;
 
         void setRadius(real const r);
         real getRadius() const;
 
     private:
         Vector3 mA;
-        real mH;
         real mR;
     };
 
@@ -147,13 +143,17 @@ namespace gmt {
     Vector3 calculateContactNormal(Sphere const& s, Plane const& p);
     real calculatePenetration(Sphere const& s, Plane const& p);
 
-    bool overlap(Sphere const &s, Triangle const& t);
+    bool overlap(Sphere const& s, Triangle const& t);
     Vector3 calculateContactNormal(Sphere const& s, Triangle const& t);
     real calculatePenetration(Sphere const& s, Triangle const& t);
 
     bool overlap(Sphere const& a, Sphere const& b);
     Vector3 calculateContactNormal(Sphere const& a, Sphere const& b);
     real calculatePenetration(Sphere const& a, Sphere const& b);
+
+    bool overlap(Sphere const& s, Cone const& c);
+    Vector3 calculateContactNormal(Sphere const& s, Cone const& c);
+    real calculatePenetration(Sphere const& s, Cone const& c);
 
     bool overlap(Box const& b, Plane const& p);
     Vector3 calculateContactNormal(Box const& b, Plane const& p);
