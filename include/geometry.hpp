@@ -158,6 +158,14 @@ namespace gmt {
     Vector3 calculateContactNormal(Sphere const& s, Cone const& c);
     real calculatePenetration(Sphere const& s, Cone const& c);
 
+	bool overlap(Sphere const& s, Capsule const& c);
+	Vector3 calculateContactNormal(Sphere const& s, Capsule const& c);
+	real calculatePenetration(Sphere const& s, Capsule const& c);
+
+	bool overlap(Sphere const& s, Cylinder const& c);
+	Vector3 calculateContactNormal(Sphere const& s, Cylinder const& c);
+	real calculatePenetration(Sphere const& s, Cylinder const& c);
+
     //Box tests
     bool overlap(Box const& b, Plane const& p);
     Vector3 calculateContactNormal(Box const& b, Plane const& p);

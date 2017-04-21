@@ -444,6 +444,112 @@ pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Cone const& c)
     return edgeDistance - (sphereDistance - s.getRadius());
 }
 
+bool pegas::gmt::overlap(Sphere const& s, Capsule const& c)
+{
+	auto const capsuleMassCenter = c.getCenterOfMass();
+	auto const capsuleRadius = c.getRadius();
+	auto const capsuleHalfHeight = c.getHalfHeight();
+
+	if (overlap(s, Cylinder(capsuleMassCenter, capsuleHalfHeight, capsuleRadius)))
+	{
+		return true;
+	}
+
+	Sphere s1(capsuleMassCenter + capsuleHalfHeight, capsuleRadius);
+	Sphere s2(capsuleMassCenter - capsuleHalfHeight, capsuleRadius);
+
+	if (overlap(s1, s))
+	{
+		return true;
+	}
+
+	return overlap(s2, s);
+}
+
+pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Capsule const& c)
+{
+	auto const capsuleMassCenter = c.getCenterOfMass();
+	auto const capsuleRadius = c.getRadius();
+	auto const capsuleHalfHeight = c.getHalfHeight();
+
+	Sphere s1(capsuleMassCenter + capsuleHalfHeight, capsuleRadius);
+	Sphere s2(capsuleMassCenter - capsuleHalfHeight, capsuleRadius);
+
+	if (overlap(s1, s))
+	{
+		return calculateContactNormal(s, s1);
+	}
+
+	if (overlap(s2, s))
+	{
+		return calculateContactNormal(s, s2);
+	}
+
+	return calculateContactNormal(s, Cylinder(capsuleMassCenter, capsuleHalfHeight, capsuleRadius));
+}
+
+pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Capsule const& c)
+{
+	return real();
+}
+
+bool pegas::gmt::overlap(Sphere const& s, Cylinder const& c)
+{
+	auto const cylinderMassCenter = c.getCenterOfMass();
+	auto const cylinderHalfHeight = c.getHalfHeight();
+	auto const cylinderRadius = c.getRadius();
+	auto const sphereMassCenter = s.getCenterOfMass();
+	auto const sphereRadius = s.getRadius();
+
+	auto const cylinderSphereVector = (sphereMassCenter - cylinderMassCenter).unit();
+	auto const contactPlaneNormal = (cylinderSphereVector) % cylinderHalfHeight;
+	auto const contactPlaneVector = (cylinderHalfHeight % contactPlaneNormal).unit() * cylinderRadius;
+
+	std::array<Vector3, 4> rectanglePoints{contactPlaneVector + cylinderHalfHeight, contactPlaneVector - cylinderHalfHeight,
+		contactPlaneVector * -1 + cylinderHalfHeight, contactPlaneVector * -1 - cylinderHalfHeight};
+
+	{
+		auto const cylinderDistance = cylinderMassCenter * contactPlaneVector.unit();
+		auto const sphereDistance = sphereMassCenter * contactPlaneVector.unit();
+
+		if (std::abs(cylinderDistance - sphereDistance) - cylinderRadius > sphereRadius)
+		{
+			return false;
+		}
+	}
+
+	{
+		auto const cylinderDistance = cylinderMassCenter * cylinderHalfHeight.unit();
+		auto const sphereDistance = sphereMassCenter * cylinderHalfHeight.unit();
+
+		if (std::abs(cylinderDistance - sphereDistance) - cylinderHalfHeight.magnitude() > sphereRadius)
+		{
+			return false;
+		}
+	}
+
+	{
+		auto const sphereDistance = sphereMassCenter * cylinderSphereVector;
+		std::for_each(rectanglePoints.begin(), rectanglePoints.end(), [&](auto & p) { p += cylinderMassCenter; });
+		std::array<real, 4> rectanglePointDistances;
+		std::transform(rectanglePoints.begin(), rectanglePoints.end(), rectanglePointDistances.begin(), 
+			[&](auto const & p) { return p * cylinderSphereVector - sphereDistance; });
+		std::sort(rectanglePointDistances.begin(), rectanglePointDistances.end());
+
+		return rectanglePointDistances.front() <= sphereRadius;
+	}
+}
+
+pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Cylinder const& c)
+{
+	return Vector3();
+}
+
+pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Cylinder const& c)
+{
+	return real();
+}
+
 bool pegas::gmt::overlap(Box const& b, Plane const& p)
 {
     return overlap(p, b);
