@@ -315,7 +315,7 @@ pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Plane const& p)
     return calculatePenetration(p, s);
 }
 
-bool pegas::gmt::overlap(const Sphere& s, const Triangle& t)
+bool pegas::gmt::overlap(Sphere const& s, Triangle const& t)
 {
     std::array<Vector3, 3> trianglePoints;
     t.getAxes(trianglePoints[0], trianglePoints[1], trianglePoints[2]);
@@ -354,7 +354,7 @@ bool pegas::gmt::overlap(const Sphere& s, const Triangle& t)
         && sameSide(sphereCenterPlaneProjection, trianglePoints[2], trianglePoints[0], trianglePoints[1]);
 }
 
-pegas::Vector3 pegas::gmt::calculateContactNormal(const Sphere& s, const Triangle& t)
+pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Triangle const & t)
 {
     std::array<Vector3, 3> trianglePoints;
     t.getAxes(trianglePoints[0], trianglePoints[1], trianglePoints[2]);
@@ -366,7 +366,7 @@ pegas::Vector3 pegas::gmt::calculateContactNormal(const Sphere& s, const Triangl
     return contactNormal;
 }
 
-pegas::real pegas::gmt::calculatePenetration(const Sphere& s, const Triangle& t)
+pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Triangle const& t)
 {
     std::array<Vector3, 3> trianglePoints;
     t.getAxes(trianglePoints[0], trianglePoints[1], trianglePoints[2]);
