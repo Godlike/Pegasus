@@ -109,7 +109,7 @@ pegas::Vector3 pegas::Vector3::vectorProduct(pegas::Vector3 const& v) const
     return Vector3{ y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x };
 }
 
-void pegas::Vector3::operator%(pegas::Vector3 const& v)
+void pegas::Vector3::operator%=(pegas::Vector3 const& v)
 {
     *this = vectorProduct(v);
 }

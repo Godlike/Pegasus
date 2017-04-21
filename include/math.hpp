@@ -47,7 +47,7 @@ public:
 
     Vector3 vectorProduct(Vector3 const& v) const;
 
-    void operator%(Vector3 const& v);
+    void operator%=(Vector3 const& v);
 
     Vector3 operator%(Vector3 const& v) const;
 
