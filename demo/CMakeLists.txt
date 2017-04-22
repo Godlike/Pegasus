@@ -7,7 +7,7 @@ set (CMAKE_CXX_STANDARD 14)
 # FIND GLUT
 #########################################################
 find_package(GLUT REQUIRED)
-include_directories(${GLUT_INCLUDE_DIRS})
+include_directories(${GLUT_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR})
 link_directories(${GLUT_LIBRARY_DIRS})
 add_definitions(${GLUT_DEFINITIONS})
 if(NOT GLUT_FOUND)
@@ -70,4 +70,4 @@ set(SOURCES
 # Linking
 #########################################################
 add_executable (${PROJECT_NAME} ${SOURCES} ${HEADERS})
-target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLUT_LIBRARIES})
