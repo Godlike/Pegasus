@@ -274,21 +274,6 @@ pegas::real pegas::gmt::calculatePenetration(Plane const& p, Box const& b)
     return (*std::min_element(penetrations.begin(), penetrations.end())) * -1;
 }
 
-bool pegas::gmt::overlap(Triangle const& t, Plane const& p)
-{
-    return overlap(p, t);
-}
-
-pegas::Vector3 pegas::gmt::calculateContactNormal(Triangle const& t, Plane const& p)
-{
-    return p.getNormal();
-}
-
-pegas::real pegas::gmt::calculatePenetration(Triangle const& t, Plane const& p)
-{
-    return calculatePenetration(p, t);
-}
-
 bool pegas::gmt::overlap(Sphere const& s, Plane const& p)
 {
     return overlap(p, s);
@@ -612,17 +597,79 @@ pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Cylinder const& c)
 	return xPenetration < yPenetration ? xPenetration : yPenetration;
 }
 
-bool pegas::gmt::overlap(Box const& b, Plane const& p)
+bool pegas::gmt::overlap(Sphere const& s, Box const& b)
 {
-    return overlap(p, b);
+	Vector3 i, j, k;
+	b.getAxes(i, j, k);
+	auto const boxMassCenter = b.getCenterOfMass();
+	auto const sphereMassCenter = s.getCenterOfMass();
+	auto const sphereRadius = s.getRadius();
+	
+	std::array<Vector3, 4> sepratingAxes{ i.unit(), j.unit(), k.unit(), (s.getCenterOfMass() - b.getCenterOfMass()).unit() };
+
+	if (std::abs((i + boxMassCenter) * sepratingAxes[0] - sphereMassCenter * sepratingAxes[0]) <= sphereRadius)
+	{
+		return true;
+	}
+
+	if (std::abs((j + boxMassCenter) * sepratingAxes[1] - sphereMassCenter * sepratingAxes[1]) <= sphereRadius)
+	{
+		return true;
+	}
+
+	if (std::abs((k + boxMassCenter) * sepratingAxes[2] - sphereMassCenter * sepratingAxes[2]) <= sphereRadius)
+	{
+		return true;
+	}
+
+	std::array<Vector3, 8> boxVertices{ (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k), (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
+	std::for_each(boxVertices.begin(), boxVertices.end(), [&b](auto& n) { n += b.getCenterOfMass(); });
+	std::array<real, 8> boxVerticesProjections;
+	std::transform(boxVertices.begin(), boxVertices.end(), boxVerticesProjections.begin(), 
+		[&sepratingAxes](auto const & v) { return v * sepratingAxes[3]; });
+	std::sort(boxVerticesProjections.begin(), boxVerticesProjections.end());
+	auto const sphereMassCenterProjection = sphereMassCenter * sepratingAxes[3];
+
+	return std::abs(sphereMassCenterProjection - boxVerticesProjections.front()) < sphereRadius
+		|| std::abs(sphereMassCenterProjection - boxVerticesProjections.back()) < sphereRadius;
 }
 
-pegas::Vector3 pegas::gmt::calculateContactNormal(Box const& b, Plane const& p)
+pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Box const& b)
 {
-    return p.getNormal();
+	Vector3 i, j, k;
+	b.getAxes(i, j, k);
+	auto const boxMassCenter = b.getCenterOfMass();
+	auto const sphereMassCenter = s.getCenterOfMass();
+
+	std::array<Vector3, 6> boxNormals{ i, j, k, i * -1, j * -1, k * -1 };
+	auto boxEdges(boxNormals);
+	std::for_each(boxEdges.begin(), boxEdges.end(), [&boxMassCenter](auto & n) { n += boxMassCenter; });
+	std::array<real, 6> boxEdgeSphereDistances;
+	for (unsigned index = 0; index < boxEdgeSphereDistances.size(); ++index)
+	{
+		boxEdgeSphereDistances[index] = std::abs(boxEdges[index] * boxNormals[index].unit() - sphereMassCenter * boxNormals[index].unit());
+	}
+	auto minIt = std::min_element(boxEdgeSphereDistances.begin(), boxEdgeSphereDistances.end());
+
+	return boxNormals[std::distance(boxEdgeSphereDistances.begin(), minIt)].unit();
 }
 
-pegas::real pegas::gmt::calculatePenetration(Box const& b, Plane const& p)
+pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Box const& b)
 {
-    return calculatePenetration(p, b);
+	Vector3 i, j, k;
+	b.getAxes(i, j, k);
+	auto const boxMassCenter = b.getCenterOfMass();
+	auto const sphereMassCenter = s.getCenterOfMass();
+
+	std::array<Vector3, 6> boxNormals{ i, j, k, i * -1, j * -1, k * -1 };
+	auto boxEdges(boxNormals);
+	std::for_each(boxEdges.begin(), boxEdges.end(), [&boxMassCenter](auto & n) { n += boxMassCenter; });
+	std::array<real, 6> boxEdgeSphereDistances;
+	for (unsigned index = 0; index < boxEdgeSphereDistances.size(); ++index)
+	{
+		boxEdgeSphereDistances[index] = std::abs(boxEdges[index] * boxNormals[index].unit() - sphereMassCenter * boxNormals[index].unit());
+	}
+	auto minIt = std::min_element(boxEdgeSphereDistances.begin(), boxEdgeSphereDistances.end());
+
+	return s.getRadius() - *minIt;
 }
