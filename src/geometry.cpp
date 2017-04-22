@@ -542,12 +542,52 @@ bool pegas::gmt::overlap(Sphere const& s, Cylinder const& c)
 
 pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Cylinder const& c)
 {
-	return Vector3();
+	auto const cylinderMassCenter = c.getCenterOfMass();
+	auto const cylinderHalfHeight = c.getHalfHeight();
+	auto const cylinderRadius = c.getRadius();
+	auto const sphereMassCenter = s.getCenterOfMass();
+	
+	auto const cylinderSphereVector = (sphereMassCenter - cylinderMassCenter).unit();
+	auto const contactPlaneNormal = (cylinderSphereVector) % cylinderHalfHeight;
+	auto const contactPlaneVector = (cylinderHalfHeight % contactPlaneNormal).unit() * cylinderRadius;
+
+	auto const xS = sphereMassCenter * contactPlaneVector.unit();
+	auto const yS = sphereMassCenter * cylinderHalfHeight.unit();
+
+	auto const xC = cylinderMassCenter * contactPlaneVector.unit();
+	auto const yC = cylinderMassCenter * cylinderHalfHeight.unit();
+
+	if (std::abs(xS - xC) < cylinderRadius 
+		&& (yS > yC + cylinderHalfHeight.magnitude() || (yS < yC - cylinderHalfHeight.magnitude())))
+	{
+		return (yS > yC ? cylinderHalfHeight : cylinderHalfHeight * -1).unit();
+	}
+
+	return (xS > xC ? contactPlaneVector : contactPlaneVector * -1).unit();
 }
 
 pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Cylinder const& c)
 {
-	return real();
+	auto const cylinderMassCenter = c.getCenterOfMass();
+	auto const cylinderHalfHeight = c.getHalfHeight();
+	auto const cylinderRadius = c.getRadius();
+	auto const sphereMassCenter = s.getCenterOfMass();
+	auto const sphereRaius = s.getRadius();
+
+	auto const cylinderSphereVector = (sphereMassCenter - cylinderMassCenter).unit();
+	auto const contactPlaneNormal = (cylinderSphereVector) % cylinderHalfHeight;
+	auto const contactPlaneVector = (cylinderHalfHeight % contactPlaneNormal).unit() * cylinderRadius;
+
+	auto const xS = sphereMassCenter * contactPlaneVector.unit();
+	auto const yS = sphereMassCenter * cylinderHalfHeight.unit();
+
+	auto const xC = cylinderMassCenter * contactPlaneVector.unit();
+	auto const yC = cylinderMassCenter * cylinderHalfHeight.unit();
+
+	auto const xPenetration = std::abs(xC - xS) - cylinderRadius - sphereRaius;
+	auto const yPenetration = std::abs(yC - yS) - cylinderHalfHeight.magnitude() - sphereRaius;
+	
+	return xPenetration < yPenetration ? xPenetration : yPenetration;
 }
 
 bool pegas::gmt::overlap(Box const& b, Plane const& p)
