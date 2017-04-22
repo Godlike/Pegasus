@@ -1,7 +1,6 @@
 #ifndef PEGAS_GEOMETRY_HPP
 #define PEGAS_GEOMETRY_HPP
 
-#include <algorithm>
 #include <memory>
 
 #include "Pegas/include/math.hpp"

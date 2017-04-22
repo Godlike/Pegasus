@@ -475,6 +475,11 @@ pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Capsule const
 	Sphere s1(capsuleMassCenter + capsuleHalfHeight, capsuleRadius);
 	Sphere s2(capsuleMassCenter - capsuleHalfHeight, capsuleRadius);
 
+	if (overlap(s, Cylinder(capsuleMassCenter, capsuleHalfHeight, capsuleRadius)))
+	{
+		return calculateContactNormal(s, Cylinder(capsuleMassCenter, capsuleHalfHeight, capsuleRadius));
+	}
+
 	if (overlap(s1, s))
 	{
 		return calculateContactNormal(s, s1);
@@ -490,7 +495,24 @@ pegas::Vector3 pegas::gmt::calculateContactNormal(Sphere const& s, Capsule const
 
 pegas::real pegas::gmt::calculatePenetration(Sphere const& s, Capsule const& c)
 {
-	return real();
+	auto const capsuleMassCenter = c.getCenterOfMass();
+	auto const capsuleRadius = c.getRadius();
+	auto const capsuleHalfHeight = c.getHalfHeight();
+
+	Sphere s1(capsuleMassCenter + capsuleHalfHeight, capsuleRadius);
+	Sphere s2(capsuleMassCenter - capsuleHalfHeight, capsuleRadius);
+
+	if (overlap(s1, s))
+	{
+		return calculatePenetration(s, s1);
+	}
+
+	if (overlap(s2, s))
+	{
+		return calculatePenetration(s, s2);
+	}
+
+	return calculatePenetration(s, Cylinder(capsuleMassCenter, capsuleHalfHeight, capsuleRadius));
 }
 
 bool pegas::gmt::overlap(Sphere const& s, Cylinder const& c)
