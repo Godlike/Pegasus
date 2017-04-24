@@ -1,6 +1,6 @@
-#include "Pegas/demo/app.hpp"
-#include "Pegas/demo/ogl_headers.hpp"
-#include "Pegas/demo/timing.hpp"
+#include "Pegasus/demo/app.hpp"
+#include "Pegasus/demo/ogl_headers.hpp"
+#include "Pegasus/demo/timing.hpp"
 
 extern Application* getApplication();
 

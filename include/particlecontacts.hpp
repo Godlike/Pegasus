@@ -1,7 +1,7 @@
 #ifndef PEGAS_PARTICLE_CONTACTS_HPP
 #define PEGAS_PARTICLE_CONTACTS_HPP
 
-#include "Pegas/include/particle.hpp"
+#include "Pegasus/include/particle.hpp"
 #include <vector>
 
 namespace pegas {

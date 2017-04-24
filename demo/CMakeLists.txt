@@ -1,13 +1,13 @@
 cmake_minimum_required (VERSION 3.1)
 project (PegasDemo)
 
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 17)
 
 #########################################################
 # FIND GLUT
 #########################################################
 find_package(GLUT REQUIRED)
-include_directories(${GLUT_INCLUDE_DIRS})
+include_directories(${GLUT_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR})
 link_directories(${GLUT_LIBRARY_DIRS})
 add_definitions(${GLUT_DEFINITIONS})
 if(NOT GLUT_FOUND)

@@ -1,8 +1,8 @@
-#include "Pegas/demo/app.hpp"
-#include "Pegas/demo/ogl_headers.hpp"
-#include "Pegas/demo/timing.hpp"
-#include "Pegas/include/core.hpp"
-#include "Pegas/include/particle.hpp"
+#include "Pegasus/demo/app.hpp"
+#include "Pegasus/demo/ogl_headers.hpp"
+#include "Pegasus/demo/timing.hpp"
+#include "Pegasus/include/core.hpp"
+#include "Pegasus/include/particle.hpp"
 
 #include <stdio.h>
 
