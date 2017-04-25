@@ -95,11 +95,12 @@ public:
                 break;
             }
 
-            if (gmt::overlap(*body->s, *mRigidBody->s)) {
+            gmt::IntersectionQueries<gmt::Sphere, gmt::Sphere> intersection(body->s.get(), mRigidBody->s.get());
+            if (intersection.overlap()) {
                 contacts.push_back(std::make_shared<ParticleContact>(
                     body->p, mRigidBody->p, mRestitution,
-                    calculateContactNormal(*body->s, *mRigidBody->s),
-                    calculatePenetration(*body->s, *mRigidBody->s)));
+                    intersection.calculateContactNormal(),
+                    intersection.calculatePenetration()));
             }
         }
 

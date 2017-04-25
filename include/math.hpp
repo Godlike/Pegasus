@@ -51,8 +51,6 @@ public:
 
     Vector3 operator%(Vector3 const& v) const;
 
-    void inverse();
-
     Vector3 inverse() const;
 
     real magnitude() const;
