@@ -1,15 +1,16 @@
-#include "Pegas/demo/app.hpp"
-#include "Pegas/demo/ogl_headers.hpp"
-#include "Pegas/demo/timing.hpp"
-#include "Pegas/include/particlecontacts.hpp"
-#include "Pegas/include/particleforcegenerator.hpp"
-#include "Pegas/include/particlelinks.hpp"
-#include "Pegas/include/particleworld.hpp"
+#include "Pegasus/demo/app.hpp"
+#include "Pegasus/demo/ogl_headers.hpp"
+#include "Pegasus/demo/timing.hpp"
+#include "Pegasus/include/particlecontacts.hpp"
+#include "Pegasus/include/particleforcegenerator.hpp"
+#include "Pegasus/include/particleworld.hpp"
+#include "Pegasus/include/particlelinks.hpp"
 
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <stdio.h>
+
 
 #define BLOB_COUNT 5
 #define PLATFORM_COUNT 10

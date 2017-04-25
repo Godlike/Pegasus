@@ -1,5 +1,4 @@
-#include "Pegas/demo/random.hpp"
-#include <cstdlib>
+#include "Pegasus/demo/random.hpp"
 #include <ctime>
 
 using namespace pegas;

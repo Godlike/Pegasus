@@ -1,8 +1,8 @@
 #ifndef PARTICLE_LINKS_HPP
 #define PARTICLE_LINKS_HPP
 
-#include "Pegas/include/particle.hpp"
-#include "Pegas/include/particlecontacts.hpp"
+#include "Pegasus/include/particle.hpp"
+#include "Pegasus/include/particlecontacts.hpp"
 
 namespace pegas {
 class ParticleLink : public ParticleContactGenerator {

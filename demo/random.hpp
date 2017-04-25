@@ -1,7 +1,7 @@
 #ifndef PEGAS_RANDOM_H
 #define PEGAS_RANDOM_H
 
-#include "Pegas/include/math.hpp"
+#include "Pegasus/include/math.hpp"
 
 namespace pegas {
 

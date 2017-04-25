@@ -1,4 +1,4 @@
-#include "Pegas/include/particleforcegenerator.hpp"
+#include "Pegasus/include/particleforcegenerator.hpp"
 
 #include <cmath>
 #include <stdexcept>

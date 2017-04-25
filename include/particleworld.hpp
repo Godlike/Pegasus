@@ -1,9 +1,9 @@
 #ifndef PEGAS_PARTICLE_WORLD_HPP
 #define PEGAS_PARTICLE_WORLD_HPP
 
-#include "Pegas/include/particle.hpp"
-#include "Pegas/include/particlecontacts.hpp"
-#include "Pegas/include/particleforcegenerator.hpp"
+#include "Pegasus/include/particle.hpp"
+#include "Pegasus/include/particlecontacts.hpp"
+#include "Pegasus/include/particleforcegenerator.hpp"
 #include <vector>
 
 namespace pegas {

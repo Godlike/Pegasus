@@ -1,4 +1,4 @@
-#include "Pegas/include/particle.hpp"
+#include "Pegasus/include/particle.hpp"
 
 #include <cmath>
 #include <limits>
