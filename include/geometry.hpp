@@ -1,12 +1,12 @@
 #ifndef PEGAS_GEOMETRY_HPP
 #define PEGAS_GEOMETRY_HPP
 
-#include <memory>
+#include <algorithm>
 #include <array>
 #include <limits>
-#include <algorithm>
+#include <memory>
 
-#include "Pegas/include/math.hpp"
+#include "Pegasus/include/math.hpp"
 
 namespace pegas {
 namespace gmt {
@@ -51,7 +51,7 @@ namespace gmt {
         void getAxes(Vector3& a, Vector3& b, Vector3& c) const;
         Vector3 getNormal() const;
 
-    private:        
+    private:
         Vector3 mA;
         Vector3 mB;
         Vector3 mC;
@@ -125,9 +125,8 @@ namespace gmt {
         Vector3 mC;
     };
 
-
-    template < typename T>
-    bool isPointOnSameSide(T const& p1, T const& p2, T const& a, T const& b) 
+    template <typename T>
+    bool isPointOnSameSide(T const& p1, T const& p2, T const& a, T const& b)
     {
         auto const ab = b - a;
         auto const cp1 = ab.vectorProduct(p1 - a);
@@ -135,74 +134,65 @@ namespace gmt {
         return cp1.scalarProduct(cp2) >= 0;
     }
 
-
-    template < typename ShapeA, typename ShapeB, typename IntersectionSpecific >
-    class IntersectionQueriesBase
-    {
+    template <typename ShapeA, typename ShapeB, typename IntersectionSpecific>
+    class IntersectionQueriesBase {
     protected:
-        ShapeA const * a;
-        ShapeB const * b;
+        ShapeA const* a;
+        ShapeB const* b;
         bool initialized = false;
 
     public:
-        explicit IntersectionQueriesBase(ShapeA const * _a = nullptr, ShapeB const * _b = nullptr)
+        explicit IntersectionQueriesBase(ShapeA const* _a = nullptr, ShapeB const* _b = nullptr)
         {
             setShapes(_a, _b);
         }
 
-        void set(Plane const * _a, Plane const * _b)
+        void set(Plane const* _a, Plane const* _b)
         {
             setShapes(_a, _b);
 
-            if (initialized)
-            {
+            if (initialized) {
                 IntersectionSpecific::calculate();
             }
         }
 
     private:
-        void setShapes(ShapeA const * _a, ShapeB const * _b)
+        void setShapes(ShapeA const* _a, ShapeB const* _b)
         {
             initialized = _a != nullptr && _b != nullptr;
-            if (initialized)
-            {
+            if (initialized) {
                 a = _a;
                 b = _b;
             }
         }
     };
 
-
-    template< typename ShapeA, typename ShapeB>
-    class IntersectionQueries :
-            public IntersectionQueriesBase<ShapeA, ShapeB, IntersectionQueries<ShapeA, ShapeB>> {};
-
+    template <typename ShapeA, typename ShapeB>
+    class IntersectionQueries : public IntersectionQueriesBase<ShapeA, ShapeB, IntersectionQueries<ShapeA, ShapeB> > {
+    };
 
     //Plane tests
-    template<>
+    template <>
     class IntersectionQueries<Plane, Plane>
-            : IntersectionQueriesBase<Plane, Plane, IntersectionQueries<Plane, Plane>>
-    {
+        : IntersectionQueriesBase<Plane, Plane, IntersectionQueries<Plane, Plane> > {
     private:
-        using Base = IntersectionQueriesBase<Plane, Plane, IntersectionQueries<Plane, Plane>>;
+        using Base = IntersectionQueriesBase<Plane, Plane, IntersectionQueries<Plane, Plane> >;
         Vector3 aNormal;
         Vector3 bNormal;
         Vector3 crossProduct;
 
     public:
-        IntersectionQueries(Plane const * _a, Plane const * _b)
+        IntersectionQueries(Plane const* _a, Plane const* _b)
             : Base(_a, _b)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return crossProduct.squareMagnitude() != static_cast<real>(0);
             }
 
@@ -211,8 +201,7 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return b->getNormal();
             }
 
@@ -221,8 +210,7 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return std::numeric_limits<pegas::real>::max();
             }
 
@@ -238,33 +226,30 @@ namespace gmt {
         }
     };
 
-    template<>
+    template <>
     class IntersectionQueries<Plane, Triangle>
-            : IntersectionQueriesBase<Plane, Triangle, IntersectionQueries<Plane, Triangle>>
-    {
+        : IntersectionQueriesBase<Plane, Triangle, IntersectionQueries<Plane, Triangle> > {
     private:
-        using Base = IntersectionQueriesBase<Plane, Triangle, IntersectionQueries<Plane, Triangle>>;
+        using Base = IntersectionQueriesBase<Plane, Triangle, IntersectionQueries<Plane, Triangle> >;
         Vector3 i, j, k;
         Vector3 aNormal;
         std::array<real, 3> projections;
 
     public:
-        IntersectionQueries(Plane const * a, Triangle const * b)
+        IntersectionQueries(Plane const* a, Triangle const* b)
             : Base(a, b)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 auto const d = b->getCenterOfMass() * aNormal;
 
-                return (projections[0] < d) || (projections[1]< d) || (projections[2] < d);
+                return (projections[0] < d) || (projections[1] < d) || (projections[2] < d);
             }
 
             return false;
@@ -272,8 +257,7 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return b->getNormal().unit();
             }
 
@@ -282,8 +266,7 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return *std::min_element(projections.begin(), projections.end());
             }
 
@@ -299,12 +282,11 @@ namespace gmt {
         }
     };
 
-    template<>
+    template <>
     class IntersectionQueries<Plane, Sphere>
-            : IntersectionQueriesBase<Plane, Sphere, IntersectionQueries<Plane, Sphere>>
-    {
+        : IntersectionQueriesBase<Plane, Sphere, IntersectionQueries<Plane, Sphere> > {
     private:
-        using Base = IntersectionQueriesBase<Plane, Sphere, IntersectionQueries<Plane, Sphere>>;
+        using Base = IntersectionQueriesBase<Plane, Sphere, IntersectionQueries<Plane, Sphere> >;
         Vector3 aMassCenter;
         Vector3 bMassCenter;
         Vector3 aNormal;
@@ -312,19 +294,17 @@ namespace gmt {
         real penetration;
 
     public:
-        IntersectionQueries(Plane const * a, Sphere const * b)
+        IntersectionQueries(Plane const* a, Sphere const* b)
             : Base(a, b)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return penetration >= real(0);
             }
 
@@ -333,8 +313,7 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return (aNormal - bMassCenter).unit();
             }
 
@@ -343,8 +322,7 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return penetration;
             }
 
@@ -362,12 +340,11 @@ namespace gmt {
         }
     };
 
-    template<>
+    template <>
     class IntersectionQueries<Plane, Box>
-            : IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box>>
-    {
+        : IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box> > {
     private:
-        using Base = IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box>>;
+        using Base = IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box> >;
         Vector3 i, j, k;
         Vector3 bMassCenter;
         std::array<Vector3, 8> boxVertices;
@@ -378,19 +355,17 @@ namespace gmt {
         real aDistance;
 
     public:
-        IntersectionQueries(Plane const * a, Box const * b)
+        IntersectionQueries(Plane const* a, Box const* b)
             : Base(a, b)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return *std::min_element(boxPenetrations.begin(), boxPenetrations.end()) >= 0;
             }
 
@@ -399,11 +374,10 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
-                std::transform(boxAxes.begin(), boxAxes.end(), boxAxesDistances.begin(), [this](auto const & v) { return v * aNormal; });
+            if (initialized) {
+                std::transform(boxAxes.begin(), boxAxes.end(), boxAxesDistances.begin(), [this](auto const& v) { return v * aNormal; });
                 auto const minIndex = std::distance(boxAxesDistances.begin(),
-                                                    std::min_element(boxAxesDistances.begin(), boxAxesDistances.end()));
+                    std::min_element(boxAxesDistances.begin(), boxAxesDistances.end()));
 
                 return boxAxes[minIndex].unit();
             }
@@ -413,8 +387,7 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return (*std::min_element(boxPenetrations.begin(), boxPenetrations.end()));
             }
 
@@ -429,37 +402,35 @@ namespace gmt {
             b->getAxes(i, j, k);
             bMassCenter = b->getCenterOfMass();
             boxVertices = { (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k),
-                            (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
+                (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
             boxAxes = { i, j, k, i * -1, j * -1, k * -1 };
             std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& n) { n += bMassCenter; });
             std::transform(boxVertices.begin(), boxVertices.end(), boxPenetrations.begin(),
-                           [this](auto const& p){ return p * aNormal - aDistance; });
+                [this](auto const& p) { return p * aNormal - aDistance; });
         }
     };
 
     //Sphere tests
-    template<>
-    class IntersectionQueries<Sphere, Plane> : IntersectionQueriesBase<Sphere, Plane, IntersectionQueries<Sphere, Plane>>
-    {
+    template <>
+    class IntersectionQueries<Sphere, Plane> : IntersectionQueriesBase<Sphere, Plane, IntersectionQueries<Sphere, Plane> > {
     private:
-        using Base = IntersectionQueriesBase<Sphere, Plane, IntersectionQueries<Sphere, Plane>>;
+        using Base = IntersectionQueriesBase<Sphere, Plane, IntersectionQueries<Sphere, Plane> >;
         IntersectionQueries<Plane, Sphere> planeSphereIntersection;
         Vector3 bNormal;
 
     public:
-        IntersectionQueries(Sphere const * a, Plane const * b)
-            : Base(a, b) , planeSphereIntersection(b, a)
+        IntersectionQueries(Sphere const* a, Plane const* b)
+            : Base(a, b)
+            , planeSphereIntersection(b, a)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return planeSphereIntersection.overlap();
             }
 
@@ -468,8 +439,7 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return bNormal;
             }
 
@@ -478,8 +448,7 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return planeSphereIntersection.calculatePenetration();
             }
 
@@ -493,11 +462,10 @@ namespace gmt {
         }
     };
 
-    template<>
-    class IntersectionQueries<Sphere, Triangle> : IntersectionQueriesBase<Sphere, Triangle, IntersectionQueries<Sphere, Triangle>>
-    {
+    template <>
+    class IntersectionQueries<Sphere, Triangle> : IntersectionQueriesBase<Sphere, Triangle, IntersectionQueries<Sphere, Triangle> > {
     private:
-        using Base = IntersectionQueriesBase<Sphere, Triangle, IntersectionQueries<Sphere, Triangle>>;
+        using Base = IntersectionQueriesBase<Sphere, Triangle, IntersectionQueries<Sphere, Triangle> >;
         std::array<Vector3, 3> triangleVetices;
         mutable std::array<real, 3> triangleVerticesSqrDistances;
         Vector3 bMassCenter;
@@ -506,19 +474,17 @@ namespace gmt {
         real aRadius;
 
     public:
-        IntersectionQueries(Sphere const * a, Triangle const * b)
+        IntersectionQueries(Sphere const* a, Triangle const* b)
             : Base(a, b)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 std::transform(triangleVetices.begin(), triangleVetices.end(), triangleVerticesSqrDistances.begin(),
                     [this](auto const& p) { return (p - aMassCenter).squareMagnitude(); });
 
@@ -545,10 +511,9 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 auto const contactNormalScalar = (aMassCenter - triangleVetices[0]) * bNormal;
-                return  bNormal * contactNormalScalar;
+                return bNormal * contactNormalScalar;
             }
 
             return {};
@@ -556,10 +521,9 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 //Note: Works as a plane penetration test, but should it work like that?
-                auto const planeDistance  = bMassCenter * bNormal;
+                auto const planeDistance = bMassCenter * bNormal;
                 auto const sphereDistance = aMassCenter * bNormal;
 
                 return planeDistance - (sphereDistance - aRadius);
@@ -576,15 +540,14 @@ namespace gmt {
             bNormal = b->getNormal();
             b->getAxes(triangleVetices[0], triangleVetices[1], triangleVetices[2]);
             std::for_each(triangleVetices.begin(), triangleVetices.end(),
-                          [this](auto & p) { p += bMassCenter; });
+                [this](auto& p) { p += bMassCenter; });
         }
     };
 
-    template<>
-    class IntersectionQueries<Sphere, Sphere> : IntersectionQueriesBase<Sphere, Sphere, IntersectionQueries<Sphere, Sphere>>
-    {
+    template <>
+    class IntersectionQueries<Sphere, Sphere> : IntersectionQueriesBase<Sphere, Sphere, IntersectionQueries<Sphere, Sphere> > {
     private:
-        using Base = IntersectionQueriesBase<Sphere, Sphere, IntersectionQueries<Sphere, Sphere>>;
+        using Base = IntersectionQueriesBase<Sphere, Sphere, IntersectionQueries<Sphere, Sphere> >;
         Vector3 aMassCenter;
         Vector3 bMassCenter;
         Vector3 baVector;
@@ -593,19 +556,17 @@ namespace gmt {
         real radiusSum;
 
     public:
-        IntersectionQueries(Sphere const * a, Sphere const * b)
+        IntersectionQueries(Sphere const* a, Sphere const* b)
             : Base(a, b)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return std::pow(radiusSum, 2) > baVector.squareMagnitude();
             }
 
@@ -614,8 +575,7 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return baVector.unit();
             }
 
@@ -624,8 +584,7 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return (radiusSum - baVector.magnitude());
             }
 
@@ -644,11 +603,10 @@ namespace gmt {
         }
     };
 
-    template<>
-    class IntersectionQueries<Sphere, Cone> : IntersectionQueriesBase<Sphere, Cone, IntersectionQueries<Sphere, Cone>>
-    {
+    template <>
+    class IntersectionQueries<Sphere, Cone> : IntersectionQueriesBase<Sphere, Cone, IntersectionQueries<Sphere, Cone> > {
     private:
-        using Base = IntersectionQueriesBase<Sphere, Cone, IntersectionQueries<Sphere, Cone>>;
+        using Base = IntersectionQueriesBase<Sphere, Cone, IntersectionQueries<Sphere, Cone> >;
         IntersectionQueries<Sphere, Triangle> intersection;
         Vector3 aMassCenter;
         Vector3 bMassCenter;
@@ -660,19 +618,19 @@ namespace gmt {
         std::array<Vector3, 3> intersectionTriangleVertices;
 
     public:
-        IntersectionQueries(Sphere const * a, Cone const * b)
-            : Base(a, b), intersection(a, &intersectionTriangle), intersectionTriangle({}, {}, {}, {})
+        IntersectionQueries(Sphere const* a, Cone const* b)
+            : Base(a, b)
+            , intersection(a, &intersectionTriangle)
+            , intersectionTriangle({}, {}, {}, {})
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return intersection.overlap();
             }
 
@@ -681,20 +639,17 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {                
-                auto const t = intersectionTriangleNormal * (intersectionTriangleVertices[0] - aMassCenter) 
-                                / intersectionTriangleNormal.squareMagnitude();
+            if (initialized) {
+                auto const t = intersectionTriangleNormal * (intersectionTriangleVertices[0] - aMassCenter)
+                    / intersectionTriangleNormal.squareMagnitude();
                 auto const sphereCenterPlaneProjection = aMassCenter + intersectionTriangleNormal * t;
 
-                if (!isPointOnSameSide(sphereCenterPlaneProjection, intersectionTriangleVertices[0], 
-                                       intersectionTriangleVertices[1], intersectionTriangleVertices[2])) 
-                {
+                if (!isPointOnSameSide(sphereCenterPlaneProjection, intersectionTriangleVertices[0],
+                        intersectionTriangleVertices[1], intersectionTriangleVertices[2])) {
                     return intersectionTriangleNormal;
                 }
-                if (!isPointOnSameSide(sphereCenterPlaneProjection, intersectionTriangleVertices[1], 
-                                       intersectionTriangleVertices[0], intersectionTriangleVertices[2])) 
-                {
+                if (!isPointOnSameSide(sphereCenterPlaneProjection, intersectionTriangleVertices[1],
+                        intersectionTriangleVertices[0], intersectionTriangleVertices[2])) {
                     return intersectionTriangleNormal.inverse();
                 }
 
@@ -706,12 +661,10 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 auto const contactNormal = intersection.calculateContactNormal();
 
-                if ((contactNormal % bAppex).squareMagnitude() == static_cast<real>(0)) 
-                {
+                if ((contactNormal % bAppex).squareMagnitude() == static_cast<real>(0)) {
                     return (aRadius - (aMassCenter - bMassCenter).magnitude()) - bAppex.magnitude() * real(0.25);
                 }
 
@@ -738,11 +691,10 @@ namespace gmt {
         }
     };
 
-    template<>
-    class IntersectionQueries<Sphere, Cylinder> : IntersectionQueriesBase<Sphere, Cylinder, IntersectionQueries<Sphere, Cylinder>>
-    {
+    template <>
+    class IntersectionQueries<Sphere, Cylinder> : IntersectionQueriesBase<Sphere, Cylinder, IntersectionQueries<Sphere, Cylinder> > {
     private:
-        using Base = IntersectionQueriesBase<Sphere, Cylinder, IntersectionQueries<Sphere, Cylinder>>;
+        using Base = IntersectionQueriesBase<Sphere, Cylinder, IntersectionQueries<Sphere, Cylinder> >;
         Vector3 bMassCenter;
         Vector3 bHalfHeight;
         real bRadius;
@@ -755,19 +707,17 @@ namespace gmt {
         Vector3 bMassCenterProjection;
 
     public:
-        IntersectionQueries(Sphere const * a, Cylinder const * b)
+        IntersectionQueries(Sphere const* a, Cylinder const* b)
             : Base(a, b)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 return calculatePenetration() > 0;
             }
 
@@ -776,18 +726,18 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
+            if (initialized) {
 
                 if (std::abs(aMassCenterProjection.x - bMassCenterProjection.x) < bRadius
-                    && (aMassCenterProjection.y > bMassCenterProjection.y + bHalfHeight.magnitude() 
-                        || aMassCenterProjection.y < bMassCenterProjection.y - bHalfHeight.magnitude()))
-                {
+                    && (aMassCenterProjection.y > bMassCenterProjection.y + bHalfHeight.magnitude()
+                           || aMassCenterProjection.y < bMassCenterProjection.y - bHalfHeight.magnitude())) {
                     return (aMassCenterProjection.y > bMassCenterProjection.y ? bHalfHeight : bHalfHeight.inverse()).unit();
                 }
 
-                return (aMassCenterProjection.x > bMassCenterProjection.x 
-                        ? intersectionPlaneVector : intersectionPlaneVector.inverse()).unit();
+                return (aMassCenterProjection.x > bMassCenterProjection.x
+                               ? intersectionPlaneVector
+                               : intersectionPlaneVector.inverse())
+                    .unit();
             }
 
             return {};
@@ -795,8 +745,7 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 auto const xPenetration = std::abs(bMassCenterProjection.x - aMassCenterProjection.x) - bRadius - aRadius;
                 auto const yPenetration = std::abs(bMassCenterProjection.y - aMassCenterProjection.y) - bHalfHeight.magnitude() - aRadius;
 
@@ -817,18 +766,17 @@ namespace gmt {
             baNormal = (aMassCenter - bMassCenter).unit();
             intersectionPlaneNormal = baNormal % bHalfHeight;
             intersectionPlaneVector = (bHalfHeight % intersectionPlaneNormal).unit() * bRadius;
-            aMassCenterProjection = { aMassCenter * intersectionPlaneVector.unit(), 
-                                      aMassCenter * bHalfHeight.unit(), real(0) };
-            bMassCenterProjection = { bMassCenter * intersectionPlaneVector.unit(), 
-                                      bMassCenter * bHalfHeight.unit(), real(0) };
+            aMassCenterProjection = { aMassCenter * intersectionPlaneVector.unit(),
+                aMassCenter * bHalfHeight.unit(), real(0) };
+            bMassCenterProjection = { bMassCenter * intersectionPlaneVector.unit(),
+                bMassCenter * bHalfHeight.unit(), real(0) };
         }
     };
 
-    template<>
-    class IntersectionQueries<Sphere, Capsule> : IntersectionQueriesBase<Sphere, Capsule, IntersectionQueries<Sphere, Capsule>>
-    {
+    template <>
+    class IntersectionQueries<Sphere, Capsule> : IntersectionQueriesBase<Sphere, Capsule, IntersectionQueries<Sphere, Capsule> > {
     private:
-        using Base = IntersectionQueriesBase<Sphere, Capsule, IntersectionQueries<Sphere, Capsule>>;
+        using Base = IntersectionQueriesBase<Sphere, Capsule, IntersectionQueries<Sphere, Capsule> >;
         Vector3 aMassCenter;
         real aRadius;
         Vector3 bMassCenter;
@@ -841,30 +789,28 @@ namespace gmt {
         IntersectionQueries<Sphere, Cylinder> scIntersection;
 
     public:
-        IntersectionQueries(Sphere const * a, Cylinder const * b)
+        IntersectionQueries(Sphere const* a, Cylinder const* b)
             : Base(a, b)
-            , s1({}, 0), s2({}, 0), c({}, {}, 0)
+            , s1({}, 0)
+            , s2({}, 0)
+            , c({}, {}, 0)
             , ssIntersection1(a, &s1)
             , ssIntersection2(a, &s2)
             , scIntersection(a, &c)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
-                if (scIntersection.overlap())
-                {
+            if (initialized) {
+                if (scIntersection.overlap()) {
                     return true;
                 }
 
-                if (ssIntersection1.overlap())
-                {
+                if (ssIntersection1.overlap()) {
                     return true;
                 }
 
@@ -876,20 +822,16 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
-                if (scIntersection.overlap())
-                {
+            if (initialized) {
+                if (scIntersection.overlap()) {
                     return scIntersection.calculateContactNormal();
                 }
 
-                if (ssIntersection1.overlap())
-                {
+                if (ssIntersection1.overlap()) {
                     return ssIntersection1.calculateContactNormal();
                 }
 
-                if (ssIntersection2.overlap())
-                {
+                if (ssIntersection2.overlap()) {
                     return ssIntersection2.calculateContactNormal();
                 }
 
@@ -901,15 +843,12 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
-                if (ssIntersection1.overlap())
-                {
+            if (initialized) {
+                if (ssIntersection1.overlap()) {
                     return ssIntersection1.calculatePenetration();
                 }
 
-                if (ssIntersection2.overlap())
-                {
+                if (ssIntersection2.overlap()) {
                     return ssIntersection2.calculatePenetration();
                 }
 
@@ -933,11 +872,10 @@ namespace gmt {
         }
     };
 
-    template<>
-    class IntersectionQueries<Sphere, Box> : IntersectionQueriesBase<Sphere, Box, IntersectionQueries<Sphere, Box>>
-    {
+    template <>
+    class IntersectionQueries<Sphere, Box> : IntersectionQueriesBase<Sphere, Box, IntersectionQueries<Sphere, Box> > {
     private:
-        using Base = IntersectionQueriesBase<Sphere, Box, IntersectionQueries<Sphere, Box>>;
+        using Base = IntersectionQueriesBase<Sphere, Box, IntersectionQueries<Sphere, Box> >;
         std::array<Vector3, 3> boxAxes;
         std::array<Vector3, 6> boxNormals;
         std::array<Vector3, 6> boxFaces;
@@ -950,31 +888,26 @@ namespace gmt {
         Vector3 bMassCenter;
 
     public:
-        IntersectionQueries(Sphere const * a, Box const * b)
+        IntersectionQueries(Sphere const* a, Box const* b)
             : Base(a, b)
         {
-            if (initialized)
-            {
+            if (initialized) {
                 calculate();
             }
         }
 
         bool overlap() const
         {
-            if (initialized)
-            {
-                if (std::abs((boxAxes[0] + bMassCenter) * separatingAxes[0] - aMassCenter * separatingAxes[0]) <= aRadius)
-                {
+            if (initialized) {
+                if (std::abs((boxAxes[0] + bMassCenter) * separatingAxes[0] - aMassCenter * separatingAxes[0]) <= aRadius) {
                     return true;
                 }
 
-                if (std::abs((boxAxes[1] + bMassCenter) * separatingAxes[1] - aMassCenter * separatingAxes[1]) <= aRadius)
-                {
+                if (std::abs((boxAxes[1] + bMassCenter) * separatingAxes[1] - aMassCenter * separatingAxes[1]) <= aRadius) {
                     return true;
                 }
 
-                if (std::abs((boxAxes[2] + bMassCenter) * separatingAxes[2] - aMassCenter * separatingAxes[2]) <= aRadius)
-                {
+                if (std::abs((boxAxes[2] + bMassCenter) * separatingAxes[2] - aMassCenter * separatingAxes[2]) <= aRadius) {
                     return true;
                 }
 
@@ -989,8 +922,7 @@ namespace gmt {
 
         Vector3 calculateContactNormal() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 auto minIt = std::min_element(boxFaceDistances.begin(), boxFaceDistances.end());
 
                 return boxNormals[std::distance(boxFaceDistances.begin(), minIt)].unit();
@@ -1001,8 +933,7 @@ namespace gmt {
 
         real calculatePenetration() const
         {
-            if (initialized)
-            {
+            if (initialized) {
                 auto minIt = std::min_element(boxFaceDistances.begin(), boxFaceDistances.end());
 
                 return aRadius - *minIt;
@@ -1029,18 +960,16 @@ namespace gmt {
                 (boxAxes[0].inverse() - boxAxes[1] - boxAxes[2]) };
             std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& n) { n += bMassCenter; });
             std::transform(boxVertices.begin(), boxVertices.end(), boxVerticesProjections.begin(),
-                [this](auto const & v) { return v * separatingAxes[3]; });
+                [this](auto const& v) { return v * separatingAxes[3]; });
             std::sort(boxVerticesProjections.begin(), boxVerticesProjections.end());
             boxNormals = { boxAxes[0], boxAxes[1], boxAxes[2], boxAxes[0].inverse(), boxAxes[1].inverse(), boxAxes[2].inverse() };
             boxFaces = boxNormals;
-            std::for_each(boxFaces.begin(), boxFaces.end(), [this](auto & n) { n += bMassCenter; });
-            for (unsigned index = 0; index < boxFaceDistances.size(); ++index)
-            {
+            std::for_each(boxFaces.begin(), boxFaces.end(), [this](auto& n) { n += bMassCenter; });
+            for (unsigned index = 0; index < boxFaceDistances.size(); ++index) {
                 boxFaceDistances[index] = std::abs(boxFaces[index] * boxNormals[index].unit() - aMassCenter * boxNormals[index].unit());
             }
         }
     };
-
 
 } // namespace gmt
 } // namespace pegas

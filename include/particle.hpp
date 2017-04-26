@@ -1,8 +1,8 @@
 #ifndef PEGAS_PARTICLE_HPP
 #define PEGAS_PARTICLE_HPP
 
-#include "Pegas/include/core.hpp"
-#include "Pegas/include/math.hpp"
+#include "Pegasus/include/core.hpp"
+#include "Pegasus/include/math.hpp"
 #include <memory>
 #include <vector>
 

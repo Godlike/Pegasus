@@ -1,4 +1,4 @@
-#include "Pegas/include/math.hpp"
+#include "Pegasus/include/math.hpp"
 
 #include <cmath>
 

@@ -41,7 +41,7 @@ set(HEADERS
     ../include/particlelinks.hpp
     ../include/particleworld.hpp
     ../include/geometry.hpp
-	../include/mechanics.hpp
+    ../include/mechanics.hpp
     ../include/math.hpp
     ../demo/app.hpp
     ../demo/timing.hpp
@@ -57,7 +57,7 @@ set(SOURCES
     ../src/particlelinks.cpp
     ../src/particleworld.cpp
     ../src/geometry.cpp
-	../src/mechanics.cpp
+    ../src/mechanics.cpp
     ../src/math.cpp
     ../demo/app.cpp
     ../demo/timing.cpp

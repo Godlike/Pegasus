@@ -1,4 +1,4 @@
-#include "Pegas/include/particlecontacts.hpp"
+#include "Pegasus/include/particlecontacts.hpp"
 
 #include <algorithm>
 

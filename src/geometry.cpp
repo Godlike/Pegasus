@@ -1,5 +1,4 @@
-#include "Pegas/include/geometry.hpp"
-
+#include "Pegasus/include/geometry.hpp"
 
 pegas::gmt::Geometry::~Geometry() {}
 
@@ -70,7 +69,7 @@ pegas::Vector3 pegas::gmt::Triangle::getNormal() const
 
 void pegas::gmt::Triangle::calculateNormal()
 {
-    mNormal = (mB-mA) % (mC-mA);
+    mNormal = (mB - mA) % (mC - mA);
 }
 
 pegas::gmt::Sphere::Sphere(Vector3 const& centerOfMass, real const r)

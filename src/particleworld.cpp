@@ -1,4 +1,4 @@
-#include "Pegas/include/particleworld.hpp"
+#include "Pegasus/include/particleworld.hpp"
 
 pegas::ParticleWorld::ParticleWorld(unsigned int maxContacts, unsigned int iterations)
     : mResolver(iterations)

@@ -1,8 +1,8 @@
 #ifndef PEGAS_MECHANICS_HPP
 #define PEGAS_MECHANICS_HPP
 
-#include "Pegas/include/geometry.hpp"
-#include "Pegas/include/particle.hpp"
+#include "Pegasus/include/geometry.hpp"
+#include "Pegasus/include/particle.hpp"
 
 #include <memory>
 #include <vector>

@@ -1,9 +1,9 @@
 #ifndef PEGAS_PARTICLE_CONTACTS_HPP
 #define PEGAS_PARTICLE_CONTACTS_HPP
 
-#include "Pegas/include/geometry.hpp"
-#include "Pegas/include/mechanics.hpp"
-#include "Pegas/include/particle.hpp"
+#include "Pegasus/include/geometry.hpp"
+#include "Pegasus/include/mechanics.hpp"
+#include "Pegasus/include/particle.hpp"
 #include <vector>
 
 namespace pegas {

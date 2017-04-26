@@ -1,11 +1,11 @@
-#include "Pegas/demo/app.hpp"
-#include "Pegas/demo/ogl_headers.hpp"
-#include "Pegas/demo/timing.hpp"
-#include "Pegas/include/geometry.hpp"
-#include "Pegas/include/mechanics.hpp"
-#include "Pegas/include/particlecontacts.hpp"
-#include "Pegas/include/particleforcegenerator.hpp"
-#include "Pegas/include/particleworld.hpp"
+#include "Pegasus/demo/app.hpp"
+#include "Pegasus/demo/ogl_headers.hpp"
+#include "Pegasus/demo/timing.hpp"
+#include "Pegasus/include/geometry.hpp"
+#include "Pegasus/include/mechanics.hpp"
+#include "Pegasus/include/particlecontacts.hpp"
+#include "Pegasus/include/particleforcegenerator.hpp"
+#include "Pegasus/include/particleworld.hpp"
 
 #include <cassert>
 #include <cmath>

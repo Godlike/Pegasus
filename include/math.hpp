@@ -1,7 +1,7 @@
 #ifndef PEGAS_MATH_HPP
 #define PEGAS_MATH_HPP
 
-#include "Pegas/include/core.hpp"
+#include "Pegasus/include/core.hpp"
 
 namespace pegas {
 

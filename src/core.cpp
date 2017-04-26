@@ -1,1 +1,1 @@
-#include "Pegas/include/core.hpp"
+#include "Pegasus/include/core.hpp"

@@ -1,7 +1,7 @@
 #ifndef PEGAS_PARTICLE_FORCE_GENERATOR_HPP
 #define PEGAS_PARTICLE_FORCE_GENERATOR_HPP
 
-#include "Pegas/include/particle.hpp"
+#include "Pegasus/include/particle.hpp"
 #include <map>
 #include <memory>
 #include <set>
