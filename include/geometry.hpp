@@ -422,6 +422,104 @@ namespace gmt {
     };
 
     template <>
+    class IntersectionQueries<Plane, Capsule>
+        : IntersectionQueriesBase<Plane, Capsule, IntersectionQueries<Plane, Capsule> > {
+    private:
+        using Base = IntersectionQueriesBase<Plane, Capsule, IntersectionQueries<Plane, Capsule> >;
+        IntersectionQueries<Plane, Sphere> psIntresection1;
+        IntersectionQueries<Plane, Sphere> psIntresection2;
+        IntersectionQueries<Plane, Cylinder> pcIntersection;
+        Vector3 bMassCenter;
+        Vector3 bHalfHeight;
+        real bRadius;
+        Sphere s1, s2;
+        Cylinder c;
+        mutable bool overlapS1 = false;
+        mutable bool overlapS2 = false;
+        mutable bool overlapC = false;
+
+    public:
+        IntersectionQueries(Plane const* a, Capsule const* b)
+            : Base(a, b)
+            , psIntresection1(a, &s1)
+            , psIntresection2(a, &s2)
+            , pcIntersection(a, &c)
+            , s1({}, 0)
+            , s2({}, 0)
+            , c({}, {}, 0)
+        {
+            if (initialized) {
+                calculate();
+            }
+        }
+
+        bool overlap() const
+        {
+            if (initialized) {
+                if (overlapC = pcIntersection.overlap()) {
+                    return true;
+                }
+                if (overlapS1 = psIntresection1.overlap()) {
+                    return true;
+                }
+
+                return overlapS2 = psIntresection2.overlap();
+            }
+
+            return false;
+        }
+
+        Vector3 calculateContactNormal() const
+        {
+            if (initialized) {
+                if (overlapC) {
+                    return pcIntersection.calculateContactNormal();
+                }
+                if (overlapS1) {
+                    return psIntresection1.calculateContactNormal();
+                }
+                if (overlapS2) {
+                    return psIntresection2.calculateContactNormal();
+                }
+
+                return pcIntersection.calculateContactNormal();
+            }
+
+            return {};
+        }
+
+        real calculatePenetration() const
+        {
+            if (initialized) {
+                if (overlapC) {
+                    return pcIntersection.calculatePenetration();
+                }
+                if (overlapS1) {
+                    return psIntresection1.calculatePenetration();
+                }
+                if (overlapS2) {
+                    return psIntresection2.calculatePenetration();
+                }
+
+                return pcIntersection.calculatePenetration();
+            }
+
+            return 0;
+        }
+
+    private:
+        void calculate()
+        {
+            bMassCenter = b->getCenterOfMass();
+            bRadius = b->getRadius();
+            bHalfHeight = b->getHalfHeight();
+            s1 = Sphere(bHalfHeight + bMassCenter, bRadius);
+            s2 = Sphere(bHalfHeight.inverse() + bMassCenter, bRadius);
+            c = Cylinder(bMassCenter, bHalfHeight, bRadius);
+        }
+    };
+
+    template <>
     class IntersectionQueries<Plane, Box>
         : IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box> > {
     private:
