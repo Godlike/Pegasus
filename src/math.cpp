@@ -126,13 +126,6 @@ void pegas::Vector3::operator-=(pegas::Vector3 const& v)
     z -= v.z;
 }
 
-void pegas::Vector3::inverse()
-{
-    x = -x;
-    y = -y;
-    z = -z;
-}
-
 pegas::Vector3 pegas::Vector3::inverse() const
 {
     auto v(*this);
