@@ -341,6 +341,92 @@ namespace gmt {
     };
 
     template <>
+    class IntersectionQueries<Plane, Cone>
+        : IntersectionQueriesBase<Plane, Cone, IntersectionQueries<Plane, Cone> > {
+    private:
+        using Base = IntersectionQueriesBase<Plane, Cone, IntersectionQueries<Plane, Cone> >;
+        Vector3 aMassCenter;
+        Vector3 aNormal;
+        real aDistance;
+        real bRadius;
+        Vector3 bMassCenter;
+        Vector3 bAppex;
+        Vector3 intersectionTriangleNormal;
+        Vector3 intersectionTriangleRadiusVector;
+        mutable std::array<Vector3, 3> intersectionTriangleVertices;
+        mutable std::array<Vector3, 3> intersectionTriangleAxes;
+        mutable std::array<real, 3> intersectionTriangleAxesDistances;
+        mutable std::array<real, 3> intersectionTriangleVerticesDistances;
+
+    public:
+        IntersectionQueries(Plane const* a, Cone const* b)
+            : Base(a, b)
+        {
+            if (initialized) {
+                calculate();
+            }
+        }
+
+        bool overlap() const
+        {
+            if (initialized) {
+                return *std::min_element(intersectionTriangleVerticesDistances.begin(),
+                           intersectionTriangleVerticesDistances.end())
+                    <= 0;
+            }
+
+            return false;
+        }
+
+        Vector3 calculateContactNormal() const
+        {
+            if (initialized) {
+                intersectionTriangleAxes = { ((intersectionTriangleVertices[1] - intersectionTriangleAxes[0]) % intersectionTriangleNormal).unit(),
+                    ((intersectionTriangleVertices[2] - intersectionTriangleAxes[0]) % intersectionTriangleNormal).unit(),
+                    ((intersectionTriangleVertices[1] - intersectionTriangleAxes[2]) % intersectionTriangleNormal).unit() };
+                std::transform(intersectionTriangleAxes.begin(), intersectionTriangleAxes.end(),
+                    intersectionTriangleAxesDistances.begin(),
+                    [this](auto const& v) { return (v + bMassCenter) * aNormal; });
+                auto minIndex = std::distance(intersectionTriangleAxesDistances.begin(), std::min_element(intersectionTriangleAxesDistances.begin(),
+                                                                                             intersectionTriangleAxesDistances.end()));
+                return intersectionTriangleAxes[minIndex];
+            }
+
+            return {};
+        }
+
+        real calculatePenetration() const
+        {
+            if (initialized) {
+                return *std::min_element(intersectionTriangleVerticesDistances.begin(),
+                           intersectionTriangleVerticesDistances.end())
+                    * -1;
+            }
+
+            return 0;
+        }
+
+    private:
+        void calculate()
+        {
+            aNormal = a->getNormal();
+            aMassCenter = a->getCenterOfMass();
+            aDistance = aMassCenter * aNormal;
+            bMassCenter = b->getCenterOfMass();
+            bRadius = b->getRadius();
+            bAppex = b->getAppex();
+            intersectionTriangleNormal = ((aNormal - bAppex) % bAppex).unit();
+            intersectionTriangleRadiusVector = (bAppex % intersectionTriangleNormal).unit() * bRadius;
+            intersectionTriangleVertices = { intersectionTriangleRadiusVector + bMassCenter,
+                intersectionTriangleRadiusVector.inverse() + bMassCenter,
+                bAppex + bMassCenter };
+            std::transform(intersectionTriangleVertices.begin(), intersectionTriangleVertices.end(),
+                intersectionTriangleVerticesDistances.begin(),
+                [this](auto const& v) { return (v * aNormal) - aDistance; });
+        }
+    };
+
+    template <>
     class IntersectionQueries<Plane, Cylinder>
         : IntersectionQueriesBase<Plane, Cylinder, IntersectionQueries<Plane, Cylinder> > {
     private:
@@ -369,7 +455,7 @@ namespace gmt {
         bool overlap() const
         {
             if (initialized) {
-                return *std::min_element(intersectionRectangleDistances.begin(), intersectionRectangleDistances.end()) > 0;
+                return *std::min_element(intersectionRectangleDistances.begin(), intersectionRectangleDistances.end()) <= 0;
             }
 
             return false;
