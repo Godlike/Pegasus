@@ -141,8 +141,8 @@ namespace gmt {
             (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
     }
 
-    template <typename It>
-    void calculateSeparatingAxes(It srcBegin1, It srcEnd1, It srcBegin2, It srcEnd2, It destBegin)
+    template <typename SrcIt1, typename SrcIt2, typename DestIt>
+    void calculateSeparatingAxes(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2, SrcIt2 srcEnd2, DestIt destBegin)
     {
         for (auto it1 = srcBegin1; it1 != srcEnd1; ++it1) {
             for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2) {
@@ -1397,6 +1397,48 @@ namespace gmt {
     };
 
     template <>
+    class IntersectionQueries<Box, Sphere>
+        : IntersectionQueriesBase<Box, Sphere, IntersectionQueries<Box, Sphere> > {
+    private:
+        using Base = IntersectionQueriesBase<Box, Sphere, IntersectionQueries<Box, Sphere> >;
+        IntersectionQueries<Sphere, Box> intersection;
+
+    public:
+        IntersectionQueries(Box const* a, Sphere const* b)
+            : Base(a, b)
+            , intersection(b, a)
+        {
+        }
+
+        bool overlap() const
+        {
+            if (initialized) {
+                return intersection.overlap();
+            }
+
+            return false;
+        }
+
+        Vector3 calculateContactNormal() const
+        {
+            if (initialized) {
+                return intersection.calculateContactNormal().inverse();
+            }
+
+            return {};
+        }
+
+        real calculatePenetration() const
+        {
+            if (initialized) {
+                return intersection.calculatePenetration();
+            }
+
+            return 0;
+        }
+    };
+
+    template <>
     class IntersectionQueries<Box, Box>
         : IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> > {
     private:
@@ -1477,8 +1519,7 @@ namespace gmt {
             std::for_each(bBoxVertices.begin(), bBoxVertices.end(), [this](auto& v) { v += bMassCenter; });
             separatingAxes = { aBoxFaces[0].unit(), aBoxFaces[1].unit(), aBoxFaces[2].unit(),
                 bBoxFaces[0].unit(), bBoxFaces[1].unit(), bBoxFaces[2].unit() };
-            calculateSeparatingAxes(aBoxFaces.begin(), aBoxFaces.begin() + 3,
-                bBoxFaces.begin(), bBoxFaces.begin() + 3, separatingAxes.begin() + 6);
+            calculateSeparatingAxes(aBoxFaces.begin(), aBoxFaces.begin() + 3, bBoxFaces.begin(), bBoxFaces.begin() + 3, separatingAxes.begin() + 6);
         }
     };
 
