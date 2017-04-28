@@ -134,6 +134,31 @@ namespace gmt {
         return cp1.scalarProduct(cp2) >= 0;
     }
 
+    template <typename Vector, typename VerticesContainer>
+    void calculateBoxVertices(Vector const& i, Vector const& j, Vector const& k, VerticesContainer& vertices)
+    {
+        vertices = { (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k),
+            (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
+    }
+
+    template <typename It>
+    void calculateSeparatingAxes(It srcBegin1, It srcEnd1, It srcBegin2, It srcEnd2, It destBegin)
+    {
+        for (auto it1 = srcBegin1; it1 != srcEnd1; ++it1) {
+            for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2) {
+                *destBegin = it1->vectorProduct(*it2);
+            }
+        }
+    }
+
+    template <typename Vector, typename VertIt, typename ProjIt>
+    void projectAllVertices(Vector const& axisNormal, VertIt srcBegin, VertIt srcEnd, ProjIt destBegin)
+    {
+        while (srcBegin != srcEnd) {
+            *destBegin++ = axisNormal.scalarProduct(*srcBegin++);
+        }
+    }
+
     template <typename ShapeA, typename ShapeB, typename IntersectionSpecific>
     class IntersectionQueriesBase {
     protected:
@@ -666,8 +691,7 @@ namespace gmt {
             aDistance = a->getCenterOfMass() * aNormal;
             b->getAxes(i, j, k);
             bMassCenter = b->getCenterOfMass();
-            boxVertices = { (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k),
-                (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
+            calculateBoxVertices(i, j, k, boxVertices);
             boxAxes = { i, j, k, i * -1, j * -1, k * -1 };
             std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& n) { n += bMassCenter; });
             std::transform(boxVertices.begin(), boxVertices.end(), boxPenetrations.begin(),
@@ -1222,14 +1246,7 @@ namespace gmt {
             aMassCenter = a->getCenterOfMass();
             aRadius = a->getRadius();
             separatingAxes = { boxAxes[0].unit(), boxAxes[1].unit(), boxAxes[2].unit(), (aMassCenter - bMassCenter).unit() };
-            boxVertices = { (boxAxes[0] + boxAxes[1] + boxAxes[2]),
-                (boxAxes[0] - boxAxes[1] + boxAxes[2]),
-                (boxAxes[1] - boxAxes[0] + boxAxes[2]),
-                (boxAxes[0].inverse() - boxAxes[1] + boxAxes[2]),
-                (boxAxes[0] + boxAxes[1] - boxAxes[2]),
-                (boxAxes[0] - boxAxes[1] - boxAxes[2]),
-                (boxAxes[1] - boxAxes[0] - boxAxes[2]),
-                (boxAxes[0].inverse() - boxAxes[1] - boxAxes[2]) };
+            calculateBoxVertices(boxAxes[0], boxAxes[1], boxAxes[2], boxVertices);
             std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& n) { n += bMassCenter; });
             std::transform(boxVertices.begin(), boxVertices.end(), boxVerticesProjections.begin(),
                 [this](auto const& v) { return v * separatingAxes[3]; });
@@ -1240,6 +1257,93 @@ namespace gmt {
             for (unsigned index = 0; index < boxFaceDistances.size(); ++index) {
                 boxFaceDistances[index] = std::abs(boxFaces[index] * boxNormals[index].unit() - aMassCenter * boxNormals[index].unit());
             }
+        }
+    };
+
+    //Box tests
+    template <>
+    class IntersectionQueries<Box, Box>
+        : IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> > {
+    private:
+        using Base = IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> >;
+        Vector3 aMassCenter;
+        Vector3 bMassCenter;
+        std::array<Vector3, 8> aBoxVertices, bBoxVertices;
+        std::array<Vector3, 6> aBoxFaces, bBoxFaces;
+        std::array<Vector3, 15> separatingAxes;
+        std::array<real, 8> aBoxProjections, bBoxProjections;
+        mutable real penetration = 0;
+
+    public:
+        IntersectionQueries(Box const* a, Box const* b)
+            : Base(a, b)
+        {
+            if (initialized) {
+                calculate();
+            }
+        }
+
+        bool overlap()
+        {
+            if (initialized) {
+                for (auto axis : separatingAxes) {
+                    projectAllVertices(axis, aBoxVertices.begin(), aBoxVertices.end(), aBoxProjections.begin());
+                    projectAllVertices(axis, bBoxVertices.begin(), bBoxVertices.end(), bBoxProjections.begin());
+                    std::sort(aBoxProjections.begin(), aBoxProjections.end());
+                    std::sort(bBoxProjections.begin(), bBoxProjections.end());
+
+                    if (aBoxProjections.back() < bBoxProjections.back()) {
+                        if (aBoxProjections.back() > bBoxProjections.front()) {
+                            penetration = aBoxProjections.back() - bBoxProjections.front();
+                            return true;
+                        }
+                    } else if (bBoxProjections.back() > aBoxProjections.front()) {
+                        penetration = bBoxProjections.back() - aBoxProjections.front();
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        Vector3 calculateContactNormal() const
+        {
+            if (initialized) {
+                std::array<real, 6> distances;
+                for (unsigned i = 0; i < distances.size(); ++i) {
+                    distances[i] = (aMassCenter - bBoxFaces[i]).squareMagnitude();
+                }
+                return bBoxFaces[std::distance(distances.begin(), std::min_element(distances.begin(), distances.end()))].unit();
+            }
+
+            return {};
+        }
+
+        real calculatePenetration() const
+        {
+            if (initialized) {
+                return penetration;
+            }
+
+            return 0;
+        }
+
+    private:
+        void calculate()
+        {
+            aMassCenter = a->getCenterOfMass();
+            bMassCenter = b->getCenterOfMass();
+            a->getAxes(aBoxFaces[0], aBoxFaces[1], aBoxFaces[2]);
+            b->getAxes(bBoxFaces[0], bBoxFaces[1], bBoxFaces[2]);
+            calculateBoxVertices(aBoxFaces[0], aBoxFaces[1], aBoxFaces[2], aBoxVertices);
+            calculateBoxVertices(bBoxFaces[0], bBoxFaces[1], bBoxFaces[2], bBoxVertices);
+            std::for_each(aBoxVertices.begin(), aBoxVertices.end(), [this](auto& v) { v += aMassCenter; });
+            std::for_each(bBoxVertices.begin(), bBoxVertices.end(), [this](auto& v) { v += bMassCenter; });
+            separatingAxes = { aBoxFaces[0], aBoxFaces[1], aBoxFaces[2], bBoxFaces[0], bBoxFaces[1], bBoxFaces[2] };
+            calculateSeparatingAxes(aBoxFaces.begin(), aBoxFaces.begin() + 3,
+                bBoxFaces.begin(), bBoxFaces.begin() + 3,
+                separatingAxes.begin() + 6);
         }
     };
 
