@@ -147,6 +147,7 @@ namespace gmt {
         for (auto it1 = srcBegin1; it1 != srcEnd1; ++it1) {
             for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2) {
                 *destBegin = it1->vectorProduct(*it2);
+                destBegin->normalize();
             }
         }
     }
@@ -1262,6 +1263,98 @@ namespace gmt {
 
     //Box tests
     template <>
+    class IntersectionQueries<Box, Triangle>
+        : IntersectionQueriesBase<Box, Triangle, IntersectionQueries<Box, Triangle> > {
+    private:
+        using Base = IntersectionQueriesBase<Box, Triangle, IntersectionQueries<Box, Triangle> >;
+        Vector3 boxMassCenter;
+        std::array<Vector3, 8> boxVertices;
+        std::array<real, 8> boxProjections;
+        std::array<Vector3, 6> boxFaces;
+
+        Vector3 triangleMassCenter;
+        Vector3 triangleNormal;
+        std::array<Vector3, 3> triangleVertices;
+        std::array<Vector3, 3> triangleEdges;
+        std::array<Vector3, 13> separatingAxes;
+        std::array<real, 3> triangleProjections;
+        mutable real penetration = 0;
+
+    public:
+        IntersectionQueries(Box const* a, Triangle const* b)
+            : Base(a, b)
+        {
+            if (initialized) {
+                calculate();
+            }
+        }
+
+        bool overlap()
+        {
+            if (initialized) {
+                for (auto axis : separatingAxes) {
+                    projectAllVertices(axis, boxVertices.begin(), boxVertices.end(), boxProjections.begin());
+                    projectAllVertices(axis, triangleVertices.begin(), triangleVertices.end(), triangleProjections.begin());
+                    std::sort(boxProjections.begin(), boxProjections.end());
+                    std::sort(triangleProjections.begin(), triangleProjections.end());
+
+                    if (boxProjections.back() < triangleProjections.back()) {
+                        if (boxProjections.back() > triangleProjections.front()) {
+                            penetration = boxProjections.back() - triangleProjections.front();
+                            return true;
+                        }
+                    } else if (triangleProjections.back() > boxProjections.front()) {
+                        penetration = triangleProjections.back() - boxProjections.front();
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        Vector3 calculateContactNormal() const
+        {
+            if (initialized) {
+                auto const t = (boxMassCenter - triangleMassCenter) * triangleNormal;
+                return (triangleNormal * t).unit();
+            }
+
+            return {};
+        }
+
+        real calculatePenetration() const
+        {
+            if (initialized) {
+                return penetration;
+            }
+
+            return 0;
+        }
+
+    private:
+        void calculate()
+        {
+            a->getAxes(boxFaces[0], boxFaces[1], boxFaces[2]);
+            boxMassCenter = a->getCenterOfMass();
+            calculateBoxVertices(boxFaces[0], boxFaces[1], boxFaces[2], boxVertices);
+            std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& v) { v += boxMassCenter; });
+
+            b->getAxes(triangleVertices[0], triangleVertices[1], triangleVertices[2]);
+            triangleMassCenter = b->getCenterOfMass();
+            triangleNormal = b->getNormal();
+            triangleEdges = { triangleVertices[2] - triangleVertices[0],
+                triangleVertices[2] - triangleVertices[1],
+                triangleVertices[2] - triangleVertices[1] };
+            std::for_each(triangleVertices.begin(), triangleVertices.end(), [this](auto& v) { v += triangleMassCenter; });
+
+            separatingAxes = { boxFaces[0].unit(), boxFaces[1].unit(), boxFaces[2].unit(), triangleNormal };
+            calculateSeparatingAxes(boxFaces.begin(), boxFaces.begin() + 3,
+                triangleEdges.begin(), triangleEdges.end(), separatingAxes.begin() + 4);
+        }
+    };
+
+    template <>
     class IntersectionQueries<Box, Box>
         : IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> > {
     private:
@@ -1340,10 +1433,10 @@ namespace gmt {
             calculateBoxVertices(bBoxFaces[0], bBoxFaces[1], bBoxFaces[2], bBoxVertices);
             std::for_each(aBoxVertices.begin(), aBoxVertices.end(), [this](auto& v) { v += aMassCenter; });
             std::for_each(bBoxVertices.begin(), bBoxVertices.end(), [this](auto& v) { v += bMassCenter; });
-            separatingAxes = { aBoxFaces[0], aBoxFaces[1], aBoxFaces[2], bBoxFaces[0], bBoxFaces[1], bBoxFaces[2] };
+            separatingAxes = { aBoxFaces[0].unit(), aBoxFaces[1].unit(), aBoxFaces[2].unit(),
+                bBoxFaces[0].unit(), bBoxFaces[1].unit(), bBoxFaces[2].unit() };
             calculateSeparatingAxes(aBoxFaces.begin(), aBoxFaces.begin() + 3,
-                bBoxFaces.begin(), bBoxFaces.begin() + 3,
-                separatingAxes.begin() + 6);
+                bBoxFaces.begin(), bBoxFaces.begin() + 3, separatingAxes.begin() + 6);
         }
     };
 
