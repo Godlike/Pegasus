@@ -1447,6 +1447,85 @@ namespace geometry {
     };
 
     template <>
+    class IntersectionQueries<Box, Cone>
+        : IntersectionQueriesBase<Box, Cone, IntersectionQueries<Box, Cone> > {
+    private:
+        using Base = IntersectionQueriesBase<Box, Cone, IntersectionQueries<Box, Cone> >;
+        Triangle intersectionTriangle;
+        Plane intersectionBoxEdge;
+        IntersectionQueries<Box, Triangle> btIntersection;
+        IntersectionQueries<Plane, Triangle> ptIntersection;
+        Vector3 boxMassCenter;
+        std::array<Vector3, 8> boxVertices;
+        std::array<Vector3, 6> boxAxes;
+        Vector3 coneMassCenter;
+        Vector3 coneAppex;
+        real coneRadius;
+
+    public:
+        IntersectionQueries(Box const* a, Cone const* b)
+            : Base(a, b)
+            , intersectionTriangle({}, {}, {}, {})
+            , intersectionBoxEdge({}, {})
+            , btIntersection(a, &intersectionTriangle)
+            , ptIntersection(&intersectionBoxEdge, &intersectionTriangle)
+        {
+            if (initialized) {
+                calculate();
+            }
+        }
+
+        bool overlap() const
+        {
+            if (initialized) {
+                return btIntersection.overlap();
+            }
+
+            return false;
+        }
+
+        Vector3 calculateContactNormal() const
+        {
+            if (initialized) {
+                ptIntersection.calculateContactNormal();
+            }
+
+            return {};
+        }
+
+        real calculatePenetration() const
+        {
+            if (initialized) {
+                return btIntersection.calculatePenetration();
+            }
+
+            return 0;
+        }
+
+    private:
+        void calculate()
+        {
+            boxMassCenter = a->getCenterOfMass();
+            a->getAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
+            boxAxes = { boxAxes[0], boxAxes[1], boxAxes[2], boxAxes[3].inverse(), boxAxes[4].inverse(), boxAxes[5].inverse() };
+            calculateBoxVertices(boxAxes[0], boxAxes[1], boxAxes[2], boxVertices);
+            
+            coneMassCenter = b->getCenterOfMass();
+            coneAppex = b->getAppex();
+            coneRadius = b->getRadius();
+
+            std::array<real, 6> boxConeVerticeSqrDistances;
+            std::transform(boxAxes.begin(), boxAxes.end(), boxConeVerticeSqrDistances.begin(),
+                [this](auto const & v) { return ((v + boxMassCenter) - coneMassCenter).squareMagnitude(); });
+            auto minIt = std::min_element(boxConeVerticeSqrDistances.begin(), boxConeVerticeSqrDistances.end());
+            auto closesAxes = boxAxes[std::distance(boxConeVerticeSqrDistances.begin(), minIt)] - boxMassCenter;
+            auto coneBase = ((closesAxes % coneAppex) % coneAppex).unit() * coneRadius;
+            intersectionTriangle = Triangle(coneMassCenter, coneBase, coneBase.inverse(), coneAppex);
+            intersectionBoxEdge = Plane(closesAxes + boxMassCenter, closesAxes.unit());
+        }
+    };
+
+    template <>
     class IntersectionQueries<Box, Box>
         : IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> > {
     private:
