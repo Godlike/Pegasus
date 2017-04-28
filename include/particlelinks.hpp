@@ -4,7 +4,7 @@
 #include "Pegasus/include/particle.hpp"
 #include "Pegasus/include/particlecontacts.hpp"
 
-namespace pegas {
+namespace pegasus {
 class ParticleLink : public ParticleContactGenerator {
 public:
     using Ptr = std::shared_ptr<ParticleLink>;
@@ -56,6 +56,6 @@ private:
     real length;
 };
 
-} // namespace pegas
+} // namespace pegasus
 
 #endif // PARTICLE_LINKS_HPP

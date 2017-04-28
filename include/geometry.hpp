@@ -8,8 +8,8 @@
 
 #include "Pegasus/include/math.hpp"
 
-namespace pegas {
-namespace gmt {
+namespace pegasus {
+namespace geometry {
 
     class Geometry {
     public:
@@ -126,7 +126,8 @@ namespace gmt {
     };
 
     template <typename T>
-    bool isPointOnSameSide(T const& p1, T const& p2, T const& a, T const& b)
+    bool isPointOnSameSide(
+        T const& p1, T const& p2, T const& a, T const& b)
     {
         auto const ab = b - a;
         auto const cp1 = ab.vectorProduct(p1 - a);
@@ -135,14 +136,16 @@ namespace gmt {
     }
 
     template <typename Vector, typename VerticesContainer>
-    void calculateBoxVertices(Vector const& i, Vector const& j, Vector const& k, VerticesContainer& vertices)
+    void calculateBoxVertices(
+        Vector const& i, Vector const& j, Vector const& k, VerticesContainer& vertices)
     {
         vertices = { (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k),
             (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
     }
 
     template <typename SrcIt1, typename SrcIt2, typename DestIt>
-    void calculateSeparatingAxes(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2, SrcIt2 srcEnd2, DestIt destBegin)
+    void calculateSeparatingAxes(
+        SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2, SrcIt2 srcEnd2, DestIt destBegin)
     {
         for (auto it1 = srcBegin1; it1 != srcEnd1; ++it1) {
             for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2) {
@@ -153,7 +156,8 @@ namespace gmt {
     }
 
     template <typename Vector, typename VertIt, typename ProjIt>
-    void projectAllVertices(Vector const& axisNormal, VertIt srcBegin, VertIt srcEnd, ProjIt destBegin)
+    void projectAllVertices(
+        Vector const& axisNormal, VertIt srcBegin, VertIt srcEnd, ProjIt destBegin)
     {
         while (srcBegin != srcEnd) {
             *destBegin++ = axisNormal.scalarProduct(*srcBegin++);
@@ -237,7 +241,7 @@ namespace gmt {
         real calculatePenetration() const
         {
             if (initialized) {
-                return std::numeric_limits<pegas::real>::max();
+                return std::numeric_limits<pegasus::real>::max();
             }
 
             return 0;
@@ -568,10 +572,13 @@ namespace gmt {
         bool overlap() const
         {
             if (initialized) {
-                if (overlapC = pcIntersection.overlap()) {
+                overlapC = pcIntersection.overlap();
+                if (overlapC) {
                     return true;
                 }
-                if (overlapS1 = psIntresection1.overlap()) {
+                
+                overlapS1 = psIntresection1.overlap();
+                if (overlapS1) {
                     return true;
                 }
 
@@ -1276,7 +1283,7 @@ namespace gmt {
         {
         }
 
-        bool overlap()
+        bool overlap() const
         {
             if (initialized) {
                 return intersection.overlap();
@@ -1311,7 +1318,6 @@ namespace gmt {
         using Base = IntersectionQueriesBase<Box, Triangle, IntersectionQueries<Box, Triangle> >;
         Vector3 boxMassCenter;
         std::array<Vector3, 8> boxVertices;
-        std::array<real, 8> boxProjections;
         std::array<Vector3, 6> boxFaces;
 
         Vector3 triangleMassCenter;
@@ -1319,7 +1325,6 @@ namespace gmt {
         std::array<Vector3, 3> triangleVertices;
         std::array<Vector3, 3> triangleEdges;
         std::array<Vector3, 13> separatingAxes;
-        std::array<real, 3> triangleProjections;
         mutable real penetration = 0;
 
     public:
@@ -1331,9 +1336,12 @@ namespace gmt {
             }
         }
 
-        bool overlap()
+        bool overlap() const
         {
             if (initialized) {
+                std::array<real, 8> boxProjections;
+                std::array<real, 3> triangleProjections;
+
                 for (auto axis : separatingAxes) {
                     projectAllVertices(axis, boxVertices.begin(), boxVertices.end(), boxProjections.begin());
                     projectAllVertices(axis, triangleVertices.begin(), triangleVertices.end(), triangleProjections.begin());
@@ -1448,7 +1456,6 @@ namespace gmt {
         std::array<Vector3, 8> aBoxVertices, bBoxVertices;
         std::array<Vector3, 6> aBoxFaces, bBoxFaces;
         std::array<Vector3, 15> separatingAxes;
-        std::array<real, 8> aBoxProjections, bBoxProjections;
         mutable real penetration = 0;
 
     public:
@@ -1460,9 +1467,11 @@ namespace gmt {
             }
         }
 
-        bool overlap()
+        bool overlap() const
         {
             if (initialized) {
+                std::array<real, 8> aBoxProjections, bBoxProjections;
+
                 for (auto axis : separatingAxes) {
                     projectAllVertices(axis, aBoxVertices.begin(), aBoxVertices.end(), aBoxProjections.begin());
                     projectAllVertices(axis, bBoxVertices.begin(), bBoxVertices.end(), bBoxProjections.begin());
@@ -1523,6 +1532,6 @@ namespace gmt {
         }
     };
 
-} // namespace gmt
-} // namespace pegas
+} // namespace geometry
+} // namespace pegasus
 #endif // PEGAS_GEOMETRY_HPP

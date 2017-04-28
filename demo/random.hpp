@@ -3,7 +3,7 @@
 
 #include "Pegasus/include/math.hpp"
 
-namespace pegas {
+namespace pegasus {
 
 /**
  * Keeps track of one random stream: i.e. a seed and its output.
@@ -105,6 +105,6 @@ private:
     unsigned buffer[17];
 };
 
-} // namespace pegas
+} // namespace pegasus
 
 #endif // PEGAS_BODY_H
