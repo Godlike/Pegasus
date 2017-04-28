@@ -1263,6 +1263,48 @@ namespace gmt {
 
     //Box tests
     template <>
+    class IntersectionQueries<Box, Plane>
+        : IntersectionQueriesBase<Box, Plane, IntersectionQueries<Box, Plane> > {
+    private:
+        using Base = IntersectionQueriesBase<Box, Plane, IntersectionQueries<Box, Plane> >;
+        IntersectionQueries<Plane, Box> intersection;
+
+    public:
+        IntersectionQueries(Box const* a, Plane const* b)
+            : Base(a, b)
+            , intersection(b, a)
+        {
+        }
+
+        bool overlap()
+        {
+            if (initialized) {
+                return intersection.overlap();
+            }
+
+            return false;
+        }
+
+        Vector3 calculateContactNormal() const
+        {
+            if (initialized) {
+                return b->getNormal();
+            }
+
+            return {};
+        }
+
+        real calculatePenetration() const
+        {
+            if (initialized) {
+                return intersection.calculatePenetration();
+            }
+
+            return 0;
+        }
+    };
+
+    template <>
     class IntersectionQueries<Box, Triangle>
         : IntersectionQueriesBase<Box, Triangle, IntersectionQueries<Box, Triangle> > {
     private:
