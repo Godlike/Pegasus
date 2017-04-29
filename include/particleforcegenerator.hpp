@@ -7,7 +7,7 @@
 #include <set>
 #include <vector>
 
-namespace pegas {
+namespace pegasus {
 class ParticleForceGenerator {
 public:
     using Ptr = std::shared_ptr<ParticleForceGenerator>;
@@ -144,6 +144,6 @@ public:
     void updateForce(Particle::Ptr const& particle) override;
 };
 
-} // namespace pegas
+} // namespace pegasus
 
 #endif // PEGAS_PARTICLE_FORCE_GENERATOR_HPP

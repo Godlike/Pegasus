@@ -1,16 +1,16 @@
 #include "Pegasus/include/particlelinks.hpp"
 
-pegas::real pegas::ParticleLink::currentLenght() const
+pegasus::real pegasus::ParticleLink::currentLenght() const
 {
     auto const relativePos = mA->getPosition() - mB->getPosition();
     return relativePos.magnitude();
 }
 
-pegas::ParticleCabel::ParticleCabel(
-    pegas::Particle::Ptr& a,
-    pegas::Particle::Ptr& b,
-    pegas::real const maxLength,
-    pegas::real const restutuition)
+pegasus::ParticleCabel::ParticleCabel(
+    pegasus::Particle::Ptr& a,
+    pegasus::Particle::Ptr& b,
+    pegasus::real const maxLength,
+    pegasus::real const restutuition)
     : ParticleLink(a, b)
     , maxLength(maxLength)
     , restitution(restutuition)
@@ -18,7 +18,7 @@ pegas::ParticleCabel::ParticleCabel(
 }
 
 unsigned int
-pegas::ParticleCabel::addContact(Contacts& contacts,
+pegasus::ParticleCabel::addContact(Contacts& contacts,
     unsigned int const limit) const
 {
     auto const length = currentLenght();
@@ -36,14 +36,14 @@ pegas::ParticleCabel::addContact(Contacts& contacts,
     return 1;
 }
 
-pegas::ParticleRod::ParticleRod(pegas::Particle::Ptr& a, pegas::Particle::Ptr& b, pegas::real const length)
+pegasus::ParticleRod::ParticleRod(pegasus::Particle::Ptr& a, pegasus::Particle::Ptr& b, pegasus::real const length)
     : ParticleLink(a, b)
     , length(length)
 {
 }
 
 unsigned int
-pegas::ParticleRod::addContact(Contacts& contacts,
+pegasus::ParticleRod::addContact(Contacts& contacts,
     unsigned int const limit) const
 {
     auto const currentLen = currentLenght();

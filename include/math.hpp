@@ -3,7 +3,7 @@
 
 #include "Pegasus/include/core.hpp"
 
-namespace pegas {
+namespace pegasus {
 
 class Vector3 {
 public:
