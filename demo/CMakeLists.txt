@@ -62,7 +62,7 @@ set(SOURCES
     ../demo/app.cpp
     ../demo/timing.cpp
     ../demo/random.cpp
-    ../demo/blob.cpp
+    ../demo/falling.cpp
     ./main.cpp
 )
 

@@ -65,7 +65,9 @@ unsigned int pegasus::ParticleWorld::generateContacts()
 
 void pegasus::ParticleWorld::integrate(pegasus::real const duration)
 {
+    auto duration_ = 0.002f;
+
     for (auto const& p : mParticles) {
-        p->integrate(duration);
+        p->integrate(duration_);
     }
 }

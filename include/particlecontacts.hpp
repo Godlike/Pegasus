@@ -72,11 +72,10 @@ public:
     unsigned int addContact(Contacts& contacts, unsigned int const limit) const override;
 };
 
-class SphereContactGenerator : public ParticleContactGenerator {
+template<typename ShapeA, typename ShapeB>
+class ShapeContactGenerator : public ParticleContactGenerator {
 public:
-    using Spheres = std::vector<geometry::Sphere::Ptr>;
-
-    SphereContactGenerator(RigidBody::Ptr const rBody, RigidBodies const& rBodies, real const restitution)
+    ShapeContactGenerator(RigidBody::Ptr const rBody, RigidBodies const& rBodies, real const restitution)
         : mRigidBody(rBody)
         , mRigidBodies(rBodies)
         , mRestitution(restitution)
@@ -95,7 +94,7 @@ public:
                 break;
             }
 
-            geometry::IntersectionQueries<geometry::Sphere, geometry::Sphere> intersection(body->s.get(), mRigidBody->s.get());
+            geometry::IntersectionQueries<ShapeA, ShapeB> intersection(body->s.get(), mRigidBody->s.get());
             if (intersection.overlap()) {
                 contacts.push_back(std::make_shared<ParticleContact>(
                     body->p, mRigidBody->p, mRestitution,
