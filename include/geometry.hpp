@@ -198,13 +198,13 @@ namespace geometry {
     };
 
     template <typename ShapeA, typename ShapeB>
-    class IntersectionQueries : public IntersectionQueriesBase<ShapeA, ShapeB, IntersectionQueries<ShapeA, ShapeB> > {
+    class IntersectionQueries : IntersectionQueriesBase<ShapeA, ShapeB, IntersectionQueries<ShapeA, ShapeB> > {
     };
 
     //Plane tests
     template <>
     class IntersectionQueries<Plane, Plane>
-        : public IntersectionQueriesBase<Plane, Plane, IntersectionQueries<Plane, Plane> > {
+        : IntersectionQueriesBase<Plane, Plane, IntersectionQueries<Plane, Plane> > {
     private:
         using Base = IntersectionQueriesBase<Plane, Plane, IntersectionQueries<Plane, Plane> >;
         Vector3 aNormal;
@@ -258,7 +258,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Plane, Triangle>
-        : public IntersectionQueriesBase<Plane, Triangle, IntersectionQueries<Plane, Triangle> > {
+        : IntersectionQueriesBase<Plane, Triangle, IntersectionQueries<Plane, Triangle> > {
     private:
         using Base = IntersectionQueriesBase<Plane, Triangle, IntersectionQueries<Plane, Triangle> >;
         Vector3 i, j, k;
@@ -314,7 +314,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Plane, Sphere>
-        : public IntersectionQueriesBase<Plane, Sphere, IntersectionQueries<Plane, Sphere> > {
+        : IntersectionQueriesBase<Plane, Sphere, IntersectionQueries<Plane, Sphere> > {
     private:
         using Base = IntersectionQueriesBase<Plane, Sphere, IntersectionQueries<Plane, Sphere> >;
         Vector3 aMassCenter;
@@ -372,7 +372,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Plane, Cone>
-        : public IntersectionQueriesBase<Plane, Cone, IntersectionQueries<Plane, Cone> > {
+        : IntersectionQueriesBase<Plane, Cone, IntersectionQueries<Plane, Cone> > {
     private:
         using Base = IntersectionQueriesBase<Plane, Cone, IntersectionQueries<Plane, Cone> >;
         Vector3 aMassCenter;
@@ -458,7 +458,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Plane, Cylinder>
-        : public IntersectionQueriesBase<Plane, Cylinder, IntersectionQueries<Plane, Cylinder> > {
+        : IntersectionQueriesBase<Plane, Cylinder, IntersectionQueries<Plane, Cylinder> > {
     private:
         using Base = IntersectionQueriesBase<Plane, Cylinder, IntersectionQueries<Plane, Cylinder> >;
         Vector3 aMassCenter;
@@ -539,7 +539,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Plane, Capsule>
-        : public IntersectionQueriesBase<Plane, Capsule, IntersectionQueries<Plane, Capsule> > {
+        : IntersectionQueriesBase<Plane, Capsule, IntersectionQueries<Plane, Capsule> > {
     private:
         using Base = IntersectionQueriesBase<Plane, Capsule, IntersectionQueries<Plane, Capsule> >;
         Vector3 bMassCenter;
@@ -635,15 +635,15 @@ namespace geometry {
             s1 = Sphere(bHalfHeight + bMassCenter, bRadius);
             s2 = Sphere(bHalfHeight.inverse() + bMassCenter, bRadius);
             c = Cylinder(bMassCenter, bHalfHeight, bRadius);
-            psIntresection1.set(a, &s1);
-            psIntresection2.set(a, &s2);
-            pcIntersection.set(a, &c);
+            psIntresection1 = IntersectionQueries<Plane,Sphere>(a, &s1);
+            psIntresection2 = IntersectionQueries<Plane, Sphere>(a, &s2);
+            pcIntersection = IntersectionQueries<Plane, Cylinder>(a, &c);
         }
     };
 
     template <>
     class IntersectionQueries<Plane, Box>
-        : public IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box> > {
+        : IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box> > {
     private:
         using Base = IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box> >;
         Vector3 i, j, k;
@@ -713,7 +713,7 @@ namespace geometry {
     //Sphere tests
     template <>
     class IntersectionQueries<Sphere, Plane>
-        : public IntersectionQueriesBase<Sphere, Plane, IntersectionQueries<Sphere, Plane> > {
+        : IntersectionQueriesBase<Sphere, Plane, IntersectionQueries<Sphere, Plane> > {
     private:
         using Base = IntersectionQueriesBase<Sphere, Plane, IntersectionQueries<Sphere, Plane> >;
         IntersectionQueries<Plane, Sphere> planeSphereIntersection;
@@ -765,7 +765,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Sphere, Triangle>
-        : public IntersectionQueriesBase<Sphere, Triangle, IntersectionQueries<Sphere, Triangle> > {
+        : IntersectionQueriesBase<Sphere, Triangle, IntersectionQueries<Sphere, Triangle> > {
     private:
         using Base = IntersectionQueriesBase<Sphere, Triangle, IntersectionQueries<Sphere, Triangle> >;
         std::array<Vector3, 3> triangleVetices;
@@ -848,7 +848,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Sphere, Sphere>
-        : public IntersectionQueriesBase<Sphere, Sphere, IntersectionQueries<Sphere, Sphere> > {
+        : IntersectionQueriesBase<Sphere, Sphere, IntersectionQueries<Sphere, Sphere> > {
     private:
         using Base = IntersectionQueriesBase<Sphere, Sphere, IntersectionQueries<Sphere, Sphere> >;
         Vector3 aMassCenter;
@@ -908,7 +908,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Sphere, Cone>
-        : public IntersectionQueriesBase<Sphere, Cone, IntersectionQueries<Sphere, Cone> > {
+        : IntersectionQueriesBase<Sphere, Cone, IntersectionQueries<Sphere, Cone> > {
     private:
         using Base = IntersectionQueriesBase<Sphere, Cone, IntersectionQueries<Sphere, Cone> >;
         Vector3 aMassCenter;
@@ -992,13 +992,13 @@ namespace geometry {
             intersectionTriangle = Triangle(bMassCenter, intersectionPlaneVector * aRadius, intersectionPlaneVector * -aRadius, bAppex);
             intersectionTriangleNormal = intersectionTriangle.getNormal();
             intersectionTriangle.getAxes(intersectionTriangleVertices[0], intersectionTriangleVertices[1], intersectionTriangleVertices[2]);
-            intersection.set(a, &intersectionTriangle);
+            intersection = IntersectionQueries<Sphere, Triangle>(a, &intersectionTriangle);
         }
     };
 
     template <>
     class IntersectionQueries<Sphere, Cylinder>
-        : public IntersectionQueriesBase<Sphere, Cylinder, IntersectionQueries<Sphere, Cylinder> > {
+        : IntersectionQueriesBase<Sphere, Cylinder, IntersectionQueries<Sphere, Cylinder> > {
     private:
         using Base = IntersectionQueriesBase<Sphere, Cylinder, IntersectionQueries<Sphere, Cylinder> >;
         Vector3 bMassCenter;
@@ -1081,7 +1081,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Sphere, Capsule>
-        : public IntersectionQueriesBase<Sphere, Capsule, IntersectionQueries<Sphere, Capsule> > {
+        : IntersectionQueriesBase<Sphere, Capsule, IntersectionQueries<Sphere, Capsule> > {
     private:
         using Base = IntersectionQueriesBase<Sphere, Capsule, IntersectionQueries<Sphere, Capsule> >;
         Vector3 aMassCenter;
@@ -1176,15 +1176,15 @@ namespace geometry {
             s1 = Sphere(bMassCenter + bHalfHeight, bRadius);
             s2 = Sphere(bMassCenter - bHalfHeight, bRadius);
             c = Cylinder(bMassCenter, bHalfHeight, bRadius);
-            ssIntersection1.set(a, &s1);
-            ssIntersection2.set(a, &s2);
-            scIntersection.set(a, &c);
+            ssIntersection1 = IntersectionQueries<Sphere, Sphere>(a, &s1);
+            ssIntersection2 = IntersectionQueries<Sphere, Sphere>(a, &s2);
+            scIntersection = IntersectionQueries<Sphere, Cylinder>(a, &c);
         }
     };
 
     template <>
     class IntersectionQueries<Sphere, Box>
-        : public IntersectionQueriesBase<Sphere, Box, IntersectionQueries<Sphere, Box> > {
+        : IntersectionQueriesBase<Sphere, Box, IntersectionQueries<Sphere, Box> > {
     private:
         using Base = IntersectionQueriesBase<Sphere, Box, IntersectionQueries<Sphere, Box> >;
         std::array<Vector3, 3> boxAxes;
@@ -1278,7 +1278,7 @@ namespace geometry {
     //Box tests
     template <>
     class IntersectionQueries<Box, Plane>
-        : public IntersectionQueriesBase<Box, Plane, IntersectionQueries<Box, Plane> > {
+        : IntersectionQueriesBase<Box, Plane, IntersectionQueries<Box, Plane> > {
     private:
         using Base = IntersectionQueriesBase<Box, Plane, IntersectionQueries<Box, Plane> >;
         IntersectionQueries<Plane, Box> intersection;
@@ -1320,7 +1320,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Box, Triangle>
-        : public IntersectionQueriesBase<Box, Triangle, IntersectionQueries<Box, Triangle> > {
+        : IntersectionQueriesBase<Box, Triangle, IntersectionQueries<Box, Triangle> > {
     private:
         using Base = IntersectionQueriesBase<Box, Triangle, IntersectionQueries<Box, Triangle> >;
         Vector3 boxMassCenter;
@@ -1413,7 +1413,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Box, Sphere>
-        : public IntersectionQueriesBase<Box, Sphere, IntersectionQueries<Box, Sphere> > {
+        : IntersectionQueriesBase<Box, Sphere, IntersectionQueries<Box, Sphere> > {
     private:
         using Base = IntersectionQueriesBase<Box, Sphere, IntersectionQueries<Box, Sphere> >;
         IntersectionQueries<Sphere, Box> intersection;
@@ -1455,7 +1455,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Box, Cone>
-        : public IntersectionQueriesBase<Box, Cone, IntersectionQueries<Box, Cone> > {
+        : IntersectionQueriesBase<Box, Cone, IntersectionQueries<Box, Cone> > {
     private:
         using Base = IntersectionQueriesBase<Box, Cone, IntersectionQueries<Box, Cone> >;
         Triangle intersectionTriangle;
@@ -1529,14 +1529,14 @@ namespace geometry {
             auto coneBase = ((closesAxes % coneAppex) % coneAppex).unit() * coneRadius;
             intersectionTriangle = Triangle(coneMassCenter, coneBase, coneBase.inverse(), coneAppex);
             intersectionBoxEdge = Plane(closesAxes + boxMassCenter, closesAxes.unit());
-            btIntersection.set(a, &intersectionTriangle);
-            ptIntersection.set(&intersectionBoxEdge, &intersectionTriangle);
+            btIntersection = IntersectionQueries<Box, Triangle>(a, &intersectionTriangle);
+            ptIntersection = IntersectionQueries<Plane, Triangle>(&intersectionBoxEdge, &intersectionTriangle);
         }
     };
 
     template <>
     class IntersectionQueries<Box, Box>
-        : public IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> > {
+        : IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> > {
     private:
         using Base = IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> >;
         Vector3 aMassCenter;
@@ -1622,7 +1622,7 @@ namespace geometry {
 
     template <>
     class IntersectionQueries<Box, Cylinder>
-        : public IntersectionQueriesBase<Box, Cylinder, IntersectionQueries<Box, Cylinder> > {
+        : IntersectionQueriesBase<Box, Cylinder, IntersectionQueries<Box, Cylinder> > {
     private:
         using Base = IntersectionQueriesBase<Box, Cylinder, IntersectionQueries<Box, Cylinder> >;
         Box intersectionBox;
@@ -1692,7 +1692,109 @@ namespace geometry {
             auto const intersectionPlaneNormal = closesAxes % bHalgHeight;
             auto const bBase = (intersectionPlaneNormal % bHalgHeight).unit() * bRadius;
             intersectionBox = Box(bMassCenter, bHalgHeight, bBase, intersectionPlaneNormal.unit() * 0.001f);
-            intersection.set(a, &intersectionBox);
+            intersection = IntersectionQueries<Box, Box>(a, &intersectionBox);
+        }
+    };
+
+    template <>
+    class IntersectionQueries<Box, Capsule>
+        : IntersectionQueriesBase<Box, Capsule, IntersectionQueries<Box, Capsule> > {
+    private:
+        using Base = IntersectionQueriesBase<Box, Capsule, IntersectionQueries<Box, Capsule> >;
+        Vector3 aMassCenter;
+        real aRadius;
+        Vector3 bMassCenter;
+        Vector3 bHalfHeight;
+        real bRadius;
+        Sphere s1, s2;
+        Cylinder c;
+        IntersectionQueries<Box, Sphere> bsIntersection1;
+        IntersectionQueries<Box, Sphere> bsIntersection2;
+        IntersectionQueries<Box, Cylinder> bcIntersection;
+
+    public:
+        IntersectionQueries(Box const* a, Cylinder const* b)
+            : Base(a, b)
+            , s1({}, 0)
+            , s2({}, 0)
+            , c({}, {}, 0)
+            , bsIntersection1(a, &s1)
+            , bsIntersection2(a, &s2)
+            , bcIntersection(a, &c)
+        {
+            if (initialized) {
+                calculate();
+            }
+        }
+
+        bool overlap() const
+        {
+            if (initialized) {
+                if (bcIntersection.overlap()) {
+                    return true;
+                }
+
+                if (bsIntersection1.overlap()) {
+                    return true;
+                }
+
+                return bsIntersection2.overlap();
+            }
+
+            return false;
+        }
+
+        Vector3 calculateContactNormal() const
+        {
+            if (initialized) {
+                if (bcIntersection.overlap()) {
+                    return bcIntersection.calculateContactNormal();
+                }
+
+                if (bsIntersection1.overlap()) {
+                    return bsIntersection1.calculateContactNormal();
+                }
+
+                if (bsIntersection2.overlap()) {
+                    return bsIntersection2.calculateContactNormal();
+                }
+
+                return bcIntersection.calculateContactNormal();
+            }
+
+            return {};
+        }
+
+        real calculatePenetration() const
+        {
+            if (initialized) {
+                if (bsIntersection1.overlap()) {
+                    return bsIntersection1.calculatePenetration();
+                }
+
+                if (bsIntersection2.overlap()) {
+                    return bsIntersection2.calculatePenetration();
+                }
+
+                return bcIntersection.calculatePenetration();
+            }
+
+            return 0;
+        }
+
+    private:
+        void calculate()
+        {
+            aMassCenter = a->getCenterOfMass();
+            bMassCenter = b->getCenterOfMass();
+            bRadius = b->getRadius();
+            bHalfHeight = b->getHalfHeight();
+            s1 = Sphere(bMassCenter + bHalfHeight, bRadius);
+            s2 = Sphere(bMassCenter - bHalfHeight, bRadius);
+            c = Cylinder(bMassCenter, bHalfHeight, bRadius);
+            bsIntersection1 = IntersectionQueries<Box, Sphere>(a, &s1);
+            bsIntersection2 = IntersectionQueries<Box, Sphere>(a, &s2);
+            bcIntersection  = IntersectionQueries<Box, Cylinder>(a, &c);
         }
     };
 
