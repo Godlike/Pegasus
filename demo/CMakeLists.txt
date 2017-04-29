@@ -4,15 +4,17 @@ project (PegasDemo)
 set (CMAKE_CXX_STANDARD 17)
 
 #########################################################
-# FIND GLUT
+# ADD FreeGLUT
 #########################################################
-find_package(GLUT REQUIRED)
-include_directories(${GLUT_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR})
-link_directories(${GLUT_LIBRARY_DIRS})
-add_definitions(${GLUT_DEFINITIONS})
-if(NOT GLUT_FOUND)
-    message(ERROR " GLUT not found!")
-endif(NOT GLUT_FOUND)
+set(FREEGLUT_BUILD_DEMOS OFF)
+set(FREEGLUT_BUILD_SHARED_LIBS OFF)
+add_subdirectory(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeGLUT/freeglut/freeglut 
+    ${CMAKE_CURRENT_BINARY_DIR}/third_party/FreeGLUT/freeglut/freeglut
+)
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeGLUT/freeglut/freeglut/include
+)
 
 #########################################################
 # FIND OPENGL
@@ -28,9 +30,10 @@ endif(NOT OPENGL_FOUND)
 #########################################################
 # Include Files
 #########################################################
+
 include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ../..
+    ../../.
 )
 
 set(HEADERS
@@ -66,4 +69,8 @@ set(SOURCES
 # Linking
 #########################################################
 add_executable (${PROJECT_NAME} ${SOURCES} ${HEADERS})
-target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
+
+target_link_libraries(${PROJECT_NAME} 
+    ${OPENGL_LIBRARIES} 
+    freeglut_static
+)

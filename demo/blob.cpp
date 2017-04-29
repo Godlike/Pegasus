@@ -6,11 +6,9 @@
 #include "Pegasus/include/particleworld.hpp"
 #include "Pegasus/include/particlelinks.hpp"
 
-#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <stdio.h>
-
 
 #define BLOB_COUNT 5
 #define PLATFORM_COUNT 10
