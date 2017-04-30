@@ -129,7 +129,9 @@ void pegasus::Vector3::operator-=(pegasus::Vector3 const& v)
 pegasus::Vector3 pegasus::Vector3::inverse() const
 {
     auto v(*this);
-    v.inverse();
+    v.x = -v.x;
+    v.y = -v.y;
+    v.z = -v.z;
     return v;
 }
 
