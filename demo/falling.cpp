@@ -12,22 +12,18 @@
 #include <cstdlib>
 #include <iostream>
 
-#define BLOB_COUNT 1
-#define BLOB_RADIUS 0.5f
+#define BLOB_COUNT 2
+#define BLOB_RADIUS 1
 
 class FallingDemo : public Application {
 public:
     FallingDemo();
-    virtual ~FallingDemo();
+    virtual ~FallingDemo() {}
 
     const char* getTitle() override;
-
     void display() override;
-
     void update() override;
-
     void key(unsigned char key) override;
-
     void mouseDrag(int x, int y) override;
 
 private:
@@ -56,7 +52,7 @@ FallingDemo::FallingDemo()
     //Create particles
     for (unsigned int i = 0; i < BLOB_COUNT; ++i) {
         auto particle = std::make_shared<pegasus::Particle>();
-        particle->setPosition(platform.start + pegasus::Vector3((platform.end.x - platform.start.x) / 2.0f, BLOB_RADIUS, 0));
+        particle->setPosition(platform.start + pegasus::Vector3((platform.end.x - platform.start.x) / 2.0f + BLOB_RADIUS * i * 4, BLOB_RADIUS, 0));
 
         particle->setVelocity(0, 0, 0);
         particle->setDamping(0.2f);
@@ -65,13 +61,18 @@ FallingDemo::FallingDemo()
         blobs.push_back(particle);
 
         rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(particle,
-            std::make_shared<pegasus::geometry::Sphere>(particle->getPosition(), BLOB_RADIUS)));
+            std::make_shared<pegasus::geometry::Box>(
+                particle->getPosition(), 
+                pegasus::Vector3{ BLOB_RADIUS, 0, 0 }, 
+                pegasus::Vector3{ 0, BLOB_RADIUS, 0 }, 
+                pegasus::Vector3{ 0, 0, BLOB_RADIUS })
+        ));
     }
 
     //Create rigid bodies
     for (auto const & body : rigidBodies) {
         contactGenerators.push_back(
-            std::make_shared<pegasus::ShapeContactGenerator<pegasus::geometry::Sphere, pegasus::geometry::Sphere>>(
+            std::make_shared<pegasus::ShapeContactGenerator<pegasus::geometry::Box, pegasus::geometry::Box>>(
                 body, rigidBodies, static_cast<pegasus::real>(0)));
     }
 
@@ -81,17 +82,15 @@ FallingDemo::FallingDemo()
     world.setParticleForcesRegistry(forceRegistry);
 }
 
-FallingDemo::~FallingDemo()
-{
-}
-
 void FallingDemo::display()
 {
     // Clear the view port and set the camera direction
+    auto const & pos = blobs.front()->getPosition();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(10, 10, 10, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x + 10, pos.y + 10, 5, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
 
+    //Add ground plane
     glBegin(GL_QUADS);
     glColor3f(0.18f, 0.31f, 0.31f);
     auto const& p0 = static_cast<pegasus::Platform*>(contactGenerators.front().get())->start;
@@ -102,20 +101,19 @@ void FallingDemo::display()
     glVertex3f(p0.x, p0.y, p0.z - 25);
     glEnd();
 
-
-    for (pegasus::real i = 0; i < BLOB_COUNT; i++) {
+    //Add bodies
+    for (pegasus::real i = 0; i < BLOB_COUNT; i++) 
+    {
         auto const& p = blobs[static_cast<int>(i)]->getPosition();
         glPushMatrix();
         glColor3f((i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT);
         glTranslatef(p.x, p.y, p.z);
-        //glutSolidSphere(BLOB_RADIUS, 12, 12);
         glutSolidCube(BLOB_RADIUS * 2);
         glPopMatrix();
 
         glPushMatrix();
         glColor3f(1.0f - (i + 1) / BLOB_COUNT, 1.0f - (i + 1) / BLOB_COUNT, 1.0f - (i + 1) / BLOB_COUNT);
         glTranslatef(p.x, p.y, p.z);
-        //glutSolidSphere(BLOB_RADIUS, 12, 12);
         glutWireCube(BLOB_RADIUS * 2);
         glPopMatrix();
     }
@@ -123,25 +121,21 @@ void FallingDemo::display()
 
 void FallingDemo::update()
 {
-    // Clear accumulators
     world.startFrame();
 
-    // Find the duration of the last frame in seconds
     auto duration = static_cast<float>(TimingData::get().lastFrameDuration * 0.001f);
     if (duration <= 0.0f)
         return;
 
-    // Recenter the axes
     xAxis *= pow(0.1f, duration);
     yAxis *= pow(0.1f, duration);
 
     // Move the controlled blob
     blobs.front()->addForce(pegasus::Vector3(xAxis, yAxis, 0) * 10.0f);
 
-    // Run the simulation
     world.runPhysics(duration);
 
-    for (auto body : rigidBodies) {
+    for (auto const & body : rigidBodies) {
         body->s->setCenterOfMass(body->p->getPosition());
     }
 
