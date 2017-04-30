@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "Pegasus/include/math.hpp"
+#include <vector>
 
 namespace pegasus {
 namespace geometry {
@@ -139,8 +140,15 @@ namespace geometry {
     void calculateBoxVertices(
         Vector const& i, Vector const& j, Vector const& k, VerticesContainer& vertices)
     {
-        vertices = { (i + j + k), (i - j + k), (j - i + k), (i * -1 - j + k),
-            (i + j - k), (i - j - k), (j - i - k), (i * -1 - j - k) };
+        vertices[0] = (i + j + k);
+        vertices[1] = (i - j + k);
+        vertices[2] = (j - i + k);
+        vertices[3] = (i * -1 - j + k);
+
+        vertices[4] = (i + j - k);
+        vertices[5] = (i - j - k);
+        vertices[6] = (j - i - k);
+        vertices[7] = (i * -1 - j - k);
     }
 
     template <typename SrcIt1, typename SrcIt2, typename DestIt>
@@ -149,8 +157,10 @@ namespace geometry {
     {
         for (auto it1 = srcBegin1; it1 != srcEnd1; ++it1) {
             for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2) {
-                *destBegin = it1->vectorProduct(*it2);
-                destBegin->normalize();
+                auto const axis = it1->vectorProduct(*it2).unit();
+                if (axis.squareMagnitude() != 0.0f) {
+                    destBegin++ = axis;
+                }
             }
         }
     }
@@ -528,10 +538,12 @@ namespace geometry {
             bRadius = b->getRadius();
             bHalfHeight = b->getHalfHeight();
             bRadiusVector = ((aNormal % bHalfHeight) % bHalfHeight).unit() * bRadius;
-            intersectionRectangleVertices = { (bRadiusVector - bHalfHeight) + bMassCenter,
-                (bRadiusVector.inverse() - bHalfHeight) + bMassCenter,
-                (bRadiusVector + bHalfHeight) + bMassCenter,
-                (bRadiusVector.inverse() + bHalfHeight) + bMassCenter };
+            intersectionRectangleVertices = { 
+                bRadiusVector - bHalfHeight + bMassCenter,
+                bRadiusVector.inverse() - bHalfHeight + bMassCenter,
+                bRadiusVector + bHalfHeight + bMassCenter,
+                bRadiusVector.inverse() + bHalfHeight + bMassCenter 
+            };
             std::transform(intersectionRectangleVertices.begin(), intersectionRectangleVertices.end(), intersectionRectangleDistances.begin(),
                 [this](auto const& v) { return (v * aNormal) - aDistance; });
         }
@@ -635,7 +647,7 @@ namespace geometry {
             s1 = Sphere(bHalfHeight + bMassCenter, bRadius);
             s2 = Sphere(bHalfHeight.inverse() + bMassCenter, bRadius);
             c = Cylinder(bMassCenter, bHalfHeight, bRadius);
-            psIntresection1 = IntersectionQueries<Plane,Sphere>(a, &s1);
+            psIntresection1 = IntersectionQueries<Plane, Sphere>(a, &s1);
             psIntresection2 = IntersectionQueries<Plane, Sphere>(a, &s2);
             pcIntersection = IntersectionQueries<Plane, Cylinder>(a, &c);
         }
@@ -703,7 +715,7 @@ namespace geometry {
             b->getAxes(i, j, k);
             bMassCenter = b->getCenterOfMass();
             calculateBoxVertices(i, j, k, boxVertices);
-            boxAxes = { i, j, k, i * -1, j * -1, k * -1 };
+            boxAxes = { i, j, k, i.inverse(), j.inverse(), k.inverse() };
             std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& n) { n += bMassCenter; });
             std::transform(boxVertices.begin(), boxVertices.end(), boxPenetrations.begin(),
                 [this](auto const& p) { return p * aNormal - aDistance; });
@@ -1331,7 +1343,7 @@ namespace geometry {
         Vector3 triangleNormal;
         std::array<Vector3, 3> triangleVertices;
         std::array<Vector3, 3> triangleEdges;
-        std::array<Vector3, 13> separatingAxes;
+        std::vector<Vector3> separatingAxes;
         mutable real penetration = 0;
 
     public:
@@ -1393,6 +1405,7 @@ namespace geometry {
         void calculate()
         {
             a->getAxes(boxFaces[0], boxFaces[1], boxFaces[2]);
+            boxFaces = { boxFaces[0], boxFaces[1], boxFaces[2], boxFaces[0].inverse(), boxFaces[1].inverse(), boxFaces[2].inverse() };
             boxMassCenter = a->getCenterOfMass();
             calculateBoxVertices(boxFaces[0], boxFaces[1], boxFaces[2], boxVertices);
             std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& v) { v += boxMassCenter; });
@@ -1401,13 +1414,13 @@ namespace geometry {
             triangleMassCenter = b->getCenterOfMass();
             triangleNormal = b->getNormal();
             triangleEdges = { triangleVertices[2] - triangleVertices[0],
-                triangleVertices[2] - triangleVertices[1],
-                triangleVertices[2] - triangleVertices[1] };
+                              triangleVertices[2] - triangleVertices[1],
+                              triangleVertices[1] - triangleVertices[0] };
             std::for_each(triangleVertices.begin(), triangleVertices.end(), [this](auto& v) { v += triangleMassCenter; });
 
             separatingAxes = { boxFaces[0].unit(), boxFaces[1].unit(), boxFaces[2].unit(), triangleNormal };
             calculateSeparatingAxes(boxFaces.begin(), boxFaces.begin() + 3,
-                triangleEdges.begin(), triangleEdges.end(), separatingAxes.begin() + 4);
+                triangleEdges.begin(), triangleEdges.end(), std::back_inserter(separatingAxes));
         }
     };
 
@@ -1543,7 +1556,7 @@ namespace geometry {
         Vector3 bMassCenter;
         std::array<Vector3, 8> aBoxVertices, bBoxVertices;
         std::array<Vector3, 6> aBoxFaces, bBoxFaces;
-        std::array<Vector3, 15> separatingAxes;
+        std::vector<Vector3> separatingAxes;
         mutable real penetration = 0;
 
     public:
@@ -1567,18 +1580,20 @@ namespace geometry {
                     std::sort(bBoxProjections.begin(), bBoxProjections.end());
 
                     if (aBoxProjections.back() < bBoxProjections.back()) {
-                        if (aBoxProjections.back() > bBoxProjections.front()) {
-                            penetration = aBoxProjections.back() - bBoxProjections.front();
-                            return true;
+                        if (aBoxProjections.back() < bBoxProjections.front()) {
+                            return false;
                         }
-                    } else if (bBoxProjections.back() > aBoxProjections.front()) {
+                        penetration = aBoxProjections.back() - bBoxProjections.front();
+                    } else {
+                        if (bBoxProjections.back() < aBoxProjections.front()) {
+                            return false;
+                        }
                         penetration = bBoxProjections.back() - aBoxProjections.front();
-                        return true;
                     }
                 }
             }
 
-            return false;
+            return true;
         }
 
         Vector3 calculateContactNormal() const
@@ -1586,9 +1601,13 @@ namespace geometry {
             if (initialized) {
                 std::array<real, 6> distances;
                 for (unsigned i = 0; i < distances.size(); ++i) {
-                    distances[i] = (aMassCenter - bBoxFaces[i]).squareMagnitude();
+                    distances[i] = (aMassCenter - bMassCenter - bBoxFaces[i]).squareMagnitude();
                 }
-                return bBoxFaces[std::distance(distances.begin(), std::min_element(distances.begin(), distances.end()))].unit();
+
+                auto const minIt = std::min_element(distances.begin(), distances.end());
+                auto const minIndex = std::distance(distances.begin(), minIt);
+
+                return bBoxFaces[minIndex].unit();
             }
 
             return {};
@@ -1607,16 +1626,21 @@ namespace geometry {
         void calculate()
         {
             aMassCenter = a->getCenterOfMass();
-            bMassCenter = b->getCenterOfMass();
             a->getAxes(aBoxFaces[0], aBoxFaces[1], aBoxFaces[2]);
+            aBoxFaces = { aBoxFaces[0], aBoxFaces[1], aBoxFaces[2], aBoxFaces[0].inverse(), aBoxFaces[1].inverse(), aBoxFaces[2].inverse() };
+            bMassCenter = b->getCenterOfMass();
             b->getAxes(bBoxFaces[0], bBoxFaces[1], bBoxFaces[2]);
+            bBoxFaces = { bBoxFaces[0], bBoxFaces[1], bBoxFaces[2], bBoxFaces[0].inverse(), bBoxFaces[1].inverse(), bBoxFaces[2].inverse() };
+
             calculateBoxVertices(aBoxFaces[0], aBoxFaces[1], aBoxFaces[2], aBoxVertices);
             calculateBoxVertices(bBoxFaces[0], bBoxFaces[1], bBoxFaces[2], bBoxVertices);
             std::for_each(aBoxVertices.begin(), aBoxVertices.end(), [this](auto& v) { v += aMassCenter; });
             std::for_each(bBoxVertices.begin(), bBoxVertices.end(), [this](auto& v) { v += bMassCenter; });
-            separatingAxes = { aBoxFaces[0].unit(), aBoxFaces[1].unit(), aBoxFaces[2].unit(),
-                bBoxFaces[0].unit(), bBoxFaces[1].unit(), bBoxFaces[2].unit() };
-            calculateSeparatingAxes(aBoxFaces.begin(), aBoxFaces.begin() + 3, bBoxFaces.begin(), bBoxFaces.begin() + 3, separatingAxes.begin() + 6);
+            separatingAxes = { aBoxFaces[0].unit(), aBoxFaces[1].unit(), aBoxFaces[2].unit(), 
+                               bBoxFaces[0].unit(), bBoxFaces[1].unit(), bBoxFaces[2].unit() };
+            calculateSeparatingAxes(aBoxFaces.begin(), aBoxFaces.begin() + 3, 
+                                    bBoxFaces.begin(), bBoxFaces.begin() + 3, 
+                                    std::back_inserter(separatingAxes));
         }
     };
 
