@@ -56,7 +56,6 @@ FallingDemo::FallingDemo()
 
         particle->setVelocity(0, 0, 0);
         particle->setDamping(0.2f);
-        particle->setAcceleration(pegasus::Vector3(0, -9.8f, 0) * 0.4f);
         particle->setMass(1.0f);
         blobs.push_back(particle);
 
@@ -102,17 +101,11 @@ void FallingDemo::display()
     glEnd();
 
     //Add bodies
-    for (pegasus::real i = 0; i < BLOB_COUNT; i++) 
+    for (auto i = 0; i < BLOB_COUNT; i++) 
     {
-        auto const& p = blobs[static_cast<int>(i)]->getPosition();
+        auto const& p = blobs[i]->getPosition();
         glPushMatrix();
-        glColor3f((i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT, (i + 1) / BLOB_COUNT);
-        glTranslatef(p.x, p.y, p.z);
-        glutSolidCube(BLOB_RADIUS * 2);
-        glPopMatrix();
-
-        glPushMatrix();
-        glColor3f(1.0f - (i + 1) / BLOB_COUNT, 1.0f - (i + 1) / BLOB_COUNT, 1.0f - (i + 1) / BLOB_COUNT);
+        glColor3f((i + 1.0f) / BLOB_COUNT, 1.0f - (i + 1.0f) / BLOB_COUNT, 1.0f - (i + 1) / BLOB_COUNT);
         glTranslatef(p.x, p.y, p.z);
         glutWireCube(BLOB_RADIUS * 2);
         glPopMatrix();
