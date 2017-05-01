@@ -152,8 +152,8 @@ namespace geometry {
     }
 
     template <typename SrcIt1, typename SrcIt2, typename DestIt>
-    void calculateSeparatingAxes(
-        SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2, SrcIt2 srcEnd2, DestIt destBegin)
+    void calculateSeparatingAxes(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2, SrcIt2 srcEnd2, 
+        std::back_insert_iterator<DestIt> destBegin)
     {
         for (auto it1 = srcBegin1; it1 != srcEnd1; ++it1) {
             for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2) {
@@ -1368,18 +1368,20 @@ namespace geometry {
                     std::sort(triangleProjections.begin(), triangleProjections.end());
 
                     if (boxProjections.back() < triangleProjections.back()) {
-                        if (boxProjections.back() > triangleProjections.front()) {
-                            penetration = boxProjections.back() - triangleProjections.front();
-                            return true;
+                        if (boxProjections.back() < triangleProjections.front()) {
+                            return false;
                         }
-                    } else if (triangleProjections.back() > boxProjections.front()) {
+                        penetration = boxProjections.back() - triangleProjections.front();
+                    } else {
+                        if (triangleProjections.back() < boxProjections.front()) {
+                            return false;
+                        }
                         penetration = triangleProjections.back() - boxProjections.front();
-                        return true;
                     }
                 }
             }
 
-            return false;
+            return true;
         }
 
         Vector3 calculateContactNormal() const
