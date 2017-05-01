@@ -3,15 +3,16 @@
 
 #include <algorithm>
 #include <array>
+#include <vector>
 #include <limits>
 #include <memory>
 
 #include "Pegasus/include/math.hpp"
-#include <vector>
 
 namespace pegasus {
 namespace geometry {
 
+    //Basic shapes
     class Geometry {
     public:
         virtual ~Geometry();
@@ -126,6 +127,7 @@ namespace geometry {
         Vector3 mC;
     };
 
+    //Utility functions
     template <typename T>
     bool isPointOnSameSide(
         T const& p1, T const& p2, T const& a, T const& b)
@@ -174,6 +176,7 @@ namespace geometry {
         }
     }
 
+    //Base intersection querie class
     template <typename ShapeA, typename ShapeB, typename IntersectionSpecific>
     class IntersectionQueriesBase {
     protected:
