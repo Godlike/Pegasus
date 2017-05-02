@@ -7,12 +7,10 @@ set(FREEGLUT_PRINT_ERRORS OFF CACHE BOOL "Lib prints errors to stderr")
 set(FREEGLUT_PRINT_WARNINGS OFF CACHE BOOL "Lib prints warnings to stderr")
 
 #Set GLUT variables
-set(GLUT_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeGLUT/freeglut/freeglut
-)
-set(GLUT_LIBRARY_DIRS
-    ${CMAKE_CURRENT_BINARY_DIR}/third_party/FreeGLUT/freeglut/freeglut
-)
 set(GLUT_INCLUDE_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeGLUT/freeglut/freeglut/include
+    ${GLUT_SOURCE_DIR}/include
+)
+
+set(GLUT_LIBRARIES 
+    freeglut_static
 )

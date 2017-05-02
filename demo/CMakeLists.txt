@@ -7,10 +7,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 #########################################################
 # INCLUDE FreeGLUT
 #########################################################
+set(GLUT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeGLUT/freeglut/freeglut")
+set(GLUT_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/third_party/FreeGLUT/freeglut/freeglut")
 include(GlutConfig)
+add_subdirectory(${GLUT_SOURCE_DIR} ${GLUT_BINARY_DIR})
 include_directories(${GLUT_INCLUDE_DIRS})
-add_subdirectory(${GLUT_PATH} ${GLUT_LIBRARY_DIRS})
-set(GLUT_LIBRARIES freeglut_static)
 
 #########################################################
 # FIND OPENGL
