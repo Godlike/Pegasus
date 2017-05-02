@@ -16,6 +16,3 @@ set(GLUT_LIBRARY_DIRS
 set(GLUT_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeGLUT/freeglut/freeglut/include
 )
-
-add_subdirectory(${GLUT_PATH} ${GLUT_LIBRARY_DIRS})
-set(GLUT_LIBRARIES freeglut_static)

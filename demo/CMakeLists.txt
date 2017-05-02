@@ -9,6 +9,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 #########################################################
 include(GlutConfig)
 include_directories(${GLUT_INCLUDE_DIRS})
+add_subdirectory(${GLUT_PATH} ${GLUT_LIBRARY_DIRS})
+set(GLUT_LIBRARIES freeglut_static)
 
 #########################################################
 # FIND OPENGL
