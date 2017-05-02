@@ -1,20 +1,14 @@
 cmake_minimum_required (VERSION 3.1)
-project (PegasDemo)
+project (PegasusDemo)
 
-set (CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 #########################################################
-# ADD FreeGLUT
+# INCLUDE FreeGLUT
 #########################################################
-set(FREEGLUT_BUILD_DEMOS OFF)
-set(FREEGLUT_BUILD_SHARED_LIBS OFF)
-add_subdirectory(
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeGLUT/freeglut/freeglut 
-    ${CMAKE_CURRENT_BINARY_DIR}/third_party/FreeGLUT/freeglut/freeglut
-)
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeGLUT/freeglut/freeglut/include
-)
+include(GlutConfig)
+include_directories(${GLUT_INCLUDE_DIRS})
 
 #########################################################
 # FIND OPENGL
@@ -30,10 +24,13 @@ endif(NOT OPENGL_FOUND)
 #########################################################
 # Include Files
 #########################################################
+set(PEGASUS_INCLUDE_DIRS
+    ../../.
+)
 
 include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ../../.
+    ${PEGASUS_INCLUDE_DIRS}
 )
 
 set(HEADERS
@@ -72,5 +69,5 @@ add_executable (${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 target_link_libraries(${PROJECT_NAME} 
     ${OPENGL_LIBRARIES} 
-    freeglut_static
+    ${GLUT_LIBRARIES}
 )
