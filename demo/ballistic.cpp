@@ -1,6 +1,6 @@
-#include "Pegasus/demo/app.hpp"
-#include "Pegasus/demo/ogl_headers.hpp"
-#include "Pegasus/demo/timing.hpp"
+#include "demo/app.hpp"
+#include "demo/ogl_headers.hpp"
+#include "demo/timing.hpp"
 #include "Pegasus/include/core.hpp"
 #include "Pegasus/include/particle.hpp"
 
@@ -14,13 +14,13 @@ class BallisticDemo : public Application {
         LASER };
 
     struct AmmoRound {
-        pegas::Particle particle;
+        pegasus::Particle particle;
         ShotType type;
         unsigned startTime;
 
         void render()
         {
-            pegas::Vector3 position;
+            pegasus::Vector3 position;
             position = particle.getPosition();
 
             glColor3f(0, 0, 0);
@@ -70,7 +70,7 @@ BallisticDemo::BallisticDemo()
     }
 }
 
-const char* BallisticDemo::getTitle() { return "pegas > Ballistic Demo"; }
+const char* BallisticDemo::getTitle() { return "pegasus > Ballistic Demo"; }
 
 void BallisticDemo::fire()
 {

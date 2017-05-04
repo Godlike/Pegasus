@@ -1,5 +1,5 @@
-#include "app.hpp"
-#include "ogl_headers.hpp"
+#include "demo/app.hpp"
+#include "demo/ogl_headers.hpp"
 #include <cstring>
 
 void Application::initGraphics()

@@ -3,6 +3,7 @@
 
 #include "Pegasus/include/geometry.hpp"
 #include "Pegasus/include/mechanics.hpp"
+#include "Pegasus/include/particlecontacts.hpp"
 #include "Pegasus/include/particle.hpp"
 #include <vector>
 
