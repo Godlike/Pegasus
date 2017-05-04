@@ -4,13 +4,6 @@
 
 cmake_minimum_required (VERSION 3.1)
 
-if(NOT DEFINED PEGASUS_NAME)
-    set(PEGASUS_NAME "PegasusPhysics" CACHE STRING "Pegasus project name.")
-endif ()
-if(NOT DEFINED PEGASUS_LIB)
-    set(PEGASUS_LIB ${PEGASUS_NAME} CACHE STRING "Pegasus library name.")
-endif ()
-
 project(PegasusDemo)
 set(CMAKE_CXX_STANDARD 14)
 
