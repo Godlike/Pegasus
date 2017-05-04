@@ -12,7 +12,7 @@ if(NOT DEFINED PEGASUS_LIB)
 endif ()
 
 project(${PEGASUS_NAME})
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 
 include_directories(
     ${PEGASUS_INCLUDE_DIR}

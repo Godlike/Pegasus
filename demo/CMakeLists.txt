@@ -12,10 +12,7 @@ if(NOT DEFINED PEGASUS_LIB)
 endif ()
 
 project(PegasusDemo)
-set(CMAKE_CXX_STANDARD 17)
-# Copyright (C) 2017 by Godlike
-# This code is licensed under the MIT license (MIT)
-# (http://opensource.org/licenses/MIT)
+set(CMAKE_CXX_STANDARD 14)
 
 #FreeGLUT
 include(GlutConfig)
