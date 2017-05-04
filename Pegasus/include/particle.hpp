@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-namespace pegas {
+namespace pegasus {
 
 class Particle {
 public:
@@ -69,6 +69,6 @@ private:
 
 using Particles = std::vector<Particle::Ptr>;
 
-} // namespace pegas
+} // namespace pegasus
 
 #endif // PEGAS_PARTICLE_HPP

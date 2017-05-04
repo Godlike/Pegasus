@@ -1,7 +1,7 @@
 #include "demo/random.hpp"
 #include <ctime>
 
-using namespace pegas;
+using namespace pegasus;
 
 Random::Random() { seed(0); }
 

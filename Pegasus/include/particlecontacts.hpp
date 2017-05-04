@@ -7,7 +7,7 @@
 #include "Pegasus/include/particle.hpp"
 #include <vector>
 
-namespace pegas {
+namespace pegasus {
 
 class ParticleContact {
 public:
@@ -53,7 +53,7 @@ private:
 class ParticleContactGenerator {
 public:
     using Ptr = std::shared_ptr<ParticleContactGenerator>;
-    using Contacts = std::vector<pegas::ParticleContact::Ptr>;
+    using Contacts = std::vector<pegasus::ParticleContact::Ptr>;
 
 public:
     virtual ~ParticleContactGenerator();
@@ -75,7 +75,7 @@ public:
 
 class SphereContactGenerator : public ParticleContactGenerator {
 public:
-    using Spheres = std::vector<gmt::Sphere::Ptr>;
+    using Spheres = std::vector<geometry::Sphere::Ptr>;
 
     SphereContactGenerator(RigidBody::Ptr const rBody, RigidBodies const& rBodies, real const restitution)
         : mRigidBody(rBody)
@@ -96,7 +96,7 @@ public:
                 break;
             }
 
-            gmt::IntersectionQueries<gmt::Sphere, gmt::Sphere> intersection(body->s.get(), mRigidBody->s.get());
+            geometry::IntersectionQueries<geometry::Sphere, geometry::Sphere> intersection(body->s.get(), mRigidBody->s.get());
             if (intersection.overlap()) {
                 contacts.push_back(std::make_shared<ParticleContact>(
                     body->p, mRigidBody->p, mRestitution,
@@ -114,6 +114,6 @@ private:
     real const mRestitution;
 };
 
-} // namespace pegas
+} // namespace pegasus
 
 #endif // PEGAS_PARTICLE_CONTACTS_HPP

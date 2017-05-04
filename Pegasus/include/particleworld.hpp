@@ -6,7 +6,7 @@
 #include "Pegasus/include/particleforcegenerator.hpp"
 #include <vector>
 
-namespace pegas {
+namespace pegasus {
 
 class ParticleWorld {
 public:
@@ -42,6 +42,6 @@ private:
     void integrate(real const duration);
 };
 
-} // namespace pegas
+} // namespace pegasus
 
 #endif // PEGAS_PARTICLE_WORLD_HPP

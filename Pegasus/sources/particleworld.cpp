@@ -1,37 +1,37 @@
 #include "Pegasus/include/particleworld.hpp"
 
-pegas::ParticleWorld::ParticleWorld(unsigned int maxContacts, unsigned int iterations)
+pegasus::ParticleWorld::ParticleWorld(unsigned int maxContacts, unsigned int iterations)
     : mResolver(iterations)
     , mCalculateIterations(false)
     , mMaxContacts(maxContacts)
 {
 }
 
-void pegas::ParticleWorld::startFrame()
+void pegasus::ParticleWorld::startFrame()
 {
     for (auto const& p : mParticles) {
         p->clearForceAccum();
     }
 }
 
-void pegas::ParticleWorld::setParticles(Particles particles)
+void pegasus::ParticleWorld::setParticles(Particles particles)
 {
     mParticles = particles;
 }
 
-void pegas::ParticleWorld::setParticleForcesRegistry(
-    pegas::ParticleForceRegistry::Ptr registry)
+void pegasus::ParticleWorld::setParticleForcesRegistry(
+    pegasus::ParticleForceRegistry::Ptr registry)
 {
     mRegistry = registry;
 }
 
-void pegas::ParticleWorld::setParticleContactGenerators(
+void pegasus::ParticleWorld::setParticleContactGenerators(
     ParticleContactGenerators generators)
 {
     mGeneratos = generators;
 }
 
-void pegas::ParticleWorld::runPhysics(pegas::real const duration)
+void pegasus::ParticleWorld::runPhysics(pegasus::real const duration)
 {
     mRegistry->updateForces();
 
@@ -47,7 +47,7 @@ void pegas::ParticleWorld::runPhysics(pegas::real const duration)
     }
 }
 
-unsigned int pegas::ParticleWorld::generateContacts()
+unsigned int pegasus::ParticleWorld::generateContacts()
 {
     auto limit = mMaxContacts;
     mContacts.clear();
@@ -63,7 +63,7 @@ unsigned int pegas::ParticleWorld::generateContacts()
     return mMaxContacts - limit;
 }
 
-void pegas::ParticleWorld::integrate(pegas::real const duration)
+void pegasus::ParticleWorld::integrate(pegasus::real const duration)
 {
     for (auto const& p : mParticles) {
         p->integrate(duration);
