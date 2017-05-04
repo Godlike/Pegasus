@@ -4,6 +4,7 @@
 
 cmake_minimum_required (VERSION 3.1)
 
+include(PegasusConfig)
 if(NOT DEFINED PEGASUS_NAME)
     set(PEGASUS_NAME "PegasusPhysics" CACHE STRING "Pegasus project name.")
 endif ()
