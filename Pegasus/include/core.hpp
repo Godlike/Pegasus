@@ -6,7 +6,6 @@
 namespace pegasus {
 
 using real = float;
-
 }
 
 #endif // PEGAS_CORE_HPP

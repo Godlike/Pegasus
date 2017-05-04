@@ -3,22 +3,18 @@
 
 #include <algorithm>
 #include <array>
-#include <vector>
+#include <functional>
 #include <limits>
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 #include "Pegasus/include/math.hpp"
 
 namespace pegasus {
 namespace geometry {
 
-    //Basic shapes
-    class Geometry {
-    public:
-        virtual ~Geometry();
-    };
-
-    class Shape : public Geometry {
+    class Shape {
     public:
         explicit Shape(Vector3 const& centerOfMass);
 
@@ -31,7 +27,20 @@ namespace geometry {
 
     class SimpleShape : public Shape {
     public:
-        explicit SimpleShape(Vector3 const& centerOfMass);
+        enum Type {
+            PLANE,
+            TRIANGLE,
+            SPHERE,
+            CONE,
+            CYLINDER,
+            CAPSULE,
+            BOX,
+            NONE
+        };
+        Type type;
+
+    public:
+        SimpleShape(Vector3 const& centerOfMass, Type type);
     };
 
     class Plane : public SimpleShape {
@@ -108,10 +117,7 @@ namespace geometry {
 
     class Cylinder : public Capsule {
     public:
-        Cylinder(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r)
-            : Capsule(centerOfMass, halfHeight, r)
-        {
-        }
+        Cylinder(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r);
     };
 
     class Box : public SimpleShape {
@@ -154,7 +160,7 @@ namespace geometry {
     }
 
     template <typename SrcIt1, typename SrcIt2, typename DestIt>
-    void calculateSeparatingAxes(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2, SrcIt2 srcEnd2, 
+    void calculateSeparatingAxes(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2, SrcIt2 srcEnd2,
         std::back_insert_iterator<DestIt> destBegin)
     {
         for (auto it1 = srcBegin1; it1 != srcEnd1; ++it1) {
@@ -177,35 +183,42 @@ namespace geometry {
     }
 
     //Base intersection querie class
+    class IntersectionBase {
+    protected:
+        SimpleShape::Type aShapeType;
+        SimpleShape::Type bShapeType;
+
+    public:
+        IntersectionBase()
+            : aShapeType(SimpleShape::NONE)
+            , bShapeType(SimpleShape::NONE)
+        {
+        }
+    };
+
     template <typename ShapeA, typename ShapeB, typename IntersectionSpecific>
-    class IntersectionQueriesBase {
+    class IntersectionQueriesBase : public IntersectionBase {
     protected:
         ShapeA const* a;
         ShapeB const* b;
         bool initialized = false;
 
     public:
-        explicit IntersectionQueriesBase(ShapeA const* _a = nullptr, ShapeB const* _b = nullptr)
+        IntersectionQueriesBase(SimpleShape const* _a, SimpleShape const* _b)
         {
             setShapes(_a, _b);
-        }
-
-        void set(ShapeA const* _a, ShapeB const* _b)
-        {
-            setShapes(_a, _b);
-
-            if (initialized) {
-                IntersectionSpecific::calculate();
-            }
         }
 
     private:
-        void setShapes(ShapeA const* _a, ShapeB const* _b)
+        void setShapes(SimpleShape const* _a, SimpleShape const* _b)
         {
             initialized = _a != nullptr && _b != nullptr;
+
             if (initialized) {
-                a = _a;
-                b = _b;
+                a = static_cast<ShapeA const*>(_a);
+                b = static_cast<ShapeB const*>(_b);
+                aShapeType = _a->type;
+                bShapeType = _b->type;
             }
         }
     };
@@ -225,8 +238,8 @@ namespace geometry {
         Vector3 crossProduct;
 
     public:
-        IntersectionQueries(Plane const* _a, Plane const* _b)
-            : Base(_a, _b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
+            : Base(a, b)
         {
             if (initialized) {
                 calculate();
@@ -279,7 +292,7 @@ namespace geometry {
         std::array<real, 3> projections;
 
     public:
-        IntersectionQueries(Plane const* a, Triangle const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -337,7 +350,7 @@ namespace geometry {
         real penetration;
 
     public:
-        IntersectionQueries(Plane const* a, Sphere const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -402,7 +415,7 @@ namespace geometry {
         mutable std::array<real, 3> intersectionTriangleVerticesDistances;
 
     public:
-        IntersectionQueries(Plane const* a, Cone const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -487,7 +500,7 @@ namespace geometry {
         real bRadius;
 
     public:
-        IntersectionQueries(Plane const* a, Cylinder const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -541,11 +554,11 @@ namespace geometry {
             bRadius = b->getRadius();
             bHalfHeight = b->getHalfHeight();
             bRadiusVector = ((aNormal % bHalfHeight) % bHalfHeight).unit() * bRadius;
-            intersectionRectangleVertices = { 
+            intersectionRectangleVertices = {
                 bRadiusVector - bHalfHeight + bMassCenter,
                 bRadiusVector.inverse() - bHalfHeight + bMassCenter,
                 bRadiusVector + bHalfHeight + bMassCenter,
-                bRadiusVector.inverse() + bHalfHeight + bMassCenter 
+                bRadiusVector.inverse() + bHalfHeight + bMassCenter
             };
             std::transform(intersectionRectangleVertices.begin(), intersectionRectangleVertices.end(), intersectionRectangleDistances.begin(),
                 [this](auto const& v) { return (v * aNormal) - aDistance; });
@@ -570,7 +583,7 @@ namespace geometry {
         IntersectionQueries<Plane, Cylinder> pcIntersection;
 
     public:
-        IntersectionQueries(Plane const* a, Capsule const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
             , s1({}, 0)
             , s2({}, 0)
@@ -591,7 +604,7 @@ namespace geometry {
                 if (overlapC) {
                     return true;
                 }
-                
+
                 overlapS1 = psIntresection1.overlap();
                 if (overlapS1) {
                     return true;
@@ -671,7 +684,7 @@ namespace geometry {
         real aDistance;
 
     public:
-        IntersectionQueries(Plane const* a, Box const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -735,7 +748,7 @@ namespace geometry {
         Vector3 bNormal;
 
     public:
-        IntersectionQueries(Sphere const* a, Plane const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
             , planeSphereIntersection(b, a)
         {
@@ -791,7 +804,7 @@ namespace geometry {
         real aRadius;
 
     public:
-        IntersectionQueries(Sphere const* a, Triangle const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -874,7 +887,7 @@ namespace geometry {
         real radiusSum;
 
     public:
-        IntersectionQueries(Sphere const* a, Sphere const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -937,7 +950,7 @@ namespace geometry {
         IntersectionQueries<Sphere, Triangle> intersection;
 
     public:
-        IntersectionQueries(Sphere const* a, Cone const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
             , intersectionTriangle({}, {}, {}, {})
             , intersection(a, &intersectionTriangle)
@@ -1028,7 +1041,7 @@ namespace geometry {
         Vector3 bMassCenterProjection;
 
     public:
-        IntersectionQueries(Sphere const* a, Cylinder const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -1111,7 +1124,7 @@ namespace geometry {
         IntersectionQueries<Sphere, Cylinder> scIntersection;
 
     public:
-        IntersectionQueries(Sphere const* a, Cylinder const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
             , s1({}, 0)
             , s2({}, 0)
@@ -1214,7 +1227,7 @@ namespace geometry {
         Vector3 bMassCenter;
 
     public:
-        IntersectionQueries(Sphere const* a, Box const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -1299,7 +1312,7 @@ namespace geometry {
         IntersectionQueries<Plane, Box> intersection;
 
     public:
-        IntersectionQueries(Box const* a, Plane const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
             , intersection(b, a)
         {
@@ -1350,7 +1363,7 @@ namespace geometry {
         mutable real penetration = 0;
 
     public:
-        IntersectionQueries(Box const* a, Triangle const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -1419,8 +1432,8 @@ namespace geometry {
             triangleMassCenter = b->getCenterOfMass();
             triangleNormal = b->getNormal();
             triangleEdges = { triangleVertices[2] - triangleVertices[0],
-                              triangleVertices[2] - triangleVertices[1],
-                              triangleVertices[1] - triangleVertices[0] };
+                triangleVertices[2] - triangleVertices[1],
+                triangleVertices[1] - triangleVertices[0] };
             std::for_each(triangleVertices.begin(), triangleVertices.end(), [this](auto& v) { v += triangleMassCenter; });
 
             separatingAxes = { boxFaces[0].unit(), boxFaces[1].unit(), boxFaces[2].unit(), triangleNormal };
@@ -1437,7 +1450,7 @@ namespace geometry {
         IntersectionQueries<Sphere, Box> intersection;
 
     public:
-        IntersectionQueries(Box const* a, Sphere const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
             , intersection(b, a)
         {
@@ -1488,7 +1501,7 @@ namespace geometry {
         real coneRadius;
 
     public:
-        IntersectionQueries(Box const* a, Cone const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
             , intersectionTriangle({}, {}, {}, {})
             , intersectionBoxEdge({}, {})
@@ -1534,14 +1547,14 @@ namespace geometry {
             a->getAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
             boxAxes = { boxAxes[0], boxAxes[1], boxAxes[2], boxAxes[3].inverse(), boxAxes[4].inverse(), boxAxes[5].inverse() };
             calculateBoxVertices(boxAxes[0], boxAxes[1], boxAxes[2], boxVertices);
-            
+
             coneMassCenter = b->getCenterOfMass();
             coneAppex = b->getAppex();
             coneRadius = b->getRadius();
 
             std::array<real, 6> boxConeVerticeSqrDistances;
             std::transform(boxAxes.begin(), boxAxes.end(), boxConeVerticeSqrDistances.begin(),
-                [this](auto const & v) { return ((v + boxMassCenter) - coneMassCenter).squareMagnitude(); });
+                [this](auto const& v) { return ((v + boxMassCenter) - coneMassCenter).squareMagnitude(); });
             auto minIt = std::min_element(boxConeVerticeSqrDistances.begin(), boxConeVerticeSqrDistances.end());
             auto closesAxes = boxAxes[std::distance(boxConeVerticeSqrDistances.begin(), minIt)] - boxMassCenter;
             auto coneBase = ((closesAxes % coneAppex) % coneAppex).unit() * coneRadius;
@@ -1565,7 +1578,7 @@ namespace geometry {
         mutable real penetration = 0;
 
     public:
-        IntersectionQueries(Box const* a, Box const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
         {
             if (initialized) {
@@ -1641,11 +1654,11 @@ namespace geometry {
             calculateBoxVertices(bBoxFaces[0], bBoxFaces[1], bBoxFaces[2], bBoxVertices);
             std::for_each(aBoxVertices.begin(), aBoxVertices.end(), [this](auto& v) { v += aMassCenter; });
             std::for_each(bBoxVertices.begin(), bBoxVertices.end(), [this](auto& v) { v += bMassCenter; });
-            separatingAxes = { aBoxFaces[0].unit(), aBoxFaces[1].unit(), aBoxFaces[2].unit(), 
-                               bBoxFaces[0].unit(), bBoxFaces[1].unit(), bBoxFaces[2].unit() };
-            calculateSeparatingAxes(aBoxFaces.begin(), aBoxFaces.begin() + 3, 
-                                    bBoxFaces.begin(), bBoxFaces.begin() + 3, 
-                                    std::back_inserter(separatingAxes));
+            separatingAxes = { aBoxFaces[0].unit(), aBoxFaces[1].unit(), aBoxFaces[2].unit(),
+                bBoxFaces[0].unit(), bBoxFaces[1].unit(), bBoxFaces[2].unit() };
+            calculateSeparatingAxes(aBoxFaces.begin(), aBoxFaces.begin() + 3,
+                bBoxFaces.begin(), bBoxFaces.begin() + 3,
+                std::back_inserter(separatingAxes));
         }
     };
 
@@ -1664,7 +1677,7 @@ namespace geometry {
         real bRadius;
 
     public:
-        IntersectionQueries(Box const* a, Cylinder const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
             , intersectionBox({}, {}, {}, {})
             , intersection(a, &intersectionBox)
@@ -1715,7 +1728,7 @@ namespace geometry {
 
             std::array<real, 6> boxConeVerticeSqrDistances;
             std::transform(aAxes.begin(), aAxes.end(), boxConeVerticeSqrDistances.begin(),
-                [this](auto const & v) { return ((v + aMassCenter) - bMassCenter).squareMagnitude(); });
+                [this](auto const& v) { return ((v + aMassCenter) - bMassCenter).squareMagnitude(); });
             auto minIt = std::min_element(boxConeVerticeSqrDistances.begin(), boxConeVerticeSqrDistances.end());
             auto const closesAxes = aAxes[std::distance(boxConeVerticeSqrDistances.begin(), minIt)] - aMassCenter;
             auto const intersectionPlaneNormal = closesAxes % bHalgHeight;
@@ -1742,7 +1755,7 @@ namespace geometry {
         IntersectionQueries<Box, Cylinder> bcIntersection;
 
     public:
-        IntersectionQueries(Box const* a, Cylinder const* b)
+        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
             : Base(a, b)
             , s1({}, 0)
             , s2({}, 0)
@@ -1823,10 +1836,66 @@ namespace geometry {
             c = Cylinder(bMassCenter, bHalfHeight, bRadius);
             bsIntersection1 = IntersectionQueries<Box, Sphere>(a, &s1);
             bsIntersection2 = IntersectionQueries<Box, Sphere>(a, &s2);
-            bcIntersection  = IntersectionQueries<Box, Cylinder>(a, &c);
+            bcIntersection = IntersectionQueries<Box, Cylinder>(a, &c);
+        }
+    };
+
+    class IntersectionQuery {
+    public:
+        using ShapeTypePair = std::pair<SimpleShape::Type, SimpleShape::Type>;
+
+    private:
+        IntersectionQueries<Plane, Plane> ppIntersectionQueries;
+        IntersectionQueries<Plane, Sphere> psIntersectionQueries;
+        IntersectionQueries<Plane, Box> pbIntersectionQueries;
+        IntersectionQueries<Sphere, Plane> spIntersectionQueries;
+        IntersectionQueries<Sphere, Sphere> ssIntersectionQueries;
+        IntersectionQueries<Sphere, Box> sbIntersectionQueries;
+        IntersectionQueries<Box, Plane> bpIntersectionQueries;
+        IntersectionQueries<Box, Sphere> bsIntersectionQueries;
+        IntersectionQueries<Box, Box> bbIntersectionQueries;
+
+        std::unordered_map<ShapeTypePair,
+            decltype(&IntersectionQuery::overlap),
+            std::function<size_t(ShapeTypePair const& p)> >
+            overlapFunctors;
+
+        std::unordered_map<ShapeTypePair,
+            decltype(&IntersectionQuery::calculateContactNormal),
+            std::function<size_t(ShapeTypePair const& p)> >
+            calculateContactNormalFunctors;
+
+        std::unordered_map<ShapeTypePair,
+            decltype(&IntersectionQuery::calculatePenetration),
+            std::function<size_t(ShapeTypePair const& p)> >
+            calculatePenetrationFunctors;
+
+    public:
+        IntersectionQuery()
+        {
+        }
+
+        void set(SimpleShape* const s1, SimpleShape* const s2)
+        {
+        }
+
+        bool overlap()
+        {
+            return overlapFunctors[std::make_pair(s1->type, s2->type)]();
+        }
+
+        Vector3 calculateContactNormal()
+        {
+            return calculateContactNormalFunctors[std::make_pair(s1->type, s2->type)]();
+        }
+
+        real calculatePenetration()
+        {
+            return calculatePenetrationFunctors[std::make_pair(s1->type, s2->type)]();
         }
     };
 
 } // namespace geometry
 } // namespace pegasus
+
 #endif // PEGAS_GEOMETRY_HPP

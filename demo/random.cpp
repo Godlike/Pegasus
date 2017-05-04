@@ -1,4 +1,4 @@
-#include "Pegasus/demo/random.hpp"
+#include "demo/random.hpp"
 #include <ctime>
 
 using namespace pegasus;

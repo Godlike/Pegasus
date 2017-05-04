@@ -1,7 +1,5 @@
 #include "Pegasus/include/geometry.hpp"
 
-pegasus::geometry::Geometry::~Geometry() {}
-
 pegasus::geometry::Shape::Shape(Vector3 const& centerOfMass)
     : mCenterOfMass(centerOfMass)
 {
@@ -17,13 +15,14 @@ pegasus::Vector3 pegasus::geometry::Shape::getCenterOfMass() const
     return mCenterOfMass;
 }
 
-pegasus::geometry::SimpleShape::SimpleShape(Vector3 const& centerOfMass)
+pegasus::geometry::SimpleShape::SimpleShape(Vector3 const& centerOfMass, Type type)
     : Shape(centerOfMass)
+    , type(type)
 {
 }
 
 pegasus::geometry::Plane::Plane(Vector3 const& centerOfMass, Vector3 const& normal)
-    : SimpleShape(centerOfMass)
+    : SimpleShape(centerOfMass, PLANE)
     , mNormal(normal)
 {
 }
@@ -39,7 +38,7 @@ pegasus::Vector3 pegasus::geometry::Plane::getNormal() const
 }
 
 pegasus::geometry::Triangle::Triangle(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c)
-    : SimpleShape(centerOfMass)
+    : SimpleShape(centerOfMass, TRIANGLE)
     , mA(a)
     , mB(b)
     , mC(c)
@@ -73,7 +72,7 @@ void pegasus::geometry::Triangle::calculateNormal()
 }
 
 pegasus::geometry::Sphere::Sphere(Vector3 const& centerOfMass, real const r)
-    : SimpleShape(centerOfMass)
+    : SimpleShape(centerOfMass, SPHERE)
     , mR(r)
 {
 }
@@ -89,7 +88,7 @@ pegasus::real pegasus::geometry::Sphere::getRadius() const
 }
 
 pegasus::geometry::Cone::Cone(Vector3 const& centerOfMass, Vector3 const& a, real const r)
-    : SimpleShape(centerOfMass)
+    : SimpleShape(centerOfMass, CONE)
     , mA(a)
     , mR(r)
 {
@@ -116,7 +115,7 @@ pegasus::real pegasus::geometry::Cone::getRadius() const
 }
 
 pegasus::geometry::Capsule::Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r)
-    : SimpleShape(centerOfMass)
+    : SimpleShape(centerOfMass, CAPSULE)
     , mHalfHeight(halfHeight)
     , mR(r)
 {
@@ -142,8 +141,13 @@ pegasus::real pegasus::geometry::Capsule::getRadius() const
     return mR;
 }
 
+pegasus::geometry::Cylinder::Cylinder(const pegasus::Vector3& centerOfMass, const pegasus::Vector3& halfHeight, const pegasus::real r)
+    : Capsule(centerOfMass, halfHeight, r)
+{
+}
+
 pegasus::geometry::Box::Box(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c)
-    : SimpleShape(centerOfMass)
+    : SimpleShape(centerOfMass, BOX)
     , mA(a)
     , mB(b)
     , mC(c)

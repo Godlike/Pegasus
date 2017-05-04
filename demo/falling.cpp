@@ -47,7 +47,7 @@ FallingDemo::FallingDemo()
     // Create ground
     contactGenerators.push_back(std::make_shared<pegasus::Platform>(
         pegasus::Vector3(-50.0f, 0, 0), pegasus::Vector3(50.0f, 0, 0), blobs, BLOB_RADIUS));
-    auto const & platform = *static_cast<pegasus::Platform*>(contactGenerators.back().get());
+    auto const& platform = *static_cast<pegasus::Platform*>(contactGenerators.back().get());
 
     //Create particles
     for (unsigned int i = 0; i < BLOB_COUNT; ++i) {
@@ -61,17 +61,16 @@ FallingDemo::FallingDemo()
 
         rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(particle,
             std::make_shared<pegasus::geometry::Box>(
-                particle->getPosition(), 
-                pegasus::Vector3{ BLOB_RADIUS, 0, 0 }, 
-                pegasus::Vector3{ 0, BLOB_RADIUS, 0 }, 
-                pegasus::Vector3{ 0, 0, BLOB_RADIUS })
-        ));
+                                                                       particle->getPosition(),
+                                                                       pegasus::Vector3{ BLOB_RADIUS, 0, 0 },
+                                                                       pegasus::Vector3{ 0, BLOB_RADIUS, 0 },
+                                                                       pegasus::Vector3{ 0, 0, BLOB_RADIUS })));
     }
 
     //Create rigid bodies
-    for (auto const & body : rigidBodies) {
+    for (auto const& body : rigidBodies) {
         contactGenerators.push_back(
-            std::make_shared<pegasus::ShapeContactGenerator<pegasus::geometry::Box, pegasus::geometry::Box>>(
+            std::make_shared<pegasus::ShapeContactGenerator<pegasus::geometry::Box, pegasus::geometry::Box> >(
                 body, rigidBodies, static_cast<pegasus::real>(0)));
     }
 
@@ -84,7 +83,7 @@ FallingDemo::FallingDemo()
 void FallingDemo::display()
 {
     // Clear the view port and set the camera direction
-    auto const & pos = blobs.front()->getPosition();
+    auto const& pos = blobs.front()->getPosition();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     gluLookAt(pos.x + 10, pos.y + 10, 5, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
@@ -101,8 +100,7 @@ void FallingDemo::display()
     glEnd();
 
     //Add bodies
-    for (auto i = 0; i < BLOB_COUNT; i++) 
-    {
+    for (auto i = 0; i < BLOB_COUNT; i++) {
         auto const& p = blobs[i]->getPosition();
         glPushMatrix();
         glColor3f((i + 1.0f) / BLOB_COUNT, 1.0f - (i + 1.0f) / BLOB_COUNT, 1.0f - (i + 1) / BLOB_COUNT);
@@ -128,7 +126,7 @@ void FallingDemo::update()
 
     world.runPhysics(duration);
 
-    for (auto const & body : rigidBodies) {
+    for (auto const& body : rigidBodies) {
         body->s->setCenterOfMass(body->p->getPosition());
     }
 
@@ -139,7 +137,6 @@ const char* FallingDemo::getTitle() { return "Pegasus Falling Demo"; }
 
 void FallingDemo::mouseDrag(int x, int y)
 {
-   
 }
 
 void FallingDemo::key(unsigned char key)

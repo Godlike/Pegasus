@@ -1,22 +1,18 @@
+# Copyright (C) 2017 by Godlike
+# This code is licensed under the MIT license (MIT)
+# (http://opensource.org/licenses/MIT)
+
 cmake_minimum_required (VERSION 3.1)
-project (PegasDemo)
 
-set (CMAKE_CXX_STANDARD 14)
+project(PegasusDemo)
+set(CMAKE_CXX_STANDARD 14)
 
-#########################################################
-# FIND GLUT
-#########################################################
-find_package(GLUT REQUIRED)
-include_directories(${GLUT_INCLUDE_DIRS} ${GLUT_INCLUDE_DIR})
-link_directories(${GLUT_LIBRARY_DIRS})
-add_definitions(${GLUT_DEFINITIONS})
-if(NOT GLUT_FOUND)
-    message(ERROR " GLUT not found!")
-endif(NOT GLUT_FOUND)
+#FreeGLUT
+include(GlutConfig)
+add_subdirectory(${GLUT_SOURCE_DIR} ${GLUT_BINARY_DIR})
+include_directories(${GLUT_INCLUDE_DIR})
 
-#########################################################
-# FIND OPENGL
-#########################################################
+#OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})
 link_directories(${OpenGL_LIBRARY_DIRS})
@@ -25,49 +21,31 @@ if(NOT OPENGL_FOUND)
     message(ERROR " OPENGL not found!")
 endif(NOT OPENGL_FOUND)
 
-#########################################################
-# Include Files
-#########################################################
+#Target
+include(PegasusConfig)
 include_directories (
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ../..
+    ${PEGASUS_INCLUDE_DIR}
+)
+set(DEMO_HEADERS
+    app.hpp
+    timing.hpp
+    random.hpp
+    ogl_headers.hpp
+)
+set(DEMO_SOURCES
+    app.cpp
+    timing.cpp
+    random.cpp
+    blob.cpp
+    main.cpp
 )
 
-set(HEADERS
-    ../include/core.hpp
-    ../include/particle.hpp
-    ../include/particleforcegenerator.hpp
-    ../include/particlecontacts.hpp
-    ../include/particlelinks.hpp
-    ../include/particleworld.hpp
-    ../include/geometry.hpp
-    ../include/mechanics.hpp
-    ../include/math.hpp
-    ../demo/app.hpp
-    ../demo/timing.hpp
-    ../demo/random.hpp
-    ../demo/ogl_headers.hpp
+add_executable (${PROJECT_NAME} 
+    ${DEMO_SOURCES} 
+    ${DEMO_HEADERS}
 )
-
-set(SOURCES
-    ../src/core.cpp
-    ../src/particle.cpp
-    ../src/particleforcegenerator.cpp
-    ../src/particlecontacts.cpp
-    ../src/particlelinks.cpp
-    ../src/particleworld.cpp
-    ../src/geometry.cpp
-    ../src/mechanics.cpp
-    ../src/math.cpp
-    ../demo/app.cpp
-    ../demo/timing.cpp
-    ../demo/random.cpp
-    ../demo/falling.cpp
-    ./main.cpp
+target_link_libraries(${PROJECT_NAME} 
+    ${OPENGL_LIBRARIES} 
+    ${GLUT_LIBRARIES}
+    ${PEGASUS_LIB}
 )
-
-########################################################
-# Linking
-#########################################################
-add_executable (${PROJECT_NAME} ${SOURCES} ${HEADERS})
-target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} ${GLUT_LIBRARIES})

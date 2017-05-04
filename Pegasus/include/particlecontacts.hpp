@@ -3,6 +3,7 @@
 
 #include "Pegasus/include/geometry.hpp"
 #include "Pegasus/include/mechanics.hpp"
+#include "Pegasus/include/particlecontacts.hpp"
 #include "Pegasus/include/particle.hpp"
 #include <vector>
 
@@ -72,7 +73,7 @@ public:
     unsigned int addContact(Contacts& contacts, unsigned int const limit) const override;
 };
 
-template<typename ShapeA, typename ShapeB>
+template <typename ShapeA, typename ShapeB>
 class ShapeContactGenerator : public ParticleContactGenerator {
 public:
     ShapeContactGenerator(RigidBody::Ptr const rBody, RigidBodies const& rBodies, real const restitution)

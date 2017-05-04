@@ -7,8 +7,7 @@
 #include <memory>
 #include <vector>
 
-namespace pegasus 
-{
+namespace pegasus {
 
 class Body {
 public:
