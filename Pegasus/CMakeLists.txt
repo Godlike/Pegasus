@@ -15,6 +15,14 @@ endif ()
 project(${PEGASUS_NAME})
 set(CMAKE_CXX_STANDARD 14)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+#Eigen
+include(EigenConfig)
+add_subdirectory(${EIGEN_SOURCE_DIR})
+include_directories(${EIGEN_INCLUDE_DIR})
+
+#Target
 include_directories(
     ${PEGASUS_INCLUDE_DIR}
 )
@@ -28,6 +36,7 @@ set(PEGASUS_HEADERS
     include/geometry.hpp
     include/mechanics.hpp
     include/math.hpp
+    include/boundingvolumes.hpp
 )
 set(PEGASUS_SOURCES
     sources/core.cpp
@@ -39,9 +48,13 @@ set(PEGASUS_SOURCES
     sources/geometry.cpp
     sources/mechanics.cpp
     sources/math.cpp
+    sources/boundingvolumes.cpp
 )
 
 add_library(${PEGASUS_LIB}
     ${PEGASUS_HEADERS}
     ${PEGASUS_SOURCES}
+)
+target_link_libraries(${PEGASUS_LIB}
+    ${EIGEN_LIBRARIES}
 )
