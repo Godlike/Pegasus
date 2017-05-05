@@ -2,9 +2,14 @@
 
 #include <numeric>
 
+using namespace pegasus;
+using namespace geometry;
+using namespace obb;
 
-obb::OrientedBoundingBox::OrientedBoundingBox(const obb::OrientedBoundingBox::Shape & shape, const obb::Indices & indices) :
-    m_shape(shape), m_indices(indices)
+OrientedBoundingBox::OrientedBoundingBox(Shape const & shape, Indices const & indices) 
+    : m_box_shape({}, {}, {}, {})
+    , m_shape(shape)
+    , m_indices(indices)
 {
     //Todo: implement convex hull step
     m_box.mean = calculateMeanVertex(m_shape, m_indices);
@@ -12,41 +17,35 @@ obb::OrientedBoundingBox::OrientedBoundingBox(const obb::OrientedBoundingBox::Sh
     m_box.eigen_vectors = calculateEigenVectors(m_box.covariance);
     m_box.extremal_vertices = calculateExtremalVertices(m_box.covariance, m_shape, m_indices);
     m_box.cube_vertices = calculateBoxVertices(m_box.extremal_vertices, m_box.eigen_vectors);
+
+    m_box_shape = geometry::Box(
+        { m_box.mean[0], m_box.mean[1], m_box.mean[2] }, 
+        { m_box.eigen_vectors.col(0)[0], m_box.eigen_vectors.col(0)[1], m_box.eigen_vectors.col(0)[2] },
+        { m_box.eigen_vectors.col(1)[0], m_box.eigen_vectors.col(1)[1], m_box.eigen_vectors.col(1)[2] },
+        { m_box.eigen_vectors.col(2)[0], m_box.eigen_vectors.col(2)[1], m_box.eigen_vectors.col(2)[2] }
+    );
 }
 
-const obb::OrientedBoundingBox::Box &obb::OrientedBoundingBox::getBox() const
+geometry::Box OrientedBoundingBox::getBox() const
 {
-    return m_box;
+    return m_box_shape;
 }
 
-const obb::OrientedBoundingBox::Shape &obb::OrientedBoundingBox::getShape() const
-{
-    return m_shape;
-}
-
-const obb::Vectors &obb::OrientedBoundingBox::getVertices() const
-{
-    return m_shape.vertices;
-}
-
-const obb::Faces &obb::OrientedBoundingBox::getIndices() const
-{
-    return m_shape.indices;
-}
-
-obb::Vector obb::OrientedBoundingBox::calculateMeanVertex(const obb::OrientedBoundingBox::Shape & shape, const obb::Indices & indices)
+OrientedBoundingBox::Vector 
+OrientedBoundingBox::calculateMeanVertex(
+    Shape const & shape, Indices const & indices)
 {
     Vector const mean = (1.0f / (3.0f * indices.size())
         * std::accumulate(indices.begin(), indices.end(), Vector{ 0, 0, 0 },
-            [&shape, &indices](Vector & s, std::size_t const & index)
-    {
-        return (s += shape.vertices[index]);
-    }));
+                          [&shape, &indices](Vector & s, std::size_t const & index) 
+                          { return (s += shape.vertices[index]); }));
 
     return mean;
 }
 
-obb::Matrix obb::OrientedBoundingBox::calculateCovarianceMatrix(const obb::OrientedBoundingBox::Shape & shape, const obb::Indices & indices, const obb::Vector & mean)
+OrientedBoundingBox::Matrix 
+OrientedBoundingBox::calculateCovarianceMatrix(
+    Shape const & shape, Indices const & indices, Vector const & mean)
 {
     Matrix C = Matrix::Zero();
 
@@ -78,7 +77,8 @@ obb::Matrix obb::OrientedBoundingBox::calculateCovarianceMatrix(const obb::Orien
     return C;
 }
 
-obb::Matrix obb::OrientedBoundingBox::calculateEigenVectors(const obb::Matrix & covariance)
+OrientedBoundingBox::Matrix 
+OrientedBoundingBox::calculateEigenVectors(Matrix const & covariance)
 {
     Eigen::EigenSolver<Matrix> es(covariance);
     auto eigen = es.eigenvectors().real();
@@ -86,9 +86,9 @@ obb::Matrix obb::OrientedBoundingBox::calculateEigenVectors(const obb::Matrix & 
     return eigen;
 }
 
-obb::Matrix obb::OrientedBoundingBox::calculateExtremalVertices(
-    const obb::Matrix & eigen_vectors, const obb::OrientedBoundingBox::Shape & shape, const obb::Indices & indices
-)
+OrientedBoundingBox::Matrix 
+OrientedBoundingBox::calculateExtremalVertices(
+    Matrix const & eigen_vectors, Shape const & shape, Indices const & indices)
 {
     Matrix extremal = Matrix::Zero();
 
@@ -105,7 +105,9 @@ obb::Matrix obb::OrientedBoundingBox::calculateExtremalVertices(
     return extremal;
 }
 
-obb::Vectors obb::OrientedBoundingBox::calculateBoxVertices(const obb::Matrix & extremal_points, const obb::Matrix & eigen_vectors)
+OrientedBoundingBox::Vectors 
+OrientedBoundingBox::calculateBoxVertices(
+    Matrix const & extremal_points, Matrix const & eigen_vectors)
 {
     Vectors box(8, Vector{ 0, 0, 0 });
 
