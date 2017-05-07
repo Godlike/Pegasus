@@ -41,6 +41,7 @@ namespace obb {
             Vector mean;
             Matrix covariance;
             Matrix eigen_vectors;
+            Matrix eigen_vectors_normalized;
             Matrix extremal_vertices;
             Vectors cube_vertices;
         };

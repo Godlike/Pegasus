@@ -15,8 +15,9 @@ OrientedBoundingBox::OrientedBoundingBox(Shape const & shape, Indices const & in
     m_box.mean = calculateMeanVertex(m_shape, m_indices);
     m_box.covariance = calculateCovarianceMatrix(m_shape, m_indices, m_box.mean);
     m_box.eigen_vectors = calculateEigenVectors(m_box.covariance);
+    m_box.eigen_vectors_normalized = m_box.eigen_vectors.normalized();
     m_box.extremal_vertices = calculateExtremalVertices(m_box.covariance, m_shape, m_indices);
-    m_box.cube_vertices = calculateBoxVertices(m_box.extremal_vertices, m_box.eigen_vectors);
+    m_box.cube_vertices = calculateBoxVertices(m_box.extremal_vertices, m_box.eigen_vectors_normalized);
 
     m_box_shape = geometry::Box(
         { m_box.mean[0], m_box.mean[1], m_box.mean[2] }, 
@@ -81,9 +82,7 @@ OrientedBoundingBox::Matrix
 OrientedBoundingBox::calculateEigenVectors(Matrix const & covariance)
 {
     Eigen::EigenSolver<Matrix> es(covariance);
-    auto eigen = es.eigenvectors().real();
-    eigen.normalize();
-    return eigen;
+    return es.eigenvectors().real();;
 }
 
 OrientedBoundingBox::Matrix 
