@@ -18,9 +18,7 @@ namespace obb {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        using Matrix = Eigen::Matrix3f;
-        using Vector = Eigen::Vector3f;
-        using Vectors = std::vector<Vector, Eigen::aligned_allocator<Vector>>;
+        using Vectors = std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>;
         using Indices = std::set<std::size_t>;
         using Face = std::array<std::size_t, 3>;
         using Faces = std::vector<Face>;
@@ -38,17 +36,13 @@ namespace obb {
         {
             EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-            Vector mean;
-            Matrix covariance;
-            Matrix eigen_vectors;
-            Matrix eigen_vectors_normalized;
-            Matrix extremal_vertices;
+            Eigen::Vector3f mean;
+            Eigen::Matrix3f covariance;
+            Eigen::Matrix3f eigen_vectors;
+            Eigen::Matrix3f eigen_vectors_normalized;
+            Eigen::Matrix3f extremal_vertices;
             Vectors cube_vertices;
         };
-
-    public:
-        OrientedBoundingBox(Shape const & shape, Indices const & indices);
-        geometry::Box getBox() const;
 
     private:
         geometry::Box m_box_shape;
@@ -56,16 +50,20 @@ namespace obb {
         Shape const & m_shape;
         Indices const & m_indices;
 
-        static Vector calculateMeanVertex(
+    public:
+        OrientedBoundingBox(Shape const & shape, Indices const & indices);
+        geometry::Box getBox() const;
+
+        static Eigen::Vector3f calculateMeanVertex(
             Shape const & shape, Indices const & indices);
-        static Matrix calculateCovarianceMatrix(
-            Shape const & shape, Indices const & indices, Vector const & mean);
-        static Matrix calculateEigenVectors(
-            Matrix const & covariance);
-        static Matrix calculateExtremalVertices(
-            Matrix const & eigen_vectors, Shape const & shape, Indices const & indices);
+        static Eigen::Matrix3f calculateCovarianceMatrix(
+            Shape const & shape, Indices const & indices, Eigen::Vector3f const & mean);
+        static Eigen::Matrix3f calculateEigenVectors(
+            Eigen::Matrix3f const & covariance);
+        static Eigen::Matrix3f calculateExtremalVertices(
+            Eigen::Matrix3f const & eigen_vectors, Shape const & shape, Indices const & indices);
         static Vectors calculateBoxVertices(
-            Matrix const & extremal_points, Matrix const & eigen_vectors);
+            Eigen::Matrix3f const & extremal_points, Eigen::Matrix3f const & eigen_vectors);
     };
 
 } // namespace obb
