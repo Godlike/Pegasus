@@ -73,7 +73,6 @@ public:
     unsigned int addContact(Contacts& contacts, unsigned int const limit) const override;
 };
 
-template <typename ShapeA, typename ShapeB>
 class ShapeContactGenerator : public ParticleContactGenerator {
 public:
     ShapeContactGenerator(RigidBody::Ptr const rBody, RigidBodies const& rBodies, real const restitution)
@@ -95,12 +94,12 @@ public:
                 break;
             }
 
-            geometry::IntersectionQueries<ShapeA, ShapeB> intersection(body->s.get(), mRigidBody->s.get());
-            if (intersection.overlap()) {
+            geometry::IntersectionQuery intersection;
+            if (intersection.overlap(body->s.get(), mRigidBody->s.get())) {
                 contacts.push_back(std::make_shared<ParticleContact>(
                     body->p, mRigidBody->p, mRestitution,
-                    intersection.calculateContactNormal(),
-                    intersection.calculatePenetration()));
+                    intersection.calculateContactNormal(body->s.get(), mRigidBody->s.get()),
+                    intersection.calculatePenetration(body->s.get(), mRigidBody->s.get())));
             }
         }
 

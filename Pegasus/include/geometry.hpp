@@ -133,6 +133,8 @@ namespace geometry {
         Vector3 mC;
     };
 
+    namespace intersection {
+
     //Utility functions
     template <typename T>
     bool isPointOnSameSide(
@@ -182,1039 +184,64 @@ namespace geometry {
         }
     }
 
-    //Base intersection querie class
-    class IntersectionBase {
-    protected:
-        SimpleShape::Type aShapeType;
-        SimpleShape::Type bShapeType;
+    //Intersection query computation caches
+    struct CacheBase {};
 
-    public:
-        IntersectionBase()
-            : aShapeType(SimpleShape::NONE)
-            , bShapeType(SimpleShape::NONE)
-        {
-        }
-    };
+    template< typename ShapeA, typename ShapeB >
+    struct Cache : CacheBase{};
 
-    template <typename ShapeA, typename ShapeB, typename IntersectionSpecific>
-    class IntersectionQueriesBase : public IntersectionBase {
-    protected:
-        ShapeA const* a;
-        ShapeB const* b;
-        bool initialized = false;
-
-    public:
-        IntersectionQueriesBase(SimpleShape const* _a, SimpleShape const* _b)
-        {
-            setShapes(_a, _b);
-        }
-
-    private:
-        void setShapes(SimpleShape const* _a, SimpleShape const* _b)
-        {
-            initialized = _a != nullptr && _b != nullptr;
-
-            if (initialized) {
-                a = static_cast<ShapeA const*>(_a);
-                b = static_cast<ShapeB const*>(_b);
-                aShapeType = _a->type;
-                bShapeType = _b->type;
-            }
-        }
-    };
-
-    template <typename ShapeA, typename ShapeB>
-    class IntersectionQueries : IntersectionQueriesBase<ShapeA, ShapeB, IntersectionQueries<ShapeA, ShapeB> > {
-    };
-
-    //Plane tests
     template <>
-    class IntersectionQueries<Plane, Plane>
-        : IntersectionQueriesBase<Plane, Plane, IntersectionQueries<Plane, Plane> > {
-    private:
-        using Base = IntersectionQueriesBase<Plane, Plane, IntersectionQueries<Plane, Plane> >;
+    struct Cache<Plane, Plane> : CacheBase
+    {
         Vector3 aNormal;
         Vector3 bNormal;
         Vector3 crossProduct;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return crossProduct.squareMagnitude() != static_cast<real>(0);
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                return b->getNormal();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return std::numeric_limits<pegasus::real>::max();
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aNormal = a->getNormal();
-            bNormal = b->getNormal();
-            crossProduct = aNormal % bNormal;
-        }
     };
 
     template <>
-    class IntersectionQueries<Plane, Triangle>
-        : IntersectionQueriesBase<Plane, Triangle, IntersectionQueries<Plane, Triangle> > {
-    private:
-        using Base = IntersectionQueriesBase<Plane, Triangle, IntersectionQueries<Plane, Triangle> >;
-        Vector3 i, j, k;
-        Vector3 aNormal;
-        std::array<real, 3> projections;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                auto const d = b->getCenterOfMass() * aNormal;
-
-                return (projections[0] < d) || (projections[1] < d) || (projections[2] < d);
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                return b->getNormal().unit();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return *std::min_element(projections.begin(), projections.end());
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            b->getAxes(i, j, k);
-            aNormal = a->getNormal();
-            projections = { i * aNormal, j * aNormal, k * aNormal };
-        }
-    };
-
-    template <>
-    class IntersectionQueries<Plane, Sphere>
-        : IntersectionQueriesBase<Plane, Sphere, IntersectionQueries<Plane, Sphere> > {
-    private:
-        using Base = IntersectionQueriesBase<Plane, Sphere, IntersectionQueries<Plane, Sphere> >;
-        Vector3 aMassCenter;
-        Vector3 bMassCenter;
-        Vector3 aNormal;
-        real bRadius;
+    struct Cache<Plane, Sphere> : CacheBase
+    {
+        Vector3 planeMassCenter;
+        Vector3 planeNormal;
+        Vector3 sphereMassCenter;
+        real sphereRadius;
         real penetration;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return penetration >= real(0);
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                return (aNormal - bMassCenter).unit();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return penetration;
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aNormal = a->getNormal();
-            aMassCenter = a->getCenterOfMass();
-            bMassCenter = b->getCenterOfMass();
-            bRadius = b->getRadius();
-            penetration = bMassCenter * aNormal - aMassCenter * aNormal;
-        }
     };
 
     template <>
-    class IntersectionQueries<Plane, Cone>
-        : IntersectionQueriesBase<Plane, Cone, IntersectionQueries<Plane, Cone> > {
-    private:
-        using Base = IntersectionQueriesBase<Plane, Cone, IntersectionQueries<Plane, Cone> >;
-        Vector3 aMassCenter;
-        Vector3 aNormal;
-        real aDistance;
-        real bRadius;
-        Vector3 bMassCenter;
-        Vector3 bAppex;
-        Vector3 intersectionTriangleNormal;
-        Vector3 intersectionTriangleRadiusVector;
-        mutable std::array<Vector3, 3> intersectionTriangleVertices;
-        mutable std::array<Vector3, 3> intersectionTriangleAxes;
-        mutable std::array<real, 3> intersectionTriangleAxesDistances;
-        mutable std::array<real, 3> intersectionTriangleVerticesDistances;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return *std::min_element(intersectionTriangleVerticesDistances.begin(),
-                           intersectionTriangleVerticesDistances.end())
-                    <= 0;
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                intersectionTriangleAxes = { ((intersectionTriangleVertices[1] - intersectionTriangleAxes[0]) % intersectionTriangleNormal).unit(),
-                    ((intersectionTriangleVertices[2] - intersectionTriangleAxes[0]) % intersectionTriangleNormal).unit(),
-                    ((intersectionTriangleVertices[1] - intersectionTriangleAxes[2]) % intersectionTriangleNormal).unit() };
-                std::transform(intersectionTriangleAxes.begin(), intersectionTriangleAxes.end(),
-                    intersectionTriangleAxesDistances.begin(),
-                    [this](auto const& v) { return (v + bMassCenter) * aNormal; });
-                auto minIndex = std::distance(intersectionTriangleAxesDistances.begin(), std::min_element(intersectionTriangleAxesDistances.begin(),
-                                                                                             intersectionTriangleAxesDistances.end()));
-                return intersectionTriangleAxes[minIndex];
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return *std::min_element(intersectionTriangleVerticesDistances.begin(),
-                           intersectionTriangleVerticesDistances.end())
-                    * -1;
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aNormal = a->getNormal();
-            aMassCenter = a->getCenterOfMass();
-            aDistance = aMassCenter * aNormal;
-            bMassCenter = b->getCenterOfMass();
-            bRadius = b->getRadius();
-            bAppex = b->getAppex();
-            intersectionTriangleNormal = ((aNormal - bAppex) % bAppex).unit();
-            intersectionTriangleRadiusVector = (bAppex % intersectionTriangleNormal).unit() * bRadius;
-            intersectionTriangleVertices = { intersectionTriangleRadiusVector + bMassCenter,
-                intersectionTriangleRadiusVector.inverse() + bMassCenter,
-                bAppex + bMassCenter };
-            std::transform(intersectionTriangleVertices.begin(), intersectionTriangleVertices.end(),
-                intersectionTriangleVerticesDistances.begin(),
-                [this](auto const& v) { return (v * aNormal) - aDistance; });
-        }
-    };
-
-    template <>
-    class IntersectionQueries<Plane, Cylinder>
-        : IntersectionQueriesBase<Plane, Cylinder, IntersectionQueries<Plane, Cylinder> > {
-    private:
-        using Base = IntersectionQueriesBase<Plane, Cylinder, IntersectionQueries<Plane, Cylinder> >;
-        Vector3 aMassCenter;
-        Vector3 aNormal;
-        real aDistance;
-        Vector3 bMassCenter;
-        Vector3 bHalfHeight;
-        Vector3 bRadiusVector;
-        mutable std::array<Vector3, 4> intersectionRectangleAxes;
-        mutable std::array<real, 4> intersectionRectangleAxesDistances;
-        std::array<Vector3, 4> intersectionRectangleVertices;
-        std::array<real, 4> intersectionRectangleDistances;
-        real bRadius;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return *std::min_element(intersectionRectangleDistances.begin(), intersectionRectangleDistances.end()) <= 0;
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                intersectionRectangleAxes = { bHalfHeight, bHalfHeight.inverse(), bRadiusVector, bRadiusVector.inverse() };
-                for (auto& v : intersectionRectangleAxes) {
-                    v += bMassCenter;
-                }
-                std::transform(intersectionRectangleAxes.begin(), intersectionRectangleAxes.end(), intersectionRectangleAxesDistances.begin(),
-                    [this](auto const& v) { return (v * aNormal) - aDistance; });
-                auto min_index = std::distance(intersectionRectangleAxesDistances.begin(),
-                    std::min_element(intersectionRectangleAxesDistances.begin(),
-                                                   intersectionRectangleAxesDistances.end()));
-                return intersectionRectangleAxes[min_index];
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return *std::min_element(intersectionRectangleDistances.begin(), intersectionRectangleDistances.end()) * -1;
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aNormal = a->getNormal();
-            aMassCenter = a->getCenterOfMass();
-            aDistance = aMassCenter * aNormal;
-            bMassCenter = b->getCenterOfMass();
-            bRadius = b->getRadius();
-            bHalfHeight = b->getHalfHeight();
-            bRadiusVector = ((aNormal % bHalfHeight) % bHalfHeight).unit() * bRadius;
-            intersectionRectangleVertices = {
-                bRadiusVector - bHalfHeight + bMassCenter,
-                bRadiusVector.inverse() - bHalfHeight + bMassCenter,
-                bRadiusVector + bHalfHeight + bMassCenter,
-                bRadiusVector.inverse() + bHalfHeight + bMassCenter
-            };
-            std::transform(intersectionRectangleVertices.begin(), intersectionRectangleVertices.end(), intersectionRectangleDistances.begin(),
-                [this](auto const& v) { return (v * aNormal) - aDistance; });
-        }
-    };
-
-    template <>
-    class IntersectionQueries<Plane, Capsule>
-        : IntersectionQueriesBase<Plane, Capsule, IntersectionQueries<Plane, Capsule> > {
-    private:
-        using Base = IntersectionQueriesBase<Plane, Capsule, IntersectionQueries<Plane, Capsule> >;
-        Vector3 bMassCenter;
-        Vector3 bHalfHeight;
-        real bRadius;
-        Sphere s1, s2;
-        Cylinder c;
-        mutable bool overlapS1 = false;
-        mutable bool overlapS2 = false;
-        mutable bool overlapC = false;
-        IntersectionQueries<Plane, Sphere> psIntresection1;
-        IntersectionQueries<Plane, Sphere> psIntresection2;
-        IntersectionQueries<Plane, Cylinder> pcIntersection;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-            , s1({}, 0)
-            , s2({}, 0)
-            , c({}, {}, 0)
-            , psIntresection1(a, &s1)
-            , psIntresection2(a, &s2)
-            , pcIntersection(a, &c)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                overlapC = pcIntersection.overlap();
-                if (overlapC) {
-                    return true;
-                }
-
-                overlapS1 = psIntresection1.overlap();
-                if (overlapS1) {
-                    return true;
-                }
-
-                return overlapS2 = psIntresection2.overlap();
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                if (overlapC) {
-                    return pcIntersection.calculateContactNormal();
-                }
-                if (overlapS1) {
-                    return psIntresection1.calculateContactNormal();
-                }
-                if (overlapS2) {
-                    return psIntresection2.calculateContactNormal();
-                }
-
-                return pcIntersection.calculateContactNormal();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                if (overlapC) {
-                    return pcIntersection.calculatePenetration();
-                }
-                if (overlapS1) {
-                    return psIntresection1.calculatePenetration();
-                }
-                if (overlapS2) {
-                    return psIntresection2.calculatePenetration();
-                }
-
-                return pcIntersection.calculatePenetration();
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            bMassCenter = b->getCenterOfMass();
-            bRadius = b->getRadius();
-            bHalfHeight = b->getHalfHeight();
-            s1 = Sphere(bHalfHeight + bMassCenter, bRadius);
-            s2 = Sphere(bHalfHeight.inverse() + bMassCenter, bRadius);
-            c = Cylinder(bMassCenter, bHalfHeight, bRadius);
-            psIntresection1 = IntersectionQueries<Plane, Sphere>(a, &s1);
-            psIntresection2 = IntersectionQueries<Plane, Sphere>(a, &s2);
-            pcIntersection = IntersectionQueries<Plane, Cylinder>(a, &c);
-        }
-    };
-
-    template <>
-    class IntersectionQueries<Plane, Box>
-        : IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box> > {
-    private:
-        using Base = IntersectionQueriesBase<Plane, Box, IntersectionQueries<Plane, Box> >;
-        Vector3 i, j, k;
-        Vector3 bMassCenter;
+    struct Cache<Plane, Box> : CacheBase
+    {
+        Vector3 boxMassCenter;
+        std::array<Vector3, 3> boxAxes;
         std::array<Vector3, 8> boxVertices;
-        std::array<Vector3, 6> boxAxes;
-        mutable std::array<real, 6> boxAxesDistances;
+        std::array<Vector3, 6> boxFaces;
+        std::array<real, 6> boxFaceDistances;
         std::array<real, 8> boxPenetrations;
-        Vector3 aNormal;
-        real aDistance;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return *std::min_element(boxPenetrations.begin(), boxPenetrations.end()) >= 0;
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                std::transform(boxAxes.begin(), boxAxes.end(), boxAxesDistances.begin(), [this](auto const& v) { return v * aNormal; });
-                auto const minIndex = std::distance(boxAxesDistances.begin(),
-                    std::min_element(boxAxesDistances.begin(), boxAxesDistances.end()));
-
-                return boxAxes[minIndex].unit();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return (*std::min_element(boxPenetrations.begin(), boxPenetrations.end()));
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aNormal = a->getNormal();
-            aDistance = a->getCenterOfMass() * aNormal;
-            b->getAxes(i, j, k);
-            bMassCenter = b->getCenterOfMass();
-            calculateBoxVertices(i, j, k, boxVertices);
-            boxAxes = { i, j, k, i.inverse(), j.inverse(), k.inverse() };
-            std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& n) { n += bMassCenter; });
-            std::transform(boxVertices.begin(), boxVertices.end(), boxPenetrations.begin(),
-                [this](auto const& p) { return p * aNormal - aDistance; });
-        }
-    };
-
-    //Sphere tests
-    template <>
-    class IntersectionQueries<Sphere, Plane>
-        : IntersectionQueriesBase<Sphere, Plane, IntersectionQueries<Sphere, Plane> > {
-    private:
-        using Base = IntersectionQueriesBase<Sphere, Plane, IntersectionQueries<Sphere, Plane> >;
-        IntersectionQueries<Plane, Sphere> planeSphereIntersection;
-        Vector3 bNormal;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-            , planeSphereIntersection(b, a)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return planeSphereIntersection.overlap();
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                return bNormal;
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return planeSphereIntersection.calculatePenetration();
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            bNormal = b->getNormal();
-        }
+        Vector3 planeNormal;
+        real planeDistance;
     };
 
     template <>
-    class IntersectionQueries<Sphere, Triangle>
-        : IntersectionQueriesBase<Sphere, Triangle, IntersectionQueries<Sphere, Triangle> > {
-    private:
-        using Base = IntersectionQueriesBase<Sphere, Triangle, IntersectionQueries<Sphere, Triangle> >;
-        std::array<Vector3, 3> triangleVetices;
-        mutable std::array<real, 3> triangleVerticesSqrDistances;
-        Vector3 bMassCenter;
-        Vector3 bNormal;
-        Vector3 aMassCenter;
-        real aRadius;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                std::transform(triangleVetices.begin(), triangleVetices.end(), triangleVerticesSqrDistances.begin(),
-                    [this](auto const& p) { return (p - aMassCenter).squareMagnitude(); });
-
-                std::sort(triangleVerticesSqrDistances.begin(), triangleVerticesSqrDistances.end());
-                if (triangleVerticesSqrDistances.front() < std::pow(aRadius, 2)) {
-                    return true;
-                }
-
-                auto const spherePlaneScalarProjection = triangleVetices[0] * bNormal - aMassCenter * bNormal;
-                if (std::abs(spherePlaneScalarProjection) < aRadius) {
-                    return true;
-                }
-
-                auto const c = bNormal * (triangleVetices[0] - aMassCenter) / bNormal.squareMagnitude();
-                auto const sphereCenterPlaneProjection = aMassCenter + bNormal * c;
-
-                return isPointOnSameSide(sphereCenterPlaneProjection, triangleVetices[0], triangleVetices[1], triangleVetices[2])
-                    && isPointOnSameSide(sphereCenterPlaneProjection, triangleVetices[1], triangleVetices[0], triangleVetices[2])
-                    && isPointOnSameSide(sphereCenterPlaneProjection, triangleVetices[2], triangleVetices[0], triangleVetices[1]);
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                auto const contactNormalScalar = (aMassCenter - triangleVetices[0]) * bNormal;
-                return bNormal * contactNormalScalar;
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                //Note: Works as a plane penetration test, but should it work like that?
-                auto const planeDistance = bMassCenter * bNormal;
-                auto const sphereDistance = aMassCenter * bNormal;
-
-                return planeDistance - (sphereDistance - aRadius);
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aMassCenter = a->getCenterOfMass();
-            bMassCenter = b->getCenterOfMass();
-            bNormal = b->getNormal();
-            b->getAxes(triangleVetices[0], triangleVetices[1], triangleVetices[2]);
-            std::for_each(triangleVetices.begin(), triangleVetices.end(),
-                [this](auto& p) { p += bMassCenter; });
-        }
+    struct Cache<Sphere, Plane> : CacheBase
+    {
+        Cache<Plane, Sphere> psCache;
     };
 
     template <>
-    class IntersectionQueries<Sphere, Sphere>
-        : IntersectionQueriesBase<Sphere, Sphere, IntersectionQueries<Sphere, Sphere> > {
-    private:
-        using Base = IntersectionQueriesBase<Sphere, Sphere, IntersectionQueries<Sphere, Sphere> >;
-        Vector3 aMassCenter;
+    struct Cache<Sphere, Sphere> : CacheBase
+    {
         Vector3 bMassCenter;
         Vector3 baVector;
-        real aRadius;
         real bRadius;
+        Vector3 aMassCenter;
+        real aRadius;
         real radiusSum;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return std::pow(radiusSum, 2) > baVector.squareMagnitude();
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                return baVector.unit();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return (radiusSum - baVector.magnitude());
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aMassCenter = a->getCenterOfMass();
-            bMassCenter = b->getCenterOfMass();
-            aRadius = a->getRadius();
-            bRadius = b->getRadius();
-            radiusSum = aRadius + bRadius;
-            baVector = aMassCenter - bMassCenter;
-        }
     };
 
     template <>
-    class IntersectionQueries<Sphere, Cone>
-        : IntersectionQueriesBase<Sphere, Cone, IntersectionQueries<Sphere, Cone> > {
-    private:
-        using Base = IntersectionQueriesBase<Sphere, Cone, IntersectionQueries<Sphere, Cone> >;
-        Vector3 aMassCenter;
-        Vector3 bMassCenter;
-        Vector3 bAppex;
-        Vector3 intersectionPlaneVector;
-        real aRadius;
-        Triangle intersectionTriangle;
-        Vector3 intersectionTriangleNormal;
-        std::array<Vector3, 3> intersectionTriangleVertices;
-        IntersectionQueries<Sphere, Triangle> intersection;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-            , intersectionTriangle({}, {}, {}, {})
-            , intersection(a, &intersectionTriangle)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return intersection.overlap();
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                auto const t = intersectionTriangleNormal * (intersectionTriangleVertices[0] - aMassCenter)
-                    / intersectionTriangleNormal.squareMagnitude();
-                auto const sphereCenterPlaneProjection = aMassCenter + intersectionTriangleNormal * t;
-
-                if (!isPointOnSameSide(sphereCenterPlaneProjection, intersectionTriangleVertices[0],
-                        intersectionTriangleVertices[1], intersectionTriangleVertices[2])) {
-                    return intersectionTriangleNormal;
-                }
-                if (!isPointOnSameSide(sphereCenterPlaneProjection, intersectionTriangleVertices[1],
-                        intersectionTriangleVertices[0], intersectionTriangleVertices[2])) {
-                    return intersectionTriangleNormal.inverse();
-                }
-
-                return bAppex.unit().inverse();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                auto const contactNormal = intersection.calculateContactNormal();
-
-                if ((contactNormal % bAppex).squareMagnitude() == static_cast<real>(0)) {
-                    return (aRadius - (aMassCenter - bMassCenter).magnitude()) - bAppex.magnitude() * real(0.25);
-                }
-
-                auto const edgeDistance = (bAppex + bMassCenter) * contactNormal;
-                auto const sphereDistance = aMassCenter * contactNormal;
-
-                return edgeDistance - (sphereDistance - aRadius);
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aMassCenter = a->getCenterOfMass();
-            bMassCenter = b->getCenterOfMass();
-            aRadius = a->getRadius();
-            bAppex = b->getAppex();
-            intersectionPlaneVector = (bAppex % (bAppex % aMassCenter.unit())).unit();
-            intersectionTriangle = Triangle(bMassCenter, intersectionPlaneVector * aRadius, intersectionPlaneVector * -aRadius, bAppex);
-            intersectionTriangleNormal = intersectionTriangle.getNormal();
-            intersectionTriangle.getAxes(intersectionTriangleVertices[0], intersectionTriangleVertices[1], intersectionTriangleVertices[2]);
-            intersection = IntersectionQueries<Sphere, Triangle>(a, &intersectionTriangle);
-        }
-    };
-
-    template <>
-    class IntersectionQueries<Sphere, Cylinder>
-        : IntersectionQueriesBase<Sphere, Cylinder, IntersectionQueries<Sphere, Cylinder> > {
-    private:
-        using Base = IntersectionQueriesBase<Sphere, Cylinder, IntersectionQueries<Sphere, Cylinder> >;
-        Vector3 bMassCenter;
-        Vector3 bHalfHeight;
-        real bRadius;
-        Vector3 aMassCenter;
-        real aRadius;
-        Vector3 baNormal;
-        Vector3 intersectionPlaneNormal;
-        Vector3 intersectionPlaneVector;
-        Vector3 aMassCenterProjection;
-        Vector3 bMassCenterProjection;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return calculatePenetration() > 0;
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-
-                if (std::abs(aMassCenterProjection.x - bMassCenterProjection.x) < bRadius
-                    && (aMassCenterProjection.y > bMassCenterProjection.y + bHalfHeight.magnitude()
-                           || aMassCenterProjection.y < bMassCenterProjection.y - bHalfHeight.magnitude())) {
-                    return (aMassCenterProjection.y > bMassCenterProjection.y ? bHalfHeight : bHalfHeight.inverse()).unit();
-                }
-
-                return (aMassCenterProjection.x > bMassCenterProjection.x
-                               ? intersectionPlaneVector
-                               : intersectionPlaneVector.inverse())
-                    .unit();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                auto const xPenetration = std::abs(bMassCenterProjection.x - aMassCenterProjection.x) - bRadius - aRadius;
-                auto const yPenetration = std::abs(bMassCenterProjection.y - aMassCenterProjection.y) - bHalfHeight.magnitude() - aRadius;
-
-                return xPenetration < yPenetration ? xPenetration : yPenetration;
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            bMassCenter = b->getCenterOfMass();
-            bHalfHeight = b->getHalfHeight();
-            bRadius = b->getRadius();
-            aMassCenter = a->getCenterOfMass();
-            aRadius = a->getRadius();
-            baNormal = (aMassCenter - bMassCenter).unit();
-            intersectionPlaneNormal = baNormal % bHalfHeight;
-            intersectionPlaneVector = (bHalfHeight % intersectionPlaneNormal).unit() * bRadius;
-            aMassCenterProjection = { aMassCenter * intersectionPlaneVector.unit(),
-                aMassCenter * bHalfHeight.unit(), real(0) };
-            bMassCenterProjection = { bMassCenter * intersectionPlaneVector.unit(),
-                bMassCenter * bHalfHeight.unit(), real(0) };
-        }
-    };
-
-    template <>
-    class IntersectionQueries<Sphere, Capsule>
-        : IntersectionQueriesBase<Sphere, Capsule, IntersectionQueries<Sphere, Capsule> > {
-    private:
-        using Base = IntersectionQueriesBase<Sphere, Capsule, IntersectionQueries<Sphere, Capsule> >;
-        Vector3 aMassCenter;
-        real aRadius;
-        Vector3 bMassCenter;
-        Vector3 bHalfHeight;
-        real bRadius;
-        Sphere s1, s2;
-        Cylinder c;
-        IntersectionQueries<Sphere, Sphere> ssIntersection1;
-        IntersectionQueries<Sphere, Sphere> ssIntersection2;
-        IntersectionQueries<Sphere, Cylinder> scIntersection;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-            , s1({}, 0)
-            , s2({}, 0)
-            , c({}, {}, 0)
-            , ssIntersection1(a, &s1)
-            , ssIntersection2(a, &s2)
-            , scIntersection(a, &c)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                if (scIntersection.overlap()) {
-                    return true;
-                }
-
-                if (ssIntersection1.overlap()) {
-                    return true;
-                }
-
-                return ssIntersection2.overlap();
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                if (scIntersection.overlap()) {
-                    return scIntersection.calculateContactNormal();
-                }
-
-                if (ssIntersection1.overlap()) {
-                    return ssIntersection1.calculateContactNormal();
-                }
-
-                if (ssIntersection2.overlap()) {
-                    return ssIntersection2.calculateContactNormal();
-                }
-
-                return scIntersection.calculateContactNormal();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                if (ssIntersection1.overlap()) {
-                    return ssIntersection1.calculatePenetration();
-                }
-
-                if (ssIntersection2.overlap()) {
-                    return ssIntersection2.calculatePenetration();
-                }
-
-                return scIntersection.calculatePenetration();
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aMassCenter = a->getCenterOfMass();
-            aRadius = a->getRadius();
-            bMassCenter = b->getCenterOfMass();
-            bRadius = b->getRadius();
-            bHalfHeight = b->getHalfHeight();
-            s1 = Sphere(bMassCenter + bHalfHeight, bRadius);
-            s2 = Sphere(bMassCenter - bHalfHeight, bRadius);
-            c = Cylinder(bMassCenter, bHalfHeight, bRadius);
-            ssIntersection1 = IntersectionQueries<Sphere, Sphere>(a, &s1);
-            ssIntersection2 = IntersectionQueries<Sphere, Sphere>(a, &s2);
-            scIntersection = IntersectionQueries<Sphere, Cylinder>(a, &c);
-        }
-    };
-
-    template <>
-    class IntersectionQueries<Sphere, Box>
-        : IntersectionQueriesBase<Sphere, Box, IntersectionQueries<Sphere, Box> > {
-    private:
-        using Base = IntersectionQueriesBase<Sphere, Box, IntersectionQueries<Sphere, Box> >;
+    struct Cache<Sphere, Box> : CacheBase
+    {
+        Vector3 boxMassCenter;
         std::array<Vector3, 3> boxAxes;
         std::array<Vector3, 6> boxNormals;
         std::array<Vector3, 6> boxFaces;
@@ -1222,676 +249,519 @@ namespace geometry {
         std::array<Vector3, 8> boxVertices;
         std::array<real, 8> boxVerticesProjections;
         std::array<Vector3, 4> separatingAxes;
-        Vector3 aMassCenter;
-        real aRadius;
-        Vector3 bMassCenter;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                if (std::abs((boxAxes[0] + bMassCenter) * separatingAxes[0] - aMassCenter * separatingAxes[0]) <= aRadius) {
-                    return true;
-                }
-
-                if (std::abs((boxAxes[1] + bMassCenter) * separatingAxes[1] - aMassCenter * separatingAxes[1]) <= aRadius) {
-                    return true;
-                }
-
-                if (std::abs((boxAxes[2] + bMassCenter) * separatingAxes[2] - aMassCenter * separatingAxes[2]) <= aRadius) {
-                    return true;
-                }
-
-                auto const sphereMassCenterProjection = aMassCenter * separatingAxes[3];
-
-                return std::abs(sphereMassCenterProjection - boxVerticesProjections.front()) < aRadius
-                    || std::abs(sphereMassCenterProjection - boxVerticesProjections.back()) < aRadius;
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                auto minIt = std::min_element(boxFaceDistances.begin(), boxFaceDistances.end());
-
-                return boxNormals[std::distance(boxFaceDistances.begin(), minIt)].unit();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                auto minIt = std::min_element(boxFaceDistances.begin(), boxFaceDistances.end());
-
-                return aRadius - *minIt;
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            b->getAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
-            bMassCenter = b->getCenterOfMass();
-            aMassCenter = a->getCenterOfMass();
-            aRadius = a->getRadius();
-            separatingAxes = { boxAxes[0].unit(), boxAxes[1].unit(), boxAxes[2].unit(), (aMassCenter - bMassCenter).unit() };
-            calculateBoxVertices(boxAxes[0], boxAxes[1], boxAxes[2], boxVertices);
-            std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& n) { n += bMassCenter; });
-            std::transform(boxVertices.begin(), boxVertices.end(), boxVerticesProjections.begin(),
-                [this](auto const& v) { return v * separatingAxes[3]; });
-            std::sort(boxVerticesProjections.begin(), boxVerticesProjections.end());
-            boxNormals = { boxAxes[0], boxAxes[1], boxAxes[2], boxAxes[0].inverse(), boxAxes[1].inverse(), boxAxes[2].inverse() };
-            boxFaces = boxNormals;
-            std::for_each(boxFaces.begin(), boxFaces.end(), [this](auto& n) { n += bMassCenter; });
-            for (unsigned index = 0; index < boxFaceDistances.size(); ++index) {
-                boxFaceDistances[index] = std::abs(boxFaces[index] * boxNormals[index].unit() - aMassCenter * boxNormals[index].unit());
-            }
-        }
-    };
-
-    //Box tests
-    template <>
-    class IntersectionQueries<Box, Plane>
-        : IntersectionQueriesBase<Box, Plane, IntersectionQueries<Box, Plane> > {
-    private:
-        using Base = IntersectionQueriesBase<Box, Plane, IntersectionQueries<Box, Plane> >;
-        IntersectionQueries<Plane, Box> intersection;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-            , intersection(b, a)
-        {
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return intersection.overlap();
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                return b->getNormal();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return intersection.calculatePenetration();
-            }
-
-            return 0;
-        }
+        Vector3 sphereMassCenter;
+        real sphereRadius;
     };
 
     template <>
-    class IntersectionQueries<Box, Triangle>
-        : IntersectionQueriesBase<Box, Triangle, IntersectionQueries<Box, Triangle> > {
-    private:
-        using Base = IntersectionQueriesBase<Box, Triangle, IntersectionQueries<Box, Triangle> >;
-        Vector3 boxMassCenter;
-        std::array<Vector3, 8> boxVertices;
-        std::array<Vector3, 6> boxFaces;
-
-        Vector3 triangleMassCenter;
-        Vector3 triangleNormal;
-        std::array<Vector3, 3> triangleVertices;
-        std::array<Vector3, 3> triangleEdges;
-        std::vector<Vector3> separatingAxes;
-        mutable real penetration = 0;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                std::array<real, 8> boxProjections;
-                std::array<real, 3> triangleProjections;
-
-                for (auto axis : separatingAxes) {
-                    projectAllVertices(axis, boxVertices.begin(), boxVertices.end(), boxProjections.begin());
-                    projectAllVertices(axis, triangleVertices.begin(), triangleVertices.end(), triangleProjections.begin());
-                    std::sort(boxProjections.begin(), boxProjections.end());
-                    std::sort(triangleProjections.begin(), triangleProjections.end());
-
-                    if (boxProjections.back() < triangleProjections.back()) {
-                        if (boxProjections.back() < triangleProjections.front()) {
-                            return false;
-                        }
-                        penetration = boxProjections.back() - triangleProjections.front();
-                    } else {
-                        if (triangleProjections.back() < boxProjections.front()) {
-                            return false;
-                        }
-                        penetration = triangleProjections.back() - boxProjections.front();
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                auto const t = (boxMassCenter - triangleMassCenter) * triangleNormal;
-                return (triangleNormal * t).unit();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return penetration;
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            a->getAxes(boxFaces[0], boxFaces[1], boxFaces[2]);
-            boxFaces = { boxFaces[0], boxFaces[1], boxFaces[2], boxFaces[0].inverse(), boxFaces[1].inverse(), boxFaces[2].inverse() };
-            boxMassCenter = a->getCenterOfMass();
-            calculateBoxVertices(boxFaces[0], boxFaces[1], boxFaces[2], boxVertices);
-            std::for_each(boxVertices.begin(), boxVertices.end(), [this](auto& v) { v += boxMassCenter; });
-
-            b->getAxes(triangleVertices[0], triangleVertices[1], triangleVertices[2]);
-            triangleMassCenter = b->getCenterOfMass();
-            triangleNormal = b->getNormal();
-            triangleEdges = { triangleVertices[2] - triangleVertices[0],
-                triangleVertices[2] - triangleVertices[1],
-                triangleVertices[1] - triangleVertices[0] };
-            std::for_each(triangleVertices.begin(), triangleVertices.end(), [this](auto& v) { v += triangleMassCenter; });
-
-            separatingAxes = { boxFaces[0].unit(), boxFaces[1].unit(), boxFaces[2].unit(), triangleNormal };
-            calculateSeparatingAxes(boxFaces.begin(), boxFaces.begin() + 3,
-                triangleEdges.begin(), triangleEdges.end(), std::back_inserter(separatingAxes));
-        }
+    struct Cache<Box, Plane> : CacheBase
+    {
+        Cache<Plane, Box> pbCache;
+        Vector3 planeMassCenter;
+        Vector3 boxContactNormal;
     };
 
     template <>
-    class IntersectionQueries<Box, Sphere>
-        : IntersectionQueriesBase<Box, Sphere, IntersectionQueries<Box, Sphere> > {
-    private:
-        using Base = IntersectionQueriesBase<Box, Sphere, IntersectionQueries<Box, Sphere> >;
-        IntersectionQueries<Sphere, Box> intersection;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-            , intersection(b, a)
-        {
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return intersection.overlap();
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                return intersection.calculateContactNormal().inverse();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return intersection.calculatePenetration();
-            }
-
-            return 0;
-        }
+    struct Cache<Box, Sphere> : CacheBase
+    {
+        Cache<Sphere, Box> sbCache;
     };
 
     template <>
-    class IntersectionQueries<Box, Cone>
-        : IntersectionQueriesBase<Box, Cone, IntersectionQueries<Box, Cone> > {
-    private:
-        using Base = IntersectionQueriesBase<Box, Cone, IntersectionQueries<Box, Cone> >;
-        Triangle intersectionTriangle;
-        Plane intersectionBoxEdge;
-        IntersectionQueries<Box, Triangle> btIntersection;
-        IntersectionQueries<Plane, Triangle> ptIntersection;
-        Vector3 boxMassCenter;
-        std::array<Vector3, 8> boxVertices;
-        std::array<Vector3, 6> boxAxes;
-        Vector3 coneMassCenter;
-        Vector3 coneAppex;
-        real coneRadius;
-
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-            , intersectionTriangle({}, {}, {}, {})
-            , intersectionBoxEdge({}, {})
-            , btIntersection(a, &intersectionTriangle)
-            , ptIntersection(&intersectionBoxEdge, &intersectionTriangle)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return btIntersection.overlap();
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                ptIntersection.calculateContactNormal();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return btIntersection.calculatePenetration();
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            boxMassCenter = a->getCenterOfMass();
-            a->getAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
-            boxAxes = { boxAxes[0], boxAxes[1], boxAxes[2], boxAxes[3].inverse(), boxAxes[4].inverse(), boxAxes[5].inverse() };
-            calculateBoxVertices(boxAxes[0], boxAxes[1], boxAxes[2], boxVertices);
-
-            coneMassCenter = b->getCenterOfMass();
-            coneAppex = b->getAppex();
-            coneRadius = b->getRadius();
-
-            std::array<real, 6> boxConeVerticeSqrDistances;
-            std::transform(boxAxes.begin(), boxAxes.end(), boxConeVerticeSqrDistances.begin(),
-                [this](auto const& v) { return ((v + boxMassCenter) - coneMassCenter).squareMagnitude(); });
-            auto minIt = std::min_element(boxConeVerticeSqrDistances.begin(), boxConeVerticeSqrDistances.end());
-            auto closesAxes = boxAxes[std::distance(boxConeVerticeSqrDistances.begin(), minIt)] - boxMassCenter;
-            auto coneBase = ((closesAxes % coneAppex) % coneAppex).unit() * coneRadius;
-            intersectionTriangle = Triangle(coneMassCenter, coneBase, coneBase.inverse(), coneAppex);
-            intersectionBoxEdge = Plane(closesAxes + boxMassCenter, closesAxes.unit());
-            btIntersection = IntersectionQueries<Box, Triangle>(a, &intersectionTriangle);
-            ptIntersection = IntersectionQueries<Plane, Triangle>(&intersectionBoxEdge, &intersectionTriangle);
-        }
-    };
-
-    template <>
-    class IntersectionQueries<Box, Box>
-        : IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> > {
-    private:
-        using Base = IntersectionQueriesBase<Box, Box, IntersectionQueries<Box, Box> >;
+    struct Cache<Box, Box> : CacheBase
+    {
         Vector3 aMassCenter;
         Vector3 bMassCenter;
         std::array<Vector3, 8> aBoxVertices, bBoxVertices;
         std::array<Vector3, 6> aBoxFaces, bBoxFaces;
         std::vector<Vector3> separatingAxes;
-        mutable real penetration = 0;
+        real penetration = 0;
+    };
 
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-        {
-            if (initialized) {
-                calculate();
-            }
+    template < typename ShapeA, typename ShapeB >
+    void initialize(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
+
+    template < typename ShapeA, typename ShapeB >
+    bool overlap(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
+
+    template < typename ShapeA, typename ShapeB >
+    Vector3 calculateContactNormal(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
+
+    template < typename ShapeA, typename ShapeB >
+    real calculatePenetration(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
+
+    //Plane, Plane
+    template <>
+    inline void initialize<Plane, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto const * p1 = static_cast<Plane const *>(a);
+        auto const * p2 = static_cast<Plane const *>(b);
+        auto * c = static_cast<Cache<Plane, Plane>*>(cache);
+
+        c->aNormal = p1->getNormal();
+        c->bNormal = p2->getNormal();
+        c->crossProduct = c->aNormal % c->bNormal;
+    }
+
+    template <>
+    inline bool overlap<Plane, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Plane, Plane>*>(cache);
+        return c->crossProduct.squareMagnitude() != static_cast<real>(0);
+    }
+
+    template <>
+    inline Vector3 calculateContactNormal<Plane, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Plane, Plane>*>(cache);
+        return c->bNormal;
+    }
+
+    template <>
+    inline real calculatePenetration<Plane, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        return std::numeric_limits<pegasus::real>::max();
+    }
+
+    //Plane, Sphere
+    template <>
+    inline void initialize<Plane, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto const * p = static_cast<Plane const *>(a);
+        auto const * s = static_cast<Sphere const *>(b);
+        auto * c = static_cast<Cache<Plane, Sphere>*>(cache);
+
+        c->planeNormal = p->getNormal();
+        c->planeMassCenter = p->getCenterOfMass();
+        c->sphereMassCenter = s->getCenterOfMass();
+        c->sphereRadius = s->getRadius();
+        c->penetration = c->sphereMassCenter * c->planeNormal - c->planeMassCenter * c->planeNormal;
+    }
+
+    template <>
+    inline bool overlap<Plane, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Plane,Sphere>*>(cache);
+        return c->penetration >= real(0);
+    }
+
+    template <>
+    inline Vector3 calculateContactNormal<Plane, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Plane,Sphere>*>(cache);
+        return (c->planeNormal - c->sphereMassCenter).unit();
+    }
+
+    template <>
+    inline real calculatePenetration<Plane, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Plane,Sphere>*>(cache);
+        return c->penetration;
+    }
+
+    //Plane, Box
+    template <>
+    inline void initialize<Plane, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto const * plane = static_cast<Plane const *>(a);
+        auto const * box = static_cast<Box const *>(b);
+        auto * c = static_cast<Cache<Plane,Box>*>(cache);
+
+        c->planeNormal = plane->getNormal();
+        c->planeDistance = plane->getCenterOfMass() * c->planeNormal;
+        box->getAxes(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2]);
+        c->boxMassCenter = box->getCenterOfMass();
+        calculateBoxVertices(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], c->boxVertices);
+        c->boxFaces = { c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], c->boxAxes[0].inverse(), c->boxAxes[1].inverse(), c->boxAxes[2].inverse() };
+        std::for_each(c->boxVertices.begin(), c->boxVertices.end(), [c](auto& n) { n += c->boxMassCenter; });
+        std::transform(c->boxVertices.begin(), c->boxVertices.end(), c->boxPenetrations.begin(),
+            [c](auto const& p) { return p * c->planeNormal - c->planeDistance; });
+    }
+
+    template <>
+    inline bool overlap<Plane, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Plane,Box>*>(cache);
+
+        return *std::min_element(c->boxPenetrations.begin(), c->boxPenetrations.end()) >= 0;
+    }
+
+    template <>
+    inline Vector3 calculateContactNormal<Plane, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Plane,Box>*>(cache);
+
+        std::transform(c->boxFaces.begin(), c->boxFaces.end(), c->boxFaceDistances.begin(), 
+            [c](auto const& v) { return v * c->planeNormal; });
+        auto const minIndex = std::distance(c->boxFaceDistances.begin(),
+            std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end()));
+
+        return c->boxFaces[minIndex].unit();
+    }
+
+    template <>
+    inline real calculatePenetration<Plane, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Plane,Box>*>(cache);
+
+        return (*std::min_element(c->boxPenetrations.begin(), c->boxPenetrations.end()));
+    }
+
+    //Sphere, Plane
+    template <>
+    inline void initialize<Sphere, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Sphere, Plane>*>(cache);
+        initialize<Plane, Sphere>(b, a, &c->psCache);
+    }
+
+    template <>
+    inline bool overlap<Sphere, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Sphere, Plane>*>(cache);
+        return overlap<Plane, Sphere>(b, a, &c->psCache);
+    }
+
+    template <>
+    inline Vector3 calculateContactNormal<Sphere, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto const * p = static_cast<Plane const *>(b);
+        return p->getNormal();
+    }
+
+    template <>
+    inline real calculatePenetration<Sphere, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Sphere, Plane>*>(cache);
+        return calculatePenetration<Plane, Sphere>(b, a, &c->psCache);
+    }
+
+    //Sphere, Sphere
+    template <>
+    inline void initialize<Sphere, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto const * s1 = static_cast<Sphere const *>(a);
+        auto const * s2 = static_cast<Sphere const *>(b);
+        auto * c = static_cast<Cache<Sphere, Sphere>*>(cache);
+       
+        c->aRadius = s1->getRadius();
+        c->aMassCenter = s1->getCenterOfMass();
+        c->bRadius = s2->getRadius();
+        c->bMassCenter = s2->getCenterOfMass();
+        c->baVector = c->aMassCenter - c->bMassCenter;
+        c->radiusSum = c->aRadius + c->aRadius;
+    }
+
+    template <>
+    inline bool overlap<Sphere, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Sphere, Sphere>*>(cache);
+        return std::pow(c->radiusSum, 2) > c->baVector.squareMagnitude();
+    }
+
+    template <>
+    inline Vector3 calculateContactNormal<Sphere, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Sphere, Sphere>*>(cache);
+        return c->baVector.unit();;
+    }
+
+    template <>
+    inline real calculatePenetration<Sphere, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Sphere, Sphere>*>(cache);
+        return (c->radiusSum - c->baVector.magnitude());
+    }
+
+    //Sphere, Box
+    template <>
+    inline void initialize<Sphere, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto const * sphere = static_cast<Sphere const *>(a);
+        auto const * box = static_cast<Box const *>(b);
+        auto * c = static_cast<Cache<Sphere, Box>*>(cache);
+
+        c->sphereMassCenter = sphere->getCenterOfMass();
+        c->sphereRadius = sphere->getRadius();
+
+        c->boxMassCenter = box->getCenterOfMass();
+        box->getAxes(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2]);
+        c->separatingAxes = { c->boxAxes[0].unit(), c->boxAxes[1].unit(), c->boxAxes[2].unit(), 
+                             (c->sphereMassCenter - c->boxMassCenter).unit() };
+        calculateBoxVertices(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], c->boxVertices);
+        std::for_each(c->boxVertices.begin(), c->boxVertices.end(), [c](auto& n) { n += c->boxMassCenter; });
+        std::transform(c->boxVertices.begin(), c->boxVertices.end(), c->boxVerticesProjections.begin(),
+            [c](auto const& v) { return v * c->separatingAxes[3]; });
+        std::sort(c->boxVerticesProjections.begin(), c->boxVerticesProjections.end());
+        c->boxNormals = { c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], 
+                          c->boxAxes[0].inverse(), c->boxAxes[1].inverse(), c->boxAxes[2].inverse() };
+        c->boxFaces = c->boxNormals;
+        std::for_each(c->boxNormals.begin(), c->boxNormals.end(), [c](auto& n) { n.normalize(); });
+        std::for_each(c->boxFaces.begin(), c->boxFaces.end(), [c](auto& n) { n += c->boxMassCenter; });
+        for (unsigned index = 0; index < c->boxFaceDistances.size(); ++index) {
+            c->boxFaceDistances[index] = std::abs(c->boxFaces[index] * c->boxNormals[index] - c->sphereMassCenter * c->boxNormals[index]);
         }
+    }
 
-        bool overlap() const
-        {
-            if (initialized) {
-                std::array<real, 8> aBoxProjections, bBoxProjections;
+    template <>
+    inline bool overlap<Sphere, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Sphere, Box>*>(cache);
 
-                for (auto axis : separatingAxes) {
-                    projectAllVertices(axis, aBoxVertices.begin(), aBoxVertices.end(), aBoxProjections.begin());
-                    projectAllVertices(axis, bBoxVertices.begin(), bBoxVertices.end(), bBoxProjections.begin());
-                    std::sort(aBoxProjections.begin(), aBoxProjections.end());
-                    std::sort(bBoxProjections.begin(), bBoxProjections.end());
-
-                    if (aBoxProjections.back() < bBoxProjections.back()) {
-                        if (aBoxProjections.back() < bBoxProjections.front()) {
-                            return false;
-                        }
-                        penetration = aBoxProjections.back() - bBoxProjections.front();
-                    } else {
-                        if (bBoxProjections.back() < aBoxProjections.front()) {
-                            return false;
-                        }
-                        penetration = bBoxProjections.back() - aBoxProjections.front();
-                    }
-                }
-            }
-
+        if (std::abs((c->boxAxes[0] + c->boxMassCenter) * c->separatingAxes[0] - c->sphereMassCenter * c->separatingAxes[0]) <= c->sphereRadius) {
             return true;
         }
 
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                std::array<real, 6> distances;
-                for (unsigned i = 0; i < distances.size(); ++i) {
-                    distances[i] = (aMassCenter - bMassCenter - bBoxFaces[i]).squareMagnitude();
-                }
-
-                auto const minIt = std::min_element(distances.begin(), distances.end());
-                auto const minIndex = std::distance(distances.begin(), minIt);
-
-                return bBoxFaces[minIndex].unit();
-            }
-
-            return {};
+        if (std::abs((c->boxAxes[1] + c->boxMassCenter) * c->separatingAxes[1] - c->sphereMassCenter * c->separatingAxes[1]) <= c->sphereRadius) {
+            return true;
         }
 
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return penetration;
-            }
-
-            return 0;
+        if (std::abs((c->boxAxes[2] + c->boxMassCenter) * c->separatingAxes[2] - c->sphereMassCenter * c->separatingAxes[2]) <= c->sphereRadius) {
+            return true;
         }
 
-    private:
-        void calculate()
-        {
-            aMassCenter = a->getCenterOfMass();
-            a->getAxes(aBoxFaces[0], aBoxFaces[1], aBoxFaces[2]);
-            aBoxFaces = { aBoxFaces[0], aBoxFaces[1], aBoxFaces[2], aBoxFaces[0].inverse(), aBoxFaces[1].inverse(), aBoxFaces[2].inverse() };
-            bMassCenter = b->getCenterOfMass();
-            b->getAxes(bBoxFaces[0], bBoxFaces[1], bBoxFaces[2]);
-            bBoxFaces = { bBoxFaces[0], bBoxFaces[1], bBoxFaces[2], bBoxFaces[0].inverse(), bBoxFaces[1].inverse(), bBoxFaces[2].inverse() };
+        auto const sphereMassCenterProjection = c->sphereMassCenter * c->separatingAxes[3];
 
-            calculateBoxVertices(aBoxFaces[0], aBoxFaces[1], aBoxFaces[2], aBoxVertices);
-            calculateBoxVertices(bBoxFaces[0], bBoxFaces[1], bBoxFaces[2], bBoxVertices);
-            std::for_each(aBoxVertices.begin(), aBoxVertices.end(), [this](auto& v) { v += aMassCenter; });
-            std::for_each(bBoxVertices.begin(), bBoxVertices.end(), [this](auto& v) { v += bMassCenter; });
-            separatingAxes = { aBoxFaces[0].unit(), aBoxFaces[1].unit(), aBoxFaces[2].unit(),
-                bBoxFaces[0].unit(), bBoxFaces[1].unit(), bBoxFaces[2].unit() };
-            calculateSeparatingAxes(aBoxFaces.begin(), aBoxFaces.begin() + 3,
-                bBoxFaces.begin(), bBoxFaces.begin() + 3,
-                std::back_inserter(separatingAxes));
-        }
-    };
+        return std::abs(sphereMassCenterProjection - c->boxVerticesProjections.front()) < c->sphereRadius
+            || std::abs(sphereMassCenterProjection - c->boxVerticesProjections.back())  < c->sphereRadius;
+    }
 
     template <>
-    class IntersectionQueries<Box, Cylinder>
-        : IntersectionQueriesBase<Box, Cylinder, IntersectionQueries<Box, Cylinder> > {
-    private:
-        using Base = IntersectionQueriesBase<Box, Cylinder, IntersectionQueries<Box, Cylinder> >;
-        Box intersectionBox;
-        IntersectionQueries<Box, Box> intersection;
-        Vector3 aMassCenter;
-        std::array<Vector3, 8> aVertices, bIntersectionBoxVertices;
-        std::array<Vector3, 6> aAxes, bIntersectionBoxAxes;
-        Vector3 bMassCenter;
-        Vector3 bHalgHeight;
-        real bRadius;
+    inline Vector3 calculateContactNormal<Sphere, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Sphere, Box>*>(cache);
 
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-            , intersectionBox({}, {}, {}, {})
-            , intersection(a, &intersectionBox)
-        {
-            if (initialized) {
-                calculate();
-            }
-        }
-
-        bool overlap() const
-        {
-            if (initialized) {
-                return intersection.overlap();
-            }
-
-            return false;
-        }
-
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                intersection.calculateContactNormal();
-            }
-
-            return {};
-        }
-
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                return intersection.calculatePenetration();
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aMassCenter = a->getCenterOfMass();
-            a->getAxes(aAxes[0], aAxes[1], aAxes[2]);
-            aAxes = { aAxes[0], aAxes[1], aAxes[2], aAxes[3].inverse(), aAxes[4].inverse(), aAxes[5].inverse() };
-            calculateBoxVertices(aAxes[0], aAxes[1], aAxes[2], aVertices);
-
-            bMassCenter = b->getCenterOfMass();
-            bHalgHeight = b->getHalfHeight();
-            bRadius = b->getRadius();
-
-            std::array<real, 6> boxConeVerticeSqrDistances;
-            std::transform(aAxes.begin(), aAxes.end(), boxConeVerticeSqrDistances.begin(),
-                [this](auto const& v) { return ((v + aMassCenter) - bMassCenter).squareMagnitude(); });
-            auto minIt = std::min_element(boxConeVerticeSqrDistances.begin(), boxConeVerticeSqrDistances.end());
-            auto const closesAxes = aAxes[std::distance(boxConeVerticeSqrDistances.begin(), minIt)] - aMassCenter;
-            auto const intersectionPlaneNormal = closesAxes % bHalgHeight;
-            auto const bBase = (intersectionPlaneNormal % bHalgHeight).unit() * bRadius;
-            intersectionBox = Box(bMassCenter, bHalgHeight, bBase, intersectionPlaneNormal.unit() * 0.001f);
-            intersection = IntersectionQueries<Box, Box>(a, &intersectionBox);
-        }
-    };
+        auto minIt = std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end());
+        return c->boxNormals[std::distance(c->boxFaceDistances.begin(), minIt)];
+    }
 
     template <>
-    class IntersectionQueries<Box, Capsule>
-        : IntersectionQueriesBase<Box, Capsule, IntersectionQueries<Box, Capsule> > {
-    private:
-        using Base = IntersectionQueriesBase<Box, Capsule, IntersectionQueries<Box, Capsule> >;
-        Vector3 aMassCenter;
-        real aRadius;
-        Vector3 bMassCenter;
-        Vector3 bHalfHeight;
-        real bRadius;
-        Sphere s1, s2;
-        Cylinder c;
-        IntersectionQueries<Box, Sphere> bsIntersection1;
-        IntersectionQueries<Box, Sphere> bsIntersection2;
-        IntersectionQueries<Box, Cylinder> bcIntersection;
+    inline real calculatePenetration<Sphere, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Sphere, Box>*>(cache);
 
-    public:
-        IntersectionQueries(SimpleShape const* a = nullptr, SimpleShape const* b = nullptr)
-            : Base(a, b)
-            , s1({}, 0)
-            , s2({}, 0)
-            , c({}, {}, 0)
-            , bsIntersection1(a, &s1)
-            , bsIntersection2(a, &s2)
-            , bcIntersection(a, &c)
-        {
-            if (initialized) {
-                calculate();
+        auto minIt = std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end());
+        return c->sphereRadius - *minIt;
+    }
+
+    //<Box, Plane
+    template <>
+    inline void initialize<Box, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Plane>*>(cache);
+        initialize<Plane, Box>(b, a, &c->pbCache);
+    }
+
+    template <>
+    inline bool overlap<Box, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Plane>*>(cache);
+        return overlap<Plane, Box>(b, a, &c->pbCache);
+    }
+
+    template <>
+    inline Vector3 calculateContactNormal<Box, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto const * plane = static_cast<Plane const *>(b);
+        return plane->getNormal();
+    }
+
+    template <>
+    inline real calculatePenetration<Box, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Plane>*>(cache);
+        return calculatePenetration<Plane, Box>(b, a, &c->pbCache);
+    }
+
+    //Box, Sphere
+    template <>
+    inline void initialize<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Sphere>*>(cache);
+        initialize<Box, Sphere>(b, a, &c->sbCache);
+    }
+
+    template <>
+    inline bool overlap<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Sphere>*>(cache);
+        return overlap<Sphere, Box>(b, a, &c->sbCache);
+    }
+
+    template <>
+    inline Vector3 calculateContactNormal<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Sphere>*>(cache);    
+        return calculateContactNormal<Sphere, Box>(b, a, &c->sbCache).inverse();
+    }
+
+    template <>
+    inline real calculatePenetration<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Sphere>*>(cache);
+        return calculatePenetration<Sphere, Box>(b, a, &c->sbCache);
+    }
+
+    //Box, Box
+    template <>
+    inline void initialize<Box, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto const * aBox = static_cast<Box const *>(a);
+        auto const * bBox = static_cast<Box const *>(b);
+        auto * c = static_cast<Cache<Box, Box>*>(cache);
+
+        c->aMassCenter = aBox->getCenterOfMass();
+        aBox->getAxes(c->aBoxFaces[0], c->aBoxFaces[1], c->aBoxFaces[2]);
+        c->aBoxFaces = { c->aBoxFaces[0], c->aBoxFaces[1], c->aBoxFaces[2], 
+                         c->aBoxFaces[0].inverse(), c->aBoxFaces[1].inverse(), c->aBoxFaces[2].inverse() };
+        c->bMassCenter = bBox->getCenterOfMass();
+        bBox->getAxes(c->bBoxFaces[0], c->bBoxFaces[1], c->bBoxFaces[2]);
+        c->bBoxFaces = { c->bBoxFaces[0], c->bBoxFaces[1], c->bBoxFaces[2], 
+                         c->bBoxFaces[0].inverse(), c->bBoxFaces[1].inverse(), c->bBoxFaces[2].inverse() };
+        calculateBoxVertices(c->aBoxFaces[0], c->aBoxFaces[1], c->aBoxFaces[2], c->aBoxVertices);
+        calculateBoxVertices(c->bBoxFaces[0], c->bBoxFaces[1], c->bBoxFaces[2], c->bBoxVertices);
+        std::for_each(c->aBoxVertices.begin(), c->aBoxVertices.end(), [c](auto& v) { v += c->aMassCenter; });
+        std::for_each(c->bBoxVertices.begin(), c->bBoxVertices.end(), [c](auto& v) { v += c->bMassCenter; });
+        c->separatingAxes = { c->aBoxFaces[0].unit(), c->aBoxFaces[1].unit(), c->aBoxFaces[2].unit(),
+                              c->bBoxFaces[0].unit(), c->bBoxFaces[1].unit(), c->bBoxFaces[2].unit() };
+        calculateSeparatingAxes(c->aBoxFaces.begin(), c->aBoxFaces.begin() + 3,
+                                c->bBoxFaces.begin(), c->bBoxFaces.begin() + 3,
+                                std::back_inserter(c->separatingAxes));
+    }
+
+    template <>
+    inline bool overlap<Box, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Box>*>(cache);
+
+        std::array<real, 8> aBoxProjections, bBoxProjections;
+        for (auto axis : c->separatingAxes) {
+            projectAllVertices(axis, c->aBoxVertices.begin(), c->aBoxVertices.end(), aBoxProjections.begin());
+            projectAllVertices(axis, c->bBoxVertices.begin(), c->bBoxVertices.end(), bBoxProjections.begin());
+            std::sort(aBoxProjections.begin(), aBoxProjections.end());
+            std::sort(bBoxProjections.begin(), bBoxProjections.end());
+
+            if (aBoxProjections.back() < bBoxProjections.back()) {
+                if (aBoxProjections.back() < bBoxProjections.front()) {
+                    return false;
+                }
+                c->penetration = aBoxProjections.back() - bBoxProjections.front();
+            }
+            else {
+                if (bBoxProjections.back() < aBoxProjections.front()) {
+                    return false;
+                }
+                c->penetration = bBoxProjections.back() - aBoxProjections.front();
             }
         }
 
-        bool overlap() const
-        {
-            if (initialized) {
-                if (bcIntersection.overlap()) {
-                    return true;
-                }
+        return true;
+    }
 
-                if (bsIntersection1.overlap()) {
-                    return true;
-                }
+    template <>
+    inline Vector3 calculateContactNormal<Box, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Box>*>(cache);
 
-                return bsIntersection2.overlap();
-            }
-
-            return false;
+        std::array<real, 6> distances;
+        for (unsigned i = 0; i < distances.size(); ++i) {
+            distances[i] = (c->aMassCenter - c->bMassCenter - c->bBoxFaces[i]).squareMagnitude();
         }
 
-        Vector3 calculateContactNormal() const
-        {
-            if (initialized) {
-                if (bcIntersection.overlap()) {
-                    return bcIntersection.calculateContactNormal();
-                }
+        auto const minIt = std::min_element(distances.begin(), distances.end());
+        auto const minIndex = std::distance(distances.begin(), minIt);
 
-                if (bsIntersection1.overlap()) {
-                    return bsIntersection1.calculateContactNormal();
-                }
+        return c->bBoxFaces[minIndex].unit();
+    }
 
-                if (bsIntersection2.overlap()) {
-                    return bsIntersection2.calculateContactNormal();
-                }
+    template <>
+    inline real calculatePenetration<Box, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    {
+        auto * c = static_cast<Cache<Box, Box>*>(cache);
+        return c->penetration;
+    }
 
-                return bcIntersection.calculateContactNormal();
-            }
+    }// namespace IntersectionQuery
 
-            return {};
-        }
 
-        real calculatePenetration() const
-        {
-            if (initialized) {
-                if (bsIntersection1.overlap()) {
-                    return bsIntersection1.calculatePenetration();
-                }
-
-                if (bsIntersection2.overlap()) {
-                    return bsIntersection2.calculatePenetration();
-                }
-
-                return bcIntersection.calculatePenetration();
-            }
-
-            return 0;
-        }
-
-    private:
-        void calculate()
-        {
-            aMassCenter = a->getCenterOfMass();
-            bMassCenter = b->getCenterOfMass();
-            bRadius = b->getRadius();
-            bHalfHeight = b->getHalfHeight();
-            s1 = Sphere(bMassCenter + bHalfHeight, bRadius);
-            s2 = Sphere(bMassCenter - bHalfHeight, bRadius);
-            c = Cylinder(bMassCenter, bHalfHeight, bRadius);
-            bsIntersection1 = IntersectionQueries<Box, Sphere>(a, &s1);
-            bsIntersection2 = IntersectionQueries<Box, Sphere>(a, &s2);
-            bcIntersection = IntersectionQueries<Box, Cylinder>(a, &c);
-        }
-    };
-
+    //General intersection
     class IntersectionQuery {
     public:
         using ShapeTypePair = std::pair<SimpleShape::Type, SimpleShape::Type>;
 
     private:
-        IntersectionQueries<Plane, Plane> ppIntersectionQueries;
-        IntersectionQueries<Plane, Sphere> psIntersectionQueries;
-        IntersectionQueries<Plane, Box> pbIntersectionQueries;
-        IntersectionQueries<Sphere, Plane> spIntersectionQueries;
-        IntersectionQueries<Sphere, Sphere> ssIntersectionQueries;
-        IntersectionQueries<Sphere, Box> sbIntersectionQueries;
-        IntersectionQueries<Box, Plane> bpIntersectionQueries;
-        IntersectionQueries<Box, Sphere> bsIntersectionQueries;
-        IntersectionQueries<Box, Box> bbIntersectionQueries;
+        std::unordered_map<ShapeTypePair,
+            std::unique_ptr<intersection::CacheBase>,
+            std::function<size_t(ShapeTypePair const& p)> >
+            intersectionCaches;
 
         std::unordered_map<ShapeTypePair,
-            decltype(&IntersectionQuery::overlap),
+            std::function<void(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
+            std::function<size_t(ShapeTypePair const& p)> >
+            initializeFunctors;
+
+        std::unordered_map<ShapeTypePair,
+            std::function<bool(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
             std::function<size_t(ShapeTypePair const& p)> >
             overlapFunctors;
 
         std::unordered_map<ShapeTypePair,
-            decltype(&IntersectionQuery::calculateContactNormal),
+            std::function<Vector3(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
             std::function<size_t(ShapeTypePair const& p)> >
             calculateContactNormalFunctors;
 
         std::unordered_map<ShapeTypePair,
-            decltype(&IntersectionQuery::calculatePenetration),
+            std::function<real(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
             std::function<size_t(ShapeTypePair const& p)> >
             calculatePenetrationFunctors;
 
     public:
         IntersectionQuery()
         {
+            intersectionCaches[std::make_pair(SimpleShape::PLANE, SimpleShape::PLANE)] 
+                = std::make_unique<intersection::Cache<Plane, Plane>>();
+            intersectionCaches[std::make_pair(SimpleShape::PLANE, SimpleShape::SPHERE)] 
+                = std::make_unique<intersection::Cache<Plane, Sphere>>();
+            intersectionCaches[std::make_pair(SimpleShape::PLANE, SimpleShape::BOX)] 
+                = std::make_unique<intersection::Cache<Plane, Box>>();
+            
+            intersectionCaches[std::make_pair(SimpleShape::SPHERE, SimpleShape::PLANE)]
+                = std::make_unique<intersection::Cache<Sphere, Plane>>();
+            intersectionCaches[std::make_pair(SimpleShape::SPHERE, SimpleShape::SPHERE)]
+                = std::make_unique<intersection::Cache<Sphere, Sphere>>();
+            intersectionCaches[std::make_pair(SimpleShape::SPHERE, SimpleShape::BOX)]
+                = std::make_unique<intersection::Cache<Sphere, Box>>();
+
+            intersectionCaches[std::make_pair(SimpleShape::BOX, SimpleShape::PLANE)]
+                = std::make_unique<intersection::Cache<Box, Plane>>();
+            intersectionCaches[std::make_pair(SimpleShape::BOX, SimpleShape::SPHERE)]
+                = std::make_unique<intersection::Cache<Box, Sphere>>();
+            intersectionCaches[std::make_pair(SimpleShape::BOX, SimpleShape::BOX)]
+                = std::make_unique<intersection::Cache<Box, Box>>();
         }
 
-        void set(SimpleShape* const s1, SimpleShape* const s2)
+        void initialize(SimpleShape* const s1, SimpleShape* const s2)
         {
+            initializeFunctors[std::make_pair(s1->type, s2->type)](
+                s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());
         }
 
-        bool overlap()
+        bool overlap(SimpleShape* const s1, SimpleShape* const s2)
         {
-            return overlapFunctors[std::make_pair(s1->type, s2->type)]();
+            return overlapFunctors[std::make_pair(s1->type, s2->type)](
+                s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());
         }
 
-        Vector3 calculateContactNormal()
+        Vector3 calculateContactNormal(SimpleShape* const s1, SimpleShape* const s2)
         {
-            return calculateContactNormalFunctors[std::make_pair(s1->type, s2->type)]();
+            return calculateContactNormalFunctors[std::make_pair(s1->type, s2->type)](
+                s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());
         }
 
-        real calculatePenetration()
+        real calculatePenetration(SimpleShape* const s1, SimpleShape* const s2)
         {
-            return calculatePenetrationFunctors[std::make_pair(s1->type, s2->type)]();
+            return calculatePenetrationFunctors[std::make_pair(s1->type, s2->type)](
+                s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());
         }
     };
 

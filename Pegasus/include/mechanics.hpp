@@ -18,14 +18,14 @@ class RigidBody : public Body {
 public:
     using Ptr = std::shared_ptr<RigidBody>;
 
-    RigidBody(Particle::Ptr const& p, std::shared_ptr<geometry::Box> const& s)
+    RigidBody(std::shared_ptr<Particle> const p, std::shared_ptr<geometry::SimpleShape> const s)
         : p(p)
         , s(s)
     {
     }
 
-    Particle::Ptr const p;
-    std::shared_ptr<geometry::Box> const s;
+    std::shared_ptr<Particle> const p;
+    std::shared_ptr<geometry::SimpleShape> const s;
 };
 
 using RigidBodies = std::vector<RigidBody::Ptr>;
