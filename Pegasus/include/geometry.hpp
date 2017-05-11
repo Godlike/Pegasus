@@ -490,9 +490,6 @@ namespace geometry {
                              (c->sphereMassCenter - c->boxMassCenter).unit() };
         calculateBoxVertices(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], c->boxVertices);
         std::for_each(c->boxVertices.begin(), c->boxVertices.end(), [c](auto& n) { n += c->boxMassCenter; });
-        std::transform(c->boxVertices.begin(), c->boxVertices.end(), c->boxVerticesProjections.begin(),
-            [c](auto const& v) { return v * c->separatingAxes[3]; });
-        std::sort(c->boxVerticesProjections.begin(), c->boxVerticesProjections.end());
         c->boxNormals = { c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], 
                           c->boxAxes[0].inverse(), c->boxAxes[1].inverse(), c->boxAxes[2].inverse() };
         c->boxFaces = c->boxNormals;
@@ -508,22 +505,24 @@ namespace geometry {
     {
         auto * c = static_cast<Cache<Sphere, Box>*>(cache);
 
-        if (std::abs((c->boxAxes[0] + c->boxMassCenter) * c->separatingAxes[0] - c->sphereMassCenter * c->separatingAxes[0]) <= c->sphereRadius) {
-            return true;
+        for(auto const & axis : c->separatingAxes)
+        {
+            projectAllVertices(axis, c->boxVertices.begin(), c->boxVertices.end(), c->boxVerticesProjections.begin());
+            std::sort(c->boxVerticesProjections.begin(), c->boxVerticesProjections.end());
+            auto const boxMassCenterProjection = c->boxMassCenter * axis;
+            auto const sphereMassCenterProjection = c->sphereMassCenter * axis;
+
+            if (boxMassCenterProjection < sphereMassCenterProjection) {
+                if (sphereMassCenterProjection - c->boxVerticesProjections.back() > c->sphereRadius) {
+                    return false;
+                }
+            }
+            else if (c->boxVerticesProjections.front() > sphereMassCenterProjection + c->sphereRadius) {
+                return false;
+            }
         }
 
-        if (std::abs((c->boxAxes[1] + c->boxMassCenter) * c->separatingAxes[1] - c->sphereMassCenter * c->separatingAxes[1]) <= c->sphereRadius) {
-            return true;
-        }
-
-        if (std::abs((c->boxAxes[2] + c->boxMassCenter) * c->separatingAxes[2] - c->sphereMassCenter * c->separatingAxes[2]) <= c->sphereRadius) {
-            return true;
-        }
-
-        auto const sphereMassCenterProjection = c->sphereMassCenter * c->separatingAxes[3];
-
-        return std::abs(sphereMassCenterProjection - c->boxVerticesProjections.front()) < c->sphereRadius
-            || std::abs(sphereMassCenterProjection - c->boxVerticesProjections.back())  < c->sphereRadius;
+        return true;
     }
 
     template <>
@@ -591,7 +590,7 @@ namespace geometry {
     template <>
     inline Vector3 calculateContactNormal<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
     {
-        auto * c = static_cast<Cache<Box, Sphere>*>(cache);    
+        auto * c = static_cast<Cache<Box, Sphere>*>(cache);
         return calculateContactNormal<Sphere, Box>(b, a, &c->sbCache).inverse();
     }
 
