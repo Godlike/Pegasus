@@ -1,6 +1,6 @@
-#include "Pegasus/demo/app.hpp"
-#include "Pegasus/demo/ogl_headers.hpp"
-#include "Pegasus/demo/timing.hpp"
+#include "demo/app.hpp"
+#include "demo/ogl_headers.hpp"
+#include "demo/timing.hpp"
 #include "Pegasus/include/geometry.hpp"
 #include "Pegasus/include/mechanics.hpp"
 #include "Pegasus/include/particlecontacts.hpp"
@@ -12,8 +12,10 @@
 #include <cstdlib>
 #include <iostream>
 
-#define BLOB_COUNT 2
-#define BLOB_RADIUS 1
+#define BOX_COUNT 1
+#define SPHER_COUNT 1
+#define TOTAL_COUNT BOX_COUNT+SPHER_COUNT
+#define RADIUS 1
 
 class FallingDemo : public Application {
 public:
@@ -40,38 +42,43 @@ private:
 // Method definitions
 FallingDemo::FallingDemo()
     : forceRegistry(std::make_shared<pegasus::ParticleForceRegistry>())
-    , world(1 + BLOB_COUNT + 1, 1 + 1)
+    , world(1 + TOTAL_COUNT + 1, 1 + 1)
     , xAxis(0)
     , yAxis(0)
 {
     // Create ground
     contactGenerators.push_back(std::make_shared<pegasus::Platform>(
-        pegasus::Vector3(-50.0f, 0, 0), pegasus::Vector3(50.0f, 0, 0), blobs, BLOB_RADIUS));
+        pegasus::Vector3(-50.0f, 0, 0), pegasus::Vector3(50.0f, 0, 0), blobs, RADIUS));
     auto const& platform = *static_cast<pegasus::Platform*>(contactGenerators.back().get());
 
     //Create particles
-    for (unsigned int i = 0; i < BLOB_COUNT; ++i) {
+    for (unsigned int i = 0; i < TOTAL_COUNT; ++i) {
         auto particle = std::make_shared<pegasus::Particle>();
-        particle->setPosition(platform.start + pegasus::Vector3((platform.end.x - platform.start.x) / 2.0f + BLOB_RADIUS * i * 4, BLOB_RADIUS, 0));
+        particle->setPosition(platform.start + pegasus::Vector3((platform.end.x - platform.start.x) / 2.0f + RADIUS * i * 4, RADIUS, 0));
 
         particle->setVelocity(0, 0, 0);
         particle->setDamping(0.2f);
         particle->setMass(1.0f);
         blobs.push_back(particle);
 
-        rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(particle,
-            std::make_shared<pegasus::geometry::Box>(
-                                                                       particle->getPosition(),
-                                                                       pegasus::Vector3{ BLOB_RADIUS, 0, 0 },
-                                                                       pegasus::Vector3{ 0, BLOB_RADIUS, 0 },
-                                                                       pegasus::Vector3{ 0, 0, BLOB_RADIUS })));
+        if (i < BOX_COUNT) {
+            rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(particle,
+                std::make_shared<pegasus::geometry::Box>(
+                   particle->getPosition(),
+                   pegasus::Vector3{ RADIUS, 0, 0 },
+                   pegasus::Vector3{ 0, RADIUS, 0 },
+                   pegasus::Vector3{ 0, 0, RADIUS })));
+        } else {
+            rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(particle,
+                std::make_shared<pegasus::geometry::Sphere>(
+                   particle->getPosition(), RADIUS)));
+        }
     }
 
     //Create rigid bodies
     for (auto const& body : rigidBodies) {
         contactGenerators.push_back(
-            std::make_shared<pegasus::ShapeContactGenerator<pegasus::geometry::Box, pegasus::geometry::Box> >(
-                body, rigidBodies, static_cast<pegasus::real>(0)));
+            std::make_shared<pegasus::ShapeContactGenerator>(body, rigidBodies, 0.0f));
     }
 
     //Init world
@@ -86,7 +93,7 @@ void FallingDemo::display()
     auto const& pos = blobs.front()->getPosition();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(pos.x + 10, pos.y + 10, 5, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x, pos.y, 5, pos.x, pos.y, 0.0, 0.0, 1.0, 0.0);
 
     //Add ground plane
     glBegin(GL_QUADS);
@@ -100,12 +107,16 @@ void FallingDemo::display()
     glEnd();
 
     //Add bodies
-    for (auto i = 0; i < BLOB_COUNT; i++) {
+    for (auto i = 0; i < TOTAL_COUNT; i++) {
         auto const& p = blobs[i]->getPosition();
         glPushMatrix();
-        glColor3f((i + 1.0f) / BLOB_COUNT, 1.0f - (i + 1.0f) / BLOB_COUNT, 1.0f - (i + 1) / BLOB_COUNT);
+        glColor3f((i + 1.0f) / TOTAL_COUNT, 1.0f - (i + 1.0f) / TOTAL_COUNT, 1.0f - (i + 1) / TOTAL_COUNT);
         glTranslatef(p.x, p.y, p.z);
-        glutWireCube(BLOB_RADIUS * 2);
+        if (i < BOX_COUNT) {
+            glutWireCube(RADIUS * 2);
+        } else {
+            glutWireSphere(RADIUS, 20, 20);
+        }
         glPopMatrix();
     }
 }

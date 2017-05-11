@@ -167,3 +167,8 @@ void pegasus::geometry::Box::getAxes(Vector3& a, Vector3& b, Vector3& c) const
     b = mB;
     c = mC;
 }
+
+size_t pegasus::geometry::shapeTypePairHash(const pegasus::geometry::ShapeTypePair &p)
+{
+    return std::hash<int>()(p.first) ^ std::hash<int>()(p.second);
+}

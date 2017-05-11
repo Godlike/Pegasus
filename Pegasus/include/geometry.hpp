@@ -578,7 +578,7 @@ namespace geometry {
     inline void initialize<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
     {
         auto * c = static_cast<Cache<Box, Sphere>*>(cache);
-        initialize<Box, Sphere>(b, a, &c->sbCache);
+        initialize<Sphere, Box>(b, a, &c->sbCache);
     }
 
     template <>
@@ -685,10 +685,11 @@ namespace geometry {
 
 
     //General intersection
-    class IntersectionQuery {
-    public:
-        using ShapeTypePair = std::pair<SimpleShape::Type, SimpleShape::Type>;
+    using ShapeTypePair = std::pair<SimpleShape::Type, SimpleShape::Type>;
 
+    size_t shapeTypePairHash(ShapeTypePair const & p);
+
+    class IntersectionQuery {
     private:
         std::unordered_map<ShapeTypePair,
             std::unique_ptr<intersection::CacheBase>,
@@ -717,27 +718,106 @@ namespace geometry {
 
     public:
         IntersectionQuery()
-        {
+            : intersectionCaches(11, &shapeTypePairHash)
+            , initializeFunctors(11, &shapeTypePairHash)
+            , overlapFunctors(11, &shapeTypePairHash)
+            , calculateContactNormalFunctors(11, &shapeTypePairHash)
+            , calculatePenetrationFunctors(11, &shapeTypePairHash)
+        {            
             intersectionCaches[std::make_pair(SimpleShape::PLANE, SimpleShape::PLANE)] 
                 = std::make_unique<intersection::Cache<Plane, Plane>>();
             intersectionCaches[std::make_pair(SimpleShape::PLANE, SimpleShape::SPHERE)] 
                 = std::make_unique<intersection::Cache<Plane, Sphere>>();
             intersectionCaches[std::make_pair(SimpleShape::PLANE, SimpleShape::BOX)] 
                 = std::make_unique<intersection::Cache<Plane, Box>>();
-            
             intersectionCaches[std::make_pair(SimpleShape::SPHERE, SimpleShape::PLANE)]
                 = std::make_unique<intersection::Cache<Sphere, Plane>>();
             intersectionCaches[std::make_pair(SimpleShape::SPHERE, SimpleShape::SPHERE)]
                 = std::make_unique<intersection::Cache<Sphere, Sphere>>();
             intersectionCaches[std::make_pair(SimpleShape::SPHERE, SimpleShape::BOX)]
                 = std::make_unique<intersection::Cache<Sphere, Box>>();
-
             intersectionCaches[std::make_pair(SimpleShape::BOX, SimpleShape::PLANE)]
                 = std::make_unique<intersection::Cache<Box, Plane>>();
             intersectionCaches[std::make_pair(SimpleShape::BOX, SimpleShape::SPHERE)]
                 = std::make_unique<intersection::Cache<Box, Sphere>>();
             intersectionCaches[std::make_pair(SimpleShape::BOX, SimpleShape::BOX)]
                 = std::make_unique<intersection::Cache<Box, Box>>();
+
+            initializeFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::PLANE)]
+                = &intersection::initialize<Plane, Plane>;
+            initializeFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::SPHERE)]
+                = &intersection::initialize<Plane, Sphere>;
+            initializeFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::BOX)]
+                = &intersection::initialize<Plane, Box>;
+            initializeFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::PLANE)]
+                = &intersection::initialize<Sphere, Plane>;
+            initializeFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::SPHERE)]
+                = &intersection::initialize<Sphere, Sphere>;
+            initializeFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::BOX)]
+                = &intersection::initialize<Sphere, Box>;
+            initializeFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::PLANE)]
+                = &intersection::initialize<Box, Plane>;
+            initializeFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::SPHERE)]
+                = &intersection::initialize<Box, Sphere>;
+            initializeFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::BOX)]
+                = &intersection::initialize<Box, Box>;
+
+            overlapFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::PLANE)]
+                = &intersection::overlap<Plane, Plane>;
+            overlapFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::SPHERE)]
+                = &intersection::overlap<Plane, Sphere>;
+            overlapFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::BOX)]
+                = &intersection::overlap<Plane, Box>;
+            overlapFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::PLANE)]
+                = &intersection::overlap<Sphere, Plane>;
+            overlapFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::SPHERE)]
+                = &intersection::overlap<Sphere, Sphere>;
+            overlapFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::BOX)]
+                = &intersection::overlap<Sphere, Box>;
+            overlapFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::PLANE)]
+                = &intersection::overlap<Box, Plane>;
+            overlapFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::SPHERE)]
+                = &intersection::overlap<Box, Sphere>;
+            overlapFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::BOX)]
+                = &intersection::overlap<Box, Box>;
+
+            calculateContactNormalFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::PLANE)]
+                = &intersection::calculateContactNormal<Plane, Plane>;
+            calculateContactNormalFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::SPHERE)]
+                = &intersection::calculateContactNormal<Plane, Sphere>;
+            calculateContactNormalFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::BOX)]
+                = &intersection::calculateContactNormal<Plane, Box>;
+            calculateContactNormalFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::PLANE)]
+                = &intersection::calculateContactNormal<Sphere, Plane>;
+            calculateContactNormalFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::SPHERE)]
+                = &intersection::calculateContactNormal<Sphere, Sphere>;
+            calculateContactNormalFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::BOX)]
+                = &intersection::calculateContactNormal<Sphere, Box>;
+            calculateContactNormalFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::PLANE)]
+                = &intersection::calculateContactNormal<Box, Plane>;
+            calculateContactNormalFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::SPHERE)]
+                = &intersection::calculateContactNormal<Box, Sphere>;
+            calculateContactNormalFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::BOX)]
+                = &intersection::calculateContactNormal<Box, Box>;
+
+            calculatePenetrationFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::PLANE)]
+                = &intersection::calculatePenetration<Plane, Plane>;
+            calculatePenetrationFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::SPHERE)]
+                = &intersection::calculatePenetration<Plane, Sphere>;
+            calculatePenetrationFunctors[std::make_pair(SimpleShape::PLANE, SimpleShape::BOX)]
+                = &intersection::calculatePenetration<Plane, Box>;
+            calculatePenetrationFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::PLANE)]
+                = &intersection::calculatePenetration<Sphere, Plane>;
+            calculatePenetrationFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::SPHERE)]
+                = &intersection::calculatePenetration<Sphere, Sphere>;
+            calculatePenetrationFunctors[std::make_pair(SimpleShape::SPHERE, SimpleShape::BOX)]
+                = &intersection::calculatePenetration<Sphere, Box>;
+            calculatePenetrationFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::PLANE)]
+                = &intersection::calculatePenetration<Box, Plane>;
+            calculatePenetrationFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::SPHERE)]
+                = &intersection::calculatePenetration<Box, Sphere>;
+            calculatePenetrationFunctors[std::make_pair(SimpleShape::BOX, SimpleShape::BOX)]
+                = &intersection::calculatePenetration<Box, Box>;
         }
 
         void initialize(SimpleShape* const s1, SimpleShape* const s2)

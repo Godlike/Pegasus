@@ -95,6 +95,8 @@ public:
             }
 
             geometry::IntersectionQuery intersection;
+            intersection.initialize(body->s.get(), mRigidBody->s.get());
+
             if (intersection.overlap(body->s.get(), mRigidBody->s.get())) {
                 contacts.push_back(std::make_shared<ParticleContact>(
                     body->p, mRigidBody->p, mRestitution,
