@@ -13,6 +13,9 @@ public:
     using Ptr = std::shared_ptr<Particle>;
     using ConstPtr = std::shared_ptr<Particle const>;
 
+public:
+    Particle();
+
     void integrate(real const duration);
 
     Vector3 getPosition() const;

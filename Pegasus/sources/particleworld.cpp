@@ -20,7 +20,7 @@ void pegasus::ParticleWorld::setParticles(Particles particles)
 }
 
 void pegasus::ParticleWorld::setParticleForcesRegistry(
-    pegasus::ParticleForceRegistry::Ptr registry)
+    ParticleForceRegistry::Ptr registry)
 {
     mRegistry = registry;
 }
@@ -31,7 +31,7 @@ void pegasus::ParticleWorld::setParticleContactGenerators(
     mGeneratos = generators;
 }
 
-void pegasus::ParticleWorld::runPhysics(pegasus::real const duration)
+void pegasus::ParticleWorld::runPhysics(real const duration)
 {
     mRegistry->updateForces();
 
@@ -63,11 +63,9 @@ unsigned int pegasus::ParticleWorld::generateContacts()
     return mMaxContacts - limit;
 }
 
-void pegasus::ParticleWorld::integrate(pegasus::real const duration)
+void pegasus::ParticleWorld::integrate(real const duration)
 {
-    auto duration_ = 0.01f;
-
     for (auto const& p : mParticles) {
-        p->integrate(duration_);
+        p->integrate(duration);
     }
 }

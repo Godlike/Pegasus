@@ -4,6 +4,13 @@
 #include <limits>
 #include <stdexcept>
 
+pegasus::Particle::Particle()
+    : mDamping(1)
+    , mMass(1)
+    , mInverseMass(1)
+{
+}
+
 void pegasus::Particle::integrate(pegasus::real const duration)
 {
     if (!hasFiniteMass()) {
