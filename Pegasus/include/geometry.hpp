@@ -493,11 +493,10 @@ namespace geometry {
         std::for_each(c->boxVertices.begin(), c->boxVertices.end(), [c](auto& n) { n += c->boxMassCenter; });
         c->boxNormals = { c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], 
                           c->boxAxes[0].inverse(), c->boxAxes[1].inverse(), c->boxAxes[2].inverse() };
-        c->boxFaces = c->boxNormals;
-        std::for_each(c->boxNormals.begin(), c->boxNormals.end(), [c](auto& n) { n.normalize(); });
-        std::for_each(c->boxFaces.begin(), c->boxFaces.end(), [c](auto& n) { n += c->boxMassCenter; });
-        for (unsigned index = 0; index < c->boxFaceDistances.size(); ++index) {
-            c->boxFaceDistances[index] = std::abs(c->boxFaces[index] * c->boxNormals[index] - c->sphereMassCenter * c->boxNormals[index]);
+        for (unsigned int i = 0; i < c->boxNormals.size(); ++i) {
+            c->boxFaces[i] = c->boxNormals[i] + c->boxMassCenter;
+            c->boxNormals[i].normalize();
+            c->boxFaceDistances[i] = c->boxFaces[i] * c->boxNormals[i] - c->sphereMassCenter * c->boxNormals[i];
         }
     }
 
@@ -532,7 +531,8 @@ namespace geometry {
         auto * c = static_cast<Cache<Sphere, Box>*>(cache);
 
         auto minIt = std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end());
-        return c->boxNormals[std::distance(c->boxFaceDistances.begin(), minIt)];
+        auto minIndex = std::distance(c->boxFaceDistances.begin(), minIt);
+        return c->boxNormals[minIndex];
     }
 
     template <>
