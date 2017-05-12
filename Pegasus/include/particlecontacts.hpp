@@ -1,5 +1,5 @@
-#ifndef PEGAS_PARTICLE_CONTACTS_HPP
-#define PEGAS_PARTICLE_CONTACTS_HPP
+#ifndef PEGASUS_PARTICLE_CONTACTS_HPP
+#define PEGASUS_PARTICLE_CONTACTS_HPP
 
 #include "Pegasus/include/geometry.hpp"
 #include "Pegasus/include/mechanics.hpp"
@@ -111,4 +111,4 @@ private:
 
 } // namespace pegasus
 
-#endif // PEGAS_PARTICLE_CONTACTS_HPP
+#endif // PEGASUS_PARTICLE_CONTACTS_HPP

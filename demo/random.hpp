@@ -1,5 +1,5 @@
-#ifndef PEGAS_RANDOM_H
-#define PEGAS_RANDOM_H
+#ifndef PEGASUS_RANDOM_H
+#define PEGASUS_RANDOM_H
 
 #include "Pegasus/include/math.hpp"
 
@@ -107,4 +107,4 @@ private:
 
 } // namespace pegasus
 
-#endif // PEGAS_BODY_H
+#endif // PEGASUS_BODY_H

@@ -1,5 +1,5 @@
-#ifndef PEGAS_PARTICLE_FORCE_GENERATOR_HPP
-#define PEGAS_PARTICLE_FORCE_GENERATOR_HPP
+#ifndef PEGASUS_PARTICLE_FORCE_GENERATOR_HPP
+#define PEGASUS_PARTICLE_FORCE_GENERATOR_HPP
 
 #include "Pegasus/include/particle.hpp"
 #include <map>
@@ -141,4 +141,4 @@ public:
 
 } // namespace pegasus
 
-#endif // PEGAS_PARTICLE_FORCE_GENERATOR_HPP
+#endif // PEGASUS_PARTICLE_FORCE_GENERATOR_HPP

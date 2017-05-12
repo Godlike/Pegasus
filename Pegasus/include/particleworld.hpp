@@ -1,5 +1,5 @@
-#ifndef PEGAS_PARTICLE_WORLD_HPP
-#define PEGAS_PARTICLE_WORLD_HPP
+#ifndef PEGASUS_PARTICLE_WORLD_HPP
+#define PEGASUS_PARTICLE_WORLD_HPP
 
 #include "Pegasus/include/particle.hpp"
 #include "Pegasus/include/particlecontacts.hpp"
@@ -42,4 +42,4 @@ private:
 
 } // namespace pegasus
 
-#endif // PEGAS_PARTICLE_WORLD_HPP
+#endif // PEGASUS_PARTICLE_WORLD_HPP

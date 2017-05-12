@@ -1,5 +1,5 @@
-#ifndef PEGAS_GEOMETRY_HPP
-#define PEGAS_GEOMETRY_HPP
+#ifndef PEGASUS_GEOMETRY_HPP
+#define PEGASUS_GEOMETRY_HPP
 
 #include <algorithm>
 #include <array>
@@ -848,4 +848,4 @@ namespace geometry {
 } // namespace geometry
 } // namespace pegasus
 
-#endif // PEGAS_GEOMETRY_HPP
+#endif // PEGASUS_GEOMETRY_HPP

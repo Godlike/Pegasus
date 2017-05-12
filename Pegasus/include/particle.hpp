@@ -1,5 +1,5 @@
-#ifndef PEGAS_PARTICLE_HPP
-#define PEGAS_PARTICLE_HPP
+#ifndef PEGASUS_PARTICLE_HPP
+#define PEGASUS_PARTICLE_HPP
 
 #include "Pegasus/include/core.hpp"
 #include "Pegasus/include/math.hpp"
@@ -74,4 +74,4 @@ using Particles = std::vector<Particle::Ptr>;
 
 } // namespace pegasus
 
-#endif // PEGAS_PARTICLE_HPP
+#endif // PEGASUS_PARTICLE_HPP

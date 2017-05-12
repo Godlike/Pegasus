@@ -1,5 +1,5 @@
-#ifndef PEGAS_MATH_HPP
-#define PEGAS_MATH_HPP
+#ifndef PEGASUS_MATH_HPP
+#define PEGASUS_MATH_HPP
 
 #include "Pegasus/include/core.hpp"
 
@@ -70,4 +70,4 @@ private:
 };
 }
 
-#endif // PEGAS_MATH_HPP
+#endif // PEGASUS_MATH_HPP

@@ -1,5 +1,5 @@
-#ifndef PEGAS_CORE_HPP
-#define PEGAS_CORE_HPP
+#ifndef PEGASUS_CORE_HPP
+#define PEGASUS_CORE_HPP
 
 #include <math.h>
 
@@ -8,4 +8,4 @@ namespace pegasus {
 using real = float;
 }
 
-#endif // PEGAS_CORE_HPP
+#endif // PEGASUS_CORE_HPP

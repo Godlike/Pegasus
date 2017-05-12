@@ -1,5 +1,5 @@
-#ifndef PEGAS_MECHANICS_HPP
-#define PEGAS_MECHANICS_HPP
+#ifndef PEGASUS_MECHANICS_HPP
+#define PEGASUS_MECHANICS_HPP
 
 #include "Pegasus/include/geometry.hpp"
 #include "Pegasus/include/particle.hpp"
@@ -26,4 +26,4 @@ public:
 using RigidBodies = std::vector<RigidBody::Ptr>;
 
 } // namespace pegasus
-#endif // PEGAS_MECHANICS_HPP
+#endif // PEGASUS_MECHANICS_HPP
