@@ -9,12 +9,7 @@
 
 namespace pegasus {
 
-class Body {
-public:
-    virtual ~Body() {}
-};
-
-class RigidBody : public Body {
+class RigidBody {
 public:
     using Ptr = std::shared_ptr<RigidBody>;
 

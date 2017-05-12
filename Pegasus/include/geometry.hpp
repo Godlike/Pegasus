@@ -335,7 +335,7 @@ namespace geometry {
         c->planeMassCenter = p->getCenterOfMass();
         c->sphereMassCenter = s->getCenterOfMass();
         c->sphereRadius = s->getRadius();
-        c->penetration = c->sphereMassCenter * c->planeNormal - c->planeMassCenter * c->planeNormal;
+        c->penetration = c->sphereRadius - (c->sphereMassCenter * c->planeNormal - c->planeMassCenter * c->planeNormal);
     }
 
     template <>
@@ -349,7 +349,7 @@ namespace geometry {
     inline Vector3 calculateContactNormal<Plane, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
     {
         auto * c = static_cast<Cache<Plane,Sphere>*>(cache);
-        return (c->planeNormal - c->sphereMassCenter).unit();
+        return c->planeNormal.inverse();
     }
 
     template <>
@@ -369,13 +369,14 @@ namespace geometry {
 
         c->planeNormal = plane->getNormal();
         c->planeDistance = plane->getCenterOfMass() * c->planeNormal;
+
         box->getAxes(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2]);
         c->boxMassCenter = box->getCenterOfMass();
         calculateBoxVertices(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], c->boxVertices);
         c->boxFaces = { c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], c->boxAxes[0].inverse(), c->boxAxes[1].inverse(), c->boxAxes[2].inverse() };
         std::for_each(c->boxVertices.begin(), c->boxVertices.end(), [c](auto& n) { n += c->boxMassCenter; });
         std::transform(c->boxVertices.begin(), c->boxVertices.end(), c->boxPenetrations.begin(),
-            [c](auto const& p) { return p * c->planeNormal - c->planeDistance; });
+            [c](auto const& p) { return c->planeDistance - p * c->planeNormal; });
     }
 
     template <>
@@ -383,7 +384,7 @@ namespace geometry {
     {
         auto * c = static_cast<Cache<Plane,Box>*>(cache);
 
-        return *std::min_element(c->boxPenetrations.begin(), c->boxPenetrations.end()) >= 0;
+        return *std::max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()) >= 0;
     }
 
     template <>
@@ -404,7 +405,7 @@ namespace geometry {
     {
         auto * c = static_cast<Cache<Plane,Box>*>(cache);
 
-        return (*std::min_element(c->boxPenetrations.begin(), c->boxPenetrations.end()));
+        return (*std::max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()));
     }
 
     //Sphere, Plane
@@ -425,8 +426,8 @@ namespace geometry {
     template <>
     inline Vector3 calculateContactNormal<Sphere, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
     {
-        auto const * p = static_cast<Plane const *>(b);
-        return p->getNormal();
+        auto * c = static_cast<Cache<Sphere, Plane>*>(cache);
+        return calculateContactNormal<Plane, Sphere>(a, b, &c->psCache).inverse();
     }
 
     template <>
