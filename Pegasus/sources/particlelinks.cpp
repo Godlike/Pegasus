@@ -7,8 +7,8 @@ pegasus::real pegasus::ParticleLink::currentLenght() const
 }
 
 pegasus::ParticleCabel::ParticleCabel(
-    Particle::Ptr& a,
-    Particle::Ptr& b,
+    Particle::Ptr a,
+    Particle::Ptr b,
     real const maxLength,
     real const restutuition)
     : ParticleLink(a, b)
@@ -18,7 +18,7 @@ pegasus::ParticleCabel::ParticleCabel(
 }
 
 unsigned int
-pegasus::ParticleCabel::addContact(Contacts& contacts,
+pegasus::ParticleCabel::addContact(ParticleContacts& contacts,
     unsigned int const limit) const
 {
     auto const length = currentLenght();
@@ -30,20 +30,19 @@ pegasus::ParticleCabel::addContact(Contacts& contacts,
     auto normal = (mB->getPosition() - mA->getPosition());
     normal.normalize();
 
-    contacts.push_back(std::make_shared<ParticleContact>(mA, mB, restitution, normal,
-        length - maxLength));
+    contacts.emplace_back(mA, mB, restitution, normal, length - maxLength);
 
     return 1;
 }
 
-pegasus::ParticleRod::ParticleRod(Particle::Ptr& a, Particle::Ptr& b, real const length)
+pegasus::ParticleRod::ParticleRod(Particle::Ptr a, Particle::Ptr b, real const length)
     : ParticleLink(a, b)
     , length(length)
 {
 }
 
 unsigned int
-pegasus::ParticleRod::addContact(Contacts& contacts,
+pegasus::ParticleRod::addContact(ParticleContacts& contacts,
     unsigned int const limit) const
 {
     auto const currentLen = currentLenght();
@@ -55,9 +54,10 @@ pegasus::ParticleRod::addContact(Contacts& contacts,
     auto normal = (mB->getPosition() - mA->getPosition());
     normal.normalize();
 
-    contacts.push_back(std::make_shared<ParticleContact>(
-        mA, mB, static_cast<real>(0), (currentLen > length ? normal : normal * -1),
-        (currentLen > length ? currentLen - length : length - currentLen)));
+    contacts.emplace_back(mA, mB, real(0), 
+        (currentLen > length ? normal : normal * -1), 
+        (currentLen > length ? currentLen - length : length - currentLen)
+    );
 
     return 1;
 }

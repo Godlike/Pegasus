@@ -3,8 +3,8 @@
 #include <algorithm>
 
 pegasus::ParticleContact::ParticleContact(
-    Particle::Ptr const& a,
-    Particle::Ptr const& b,
+    Particle::Ptr const a,
+    Particle::Ptr const b,
     real const restitution,
     Vector3 const& contactNormal,
     real const penetration)
@@ -22,7 +22,7 @@ pegasus::ParticleContact::ParticleContact(
 void pegasus::ParticleContact::resolve(real const duration) const
 {
     if (duration < 0) {
-        throw std::invalid_argument("ParticleContact::resolve duration < 0");
+        return;
     }
 
     resolveVelocity(duration);
@@ -79,8 +79,7 @@ void pegasus::ParticleContact::resolveVelocity(real const duration) const
     }
 }
 
-void pegasus::ParticleContact::resolveInterpenetration(
-    real const duration) const
+void pegasus::ParticleContact::resolveInterpenetration(real const duration) const
 {
     if (mPenetration <= 0) {
         return;
@@ -115,19 +114,19 @@ void pegasus::ParticleContactResolver::setIterations(
 }
 
 void pegasus::ParticleContactResolver::resolveContacts(
-    ParticleContactsArray& contacts, real const duration)
+    ParticleContacts& contacts, real const duration)
 {
     mIterationsUsed = 0;
 
     std::sort(contacts.begin(), contacts.end(),
-        [](ParticleContact::Ptr const& a, ParticleContact::Ptr const& b) {
-            return a->calculateSeparatingVelocity() < b->calculateSeparatingVelocity();
+        [](ParticleContact const& a, ParticleContact const& b) {
+            return a.calculateSeparatingVelocity() < b.calculateSeparatingVelocity();
         });
 
     while (mIterationsUsed++ < mIterations && !contacts.empty()) {
         auto maxSepVelocityContact = contacts.back();
         contacts.pop_back();
-        maxSepVelocityContact->resolve(duration);
+        maxSepVelocityContact.resolve(duration);
     }
 }
 
@@ -142,7 +141,7 @@ pegasus::Platform::Platform(
 {
 }
 
-unsigned int pegasus::Platform::addContact(Contacts& contacts, unsigned int limit) const
+unsigned int pegasus::Platform::addContact(ParticleContacts& contacts, unsigned int limit) const
 {
     static auto const restitution = 0.0f;
 
@@ -162,8 +161,8 @@ unsigned int pegasus::Platform::addContact(Contacts& contacts, unsigned int limi
                 auto contactNormal = toParticle.unit();
                 contactNormal.z = 0;
                 auto const penetration = blobRadius - toParticle.magnitude();
-                contacts.push_back(std::make_shared<ParticleContact>(
-                    particles[i], nullptr, restitution, contactNormal, penetration));
+                contacts.emplace_back(
+                    particles[i], nullptr, restitution, contactNormal, penetration);
                 ++used;
             }
 
@@ -173,8 +172,8 @@ unsigned int pegasus::Platform::addContact(Contacts& contacts, unsigned int limi
                 auto contactNormal = toParticle.unit();
                 contactNormal.z = 0;
                 auto const penetration = blobRadius - toParticle.magnitude();
-                contacts.push_back(std::make_shared<ParticleContact>(
-                    particles[i], nullptr, restitution, contactNormal, penetration));
+                contacts.emplace_back(
+                    particles[i], nullptr, restitution, contactNormal, penetration);
                 ++used;
             }
         } else {
@@ -184,8 +183,8 @@ unsigned int pegasus::Platform::addContact(Contacts& contacts, unsigned int limi
                 auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
                 contactNormal.z = 0;
                 auto const penetration = blobRadius - sqrt(distanceToPlatform);
-                contacts.push_back(std::make_shared<ParticleContact>(
-                    particles[i], nullptr, restitution, contactNormal, penetration));
+                contacts.emplace_back(
+                    particles[i], nullptr, restitution, contactNormal, penetration);
                 ++used;
             }
         }

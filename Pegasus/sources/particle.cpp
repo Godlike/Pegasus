@@ -17,8 +17,8 @@ void pegasus::Particle::integrate(real const duration)
         return;
     }
 
-    if (duration <= 0.0f) {
-        throw std::invalid_argument("Particle::integrate duration <= 0");
+    if (duration < 0) {
+        return;
     }
 
     mPosition.addScaledVector(mVelocity, duration);
@@ -90,7 +90,7 @@ pegasus::real pegasus::Particle::getMass() const
 void pegasus::Particle::setMass(real const mass)
 {
     if (mass <= 0) {
-        throw std::invalid_argument("Particle::setMass mass <= 0");
+        return;
     }
 
     mMass = mass;

@@ -9,7 +9,7 @@ class ParticleLink : public ParticleContactGenerator {
 public:
     using Ptr = std::shared_ptr<ParticleLink>;
 
-    ParticleLink(Particle::Ptr& a, Particle::Ptr& b)
+    ParticleLink(Particle::Ptr a, Particle::Ptr b)
         : mA(a)
         , mB(b)
     {
@@ -18,14 +18,14 @@ public:
         }
     }
 
-    virtual unsigned int addContact(Contacts& contacts,
+    virtual unsigned int addContact(ParticleContacts& contacts,
         unsigned int const limit) const override = 0;
 
     real currentLenght() const;
 
 protected:
-    Particle::Ptr& mA;
-    Particle::Ptr& mB;
+    Particle::Ptr const mA;
+    Particle::Ptr const mB;
 };
 
 class ParticleCabel : public ParticleLink {
@@ -33,9 +33,9 @@ public:
     using Ptr = std::shared_ptr<ParticleCabel>;
 
     ParticleCabel(
-        Particle::Ptr& a, Particle::Ptr& b, real const maxLength, real const restutuition);
+        Particle::Ptr a, Particle::Ptr b, real const maxLength, real const restutuition);
 
-    virtual unsigned int addContact(Contacts& contacts,
+    virtual unsigned int addContact(ParticleContacts& contacts,
         unsigned int const limit) const override;
 
 private:
@@ -47,9 +47,9 @@ class ParticleRod : public ParticleLink {
 public:
     using Ptr = std::shared_ptr<ParticleRod>;
 
-    ParticleRod(Particle::Ptr& a, Particle::Ptr& b, real const length);
+    ParticleRod(Particle::Ptr a, Particle::Ptr b, real const length);
 
-    virtual unsigned int addContact(Contacts& contacts,
+    virtual unsigned int addContact(ParticleContacts& contacts,
         unsigned int const limit) const override;
 
 private:

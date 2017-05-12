@@ -10,8 +10,6 @@ namespace pegasus {
 
 class ParticleWorld {
 public:
-    using Particles = std::vector<Particle::Ptr>;
-    using ParticleContacts = std::vector<ParticleContact::Ptr>;
     using ParticleContactGenerators = std::vector<ParticleContactGenerator::Ptr>;
 
     explicit ParticleWorld(unsigned int maxContacts, unsigned int iterations = 0);

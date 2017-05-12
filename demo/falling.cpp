@@ -48,7 +48,8 @@ FallingDemo::FallingDemo()
     , yAxis(0)
 {
     //Create particles
-    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) {
+    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
+    {
         auto particle = std::make_shared<pegasus::Particle>();
         particle->setPosition(0, pegasus::real(RADIUS * 3 * (TOTAL_COUNT - PLANE_COUNT - i)), pegasus::real(0));
         particle->setVelocity(0, 0, 0);
@@ -58,14 +59,17 @@ FallingDemo::FallingDemo()
     }
 
     //Create rigid bodies
-    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) {
-        if (i < SPHERE_COUNT) {
+    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
+    {
+        if (i < SPHERE_COUNT) 
+        {
             rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(
                 particles[i],
                 std::make_shared<pegasus::geometry::Sphere>(particles[i]->getPosition(), pegasus::real(RADIUS))
             ));
         }
-        else {
+        else 
+        {
             rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(
                 particles[i],
                 std::make_shared<pegasus::geometry::Box>(
@@ -78,7 +82,8 @@ FallingDemo::FallingDemo()
     }
 
     //Create plane particle and rigid body
-    if (true) {
+    if (true) 
+    {
         auto particlePlane = std::make_shared<pegasus::Particle>();
         particlePlane->setPosition(pegasus::Vector3(1, 0, 0));
         particlePlane->setInverseMass(0);
@@ -92,7 +97,7 @@ FallingDemo::FallingDemo()
     }
 
     //Register forces
-    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i)
+    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
     {
         forceRegistry->add(
             particles[i], 
@@ -101,7 +106,8 @@ FallingDemo::FallingDemo()
     }
 
     //Create contact generators
-    for (auto const& body : rigidBodies) {
+    for (auto const& body : rigidBodies) 
+    {
         contactGenerators.push_back(
             std::make_shared<pegasus::ShapeContactGenerator>(body, rigidBodies, 0.0f));
     }
@@ -128,7 +134,8 @@ void FallingDemo::display()
         glPushMatrix();
         glColor3f(1.0f, 0.0f, 0.0f);
         glTranslatef(p.x, p.y, p.z);
-        if (s == pegasus::geometry::SimpleShape::PLANE) {
+        if (s == pegasus::geometry::SimpleShape::PLANE) 
+        {
             pegasus::real const planeSideLength = 25;
 
             auto p0 = static_cast<pegasus::geometry::Plane*>(body->s.get())->getCenterOfMass();
@@ -147,10 +154,12 @@ void FallingDemo::display()
             glVertex3f(p0.x, p0.y, p0.z - planeSideLength);
             glEnd();
         }
-        else if (s == pegasus::geometry::SimpleShape::SPHERE) {
+        else if (s == pegasus::geometry::SimpleShape::SPHERE) 
+        {
             glutWireSphere(RADIUS, 20, 20);
         }
-        else if (s == pegasus::geometry::SimpleShape::BOX) {
+        else if (s == pegasus::geometry::SimpleShape::BOX) 
+        {
             glutWireCube(RADIUS * 2);
         }
         glPopMatrix();
