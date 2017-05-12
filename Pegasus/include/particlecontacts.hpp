@@ -3,8 +3,8 @@
 
 #include "Pegasus/include/geometry.hpp"
 #include "Pegasus/include/mechanics.hpp"
-#include "Pegasus/include/particlecontacts.hpp"
 #include "Pegasus/include/particle.hpp"
+
 #include <vector>
 
 namespace pegasus {
@@ -53,7 +53,7 @@ private:
 class ParticleContactGenerator {
 public:
     using Ptr = std::shared_ptr<ParticleContactGenerator>;
-    using Contacts = std::vector<pegasus::ParticleContact::Ptr>;
+    using Contacts = std::vector<ParticleContact::Ptr>;
 
 public:
     virtual ~ParticleContactGenerator();

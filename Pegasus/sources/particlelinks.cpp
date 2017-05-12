@@ -7,10 +7,10 @@ pegasus::real pegasus::ParticleLink::currentLenght() const
 }
 
 pegasus::ParticleCabel::ParticleCabel(
-    pegasus::Particle::Ptr& a,
-    pegasus::Particle::Ptr& b,
-    pegasus::real const maxLength,
-    pegasus::real const restutuition)
+    Particle::Ptr& a,
+    Particle::Ptr& b,
+    real const maxLength,
+    real const restutuition)
     : ParticleLink(a, b)
     , maxLength(maxLength)
     , restitution(restutuition)
@@ -36,7 +36,7 @@ pegasus::ParticleCabel::addContact(Contacts& contacts,
     return 1;
 }
 
-pegasus::ParticleRod::ParticleRod(pegasus::Particle::Ptr& a, pegasus::Particle::Ptr& b, pegasus::real const length)
+pegasus::ParticleRod::ParticleRod(Particle::Ptr& a, Particle::Ptr& b, real const length)
     : ParticleLink(a, b)
     , length(length)
 {

@@ -141,7 +141,7 @@ pegasus::real pegasus::geometry::Capsule::getRadius() const
     return mR;
 }
 
-pegasus::geometry::Cylinder::Cylinder(const pegasus::Vector3& centerOfMass, const pegasus::Vector3& halfHeight, const pegasus::real r)
+pegasus::geometry::Cylinder::Cylinder(const Vector3& centerOfMass, const Vector3& halfHeight, const real r)
     : Capsule(centerOfMass, halfHeight, r)
 {
 }
@@ -168,7 +168,7 @@ void pegasus::geometry::Box::getAxes(Vector3& a, Vector3& b, Vector3& c) const
     c = mC;
 }
 
-size_t pegasus::geometry::shapeTypePairHash(const pegasus::geometry::ShapeTypePair &p)
+size_t pegasus::geometry::shapeTypePairHash(const ShapeTypePair &p)
 {
     return std::hash<int>()(p.first) ^ std::hash<int>()(p.second);
 }

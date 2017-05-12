@@ -3,11 +3,11 @@
 #include <algorithm>
 
 pegasus::ParticleContact::ParticleContact(
-    pegasus::Particle::Ptr const& a,
-    pegasus::Particle::Ptr const& b,
-    pegasus::real const restitution,
-    pegasus::Vector3 const& contactNormal,
-    pegasus::real const penetration)
+    Particle::Ptr const& a,
+    Particle::Ptr const& b,
+    real const restitution,
+    Vector3 const& contactNormal,
+    real const penetration)
     : mA(a)
     , mB(b)
     , mRestitution(restitution)
@@ -19,7 +19,7 @@ pegasus::ParticleContact::ParticleContact(
     }
 }
 
-void pegasus::ParticleContact::resolve(pegasus::real const duration) const
+void pegasus::ParticleContact::resolve(real const duration) const
 {
     if (duration < 0) {
         throw std::invalid_argument("ParticleContact::resolve duration < 0");
@@ -39,7 +39,7 @@ pegasus::real pegasus::ParticleContact::calculateSeparatingVelocity() const
     return relativeVelocity * mContactNormal;
 }
 
-void pegasus::ParticleContact::resolveVelocity(pegasus::real const duration) const
+void pegasus::ParticleContact::resolveVelocity(real const duration) const
 {
     auto const separatingVelocity = calculateSeparatingVelocity();
     if (separatingVelocity > 0) {
@@ -80,7 +80,7 @@ void pegasus::ParticleContact::resolveVelocity(pegasus::real const duration) con
 }
 
 void pegasus::ParticleContact::resolveInterpenetration(
-    pegasus::real const duration) const
+    real const duration) const
 {
     if (mPenetration <= 0) {
         return;
@@ -115,7 +115,7 @@ void pegasus::ParticleContactResolver::setIterations(
 }
 
 void pegasus::ParticleContactResolver::resolveContacts(
-    pegasus::ParticleContactsArray& contacts, pegasus::real const duration)
+    ParticleContactsArray& contacts, real const duration)
 {
     mIterationsUsed = 0;
 
@@ -134,7 +134,7 @@ void pegasus::ParticleContactResolver::resolveContacts(
 pegasus::ParticleContactGenerator::~ParticleContactGenerator() {}
 
 pegasus::Platform::Platform(
-    pegasus::Vector3 start, pegasus::Vector3 end, Particles& particles, const real blobRadius)
+    Vector3 start, Vector3 end, Particles& particles, const real blobRadius)
     : start(start)
     , end(end)
     , particles(particles)
@@ -142,7 +142,7 @@ pegasus::Platform::Platform(
 {
 }
 
-unsigned int pegasus::Platform::addContact(pegasus::ParticleContactGenerator::Contacts& contacts, unsigned int limit) const
+unsigned int pegasus::Platform::addContact(Contacts& contacts, unsigned int limit) const
 {
     static auto const restitution = 0.0f;
 
@@ -183,7 +183,7 @@ unsigned int pegasus::Platform::addContact(pegasus::ParticleContactGenerator::Co
                 auto closestPoint = start + lineDirection * (projected / platformSqLength);
                 auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
                 contactNormal.z = 0;
-                auto const penetration = blobRadius - std::sqrt(distanceToPlatform);
+                auto const penetration = blobRadius - sqrt(distanceToPlatform);
                 contacts.push_back(std::make_shared<ParticleContact>(
                     particles[i], nullptr, restitution, contactNormal, penetration));
                 ++used;
