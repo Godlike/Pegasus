@@ -14,7 +14,7 @@
 
 #define PLANE_COUNT 1
 #define BOX_COUNT 1
-#define SPHERE_COUNT 0
+#define SPHERE_COUNT 1
 #define TOTAL_COUNT BOX_COUNT+SPHERE_COUNT+PLANE_COUNT
 #define RADIUS 1
 
@@ -36,8 +36,8 @@ private:
     pegasus::ParticleForceRegistry::Ptr forceRegistry;
     pegasus::ParticleWorld world;
 
-    float xAxis;
-    float yAxis;
+    pegasus::real xAxis;
+    pegasus::real yAxis;
 };
 
 // Method definitions
@@ -50,7 +50,7 @@ FallingDemo::FallingDemo()
     //Create particles
     for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) {
         auto particle = std::make_shared<pegasus::Particle>();
-        particle->setPosition(2.0f + RADIUS * i * 4, RADIUS * 2, pegasus::real(0));
+        particle->setPosition(0, pegasus::real(RADIUS * 3 * (TOTAL_COUNT - PLANE_COUNT - i)), pegasus::real(0));
         particle->setVelocity(0, 0, 0);
         particle->setDamping(0.2f);
         particle->setMass(1.0f);
@@ -91,6 +91,15 @@ FallingDemo::FallingDemo()
         ));
     }
 
+    //Register forces
+    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i)
+    {
+        forceRegistry->add(
+            particles[i], 
+            std::make_shared<pegasus::ParticleGravity>(pegasus::Vector3{ 0, -9.8f, 0 })
+        );
+    }
+
     //Create contact generators
     for (auto const& body : rigidBodies) {
         contactGenerators.push_back(
@@ -109,7 +118,7 @@ void FallingDemo::display()
     auto const& pos = particles.front()->getPosition();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(pos.x, pos.y, 5, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x, pos.y, 10, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
 
     //Add bodies
     for (auto & body : rigidBodies)
@@ -158,9 +167,7 @@ void FallingDemo::update()
 
     xAxis *= pow(0.1f, duration);
     yAxis *= pow(0.1f, duration);
-
-    // Move the controlled blob
-    particles.front()->addForce(pegasus::Vector3(xAxis, yAxis, 0) * 10.0f);
+    particles.front()->addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, 0));
 
     world.runPhysics(0.001f); //(duration);
 

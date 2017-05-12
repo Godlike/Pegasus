@@ -25,11 +25,11 @@ public:
     using Registry = std::map<Particle::Ptr, std::set<ParticleForceGenerator::Ptr> >;
 
 public:
-    void add(Particle::Ptr& p, ParticleForceGenerator::Ptr& pfg);
+    void add(Particle::Ptr p, ParticleForceGenerator::Ptr pfg);
 
-    void remove(Particle::Ptr const& p);
+    void remove(Particle::Ptr const p);
 
-    void remove(Particle::Ptr const& p, ParticleForceGenerator::Ptr const& pfg);
+    void remove(Particle::Ptr const p, ParticleForceGenerator::Ptr const pfg);
 
     void clear();
 
