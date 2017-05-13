@@ -134,7 +134,7 @@ void FallingDemo::display()
         glPushMatrix();
         glColor3f(1.0f, 0.0f, 0.0f);
         glTranslatef(p.x, p.y, p.z);
-        if (s == pegasus::geometry::SimpleShape::PLANE) 
+        if (s == pegasus::geometry::SimpleShapeType::PLANE) 
         {
             pegasus::real const planeSideLength = 25;
 
@@ -154,13 +154,17 @@ void FallingDemo::display()
             glVertex3f(p0.x, p0.y, p0.z - planeSideLength);
             glEnd();
         }
-        else if (s == pegasus::geometry::SimpleShape::SPHERE) 
+        else if (s == pegasus::geometry::SimpleShapeType::SPHERE)
         {
             glutWireSphere(RADIUS, 20, 20);
+            glColor3f(0.0f, 1.0f, 0.0f);
+            glutSolidSphere(RADIUS, 20, 20);
         }
-        else if (s == pegasus::geometry::SimpleShape::BOX) 
+        else if (s == pegasus::geometry::SimpleShapeType::BOX)
         {
             glutWireCube(RADIUS * 2);
+            glColor3f(0.0f, 0.0f, 1.0f);
+            glutSolidCube(RADIUS * 2);
         }
         glPopMatrix();
     }

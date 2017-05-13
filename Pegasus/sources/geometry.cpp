@@ -15,14 +15,14 @@ pegasus::Vector3 pegasus::geometry::Shape::getCenterOfMass() const
     return mCenterOfMass;
 }
 
-pegasus::geometry::SimpleShape::SimpleShape(Vector3 const& centerOfMass, Type type)
+pegasus::geometry::SimpleShape::SimpleShape(Vector3 const& centerOfMass, SimpleShapeType type)
     : Shape(centerOfMass)
     , type(type)
 {
 }
 
 pegasus::geometry::Plane::Plane(Vector3 const& centerOfMass, Vector3 const& normal)
-    : SimpleShape(centerOfMass, PLANE)
+    : SimpleShape(centerOfMass, SimpleShapeType::PLANE)
     , mNormal(normal)
 {
 }
@@ -38,7 +38,7 @@ pegasus::Vector3 pegasus::geometry::Plane::getNormal() const
 }
 
 pegasus::geometry::Triangle::Triangle(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c)
-    : SimpleShape(centerOfMass, TRIANGLE)
+    : SimpleShape(centerOfMass, SimpleShapeType::TRIANGLE)
     , mA(a)
     , mB(b)
     , mC(c)
@@ -72,7 +72,7 @@ void pegasus::geometry::Triangle::calculateNormal()
 }
 
 pegasus::geometry::Sphere::Sphere(Vector3 const& centerOfMass, real const r)
-    : SimpleShape(centerOfMass, SPHERE)
+    : SimpleShape(centerOfMass, SimpleShapeType::SPHERE)
     , mR(r)
 {
 }
@@ -88,7 +88,7 @@ pegasus::real pegasus::geometry::Sphere::getRadius() const
 }
 
 pegasus::geometry::Cone::Cone(Vector3 const& centerOfMass, Vector3 const& a, real const r)
-    : SimpleShape(centerOfMass, CONE)
+    : SimpleShape(centerOfMass, SimpleShapeType::CONE)
     , mA(a)
     , mR(r)
 {
@@ -115,7 +115,7 @@ pegasus::real pegasus::geometry::Cone::getRadius() const
 }
 
 pegasus::geometry::Capsule::Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r)
-    : SimpleShape(centerOfMass, CAPSULE)
+    : SimpleShape(centerOfMass, SimpleShapeType::CAPSULE)
     , mHalfHeight(halfHeight)
     , mR(r)
 {
@@ -147,7 +147,7 @@ pegasus::geometry::Cylinder::Cylinder(const Vector3& centerOfMass, const Vector3
 }
 
 pegasus::geometry::Box::Box(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c)
-    : SimpleShape(centerOfMass, BOX)
+    : SimpleShape(centerOfMass, SimpleShapeType::BOX)
     , mA(a)
     , mB(b)
     , mC(c)
@@ -170,5 +170,5 @@ void pegasus::geometry::Box::getAxes(Vector3& a, Vector3& b, Vector3& c) const
 
 size_t pegasus::geometry::shapeTypePairHash(const ShapeTypePair &p)
 {
-    return std::hash<int>()(p.first) ^ std::hash<int>()(p.second);
+    return std::hash<int>()(static_cast<int>(p.first)) ^ std::hash<int>()(static_cast<int>(p.second));
 }
