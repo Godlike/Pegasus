@@ -38,6 +38,7 @@ private:
 
     pegasus::real xAxis;
     pegasus::real yAxis;
+    pegasus::real zAxis;
 };
 
 // Method definitions
@@ -46,6 +47,7 @@ FallingDemo::FallingDemo()
     , world(TOTAL_COUNT * TOTAL_COUNT, 10)
     , xAxis(0)
     , yAxis(0)
+    , zAxis(0)
 {
     //Create particles
     for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
@@ -124,7 +126,7 @@ void FallingDemo::display()
     auto const& pos = particles.front()->getPosition();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(pos.x, pos.y, 10, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x, pos.y + 5, pos.z + 5, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
 
     //Add bodies
     for (auto & body : rigidBodies)
@@ -180,7 +182,8 @@ void FallingDemo::update()
 
     xAxis *= pow(0.1f, duration);
     yAxis *= pow(0.1f, duration);
-    particles.front()->addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, 0));
+    zAxis *= pow(0.1f, duration);
+    particles.front()->addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
     world.runPhysics(0.001f); //(duration);
 
@@ -202,11 +205,11 @@ void FallingDemo::key(unsigned char key)
     switch (key) {
     case 'w':
     case 'W':
-        yAxis = 1.0;
+        zAxis = -1.0;
         break;
     case 's':
     case 'S':
-        yAxis = -1.0;
+        zAxis = 1.0;
         break;
     case 'a':
     case 'A':
@@ -215,6 +218,9 @@ void FallingDemo::key(unsigned char key)
     case 'd':
     case 'D':
         xAxis = 1.0f;
+        break;
+    case ' ':
+        yAxis = 1.0f;
         break;
     default:
         break;

@@ -135,7 +135,7 @@ namespace geometry {
 
     namespace intersection {
 
-    //Utility functions
+    // Utility functions
     template <typename T>
     bool isPointOnSameSide(
         T const& p1, T const& p2, T const& a, T const& b)
@@ -184,7 +184,7 @@ namespace geometry {
         }
     }
 
-    //Intersection query computation caches
+    // Intersection query computation caches
     struct CacheBase {};
 
     template< typename ShapeA, typename ShapeB >
@@ -290,9 +290,9 @@ namespace geometry {
     template < typename ShapeA, typename ShapeB >
     real calculatePenetration(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
 
-    //Plane, Plane
+    // Plane, Plane
     template <>
-    inline void initialize<Plane, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline void initialize<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto p1 = static_cast<Plane const *>(a);
         auto p2 = static_cast<Plane const *>(b);
@@ -304,28 +304,28 @@ namespace geometry {
     }
 
     template <>
-    inline bool overlap<Plane, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline bool overlap<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane, Plane>*>(cache);
         return c->crossProduct.squareMagnitude() != 0;
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Plane, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane, Plane>*>(cache);
         return c->bNormal;
     }
 
     template <>
-    inline real calculatePenetration<Plane, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline real calculatePenetration<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         return std::numeric_limits<real>::max();
     }
 
-    //Plane, Sphere
+    // Plane, Sphere
     template <>
-    inline void initialize<Plane, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline void initialize<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto p = static_cast<Plane const *>(a);
         auto s = static_cast<Sphere const *>(b);
@@ -339,29 +339,29 @@ namespace geometry {
     }
 
     template <>
-    inline bool overlap<Plane, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline bool overlap<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Sphere>*>(cache);
         return c->penetration >= real(0);
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Plane, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Sphere>*>(cache);
         return c->planeNormal.inverse();
     }
 
     template <>
-    inline real calculatePenetration<Plane, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline real calculatePenetration<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Sphere>*>(cache);
         return c->penetration;
     }
 
-    //Plane, Box
+    // Plane, Box
     template <>
-    inline void initialize<Plane, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline void initialize<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto plane = static_cast<Plane const *>(a);
         auto box = static_cast<Box const *>(b);
@@ -380,14 +380,14 @@ namespace geometry {
     }
 
     template <>
-    inline bool overlap<Plane, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline bool overlap<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Box>*>(cache);
         return *max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()) >= 0;
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Plane, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Box>*>(cache);
 
@@ -400,45 +400,45 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Plane, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline real calculatePenetration<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Box>*>(cache);
 
         return (*max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()));
     }
 
-    //Sphere, Plane
+    // Sphere, Plane
     template <>
-    inline void initialize<Sphere, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline void initialize<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Plane>*>(cache);
         initialize<Plane, Sphere>(b, a, &c->psCache);
     }
 
     template <>
-    inline bool overlap<Sphere, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline bool overlap<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Plane>*>(cache);
         return overlap<Plane, Sphere>(b, a, &c->psCache);
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Sphere, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Plane>*>(cache);
         return calculateContactNormal<Plane, Sphere>(a, b, &c->psCache).inverse();
     }
 
     template <>
-    inline real calculatePenetration<Sphere, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline real calculatePenetration<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Plane>*>(cache);
         return calculatePenetration<Plane, Sphere>(b, a, &c->psCache);
     }
 
-    //Sphere, Sphere
+    // Sphere, Sphere
     template <>
-    inline void initialize<Sphere, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline void initialize<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto s1 = static_cast<Sphere const *>(a);
         auto s2 = static_cast<Sphere const *>(b);
@@ -453,29 +453,29 @@ namespace geometry {
     }
 
     template <>
-    inline bool overlap<Sphere, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline bool overlap<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Sphere>*>(cache);
         return pow(c->radiusSum, 2) > c->baVector.squareMagnitude();
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Sphere, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Sphere>*>(cache);
         return c->baVector.unit();;
     }
 
     template <>
-    inline real calculatePenetration<Sphere, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline real calculatePenetration<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Sphere>*>(cache);
         return (c->radiusSum - c->baVector.magnitude());
     }
 
-    //Sphere, Box
+    // Sphere, Box
     template <>
-    inline void initialize<Sphere, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline void initialize<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto sphere = static_cast<Sphere const *>(a);
         auto box = static_cast<Box const *>(b);
@@ -500,7 +500,7 @@ namespace geometry {
     }
 
     template <>
-    inline bool overlap<Sphere, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline bool overlap<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Box>*>(cache);
 
@@ -525,7 +525,7 @@ namespace geometry {
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Sphere, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Box>*>(cache);
 
@@ -535,7 +535,7 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Sphere, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline real calculatePenetration<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Box>*>(cache);
 
@@ -543,67 +543,67 @@ namespace geometry {
         return c->sphereRadius - *minIt;
     }
 
-    //<Box, Plane
+    // Box, Plane
     template <>
-    inline void initialize<Box, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline void initialize<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Plane>*>(cache);
         initialize<Plane, Box>(b, a, &c->pbCache);
     }
 
     template <>
-    inline bool overlap<Box, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline bool overlap<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Plane>*>(cache);
         return overlap<Plane, Box>(b, a, &c->pbCache);
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Box, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto plane = static_cast<Plane const *>(b);
         return plane->getNormal();
     }
 
     template <>
-    inline real calculatePenetration<Box, Plane>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline real calculatePenetration<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Plane>*>(cache);
         return calculatePenetration<Plane, Box>(b, a, &c->pbCache);
     }
 
-    //Box, Sphere
+    // Box, Sphere
     template <>
-    inline void initialize<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline void initialize<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Sphere>*>(cache);
         initialize<Sphere, Box>(b, a, &c->sbCache);
     }
 
     template <>
-    inline bool overlap<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline bool overlap<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Sphere>*>(cache);
         return overlap<Sphere, Box>(b, a, &c->sbCache);
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Sphere>*>(cache);
         return calculateContactNormal<Sphere, Box>(b, a, &c->sbCache).inverse();
     }
 
     template <>
-    inline real calculatePenetration<Box, Sphere>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline real calculatePenetration<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Sphere>*>(cache);
         return calculatePenetration<Sphere, Box>(b, a, &c->sbCache);
     }
 
-    //Box, Box
+    // Box, Box
     template <>
-    inline void initialize<Box, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline void initialize<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto aBox = static_cast<Box const *>(a);
         auto bBox = static_cast<Box const *>(b);
@@ -629,7 +629,7 @@ namespace geometry {
     }
 
     template <>
-    inline bool overlap<Box, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline bool overlap<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Box>*>(cache);
 
@@ -658,7 +658,7 @@ namespace geometry {
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Box, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Box>*>(cache);
 
@@ -674,16 +674,16 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Box, Box>(const SimpleShape *a, const SimpleShape *b, CacheBase *cache)
+    inline real calculatePenetration<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Box>*>(cache);
         return c->penetration;
     }
 
-    }// namespace IntersectionQuery
+    } // namespace IntersectionQuery
 
 
-    //General intersection
+    // General intersection
     using ShapeTypePair = std::pair<SimpleShapeType, SimpleShapeType>;
 
     size_t shapeTypePairHash(ShapeTypePair const & p);

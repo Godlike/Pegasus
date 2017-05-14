@@ -50,7 +50,7 @@ private:
 
 class ParticleDrag : public ParticleForceGenerator {
 public:
-    ParticleDrag(real const mK1, real const mK2);
+    ParticleDrag(real const k1, real const k2);
 
     void updateForce(Particle::Ptr const p) override;
 
@@ -61,7 +61,7 @@ private:
 
 class ParticleSpring : public ParticleForceGenerator {
 public:
-    ParticleSpring(Particle::Ptr const mOther, real const mSpringConstant, real const mRestLenght);
+    ParticleSpring(Particle::Ptr const other, real const springConstant, real const restLenght);
 
     void updateForce(Particle::Ptr const p) override;
 
@@ -73,7 +73,7 @@ private:
 
 class ParticleAnchoredSpring : public ParticleForceGenerator {
 public:
-    ParticleAnchoredSpring(Vector3 const& mAnchor, real const mSpringConstant, real const mRestLenght);
+    ParticleAnchoredSpring(Vector3 const& anchor, real const springConstant, real const restLenght);
 
     void updateForce(Particle::Ptr const p) override;
 
@@ -85,7 +85,7 @@ private:
 
 class ParticleBungee : public ParticleForceGenerator {
 public:
-    ParticleBungee(Particle::Ptr const mOther, real const mSpringConstant, real const mRestLenght);
+    ParticleBungee(Particle::Ptr const other, real const springConstant, real const restLenght);
 
     void updateForce(Particle::Ptr const p) override;
 
@@ -97,8 +97,8 @@ private:
 
 class ParticleBuoyancy : public ParticleForceGenerator {
 public:
-    ParticleBuoyancy(real const mMaxDepth,  real const mVolume,
-                     real const waterWight, real const mLiquidDensity);
+    ParticleBuoyancy(real const maxDepth,  real const volume,
+                     real const waterWight, real const liquidDensity);
 
     void updateForce(Particle::Ptr const p) override;
 
@@ -111,9 +111,9 @@ private:
 
 class ParticleFakeSpring : public ParticleForceGenerator {
 public:
-    ParticleFakeSpring(Vector3 const& mAnchor, real const mSpringConstant, real const mDamping);
+    ParticleFakeSpring(Vector3 const& anchor, real const springConstant, real const damping);
 
-    void updateForce(Particle::Ptr const& p, real const mDuration) const;
+    void updateForce(Particle::Ptr const p, real const duration) const;
 
     void updateForce(Particle::Ptr const p) override;
 
