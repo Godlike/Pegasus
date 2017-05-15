@@ -5,9 +5,9 @@
 pegasus::ParticleContact::ParticleContact(
     Particle::Ptr const a,
     Particle::Ptr const b,
-    real const restitution,
+    double const restitution,
     Vector3 const& contactNormal,
-    real const penetration)
+    double const penetration)
     : mA(a)
     , mB(b)
     , mRestitution(restitution)
@@ -19,7 +19,7 @@ pegasus::ParticleContact::ParticleContact(
     }
 }
 
-void pegasus::ParticleContact::resolve(real const duration) const
+void pegasus::ParticleContact::resolve(double const duration) const
 {
     if (duration < 0) {
         return;
@@ -29,7 +29,7 @@ void pegasus::ParticleContact::resolve(real const duration) const
     resolveInterpenetration(duration);
 }
 
-pegasus::real pegasus::ParticleContact::calculateSeparatingVelocity() const
+double pegasus::ParticleContact::calculateSeparatingVelocity() const
 {
     Vector3 relativeVelocity = mA->getVelocity();
     if (mB) {
@@ -39,7 +39,7 @@ pegasus::real pegasus::ParticleContact::calculateSeparatingVelocity() const
     return relativeVelocity * mContactNormal;
 }
 
-void pegasus::ParticleContact::resolveVelocity(real const duration) const
+void pegasus::ParticleContact::resolveVelocity(double const duration) const
 {
     auto const separatingVelocity = calculateSeparatingVelocity();
     if (separatingVelocity > 0) {
@@ -79,7 +79,7 @@ void pegasus::ParticleContact::resolveVelocity(real const duration) const
     }
 }
 
-void pegasus::ParticleContact::resolveInterpenetration(real const duration) const
+void pegasus::ParticleContact::resolveInterpenetration(double const duration) const
 {
     if (mPenetration <= 0) {
         return;
@@ -114,7 +114,7 @@ void pegasus::ParticleContactResolver::setIterations(
 }
 
 void pegasus::ParticleContactResolver::resolveContacts(
-    ParticleContacts& contacts, real const duration)
+    ParticleContacts& contacts, double const duration)
 {
     mIterationsUsed = 0;
 
@@ -133,7 +133,7 @@ void pegasus::ParticleContactResolver::resolveContacts(
 pegasus::ParticleContactGenerator::~ParticleContactGenerator() {}
 
 pegasus::Platform::Platform(
-    Vector3 start, Vector3 end, Particles& particles, const real blobRadius)
+    Vector3 start, Vector3 end, Particles& particles, const double blobRadius)
     : start(start)
     , end(end)
     , particles(particles)

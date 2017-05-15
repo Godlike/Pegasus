@@ -1,25 +1,23 @@
 #ifndef PEGASUS_MATH_HPP
 #define PEGASUS_MATH_HPP
 
-#include "Pegasus/include/core.hpp"
-
 namespace pegasus {
 
 class Vector3 {
 public:
-    real x;
+    double x;
 
-    real y;
+    double y;
 
-    real z;
+    double z;
 
     Vector3();
 
-    Vector3(real const x, real const y, real const z);
+    Vector3(double const x, double const y, double const z);
 
-    void operator*=(real const r);
+    void operator*=(double const r);
 
-    Vector3 operator*=(real const r) const;
+    Vector3 operator*=(double const r) const;
 
     void operator+=(Vector3 const& v);
 
@@ -33,17 +31,17 @@ public:
 
     Vector3 operator-(Vector3 const& v) const;
 
-    void addScaledVector(Vector3 const& v, real const s);
+    void addScaledVector(Vector3 const& v, double const s);
 
     void componentProduct(Vector3 const& v);
 
     Vector3 componentProduct(Vector3 const& v) const;
 
-    real scalarProduct(Vector3 const& v) const;
+    double scalarProduct(Vector3 const& v) const;
 
-    real operator*(Vector3 const& v) const;
+    double operator*(Vector3 const& v) const;
 
-    Vector3 operator*(real const r) const;
+    Vector3 operator*(double const r) const;
 
     Vector3 vectorProduct(Vector3 const& v) const;
 
@@ -53,9 +51,9 @@ public:
 
     Vector3 inverse() const;
 
-    real magnitude() const;
+    double magnitude() const;
 
-    real squareMagnitude() const;
+    double squareMagnitude() const;
 
     void normalize();
 
@@ -63,10 +61,10 @@ public:
 
     Vector3 unit() const;
 
-    void trim(real const size);
+    void trim(double const size);
 
 private:
-    real pad;
+    double pad;
 };
 }
 

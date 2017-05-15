@@ -1,7 +1,6 @@
 #ifndef PEGASUS_PARTICLE_HPP
 #define PEGASUS_PARTICLE_HPP
 
-#include "Pegasus/include/core.hpp"
 #include "Pegasus/include/math.hpp"
 #include <memory>
 #include <vector>
@@ -16,39 +15,39 @@ public:
 public:
     Particle();
 
-    void integrate(real const duration);
+    void integrate(double const duration);
 
     Vector3 getPosition() const;
 
     void setPosition(Vector3 const& position);
 
-    void setPosition(real const x, real const y, real const z);
+    void setPosition(double const x, double const y, double const z);
 
     Vector3 getVelocity() const;
 
     void setVelocity(Vector3 const& velocity);
 
-    void setVelocity(real const x, real const y, real const z);
+    void setVelocity(double const x, double const y, double const z);
 
     Vector3 getAcceleration() const;
 
     void setAcceleration(Vector3 const& acceleration);
 
-    void setAcceleration(real const x, real const y, real const z);
+    void setAcceleration(double const x, double const y, double const z);
 
-    real getDamping() const;
+    double getDamping() const;
 
-    void setDamping(real const damping);
+    void setDamping(double const damping);
 
-    real getMass() const;
+    double getMass() const;
 
-    void setMass(real const mass);
+    void setMass(double const mass);
 
     bool hasFiniteMass() const;
 
-    real getInverseMass() const;
+    double getInverseMass() const;
 
-    void setInverseMass(real const inverseMass);
+    void setInverseMass(double const inverseMass);
 
     void addForce(Vector3 const& force);
 
@@ -61,11 +60,11 @@ private:
 
     Vector3 mAcceleration;
 
-    real mDamping;
+    double mDamping;
 
-    real mMass;
+    double mMass;
 
-    real mInverseMass;
+    double mInverseMass;
 
     Vector3 mForceAccum;
 };

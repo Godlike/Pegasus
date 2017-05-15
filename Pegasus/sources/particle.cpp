@@ -11,7 +11,7 @@ pegasus::Particle::Particle()
 {
 }
 
-void pegasus::Particle::integrate(real const duration)
+void pegasus::Particle::integrate(double const duration)
 {
     if (!hasFiniteMass()) {
         return;
@@ -40,8 +40,8 @@ void pegasus::Particle::setPosition(Vector3 const& position)
     mPosition = position;
 }
 
-void pegasus::Particle::setPosition(real const x, real const y,
-    real const z)
+void pegasus::Particle::setPosition(double const x, double const y,
+    double const z)
 {
     mPosition = Vector3(x, y, z);
 }
@@ -53,8 +53,8 @@ void pegasus::Particle::setVelocity(Vector3 const& velocity)
     mVelocity = velocity;
 }
 
-void pegasus::Particle::setVelocity(real const x, real const y,
-    real const z)
+void pegasus::Particle::setVelocity(double const x, double const y,
+    double const z)
 {
     mVelocity = Vector3(x, y, z);
 }
@@ -69,39 +69,39 @@ void pegasus::Particle::setAcceleration(Vector3 const& acceleration)
     mAcceleration = acceleration;
 }
 
-void pegasus::Particle::setAcceleration(real const x, real const y,
-    real const z)
+void pegasus::Particle::setAcceleration(double const x, double const y,
+    double const z)
 {
     mAcceleration = Vector3(x, y, z);
 }
 
-pegasus::real pegasus::Particle::getDamping() const { return mDamping; }
+double pegasus::Particle::getDamping() const { return mDamping; }
 
-void pegasus::Particle::setDamping(real const damping)
+void pegasus::Particle::setDamping(double const damping)
 {
     mDamping = damping;
 }
 
-pegasus::real pegasus::Particle::getMass() const
+double pegasus::Particle::getMass() const
 {
-    return (mInverseMass == 0) ? std::numeric_limits<real>::max() : mMass;
+    return (mInverseMass == 0) ? std::numeric_limits<double>::max() : mMass;
 }
 
-void pegasus::Particle::setMass(real const mass)
+void pegasus::Particle::setMass(double const mass)
 {
     if (mass <= 0) {
         return;
     }
 
     mMass = mass;
-    mInverseMass = real(1) / mass;
+    mInverseMass = double(1) / mass;
 }
 
 bool pegasus::Particle::hasFiniteMass() const { return mInverseMass != 0; }
 
-pegasus::real pegasus::Particle::getInverseMass() const { return mInverseMass; }
+double pegasus::Particle::getInverseMass() const { return mInverseMass; }
 
-void pegasus::Particle::setInverseMass(real const inverseMass)
+void pegasus::Particle::setInverseMass(double const inverseMass)
 {
     mInverseMass = inverseMass;
 }

@@ -50,89 +50,89 @@ private:
 
 class ParticleDrag : public ParticleForceGenerator {
 public:
-    ParticleDrag(real const k1, real const k2);
+    ParticleDrag(double const k1, double const k2);
 
     void updateForce(Particle::Ptr const p) override;
 
 private:
-    real const mK1;
-    real const mK2;
+    double const mK1;
+    double const mK2;
 };
 
 class ParticleSpring : public ParticleForceGenerator {
 public:
-    ParticleSpring(Particle::Ptr const other, real const springConstant, real const restLenght);
+    ParticleSpring(Particle::Ptr const other, double const springConstant, double const restLenght);
 
     void updateForce(Particle::Ptr const p) override;
 
 private:
     Particle::Ptr const mOther;
-    real const mSpringConstant;
-    real const mRestLenght;
+    double const mSpringConstant;
+    double const mRestLenght;
 };
 
 class ParticleAnchoredSpring : public ParticleForceGenerator {
 public:
-    ParticleAnchoredSpring(Vector3 const& anchor, real const springConstant, real const restLenght);
+    ParticleAnchoredSpring(Vector3 const& anchor, double const springConstant, double const restLenght);
 
     void updateForce(Particle::Ptr const p) override;
 
 private:
     Vector3 const mAnchor;
-    real const mSpringConstant;
-    real const mRestLenght;
+    double const mSpringConstant;
+    double const mRestLenght;
 };
 
 class ParticleBungee : public ParticleForceGenerator {
 public:
-    ParticleBungee(Particle::Ptr const other, real const springConstant, real const restLenght);
+    ParticleBungee(Particle::Ptr const other, double const springConstant, double const restLenght);
 
     void updateForce(Particle::Ptr const p) override;
 
 private:
     Particle::Ptr const mOther;
-    real const mSpringConstant;
-    real const mRestLenght;
+    double const mSpringConstant;
+    double const mRestLenght;
 };
 
 class ParticleBuoyancy : public ParticleForceGenerator {
 public:
-    ParticleBuoyancy(real const maxDepth,  real const volume,
-                     real const waterWight, real const liquidDensity);
+    ParticleBuoyancy(double const maxDepth,  double const volume,
+                     double const waterWight, double const liquidDensity);
 
     void updateForce(Particle::Ptr const p) override;
 
 private:
-    real const mMaxDepth;
-    real const mVolume;
-    real const mWaterHeight;
-    real const mLiquidDensity;
+    double const mMaxDepth;
+    double const mVolume;
+    double const mWaterHeight;
+    double const mLiquidDensity;
 };
 
 class ParticleFakeSpring : public ParticleForceGenerator {
 public:
-    ParticleFakeSpring(Vector3 const& anchor, real const springConstant, real const damping);
+    ParticleFakeSpring(Vector3 const& anchor, double const springConstant, double const damping);
 
-    void updateForce(Particle::Ptr const p, real const duration) const;
+    void updateForce(Particle::Ptr const p, double const duration) const;
 
     void updateForce(Particle::Ptr const p) override;
 
 private:
     Vector3 const mAnchor;
-    real const mSpringConstant;
-    real const mDamping;
-    real mDuration;
+    double const mSpringConstant;
+    double const mDamping;
+    double mDuration;
 };
 
 class BlobForceGenerator : public ParticleForceGenerator {
 public:
     Particles& particles;
-    real maxReplusion;
-    real maxAttraction;
-    real minNaturalDistance, maxNaturalDistance;
-    real floatHead;
+    double maxReplusion;
+    double maxAttraction;
+    double minNaturalDistance, maxNaturalDistance;
+    double floatHead;
     unsigned int maxFloat;
-    real maxDistance;
+    double maxDistance;
 
     explicit BlobForceGenerator(Particles& particles);
 

@@ -6,6 +6,7 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <cmath>
 #include <unordered_map>
 #include <vector>
 #include <utility>
@@ -77,48 +78,48 @@ namespace geometry {
         using Ptr = std::shared_ptr<Sphere>;
 
     public:
-        Sphere(Vector3 const& centerOfMass, real const r);
+        Sphere(Vector3 const& centerOfMass, double const r);
 
-        void setRadius(real const r);
-        real getRadius() const;
+        void setRadius(double const r);
+        double getRadius() const;
 
     private:
-        real mR;
+        double mR;
     };
 
     class Cone : public SimpleShape {
     public:
-        Cone(Vector3 const& centerOfMass, Vector3 const& a, real const r);
+        Cone(Vector3 const& centerOfMass, Vector3 const& a, double const r);
 
         void setAppex(Vector3 const& a);
         Vector3 getAppex() const;
 
-        void setRadius(real const r);
-        real getRadius() const;
+        void setRadius(double const r);
+        double getRadius() const;
 
     private:
         Vector3 mA;
-        real mR;
+        double mR;
     };
 
     class Capsule : public SimpleShape {
     public:
-        Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r);
+        Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, double const r);
 
         void setHalfHeight(Vector3 const& halfHeight);
         Vector3 getHalfHeight() const;
 
-        void setRadius(real const r);
-        real getRadius() const;
+        void setRadius(double const r);
+        double getRadius() const;
 
     private:
         Vector3 mHalfHeight;
-        real mR;
+        double mR;
     };
 
     class Cylinder : public Capsule {
     public:
-        Cylinder(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r);
+        Cylinder(Vector3 const& centerOfMass, Vector3 const& halfHeight, double const r);
     };
 
     class Box : public SimpleShape {
@@ -205,8 +206,8 @@ namespace geometry {
         Vector3 planeMassCenter;
         Vector3 planeNormal;
         Vector3 sphereMassCenter;
-        real sphereRadius;
-        real penetration;
+        double sphereRadius;
+        double penetration;
     };
 
     template <>
@@ -216,10 +217,10 @@ namespace geometry {
         std::array<Vector3, 3> boxAxes;
         std::array<Vector3, 8> boxVertices;
         std::array<Vector3, 6> boxFaces;
-        std::array<real, 6> boxFaceDistances;
-        std::array<real, 8> boxPenetrations;
+        std::array<double, 6> boxFaceDistances;
+        std::array<double, 8> boxPenetrations;
         Vector3 planeNormal;
-        real planeDistance;
+        double planeDistance;
     };
 
     template <>
@@ -233,10 +234,10 @@ namespace geometry {
     {
         Vector3 bMassCenter;
         Vector3 baVector;
-        real bRadius;
+        double bRadius;
         Vector3 aMassCenter;
-        real aRadius;
-        real radiusSum;
+        double aRadius;
+        double radiusSum;
     };
 
     template <>
@@ -246,12 +247,12 @@ namespace geometry {
         std::array<Vector3, 3> boxAxes;
         std::array<Vector3, 6> boxNormals;
         std::array<Vector3, 6> boxFaces;
-        std::array<real, 6> boxFaceDistances;
+        std::array<double, 6> boxFaceDistances;
         std::array<Vector3, 8> boxVertices;
-        std::array<real, 8> boxVerticesProjections;
+        std::array<double, 8> boxVerticesProjections;
         std::array<Vector3, 4> separatingAxes;
         Vector3 sphereMassCenter;
-        real sphereRadius;
+        double sphereRadius;
     };
 
     template <>
@@ -276,7 +277,7 @@ namespace geometry {
         std::array<Vector3, 8> aBoxVertices, bBoxVertices;
         std::array<Vector3, 6> aBoxFaces, bBoxFaces;
         std::vector<Vector3> separatingAxes;
-        real penetration = 0;
+        double penetration = 0;
     };
 
     template < typename ShapeA, typename ShapeB >
@@ -289,7 +290,7 @@ namespace geometry {
     Vector3 calculateContactNormal(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
 
     template < typename ShapeA, typename ShapeB >
-    real calculatePenetration(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
+    double calculatePenetration(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
 
     // Plane, Plane
     template <>
@@ -319,9 +320,9 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
-        return std::numeric_limits<real>::max();
+        return std::numeric_limits<double>::max();
     }
 
     // Plane, Sphere
@@ -343,7 +344,7 @@ namespace geometry {
     inline bool overlap<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Sphere>*>(cache);
-        return c->penetration >= real(0);
+        return c->penetration >= double(0);
     }
 
     template <>
@@ -354,7 +355,7 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Sphere>*>(cache);
         return c->penetration;
@@ -401,7 +402,7 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Box>*>(cache);
 
@@ -431,7 +432,7 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Plane>*>(cache);
         return calculatePenetration<Plane, Sphere>(b, a, &c->psCache);
@@ -468,7 +469,7 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Sphere>*>(cache);
         return (c->radiusSum - c->baVector.magnitude());
@@ -536,7 +537,7 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Sphere, Box>*>(cache);
 
@@ -567,7 +568,7 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Plane>*>(cache);
         return calculatePenetration<Plane, Box>(b, a, &c->pbCache);
@@ -596,7 +597,7 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Sphere>*>(cache);
         return calculatePenetration<Sphere, Box>(b, a, &c->sbCache);
@@ -634,7 +635,7 @@ namespace geometry {
     {
         auto c = static_cast<Cache<Box, Box>*>(cache);
 
-        std::array<real, 8> aBoxProjections, bBoxProjections;
+        std::array<double, 8> aBoxProjections, bBoxProjections;
         for (auto axis : c->separatingAxes) {
             projectAllVertices(axis, c->aBoxVertices.begin(), c->aBoxVertices.end(), aBoxProjections.begin());
             projectAllVertices(axis, c->bBoxVertices.begin(), c->bBoxVertices.end(), bBoxProjections.begin());
@@ -663,7 +664,7 @@ namespace geometry {
     {
         auto c = static_cast<Cache<Box, Box>*>(cache);
 
-        std::array<real, 6> distances;
+        std::array<double, 6> distances;
         for (unsigned i = 0; i < distances.size(); ++i) {
             distances[i] = (c->aMassCenter - c->bMassCenter - c->bBoxFaces[i]).squareMagnitude();
         }
@@ -675,7 +676,7 @@ namespace geometry {
     }
 
     template <>
-    inline real calculatePenetration<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Box, Box>*>(cache);
         return c->penetration;
@@ -712,7 +713,7 @@ namespace geometry {
             calculateContactNormalFunctors;
 
         std::unordered_map<ShapeTypePair,
-            std::function<real(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
+            std::function<double(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
             std::function<size_t(ShapeTypePair const& p)> >
             calculatePenetrationFunctors;
 
@@ -838,7 +839,7 @@ namespace geometry {
                 s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());
         }
 
-        real calculatePenetration(SimpleShape const * s1, SimpleShape const * s2)
+        double calculatePenetration(SimpleShape const * s1, SimpleShape const * s2)
         {
             return calculatePenetrationFunctors[std::make_pair(s1->type, s2->type)](
                 s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());

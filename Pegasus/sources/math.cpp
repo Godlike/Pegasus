@@ -10,8 +10,8 @@ pegasus::Vector3::Vector3()
 {
 }
 
-pegasus::Vector3::Vector3(real const x, real const y,
-    real const z)
+pegasus::Vector3::Vector3(double const x, double const y,
+    double const z)
     : x(x)
     , y(y)
     , z(z)
@@ -19,14 +19,14 @@ pegasus::Vector3::Vector3(real const x, real const y,
 {
 }
 
-void pegasus::Vector3::operator*=(real const r)
+void pegasus::Vector3::operator*=(double const r)
 {
     x *= r;
     y *= r;
     z *= r;
 }
 
-pegasus::Vector3 pegasus::Vector3::operator*=(real const r) const
+pegasus::Vector3 pegasus::Vector3::operator*=(double const r) const
 {
     auto v(*this);
     v *= r;
@@ -66,7 +66,7 @@ pegasus::Vector3 pegasus::Vector3::operator-(Vector3 const& v) const
 }
 
 void pegasus::Vector3::addScaledVector(Vector3 const& v,
-    real const s)
+    double const s)
 {
     x += v.x * s;
     y += v.y * s;
@@ -87,17 +87,17 @@ pegasus::Vector3 pegasus::Vector3::componentProduct(Vector3 const& v) const
     return new_v;
 }
 
-pegasus::real pegasus::Vector3::scalarProduct(Vector3 const& v) const
+double pegasus::Vector3::scalarProduct(Vector3 const& v) const
 {
     return x * v.x + y * v.y + z * v.z;
 }
 
-pegasus::real pegasus::Vector3::operator*(Vector3 const& v) const
+double pegasus::Vector3::operator*(Vector3 const& v) const
 {
     return scalarProduct(v);
 }
 
-pegasus::Vector3 pegasus::Vector3::operator*(real const r) const
+pegasus::Vector3 pegasus::Vector3::operator*(double const r) const
 {
     auto new_v(*this);
     new_v *= r;
@@ -135,12 +135,12 @@ pegasus::Vector3 pegasus::Vector3::inverse() const
     return v;
 }
 
-pegasus::real pegasus::Vector3::magnitude() const
+double pegasus::Vector3::magnitude() const
 {
     return sqrt(x * x + y * y + z * z);
 }
 
-pegasus::real pegasus::Vector3::squareMagnitude() const
+double pegasus::Vector3::squareMagnitude() const
 {
     return (x * x + y * y + z * z);
 }
@@ -149,7 +149,7 @@ void pegasus::Vector3::normalize()
 {
     auto const l = magnitude();
     if (l > 0) {
-        (*this) *= (real(1) / l);
+        (*this) *= (double(1) / l);
     }
 }
 
@@ -167,7 +167,7 @@ pegasus::Vector3 pegasus::Vector3::unit() const
     return result;
 }
 
-void pegasus::Vector3::trim(real const size)
+void pegasus::Vector3::trim(double const size)
 {
     if (squareMagnitude() > size * size) {
         normalize();

@@ -72,7 +72,7 @@ void pegasus::ParticleGravity::updateForce(Particle::Ptr const p)
     p->addForce(mGravity * p->getMass());
 }
 
-pegasus::ParticleDrag::ParticleDrag(real const k1, real const k2)
+pegasus::ParticleDrag::ParticleDrag(double const k1, double const k2)
     : mK1(k1)
     , mK2(k2)
 {
@@ -82,7 +82,7 @@ void pegasus::ParticleDrag::updateForce(Particle::Ptr const p)
 {
     Vector3 force = p->getVelocity();
 
-    real dragCoeff = force.magnitude();
+    double dragCoeff = force.magnitude();
     dragCoeff = mK1 * dragCoeff + mK2 * dragCoeff * dragCoeff;
 
     force.normalize();
@@ -91,7 +91,7 @@ void pegasus::ParticleDrag::updateForce(Particle::Ptr const p)
 }
 
 pegasus::ParticleSpring::ParticleSpring(
-    Particle::Ptr const other, real const springConstant, real const restLenght)
+    Particle::Ptr const other, double const springConstant, double const restLenght)
     : mOther(other)
     , mSpringConstant(springConstant)
     , mRestLenght(restLenght)
@@ -111,7 +111,7 @@ void pegasus::ParticleSpring::updateForce(Particle::Ptr const p)
 }
 
 pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
-    Vector3 const& anchor, real const springConstant, real const restLenght)
+    Vector3 const& anchor, double const springConstant, double const restLenght)
     : mAnchor(anchor)
     , mSpringConstant(springConstant)
     , mRestLenght(restLenght)
@@ -131,8 +131,8 @@ void pegasus::ParticleAnchoredSpring::updateForce(Particle::Ptr const p)
 }
 
 pegasus::ParticleBungee::ParticleBungee(Particle::Ptr const other,
-    real const springConstant,
-    real const restLenght)
+    double const springConstant,
+    double const restLenght)
     : mOther(other)
     , mSpringConstant(springConstant)
     , mRestLenght(restLenght)
@@ -144,7 +144,7 @@ void pegasus::ParticleBungee::updateForce(Particle::Ptr const p)
     Vector3 force = p->getPosition();
     force -= mOther->getPosition();
 
-    real magnitude = force.magnitude();
+    double magnitude = force.magnitude();
     if (magnitude <= mRestLenght) {
         return;
     }
@@ -157,7 +157,7 @@ void pegasus::ParticleBungee::updateForce(Particle::Ptr const p)
 }
 
 pegasus::ParticleBuoyancy::ParticleBuoyancy(
-    real const maxDepth, real const volume, real const waterWight, real const liquidDensity)
+    double const maxDepth, double const volume, double const waterWight, double const liquidDensity)
     : mMaxDepth(maxDepth)
     , mVolume(volume)
     , mWaterHeight(waterWight)
@@ -167,7 +167,7 @@ pegasus::ParticleBuoyancy::ParticleBuoyancy(
 
 void pegasus::ParticleBuoyancy::updateForce(Particle::Ptr const p)
 {
-    real const depth = p->getPosition().y;
+    double const depth = p->getPosition().y;
 
     if (depth >= mWaterHeight + mMaxDepth) {
         return;
@@ -184,7 +184,7 @@ void pegasus::ParticleBuoyancy::updateForce(Particle::Ptr const p)
 }
 
 pegasus::ParticleFakeSpring::ParticleFakeSpring(
-    Vector3 const& anchor, real const springConstant, real const damping)
+    Vector3 const& anchor, double const springConstant, double const damping)
     : mAnchor(anchor)
     , mSpringConstant(springConstant)
     , mDamping(damping)
@@ -192,14 +192,14 @@ pegasus::ParticleFakeSpring::ParticleFakeSpring(
 {
 }
 
-void pegasus::ParticleFakeSpring::updateForce(Particle::Ptr const p, real const duration) const
+void pegasus::ParticleFakeSpring::updateForce(Particle::Ptr const p, double const duration) const
 {
     if (!p->hasFiniteMass()) {
         return;
     }
 
     Vector3 const position = p->getPosition() - mAnchor;
-    real const gamma = 0.5f * sqrt(4 * mSpringConstant - mDamping * mDamping);
+    double const gamma = 0.5f * sqrt(4 * mSpringConstant - mDamping * mDamping);
 
     if (gamma == 0.0f)
         return;
@@ -256,7 +256,7 @@ void pegasus::BlobForceGenerator::updateForce(Particle::Ptr const particle)
 
     // If the particle is the head, and we've got a join count, then float it.
     if (particle == particles.front() && joinCount > 0 && maxFloat > 0) {
-        auto force = real(joinCount / maxFloat) * floatHead;
+        auto force = double(joinCount / maxFloat) * floatHead;
         if (force > floatHead)
             force = floatHead;
         particle->addForce(Vector3(0, force, 0));

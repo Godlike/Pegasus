@@ -14,7 +14,7 @@ public:
 
     explicit ParticleWorld(unsigned int maxContacts, unsigned int iterations = 0);
 
-    void runPhysics(real const duration);
+    void runPhysics(double const duration);
 
     void startFrame();
 
@@ -37,7 +37,7 @@ private:
 
     unsigned int generateContacts();
 
-    void integrate(real const duration);
+    void integrate(double const duration);
 };
 
 } // namespace pegasus

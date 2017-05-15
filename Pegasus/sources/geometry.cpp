@@ -71,23 +71,23 @@ void pegasus::geometry::Triangle::calculateNormal()
     mNormal = (mB - mA) % (mC - mA);
 }
 
-pegasus::geometry::Sphere::Sphere(Vector3 const& centerOfMass, real const r)
+pegasus::geometry::Sphere::Sphere(Vector3 const& centerOfMass, double const r)
     : SimpleShape(centerOfMass, SimpleShapeType::SPHERE)
     , mR(r)
 {
 }
 
-void pegasus::geometry::Sphere::setRadius(real const r)
+void pegasus::geometry::Sphere::setRadius(double const r)
 {
     mR = r;
 }
 
-pegasus::real pegasus::geometry::Sphere::getRadius() const
+double pegasus::geometry::Sphere::getRadius() const
 {
     return mR;
 }
 
-pegasus::geometry::Cone::Cone(Vector3 const& centerOfMass, Vector3 const& a, real const r)
+pegasus::geometry::Cone::Cone(Vector3 const& centerOfMass, Vector3 const& a, double const r)
     : SimpleShape(centerOfMass, SimpleShapeType::CONE)
     , mA(a)
     , mR(r)
@@ -104,17 +104,17 @@ pegasus::Vector3 pegasus::geometry::Cone::getAppex() const
     return mA;
 }
 
-void pegasus::geometry::Cone::setRadius(real const r)
+void pegasus::geometry::Cone::setRadius(double const r)
 {
     mR = r;
 }
 
-pegasus::real pegasus::geometry::Cone::getRadius() const
+double pegasus::geometry::Cone::getRadius() const
 {
     return mR;
 }
 
-pegasus::geometry::Capsule::Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, real const r)
+pegasus::geometry::Capsule::Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, double const r)
     : SimpleShape(centerOfMass, SimpleShapeType::CAPSULE)
     , mHalfHeight(halfHeight)
     , mR(r)
@@ -131,17 +131,17 @@ pegasus::Vector3 pegasus::geometry::Capsule::getHalfHeight() const
     return mHalfHeight;
 }
 
-void pegasus::geometry::Capsule::setRadius(real const r)
+void pegasus::geometry::Capsule::setRadius(double const r)
 {
     mR = r;
 }
 
-pegasus::real pegasus::geometry::Capsule::getRadius() const
+double pegasus::geometry::Capsule::getRadius() const
 {
     return mR;
 }
 
-pegasus::geometry::Cylinder::Cylinder(const Vector3& centerOfMass, const Vector3& halfHeight, const real r)
+pegasus::geometry::Cylinder::Cylinder(const Vector3& centerOfMass, const Vector3& halfHeight, const double r)
     : Capsule(centerOfMass, halfHeight, r)
 {
 }

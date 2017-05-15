@@ -12,23 +12,23 @@ namespace pegasus {
 class ParticleContact {
 public:
     ParticleContact(Particle::Ptr const a, Particle::Ptr const b,
-        real const restitution, Vector3 const& contactNormal,
-        real const penetration);
+        double const restitution, Vector3 const& contactNormal,
+        double const penetration);
 
-    void resolve(real const duration) const;
-    real calculateSeparatingVelocity() const;
+    void resolve(double const duration) const;
+    double calculateSeparatingVelocity() const;
 
 private:
     Particle::Ptr mA;
     Particle::Ptr mB;
-    real mRestitution;
+    double mRestitution;
     Vector3 mContactNormal;
-    real mPenetration;
+    double mPenetration;
 
 private:
-    void resolveVelocity(real const duration) const;
+    void resolveVelocity(double const duration) const;
 
-    void resolveInterpenetration(real const duration) const;
+    void resolveInterpenetration(double const duration) const;
 };
 
 using ParticleContacts = std::vector<ParticleContact>;
@@ -40,7 +40,7 @@ public:
     void setIterations(unsigned int const iterations);
 
     void resolveContacts(ParticleContacts& contacts,
-        real const duration);
+        double const duration);
 
 private:
     unsigned int mIterations;
@@ -61,16 +61,16 @@ public:
     Vector3 start;
     Vector3 end;
     Particles& particles;
-    real const blobRadius;
+    double const blobRadius;
 
-    Platform(Vector3 start, Vector3 end, Particles& particles, real const blobRadius);
+    Platform(Vector3 start, Vector3 end, Particles& particles, double const blobRadius);
 
     unsigned int addContact(ParticleContacts& contacts, unsigned int const limit) const override;
 };
 
 class ShapeContactGenerator : public ParticleContactGenerator {
 public:
-    ShapeContactGenerator(RigidBody::Ptr const rBody, RigidBodies const& rBodies, real const restitution)
+    ShapeContactGenerator(RigidBody::Ptr const rBody, RigidBodies const& rBodies, double const restitution)
         : mRigidBody(rBody)
         , mRigidBodies(rBodies)
         , mRestitution(restitution)
@@ -106,7 +106,7 @@ public:
 private:
     RigidBody::Ptr const mRigidBody;
     RigidBodies const& mRigidBodies;
-    real const mRestitution;
+    double const mRestitution;
 };
 
 } // namespace pegasus

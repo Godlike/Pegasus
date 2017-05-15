@@ -13,8 +13,8 @@
 #include <iostream>
 
 #define PLANE_COUNT 1
-#define BOX_COUNT 2
-#define SPHERE_COUNT 0
+#define BOX_COUNT 1
+#define SPHERE_COUNT 1
 #define TOTAL_COUNT BOX_COUNT+SPHERE_COUNT+PLANE_COUNT
 #define RADIUS 1
 
@@ -36,9 +36,9 @@ private:
     pegasus::ParticleForceRegistry::Ptr forceRegistry;
     pegasus::ParticleWorld world;
 
-    pegasus::real xAxis;
-    pegasus::real yAxis;
-    pegasus::real zAxis;
+    double xAxis;
+    double yAxis;
+    double zAxis;
 };
 
 // Method definitions
@@ -53,7 +53,7 @@ FallingDemo::FallingDemo()
     for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
     {
         auto particle = std::make_shared<pegasus::Particle>();
-        particle->setPosition(0, pegasus::real(RADIUS * 3 * (TOTAL_COUNT - PLANE_COUNT - i)), pegasus::real(0));
+        particle->setPosition(0, double(RADIUS * 3 * (TOTAL_COUNT - PLANE_COUNT - i)), double(0));
         particle->setVelocity(0, 0, 0);
         particle->setDamping(0.2f);
         particle->setMass(1.0f);
@@ -67,7 +67,7 @@ FallingDemo::FallingDemo()
         {
             rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(
                 particles[i],
-                std::make_shared<pegasus::geometry::Sphere>(particles[i]->getPosition(), pegasus::real(RADIUS))
+                std::make_shared<pegasus::geometry::Sphere>(particles[i]->getPosition(), double(RADIUS))
             ));
         }
         else 
@@ -138,7 +138,7 @@ void FallingDemo::display()
         glTranslatef(p.x, p.y, p.z);
         if (s == pegasus::geometry::SimpleShapeType::PLANE) 
         {
-            pegasus::real const planeSideLength = 25;
+            double const planeSideLength = 25;
 
             auto p0 = static_cast<pegasus::geometry::Plane*>(body->s.get())->getCenterOfMass();
             auto const planeNormal = static_cast<pegasus::geometry::Plane*>(body->s.get())->getNormal();
