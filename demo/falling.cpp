@@ -13,8 +13,8 @@
 #include <iostream>
 
 #define PLANE_COUNT 1
-#define BOX_COUNT 1
-#define SPHERE_COUNT 1
+#define BOX_COUNT 2
+#define SPHERE_COUNT 0
 #define TOTAL_COUNT BOX_COUNT+SPHERE_COUNT+PLANE_COUNT
 #define RADIUS 1
 
@@ -103,7 +103,7 @@ FallingDemo::FallingDemo()
     {
         forceRegistry->add(
             particles[i], 
-            std::make_shared<pegasus::ParticleGravity>(pegasus::Vector3{ 0, -9.8f, 0 })
+            std::make_shared<pegasus::ParticleGravity>(pegasus::Vector3{ 0, 0, 0 })
         );
     }
 
@@ -185,7 +185,7 @@ void FallingDemo::update()
     zAxis *= pow(0.1f, duration);
     particles.front()->addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
-    world.runPhysics(0.001f); //(duration);
+    world.runPhysics(0.01f); //(duration);
 
     for (auto const& body : rigidBodies) {
         body->s->setCenterOfMass(body->p->getPosition());
@@ -221,6 +221,10 @@ void FallingDemo::key(unsigned char key)
         break;
     case ' ':
         yAxis = 1.0f;
+        break;
+    case 'v':
+    case 'V':
+        yAxis = -1.0f;
         break;
     default:
         break;

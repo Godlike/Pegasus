@@ -8,6 +8,7 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 
 #include "Pegasus/include/math.hpp"
 
@@ -383,7 +384,7 @@ namespace geometry {
     inline bool overlap<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
     {
         auto c = static_cast<Cache<Plane,Box>*>(cache);
-        return *max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()) >= 0;
+        return *std::max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()) >= 0;
     }
 
     template <>
@@ -393,8 +394,8 @@ namespace geometry {
 
         std::transform(c->boxFaces.begin(), c->boxFaces.end(), c->boxFaceDistances.begin(), 
             [c](auto const& v) { return v * c->planeNormal; });
-        auto const minIndex = distance(c->boxFaceDistances.begin(),
-            min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end()));
+        auto const minIndex = std::distance(c->boxFaceDistances.begin(),
+            std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end()));
 
         return c->boxFaces[minIndex].unit();
     }
@@ -404,7 +405,7 @@ namespace geometry {
     {
         auto c = static_cast<Cache<Plane,Box>*>(cache);
 
-        return (*max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()));
+        return (*std::max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()));
     }
 
     // Sphere, Plane
@@ -507,7 +508,7 @@ namespace geometry {
         for(auto const & axis : c->separatingAxes)
         {
             projectAllVertices(axis, c->boxVertices.begin(), c->boxVertices.end(), c->boxVerticesProjections.begin());
-            sort(c->boxVerticesProjections.begin(), c->boxVerticesProjections.end());
+            std::sort(c->boxVerticesProjections.begin(), c->boxVerticesProjections.end());
             auto const boxMassCenterProjection = c->boxMassCenter * axis;
             auto const sphereMassCenterProjection = c->sphereMassCenter * axis;
 
@@ -529,8 +530,8 @@ namespace geometry {
     {
         auto c = static_cast<Cache<Sphere, Box>*>(cache);
 
-        auto minIt = min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end());
-        auto minIndex = distance(c->boxFaceDistances.begin(), minIt);
+        auto minIt = std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end());
+        auto minIndex = std::distance(c->boxFaceDistances.begin(), minIt);
         return c->boxNormals[minIndex];
     }
 
@@ -539,7 +540,7 @@ namespace geometry {
     {
         auto c = static_cast<Cache<Sphere, Box>*>(cache);
 
-        auto minIt = min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end());
+        auto minIt = std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end());
         return c->sphereRadius - *minIt;
     }
 
@@ -637,8 +638,8 @@ namespace geometry {
         for (auto axis : c->separatingAxes) {
             projectAllVertices(axis, c->aBoxVertices.begin(), c->aBoxVertices.end(), aBoxProjections.begin());
             projectAllVertices(axis, c->bBoxVertices.begin(), c->bBoxVertices.end(), bBoxProjections.begin());
-            sort(aBoxProjections.begin(), aBoxProjections.end());
-            sort(bBoxProjections.begin(), bBoxProjections.end());
+            std::sort(aBoxProjections.begin(), aBoxProjections.end());
+            std::sort(bBoxProjections.begin(), bBoxProjections.end());
 
             if (aBoxProjections.back() < bBoxProjections.back()) {
                 if (aBoxProjections.back() < bBoxProjections.front()) {
@@ -667,8 +668,8 @@ namespace geometry {
             distances[i] = (c->aMassCenter - c->bMassCenter - c->bBoxFaces[i]).squareMagnitude();
         }
 
-        auto const minIt = min_element(distances.begin(), distances.end());
-        auto const minIndex = distance(distances.begin(), minIt);
+        auto const minIt = std::min_element(distances.begin(), distances.end());
+        auto const minIndex = std::distance(distances.begin(), minIt);
 
         return c->bBoxFaces[minIndex].unit();
     }
