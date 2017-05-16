@@ -344,7 +344,7 @@ namespace geometry {
     inline bool overlap<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         auto cache = static_cast<Cache<Plane,Sphere>*>(cacheBase);
-        return cache->penetration >= double(0);
+        return cache->penetration >= 0.0;
     }
 
     template <>
