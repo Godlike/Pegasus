@@ -19,7 +19,7 @@ void pegasus::ParticleForceRegistry::add(
     }
 }
 
-void pegasus::ParticleForceRegistry::remove(Particle::Ptr const p)
+void pegasus::ParticleForceRegistry::remove(Particle::Ptr p)
 {
     if (!p) {
         return;
@@ -32,7 +32,7 @@ void pegasus::ParticleForceRegistry::remove(Particle::Ptr const p)
 }
 
 void pegasus::ParticleForceRegistry::remove(
-    Particle::Ptr const p, ParticleForceGenerator::Ptr const pfg)
+    Particle::Ptr p, ParticleForceGenerator::Ptr pfg)
 {
     if (!p || !pfg) {
         return;
@@ -63,7 +63,7 @@ pegasus::ParticleGravity::ParticleGravity(Vector3 const& g)
 {
 }
 
-void pegasus::ParticleGravity::updateForce(Particle::Ptr const p)
+void pegasus::ParticleGravity::updateForce(Particle::Ptr p)
 {
     if (!p->hasFiniteMass()) {
         return;
@@ -72,13 +72,13 @@ void pegasus::ParticleGravity::updateForce(Particle::Ptr const p)
     p->addForce(mGravity * p->getMass());
 }
 
-pegasus::ParticleDrag::ParticleDrag(double const k1, double const k2)
+pegasus::ParticleDrag::ParticleDrag(double k1, double k2)
     : mK1(k1)
     , mK2(k2)
 {
 }
 
-void pegasus::ParticleDrag::updateForce(Particle::Ptr const p)
+void pegasus::ParticleDrag::updateForce(Particle::Ptr p)
 {
     Vector3 force = p->getVelocity();
 
@@ -91,14 +91,14 @@ void pegasus::ParticleDrag::updateForce(Particle::Ptr const p)
 }
 
 pegasus::ParticleSpring::ParticleSpring(
-    Particle::Ptr const other, double const springConstant, double const restLenght)
+    Particle::Ptr other, double springConstant, double restLenght)
     : mOther(other)
     , mSpringConstant(springConstant)
     , mRestLenght(restLenght)
 {
 }
 
-void pegasus::ParticleSpring::updateForce(Particle::Ptr const p)
+void pegasus::ParticleSpring::updateForce(Particle::Ptr p)
 {
     Vector3 force = p->getPosition();
     force -= mOther->getPosition();
@@ -111,14 +111,14 @@ void pegasus::ParticleSpring::updateForce(Particle::Ptr const p)
 }
 
 pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
-    Vector3 const& anchor, double const springConstant, double const restLenght)
+    Vector3 const& anchor, double springConstant, double restLenght)
     : mAnchor(anchor)
     , mSpringConstant(springConstant)
     , mRestLenght(restLenght)
 {
 }
 
-void pegasus::ParticleAnchoredSpring::updateForce(Particle::Ptr const p)
+void pegasus::ParticleAnchoredSpring::updateForce(Particle::Ptr p)
 {
     Vector3 force = p->getPosition();
     force -= mAnchor;
@@ -130,7 +130,7 @@ void pegasus::ParticleAnchoredSpring::updateForce(Particle::Ptr const p)
     p->addForce(force);
 }
 
-pegasus::ParticleBungee::ParticleBungee(Particle::Ptr const other,
+pegasus::ParticleBungee::ParticleBungee(Particle::Ptr other,
     double const springConstant,
     double const restLenght)
     : mOther(other)
@@ -139,7 +139,7 @@ pegasus::ParticleBungee::ParticleBungee(Particle::Ptr const other,
 {
 }
 
-void pegasus::ParticleBungee::updateForce(Particle::Ptr const p)
+void pegasus::ParticleBungee::updateForce(Particle::Ptr p)
 {
     Vector3 force = p->getPosition();
     force -= mOther->getPosition();
@@ -157,7 +157,7 @@ void pegasus::ParticleBungee::updateForce(Particle::Ptr const p)
 }
 
 pegasus::ParticleBuoyancy::ParticleBuoyancy(
-    double const maxDepth, double const volume, double const waterWight, double const liquidDensity)
+    double maxDepth, double volume, double waterWight, double liquidDensity)
     : mMaxDepth(maxDepth)
     , mVolume(volume)
     , mWaterHeight(waterWight)
@@ -165,7 +165,7 @@ pegasus::ParticleBuoyancy::ParticleBuoyancy(
 {
 }
 
-void pegasus::ParticleBuoyancy::updateForce(Particle::Ptr const p)
+void pegasus::ParticleBuoyancy::updateForce(Particle::Ptr p)
 {
     double const depth = p->getPosition().y;
 
@@ -184,7 +184,7 @@ void pegasus::ParticleBuoyancy::updateForce(Particle::Ptr const p)
 }
 
 pegasus::ParticleFakeSpring::ParticleFakeSpring(
-    Vector3 const& anchor, double const springConstant, double const damping)
+    Vector3 const& anchor, double springConstant, double damping)
     : mAnchor(anchor)
     , mSpringConstant(springConstant)
     , mDamping(damping)
@@ -192,7 +192,7 @@ pegasus::ParticleFakeSpring::ParticleFakeSpring(
 {
 }
 
-void pegasus::ParticleFakeSpring::updateForce(Particle::Ptr const p, double const duration) const
+void pegasus::ParticleFakeSpring::updateForce(Particle::Ptr p, double duration) const
 {
     if (!p->hasFiniteMass()) {
         return;
@@ -212,7 +212,7 @@ void pegasus::ParticleFakeSpring::updateForce(Particle::Ptr const p, double cons
     p->addForce(accel * p->getMass());
 }
 
-void pegasus::ParticleFakeSpring::updateForce(Particle::Ptr const p)
+void pegasus::ParticleFakeSpring::updateForce(Particle::Ptr p)
 {
     updateForce(p, mDuration);
 }
@@ -229,7 +229,7 @@ pegasus::BlobForceGenerator::BlobForceGenerator(Particles& particles)
 {
 }
 
-void pegasus::BlobForceGenerator::updateForce(Particle::Ptr const particle)
+void pegasus::BlobForceGenerator::updateForce(Particle::Ptr particle)
 {
     unsigned joinCount = 0;
     for (unsigned i = 0; i < particles.size(); ++i) {

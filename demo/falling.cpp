@@ -84,19 +84,16 @@ FallingDemo::FallingDemo()
     }
 
     //Create plane particle and rigid body
-    if (true) 
-    {
-        auto particlePlane = std::make_shared<pegasus::Particle>();
-        particlePlane->setPosition(pegasus::Vector3(1, 0, 0));
-        particlePlane->setInverseMass(0);
-        particles.push_back(particlePlane);
-        rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(
-            particlePlane,
-            std::make_shared<pegasus::geometry::Plane>(
-                particlePlane->getPosition(), pegasus::Vector3(0, 1.0f, 0).unit()
-            )
-        ));
-    }
+    auto particlePlane = std::make_shared<pegasus::Particle>();
+    particlePlane->setPosition(pegasus::Vector3(1, 0, 0));
+    particlePlane->setInverseMass(0);
+    particles.push_back(particlePlane);
+    rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(
+        particlePlane,
+        std::make_shared<pegasus::geometry::Plane>(
+            particlePlane->getPosition(), pegasus::Vector3(0, 1.0, 0).unit()
+        )
+    ));
 
     //Register forces
     for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 

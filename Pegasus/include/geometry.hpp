@@ -186,7 +186,7 @@ namespace geometry {
         }
     }
 
-    // Intersection query computation caches
+    // Intersection query computation cacheBases
     struct CacheBase {};
 
     template< typename ShapeA, typename ShapeB >
@@ -281,244 +281,244 @@ namespace geometry {
     };
 
     template < typename ShapeA, typename ShapeB >
-    void initialize(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
+    void initialize(SimpleShape const * a, SimpleShape const * b, CacheBase  * cacheBase);
 
     template < typename ShapeA, typename ShapeB >
-    bool overlap(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
+    bool overlap(SimpleShape const * a, SimpleShape const * b, CacheBase  * cacheBase);
 
     template < typename ShapeA, typename ShapeB >
-    Vector3 calculateContactNormal(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
+    Vector3 calculateContactNormal(SimpleShape const * a, SimpleShape const * b, CacheBase  * cacheBase);
 
     template < typename ShapeA, typename ShapeB >
-    double calculatePenetration(SimpleShape const * a, SimpleShape const * b, CacheBase  * cache);
+    double calculatePenetration(SimpleShape const * a, SimpleShape const * b, CacheBase  * cacheBase);
 
     // Plane, Plane
     template <>
-    inline void initialize<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline void initialize<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto p1 = static_cast<Plane const *>(a);
-        auto p2 = static_cast<Plane const *>(b);
-        auto c = static_cast<Cache<Plane, Plane>*>(cache);
+        auto aPlane = static_cast<Plane const *>(a);
+        auto bPlane = static_cast<Plane const *>(b);
+        auto cache = static_cast<Cache<Plane, Plane>*>(cacheBase);
 
-        c->aNormal = p1->getNormal();
-        c->bNormal = p2->getNormal();
-        c->crossProduct = c->aNormal % c->bNormal;
+        cache->aNormal = aPlane->getNormal();
+        cache->bNormal = bPlane->getNormal();
+        cache->crossProduct = cache->aNormal % cache->bNormal;
     }
 
     template <>
-    inline bool overlap<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline bool overlap<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Plane, Plane>*>(cache);
-        return c->crossProduct.squareMagnitude() != 0;
+        auto cache = static_cast<Cache<Plane, Plane>*>(cacheBase);
+        return cache->crossProduct.squareMagnitude() != 0;
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Plane, Plane>*>(cache);
-        return c->bNormal;
+        auto cache = static_cast<Cache<Plane, Plane>*>(cacheBase);
+        return cache->bNormal;
     }
 
     template <>
-    inline double calculatePenetration<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Plane, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         return std::numeric_limits<double>::max();
     }
 
     // Plane, Sphere
     template <>
-    inline void initialize<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline void initialize<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto p = static_cast<Plane const *>(a);
-        auto s = static_cast<Sphere const *>(b);
-        auto c = static_cast<Cache<Plane, Sphere>*>(cache);
+        auto plane = static_cast<Plane const *>(a);
+        auto sphere = static_cast<Sphere const *>(b);
+        auto cache = static_cast<Cache<Plane, Sphere>*>(cacheBase);
 
-        c->planeNormal = p->getNormal();
-        c->planeMassCenter = p->getCenterOfMass();
-        c->sphereMassCenter = s->getCenterOfMass();
-        c->sphereRadius = s->getRadius();
-        c->penetration = c->sphereRadius - (c->sphereMassCenter * c->planeNormal - c->planeMassCenter * c->planeNormal);
+        cache->planeNormal = plane->getNormal();
+        cache->planeMassCenter = plane->getCenterOfMass();
+        cache->sphereMassCenter = sphere->getCenterOfMass();
+        cache->sphereRadius = sphere->getRadius();
+        cache->penetration = cache->sphereRadius - (cache->sphereMassCenter * cache->planeNormal - cache->planeMassCenter * cache->planeNormal);
     }
 
     template <>
-    inline bool overlap<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline bool overlap<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Plane,Sphere>*>(cache);
-        return c->penetration >= double(0);
+        auto cache = static_cast<Cache<Plane,Sphere>*>(cacheBase);
+        return cache->penetration >= double(0);
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Plane,Sphere>*>(cache);
-        return c->planeNormal.inverse();
+        auto cache = static_cast<Cache<Plane,Sphere>*>(cacheBase);
+        return cache->planeNormal.inverse();
     }
 
     template <>
-    inline double calculatePenetration<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Plane, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Plane,Sphere>*>(cache);
-        return c->penetration;
+        auto cache = static_cast<Cache<Plane,Sphere>*>(cacheBase);
+        return cache->penetration;
     }
 
     // Plane, Box
     template <>
-    inline void initialize<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline void initialize<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         auto plane = static_cast<Plane const *>(a);
         auto box = static_cast<Box const *>(b);
-        auto c = static_cast<Cache<Plane,Box>*>(cache);
+        auto cache = static_cast<Cache<Plane,Box>*>(cacheBase);
 
-        c->planeNormal = plane->getNormal();
-        c->planeDistance = plane->getCenterOfMass() * c->planeNormal;
+        cache->planeNormal = plane->getNormal();
+        cache->planeDistance = plane->getCenterOfMass() * cache->planeNormal;
 
-        box->getAxes(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2]);
-        c->boxMassCenter = box->getCenterOfMass();
-        calculateBoxVertices(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], c->boxVertices);
-        c->boxFaces = { c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], c->boxAxes[0].inverse(), c->boxAxes[1].inverse(), c->boxAxes[2].inverse() };
-        std::for_each(c->boxVertices.begin(), c->boxVertices.end(), [c](auto& n) { n += c->boxMassCenter; });
-        std::transform(c->boxVertices.begin(), c->boxVertices.end(), c->boxPenetrations.begin(),
-            [c](auto const& p) { return c->planeDistance - p * c->planeNormal; });
+        box->getAxes(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2]);
+        cache->boxMassCenter = box->getCenterOfMass();
+        calculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices);
+        cache->boxFaces = { cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2],
+                            cache->boxAxes[0].inverse(), cache->boxAxes[1].inverse(), cache->boxAxes[2].inverse() };
+        std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n) { n += cache->boxMassCenter; });
+        std::transform(cache->boxVertices.begin(), cache->boxVertices.end(), cache->boxPenetrations.begin(),
+            [cache](auto const& p) { return cache->planeDistance - p * cache->planeNormal; });
     }
 
     template <>
-    inline bool overlap<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline bool overlap<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Plane,Box>*>(cache);
-        return *std::max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()) >= 0;
+        auto cache = static_cast<Cache<Plane,Box>*>(cacheBase);
+        return *std::max_element(cache->boxPenetrations.begin(), cache->boxPenetrations.end()) >= 0;
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Plane,Box>*>(cache);
+        auto cache = static_cast<Cache<Plane,Box>*>(cacheBase);
 
-        std::transform(c->boxFaces.begin(), c->boxFaces.end(), c->boxFaceDistances.begin(), 
-            [c](auto const& v) { return v * c->planeNormal; });
-        auto const minIndex = std::distance(c->boxFaceDistances.begin(),
-            std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end()));
+        std::transform(cache->boxFaces.begin(), cache->boxFaces.end(), cache->boxFaceDistances.begin(), 
+            [cache](auto const& v) { return v * cache->planeNormal; });
+        auto const minIndex = std::distance(cache->boxFaceDistances.begin(),
+            std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end()));
 
-        return c->boxFaces[minIndex].unit();
+        return cache->boxFaces[minIndex].unit();
     }
 
     template <>
-    inline double calculatePenetration<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Plane, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Plane,Box>*>(cache);
-
-        return (*std::max_element(c->boxPenetrations.begin(), c->boxPenetrations.end()));
+        auto cache = static_cast<Cache<Plane,Box>*>(cacheBase);
+        return (*std::max_element(cache->boxPenetrations.begin(), cache->boxPenetrations.end()));
     }
 
     // Sphere, Plane
     template <>
-    inline void initialize<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline void initialize<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Plane>*>(cache);
-        initialize<Plane, Sphere>(b, a, &c->psCache);
+        auto cache = static_cast<Cache<Sphere, Plane>*>(cacheBase);
+        initialize<Plane, Sphere>(b, a, &cache->psCache);
     }
 
     template <>
-    inline bool overlap<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline bool overlap<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Plane>*>(cache);
-        return overlap<Plane, Sphere>(b, a, &c->psCache);
+        auto cache = static_cast<Cache<Sphere, Plane>*>(cacheBase);
+        return overlap<Plane, Sphere>(b, a, &cache->psCache);
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Plane>*>(cache);
-        return calculateContactNormal<Plane, Sphere>(a, b, &c->psCache).inverse();
+        auto cache = static_cast<Cache<Sphere, Plane>*>(cacheBase);
+        return calculateContactNormal<Plane, Sphere>(a, b, &cache->psCache).inverse();
     }
 
     template <>
-    inline double calculatePenetration<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Plane>*>(cache);
-        return calculatePenetration<Plane, Sphere>(b, a, &c->psCache);
+        auto cache = static_cast<Cache<Sphere, Plane>*>(cacheBase);
+        return calculatePenetration<Plane, Sphere>(b, a, &cache->psCache);
     }
 
     // Sphere, Sphere
     template <>
-    inline void initialize<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline void initialize<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto s1 = static_cast<Sphere const *>(a);
-        auto s2 = static_cast<Sphere const *>(b);
-        auto c = static_cast<Cache<Sphere, Sphere>*>(cache);
+        auto aSphere = static_cast<Sphere const *>(a);
+        auto bSphere = static_cast<Sphere const *>(b);
+        auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
        
-        c->aRadius = s1->getRadius();
-        c->aMassCenter = s1->getCenterOfMass();
-        c->bRadius = s2->getRadius();
-        c->bMassCenter = s2->getCenterOfMass();
-        c->baVector = c->aMassCenter - c->bMassCenter;
-        c->radiusSum = c->aRadius + c->aRadius;
+        cache->aRadius = aSphere->getRadius();
+        cache->aMassCenter = aSphere->getCenterOfMass();
+        cache->bRadius = bSphere->getRadius();
+        cache->bMassCenter = bSphere->getCenterOfMass();
+        cache->baVector = cache->aMassCenter - cache->bMassCenter;
+        cache->radiusSum = cache->aRadius + cache->aRadius;
     }
 
     template <>
-    inline bool overlap<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline bool overlap<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Sphere>*>(cache);
-        return pow(c->radiusSum, 2) > c->baVector.squareMagnitude();
+        auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
+        return pow(cache->radiusSum, 2) > cache->baVector.squareMagnitude();
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Sphere>*>(cache);
-        return c->baVector.unit();;
+        auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
+        return cache->baVector.unit();
     }
 
     template <>
-    inline double calculatePenetration<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Sphere, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Sphere>*>(cache);
-        return (c->radiusSum - c->baVector.magnitude());
+        auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
+        return (cache->radiusSum - cache->baVector.magnitude());
     }
 
     // Sphere, Box
     template <>
-    inline void initialize<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline void initialize<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         auto sphere = static_cast<Sphere const *>(a);
         auto box = static_cast<Box const *>(b);
-        auto c = static_cast<Cache<Sphere, Box>*>(cache);
+        auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);
 
-        c->sphereMassCenter = sphere->getCenterOfMass();
-        c->sphereRadius = sphere->getRadius();
+        cache->sphereMassCenter = sphere->getCenterOfMass();
+        cache->sphereRadius = sphere->getRadius();
 
-        c->boxMassCenter = box->getCenterOfMass();
-        box->getAxes(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2]);
-        c->separatingAxes = { c->boxAxes[0].unit(), c->boxAxes[1].unit(), c->boxAxes[2].unit(), 
-                             (c->sphereMassCenter - c->boxMassCenter).unit() };
-        calculateBoxVertices(c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], c->boxVertices);
-        std::for_each(c->boxVertices.begin(), c->boxVertices.end(), [c](auto& n) { n += c->boxMassCenter; });
-        c->boxNormals = { c->boxAxes[0], c->boxAxes[1], c->boxAxes[2], 
-                          c->boxAxes[0].inverse(), c->boxAxes[1].inverse(), c->boxAxes[2].inverse() };
-        for (unsigned int i = 0; i < c->boxNormals.size(); ++i) {
-            c->boxFaces[i] = c->boxNormals[i] + c->boxMassCenter;
-            c->boxNormals[i].normalize();
-            c->boxFaceDistances[i] = c->boxFaces[i] * c->boxNormals[i] - c->sphereMassCenter * c->boxNormals[i];
+        cache->boxMassCenter = box->getCenterOfMass();
+        box->getAxes(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2]);
+        cache->separatingAxes = { cache->boxAxes[0].unit(), cache->boxAxes[1].unit(), cache->boxAxes[2].unit(), 
+                                 (cache->sphereMassCenter - cache->boxMassCenter).unit() };
+        calculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices);
+        std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n) { n += cache->boxMassCenter; });
+        cache->boxNormals = { cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], 
+                              cache->boxAxes[0].inverse(), cache->boxAxes[1].inverse(), cache->boxAxes[2].inverse() };
+        for (unsigned int i = 0; i < cache->boxNormals.size(); ++i) {
+            cache->boxFaces[i] = cache->boxNormals[i] + cache->boxMassCenter;
+            cache->boxNormals[i].normalize();
+            cache->boxFaceDistances[i] = cache->boxFaces[i] * cache->boxNormals[i] - cache->sphereMassCenter * cache->boxNormals[i];
         }
     }
 
     template <>
-    inline bool overlap<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline bool overlap<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Box>*>(cache);
+        auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);
 
-        for(auto const & axis : c->separatingAxes)
+        for(auto const & axis : cache->separatingAxes)
         {
-            projectAllVertices(axis, c->boxVertices.begin(), c->boxVertices.end(), c->boxVerticesProjections.begin());
-            std::sort(c->boxVerticesProjections.begin(), c->boxVerticesProjections.end());
-            auto const boxMassCenterProjection = c->boxMassCenter * axis;
-            auto const sphereMassCenterProjection = c->sphereMassCenter * axis;
+            projectAllVertices(axis, cache->boxVertices.begin(), cache->boxVertices.end(), cache->boxVerticesProjections.begin());
+            std::sort(cache->boxVerticesProjections.begin(), cache->boxVerticesProjections.end());
+            auto const boxMassCenterProjection = cache->boxMassCenter * axis;
+            auto const sphereMassCenterProjection = cache->sphereMassCenter * axis;
 
             if (boxMassCenterProjection < sphereMassCenterProjection) {
-                if (sphereMassCenterProjection - c->boxVerticesProjections.back() > c->sphereRadius) {
+                if (sphereMassCenterProjection - cache->boxVerticesProjections.back() > cache->sphereRadius) {
                     return false;
                 }
             }
-            else if (c->boxVerticesProjections.front() > sphereMassCenterProjection + c->sphereRadius) {
+            else if (cache->boxVerticesProjections.front() > sphereMassCenterProjection + cache->sphereRadius) {
                 return false;
             }
         }
@@ -527,118 +527,118 @@ namespace geometry {
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Box>*>(cache);
+        auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);
 
-        auto minIt = std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end());
-        auto minIndex = std::distance(c->boxFaceDistances.begin(), minIt);
-        return c->boxNormals[minIndex];
+        auto minIt = std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end());
+        auto minIndex = std::distance(cache->boxFaceDistances.begin(), minIt);
+        return cache->boxNormals[minIndex];
     }
 
     template <>
-    inline double calculatePenetration<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Sphere, Box>*>(cache);
+        auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);
 
-        auto minIt = std::min_element(c->boxFaceDistances.begin(), c->boxFaceDistances.end());
-        return c->sphereRadius - *minIt;
+        auto minIt = std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end());
+        return cache->sphereRadius - *minIt;
     }
 
     // Box, Plane
     template <>
-    inline void initialize<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline void initialize<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Plane>*>(cache);
-        initialize<Plane, Box>(b, a, &c->pbCache);
+        auto cache = static_cast<Cache<Box, Plane>*>(cacheBase);
+        initialize<Plane, Box>(b, a, &cache->pbCache);
     }
 
     template <>
-    inline bool overlap<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline bool overlap<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Plane>*>(cache);
-        return overlap<Plane, Box>(b, a, &c->pbCache);
+        auto cache = static_cast<Cache<Box, Plane>*>(cacheBase);
+        return overlap<Plane, Box>(b, a, &cache->pbCache);
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         auto plane = static_cast<Plane const *>(b);
         return plane->getNormal();
     }
 
     template <>
-    inline double calculatePenetration<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Box, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Plane>*>(cache);
-        return calculatePenetration<Plane, Box>(b, a, &c->pbCache);
+        auto cache = static_cast<Cache<Box, Plane>*>(cacheBase);
+        return calculatePenetration<Plane, Box>(b, a, &cache->pbCache);
     }
 
     // Box, Sphere
     template <>
-    inline void initialize<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline void initialize<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Sphere>*>(cache);
-        initialize<Sphere, Box>(b, a, &c->sbCache);
+        auto cache = static_cast<Cache<Box, Sphere>*>(cacheBase);
+        initialize<Sphere, Box>(b, a, &cache->sbCache);
     }
 
     template <>
-    inline bool overlap<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline bool overlap<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Sphere>*>(cache);
-        return overlap<Sphere, Box>(b, a, &c->sbCache);
+        auto cache = static_cast<Cache<Box, Sphere>*>(cacheBase);
+        return overlap<Sphere, Box>(b, a, &cache->sbCache);
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Sphere>*>(cache);
-        return calculateContactNormal<Sphere, Box>(b, a, &c->sbCache).inverse();
+        auto cache = static_cast<Cache<Box, Sphere>*>(cacheBase);
+        return calculateContactNormal<Sphere, Box>(b, a, &cache->sbCache).inverse();
     }
 
     template <>
-    inline double calculatePenetration<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Sphere>*>(cache);
-        return calculatePenetration<Sphere, Box>(b, a, &c->sbCache);
+        auto cache = static_cast<Cache<Box, Sphere>*>(cacheBase);
+        return calculatePenetration<Sphere, Box>(b, a, &cache->sbCache);
     }
 
     // Box, Box
     template <>
-    inline void initialize<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline void initialize<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         auto aBox = static_cast<Box const *>(a);
         auto bBox = static_cast<Box const *>(b);
-        auto c = static_cast<Cache<Box, Box>*>(cache);
+        auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
 
-        c->aMassCenter = aBox->getCenterOfMass();
-        aBox->getAxes(c->aBoxFaces[0], c->aBoxFaces[1], c->aBoxFaces[2]);
-        c->aBoxFaces = { c->aBoxFaces[0], c->aBoxFaces[1], c->aBoxFaces[2], 
-                         c->aBoxFaces[0].inverse(), c->aBoxFaces[1].inverse(), c->aBoxFaces[2].inverse() };
-        c->bMassCenter = bBox->getCenterOfMass();
-        bBox->getAxes(c->bBoxFaces[0], c->bBoxFaces[1], c->bBoxFaces[2]);
-        c->bBoxFaces = { c->bBoxFaces[0], c->bBoxFaces[1], c->bBoxFaces[2], 
-                         c->bBoxFaces[0].inverse(), c->bBoxFaces[1].inverse(), c->bBoxFaces[2].inverse() };
-        calculateBoxVertices(c->aBoxFaces[0], c->aBoxFaces[1], c->aBoxFaces[2], c->aBoxVertices);
-        calculateBoxVertices(c->bBoxFaces[0], c->bBoxFaces[1], c->bBoxFaces[2], c->bBoxVertices);
-        std::for_each(c->aBoxVertices.begin(), c->aBoxVertices.end(), [c](auto& v) { v += c->aMassCenter; });
-        std::for_each(c->bBoxVertices.begin(), c->bBoxVertices.end(), [c](auto& v) { v += c->bMassCenter; });
-        c->separatingAxes = { c->aBoxFaces[0].unit(), c->aBoxFaces[1].unit(), c->aBoxFaces[2].unit(),
-                              c->bBoxFaces[0].unit(), c->bBoxFaces[1].unit(), c->bBoxFaces[2].unit() };
-        calculateSeparatingAxes(c->aBoxFaces.begin(), c->aBoxFaces.begin() + 3,
-                                c->bBoxFaces.begin(), c->bBoxFaces.begin() + 3,
-                                back_inserter(c->separatingAxes));
+        cache->aMassCenter = aBox->getCenterOfMass();
+        aBox->getAxes(cache->aBoxFaces[0], cache->aBoxFaces[1], cache->aBoxFaces[2]);
+        cache->aBoxFaces = { cache->aBoxFaces[0], cache->aBoxFaces[1], cache->aBoxFaces[2], 
+                             cache->aBoxFaces[0].inverse(), cache->aBoxFaces[1].inverse(), cache->aBoxFaces[2].inverse() };
+        cache->bMassCenter = bBox->getCenterOfMass();
+        bBox->getAxes(cache->bBoxFaces[0], cache->bBoxFaces[1], cache->bBoxFaces[2]);
+        cache->bBoxFaces = { cache->bBoxFaces[0], cache->bBoxFaces[1], cache->bBoxFaces[2], 
+                             cache->bBoxFaces[0].inverse(), cache->bBoxFaces[1].inverse(), cache->bBoxFaces[2].inverse() };
+        calculateBoxVertices(cache->aBoxFaces[0], cache->aBoxFaces[1], cache->aBoxFaces[2], cache->aBoxVertices);
+        calculateBoxVertices(cache->bBoxFaces[0], cache->bBoxFaces[1], cache->bBoxFaces[2], cache->bBoxVertices);
+        std::for_each(cache->aBoxVertices.begin(), cache->aBoxVertices.end(), [cache](auto& v) { v += cache->aMassCenter; });
+        std::for_each(cache->bBoxVertices.begin(), cache->bBoxVertices.end(), [cache](auto& v) { v += cache->bMassCenter; });
+        cache->separatingAxes = { cache->aBoxFaces[0].unit(), cache->aBoxFaces[1].unit(), cache->aBoxFaces[2].unit(),
+                                  cache->bBoxFaces[0].unit(), cache->bBoxFaces[1].unit(), cache->bBoxFaces[2].unit() };
+        calculateSeparatingAxes(cache->aBoxFaces.begin(), cache->aBoxFaces.begin() + 3,
+                                cache->bBoxFaces.begin(), cache->bBoxFaces.begin() + 3,
+                                back_inserter(cache->separatingAxes));
     }
 
     template <>
-    inline bool overlap<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline bool overlap<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Box>*>(cache);
+        auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
 
         std::array<double, 8> aBoxProjections, bBoxProjections;
-        for (auto axis : c->separatingAxes) {
-            projectAllVertices(axis, c->aBoxVertices.begin(), c->aBoxVertices.end(), aBoxProjections.begin());
-            projectAllVertices(axis, c->bBoxVertices.begin(), c->bBoxVertices.end(), bBoxProjections.begin());
+        for (auto axis : cache->separatingAxes) {
+            projectAllVertices(axis, cache->aBoxVertices.begin(), cache->aBoxVertices.end(), aBoxProjections.begin());
+            projectAllVertices(axis, cache->bBoxVertices.begin(), cache->bBoxVertices.end(), bBoxProjections.begin());
             std::sort(aBoxProjections.begin(), aBoxProjections.end());
             std::sort(bBoxProjections.begin(), bBoxProjections.end());
 
@@ -646,13 +646,13 @@ namespace geometry {
                 if (aBoxProjections.back() < bBoxProjections.front()) {
                     return false;
                 }
-                c->penetration = aBoxProjections.back() - bBoxProjections.front();
+                cache->penetration = aBoxProjections.back() - bBoxProjections.front();
             }
             else {
                 if (bBoxProjections.back() < aBoxProjections.front()) {
                     return false;
                 }
-                c->penetration = bBoxProjections.back() - aBoxProjections.front();
+                cache->penetration = bBoxProjections.back() - aBoxProjections.front();
             }
         }
 
@@ -660,26 +660,26 @@ namespace geometry {
     }
 
     template <>
-    inline Vector3 calculateContactNormal<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline Vector3 calculateContactNormal<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Box>*>(cache);
+        auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
 
         std::array<double, 6> distances;
         for (unsigned i = 0; i < distances.size(); ++i) {
-            distances[i] = (c->aMassCenter - c->bMassCenter - c->bBoxFaces[i]).squareMagnitude();
+            distances[i] = (cache->aMassCenter - cache->bMassCenter - cache->bBoxFaces[i]).squareMagnitude();
         }
 
         auto const minIt = std::min_element(distances.begin(), distances.end());
         auto const minIndex = std::distance(distances.begin(), minIt);
 
-        return c->bBoxFaces[minIndex].unit();
+        return cache->bBoxFaces[minIndex].unit();
     }
 
     template <>
-    inline double calculatePenetration<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cache)
+    inline double calculatePenetration<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto c = static_cast<Cache<Box, Box>*>(cache);
-        return c->penetration;
+        auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
+        return cache->penetration;
     }
 
     } // namespace IntersectionQuery
@@ -821,28 +821,28 @@ namespace geometry {
                 = &intersection::calculatePenetration<Box, Box>;
         }
 
-        void initialize(SimpleShape const * s1, SimpleShape const * s2)
+        void initialize(SimpleShape const * aSphere, SimpleShape const * bSphere)
         {
-            initializeFunctors[std::make_pair(s1->type, s2->type)](
-                s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());
+            initializeFunctors[std::make_pair(aSphere->type, bSphere->type)](
+                aSphere, bSphere, intersectionCaches[std::make_pair(aSphere->type, bSphere->type)].get());
         }
 
-        bool overlap(SimpleShape const* s1, SimpleShape const * s2)
+        bool overlap(SimpleShape const* aSphere, SimpleShape const * bSphere)
         {
-            return overlapFunctors[std::make_pair(s1->type, s2->type)](
-                s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());
+            return overlapFunctors[std::make_pair(aSphere->type, bSphere->type)](
+                aSphere, bSphere, intersectionCaches[std::make_pair(aSphere->type, bSphere->type)].get());
         }
 
-        Vector3 calculateContactNormal(SimpleShape const * s1, SimpleShape const * s2)
+        Vector3 calculateContactNormal(SimpleShape const * aSphere, SimpleShape const * bSphere)
         {
-            return calculateContactNormalFunctors[std::make_pair(s1->type, s2->type)](
-                s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());
+            return calculateContactNormalFunctors[std::make_pair(aSphere->type, bSphere->type)](
+                aSphere, bSphere, intersectionCaches[std::make_pair(aSphere->type, bSphere->type)].get());
         }
 
-        double calculatePenetration(SimpleShape const * s1, SimpleShape const * s2)
+        double calculatePenetration(SimpleShape const * aSphere, SimpleShape const * bSphere)
         {
-            return calculatePenetrationFunctors[std::make_pair(s1->type, s2->type)](
-                s1, s2, intersectionCaches[std::make_pair(s1->type, s2->type)].get());
+            return calculatePenetrationFunctors[std::make_pair(aSphere->type, bSphere->type)](
+                aSphere, bSphere, intersectionCaches[std::make_pair(aSphere->type, bSphere->type)].get());
         }
     };
 
