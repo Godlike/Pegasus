@@ -34,6 +34,7 @@ private:
     std::vector<pegasus::Particle::Ptr> particles;
     std::vector<pegasus::ParticleContactGenerator::Ptr> contactGenerators;
     pegasus::ParticleForceRegistry::Ptr forceRegistry;
+    std::vector<std::unique_ptr<pegasus::ParticleForceGenerator>> forces;
     pegasus::ParticleWorld world;
 
     double xAxis;
@@ -95,13 +96,13 @@ FallingDemo::FallingDemo()
         )
     ));
 
+    //Create forces
+    forces.push_back(std::make_unique<pegasus::ParticleGravity>(pegasus::Vector3{ 0, -9.8, 0 }));
+
     //Register forces
     for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
     {
-        forceRegistry->add(
-            particles[i], 
-            std::make_shared<pegasus::ParticleGravity>(pegasus::Vector3{ 0, 0, 0 })
-        );
+        forceRegistry->add(*particles[i], *forces.at(0));
     }
 
     //Create contact generators

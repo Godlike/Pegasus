@@ -15,20 +15,20 @@ public:
 public:
     virtual ~ParticleForceGenerator() {}
 
-    virtual void updateForce(Particle::Ptr p) = 0;
+    virtual void updateForce(Particle & p) = 0;
 };
 
 class ParticleForceRegistry {
 public:
     using Ptr = std::shared_ptr<ParticleForceRegistry>;
-    using Registry = std::map<Particle::Ptr, std::set<ParticleForceGenerator::Ptr> >;
+    using Registry = std::map<Particle*, std::set<ParticleForceGenerator*> >;
 
 public:
-    void add(Particle::Ptr p, ParticleForceGenerator::Ptr pfg);
+    void add(Particle & p, ParticleForceGenerator & pfg);
 
-    void remove(Particle::Ptr p);
+    void remove(Particle & p);
 
-    void remove(Particle::Ptr p, ParticleForceGenerator::Ptr pfg);
+    void remove(Particle & p, ParticleForceGenerator & pfg);
 
     void clear();
 
@@ -42,7 +42,7 @@ class ParticleGravity : public ParticleForceGenerator {
 public:
     explicit ParticleGravity(Vector3 const& g);
 
-    void updateForce(Particle::Ptr p) override;
+    void updateForce(Particle & p) override;
 
 private:
     Vector3 const mGravity;
@@ -52,7 +52,7 @@ class ParticleDrag : public ParticleForceGenerator {
 public:
     ParticleDrag(double k1, double k2);
 
-    void updateForce(Particle::Ptr p) override;
+    void updateForce(Particle & p) override;
 
 private:
     double const mK1;
@@ -61,12 +61,12 @@ private:
 
 class ParticleSpring : public ParticleForceGenerator {
 public:
-    ParticleSpring(Particle::Ptr other, double springConstant, double restLenght);
+    ParticleSpring(Particle & other, double springConstant, double restLenght);
 
-    void updateForce(Particle::Ptr p) override;
+    void updateForce(Particle & p) override;
 
 private:
-    Particle::Ptr const mOther;
+    Particle & mOther;
     double const mSpringConstant;
     double const mRestLenght;
 };
@@ -75,7 +75,7 @@ class ParticleAnchoredSpring : public ParticleForceGenerator {
 public:
     ParticleAnchoredSpring(Vector3 const& anchor, double springConstant, double restLenght);
 
-    void updateForce(Particle::Ptr p) override;
+    void updateForce(Particle & p) override;
 
 private:
     Vector3 const mAnchor;
@@ -85,22 +85,22 @@ private:
 
 class ParticleBungee : public ParticleForceGenerator {
 public:
-    ParticleBungee(Particle::Ptr other, double springConstant, double restLenght);
+    ParticleBungee(Particle & other, double springConstant, double restLenght);
 
-    void updateForce(Particle::Ptr p) override;
+    void updateForce(Particle & p) override;
 
 private:
-    Particle::Ptr const mOther;
+    Particle & mOther;
     double const mSpringConstant;
     double const mRestLenght;
 };
 
 class ParticleBuoyancy : public ParticleForceGenerator {
 public:
-    ParticleBuoyancy(double maxDepth,  double volume,
+    ParticleBuoyancy(double maxDepth,   double volume,
                      double waterWight, double liquidDensity);
 
-    void updateForce(Particle::Ptr p) override;
+    void updateForce(Particle & p) override;
 
 private:
     double const mMaxDepth;
@@ -113,9 +113,9 @@ class ParticleFakeSpring : public ParticleForceGenerator {
 public:
     ParticleFakeSpring(Vector3 const& anchor, double springConstant, double damping);
 
-    void updateForce(Particle::Ptr p, double duration) const;
+    void updateForce(Particle & p, double duration) const;
 
-    void updateForce(Particle::Ptr p) override;
+    void updateForce(Particle & p) override;
 
 private:
     Vector3 const mAnchor;
@@ -126,7 +126,7 @@ private:
 
 class BlobForceGenerator : public ParticleForceGenerator {
 public:
-    Particles& particles;
+    Particles & particles;
     double maxReplusion;
     double maxAttraction;
     double minNaturalDistance, maxNaturalDistance;
@@ -136,7 +136,7 @@ public:
 
     explicit BlobForceGenerator(Particles& particles);
 
-    void updateForce(Particle::Ptr particle) override;
+    void updateForce(Particle & particle) override;
 };
 
 } // namespace pegasus

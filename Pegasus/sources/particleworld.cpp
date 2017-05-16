@@ -5,6 +5,7 @@ pegasus::ParticleWorld::ParticleWorld(unsigned int maxContacts, unsigned int ite
     , mCalculateIterations(false)
     , mMaxContacts(maxContacts)
 {
+    mContacts.reserve(mMaxContacts);
 }
 
 void pegasus::ParticleWorld::startFrame()
@@ -49,17 +50,18 @@ void pegasus::ParticleWorld::runPhysics(double const duration)
 
 unsigned int pegasus::ParticleWorld::generateContacts()
 {
-    auto limit = mMaxContacts;
+    unsigned int limit = mMaxContacts;
     mContacts.clear();
 
-    for (auto const& g : mGeneratos) {
-        auto const used = g->addContact(mContacts, limit);
-        limit -= used;
+    for (auto const& g : mGeneratos) 
+    {
+        limit -= g->addContact(mContacts, limit);
 
         if (limit == 0) {
             break;
         }
     }
+
     return mMaxContacts - limit;
 }
 
