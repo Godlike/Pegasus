@@ -12,11 +12,13 @@ namespace pegasus {
 class RigidBody {
 public:
     using Ptr = std::shared_ptr<RigidBody>;
-    std::shared_ptr<Particle> const p;
-    std::shared_ptr<geometry::SimpleShape> const s;
 
 public:
-    RigidBody(std::shared_ptr<Particle> const p, std::shared_ptr<geometry::SimpleShape> const s)
+    std::shared_ptr<Particle> p;
+    std::shared_ptr<geometry::SimpleShape> s;
+
+public:
+    RigidBody(std::shared_ptr<Particle> p, std::shared_ptr<geometry::SimpleShape> s)
         : p(p)
         , s(s)
     {
