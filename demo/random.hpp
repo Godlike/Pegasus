@@ -56,7 +56,7 @@ public:
     double randomDouble(double scale);
 
     /**
-   * Returns a random floating point number between min and max.
+   * Returns a random floating point number between min and max in the [min, max) range.
    */
     double randomDouble(double min, double max);
 

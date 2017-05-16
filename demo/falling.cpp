@@ -97,7 +97,7 @@ FallingDemo::FallingDemo()
     ));
 
     //Create forces
-    forces.push_back(std::make_unique<pegasus::ParticleGravity>(pegasus::Vector3{ 0, -9.8, 0 }));
+    forces.push_back(std::make_unique<pegasus::ParticleGravity>(pegasus::Vector3{ 0, 0, 0 }));
 
     //Register forces
     for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
