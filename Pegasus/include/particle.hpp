@@ -7,65 +7,47 @@
 
 namespace pegasus {
 
-class Particle {
+class Particle 
+{
 public:
     using Ptr = std::shared_ptr<Particle>;
-    using ConstPtr = std::shared_ptr<Particle const>;
 
 public:
     Particle();
 
-    void integrate(double const duration);
+    void integrate(double duration);
 
     Vector3 getPosition() const;
-
     void setPosition(Vector3 const& position);
-
-    void setPosition(double const x, double const y, double const z);
+    void setPosition(double x, double y, double z);
 
     Vector3 getVelocity() const;
-
     void setVelocity(Vector3 const& velocity);
-
-    void setVelocity(double const x, double const y, double const z);
+    void setVelocity(double x, double y, double z);
 
     Vector3 getAcceleration() const;
-
     void setAcceleration(Vector3 const& acceleration);
-
-    void setAcceleration(double const x, double const y, double const z);
+    void setAcceleration(double x, double y, double z);
 
     double getDamping() const;
-
-    void setDamping(double const damping);
+    void setDamping(double damping);
 
     double getMass() const;
-
-    void setMass(double const mass);
-
+    void setMass(double mass);
     bool hasFiniteMass() const;
-
     double getInverseMass() const;
-
-    void setInverseMass(double const inverseMass);
+    void setInverseMass(double inverseMass);
 
     void addForce(Vector3 const& force);
-
     void clearForceAccum();
 
 private:
     Vector3 mPosition;
-
     Vector3 mVelocity;
-
     Vector3 mAcceleration;
-
     double mDamping;
-
     double mMass;
-
     double mInverseMass;
-
     Vector3 mForceAccum;
 };
 

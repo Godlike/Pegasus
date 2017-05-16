@@ -1,6 +1,5 @@
 #include "Pegasus/include/particle.hpp"
 
-#include <cmath>
 #include <limits>
 #include <stdexcept>
 
@@ -11,13 +10,13 @@ pegasus::Particle::Particle()
 {
 }
 
-void pegasus::Particle::integrate(double const duration)
+void pegasus::Particle::integrate(double duration)
 {
     if (!hasFiniteMass()) {
         return;
     }
 
-    if (duration < 0) {
+    if (duration <= 0) {
         return;
     }
 
@@ -33,28 +32,32 @@ void pegasus::Particle::integrate(double const duration)
     clearForceAccum();
 }
 
-pegasus::Vector3 pegasus::Particle::getPosition() const { return mPosition; }
+pegasus::Vector3 pegasus::Particle::getPosition() const
+{
+    return mPosition;
+}
 
 void pegasus::Particle::setPosition(Vector3 const& position)
 {
     mPosition = position;
 }
 
-void pegasus::Particle::setPosition(double const x, double const y,
-    double const z)
+void pegasus::Particle::setPosition(double x, double y, double z)
 {
     mPosition = Vector3(x, y, z);
 }
 
-pegasus::Vector3 pegasus::Particle::getVelocity() const { return mVelocity; }
+pegasus::Vector3 pegasus::Particle::getVelocity() const
+{
+    return mVelocity;
+}
 
 void pegasus::Particle::setVelocity(Vector3 const& velocity)
 {
     mVelocity = velocity;
 }
 
-void pegasus::Particle::setVelocity(double const x, double const y,
-    double const z)
+void pegasus::Particle::setVelocity(double x, double y, double z)
 {
     mVelocity = Vector3(x, y, z);
 }
@@ -69,15 +72,17 @@ void pegasus::Particle::setAcceleration(Vector3 const& acceleration)
     mAcceleration = acceleration;
 }
 
-void pegasus::Particle::setAcceleration(double const x, double const y,
-    double const z)
+void pegasus::Particle::setAcceleration(double x, double y, double z)
 {
     mAcceleration = Vector3(x, y, z);
 }
 
-double pegasus::Particle::getDamping() const { return mDamping; }
+double pegasus::Particle::getDamping() const
+{
+    return mDamping;
+}
 
-void pegasus::Particle::setDamping(double const damping)
+void pegasus::Particle::setDamping(double damping)
 {
     mDamping = damping;
 }
@@ -87,21 +92,27 @@ double pegasus::Particle::getMass() const
     return (mInverseMass == 0) ? std::numeric_limits<double>::max() : mMass;
 }
 
-void pegasus::Particle::setMass(double const mass)
+void pegasus::Particle::setMass(double mass)
 {
     if (mass <= 0) {
         return;
     }
 
     mMass = mass;
-    mInverseMass = double(1) / mass;
+    mInverseMass = 1.0 / mass;
 }
 
-bool pegasus::Particle::hasFiniteMass() const { return mInverseMass != 0; }
+bool pegasus::Particle::hasFiniteMass() const
+{
+    return mInverseMass != 0;
+}
 
-double pegasus::Particle::getInverseMass() const { return mInverseMass; }
+double pegasus::Particle::getInverseMass() const
+{
+    return mInverseMass;
+}
 
-void pegasus::Particle::setInverseMass(double const inverseMass)
+void pegasus::Particle::setInverseMass(double inverseMass)
 {
     mInverseMass = inverseMass;
 }
