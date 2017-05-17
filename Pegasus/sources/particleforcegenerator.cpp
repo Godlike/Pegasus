@@ -1,5 +1,7 @@
 #include "Pegasus/include/particleforcegenerator.hpp"
 
+#include <cmath>
+
 void pegasus::ParticleForceRegistry::add(
     Particle & p, ParticleForceGenerator & pfg)
 {
@@ -88,7 +90,7 @@ void pegasus::ParticleSpring::updateForce(Particle & p)
     Vector3 force = p.getPosition();
     force -= mOther.getPosition();
 
-    auto const magnitude = mSpringConstant * fabs(force.magnitude() - mRestLenght);
+    auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
 
     force.normalize();
     force *= -magnitude;
@@ -108,7 +110,7 @@ void pegasus::ParticleAnchoredSpring::updateForce(Particle & p)
     Vector3 force = p.getPosition();
     force -= mAnchor;
 
-    auto const magnitude = mSpringConstant * fabs(force.magnitude() - mRestLenght);
+    auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
 
     force.normalize();
     force *= -magnitude;
@@ -182,14 +184,14 @@ void pegasus::ParticleFakeSpring::updateForce(Particle & p, double duration) con
     }
 
     Vector3 const position = p.getPosition() - mAnchor;
-    double const gamma = 0.5f * sqrt(4 * mSpringConstant - mDamping * mDamping);
+    double const gamma = 0.5f * std::sqrt(4 * mSpringConstant - mDamping * mDamping);
 
     if (gamma == 0.0f)
         return;
 
     auto const c = position * (mDamping / (2.0f * gamma)) + p.getVelocity() * (1.0f / gamma);
-    auto target = position * cos(gamma * duration) + c * sin(gamma * duration);
-    target *= exp(-0.5f * duration * mDamping);
+    auto target = position * std::cos(gamma * duration) + c * sin(gamma * duration);
+    target *= std::exp(-0.5f * duration * mDamping);
 
     auto const accel = (target - position) * (1.0f / duration * duration) - p.getVelocity() * duration;
     p.addForce(accel * p.getMass());

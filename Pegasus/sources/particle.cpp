@@ -1,6 +1,7 @@
 #include "Pegasus/include/particle.hpp"
 
 #include <limits>
+#include <cmath>
 #include <stdexcept>
 
 pegasus::Particle::Particle()
@@ -27,7 +28,7 @@ void pegasus::Particle::integrate(double duration)
 
     mVelocity.addScaledVector(resultingAcc, duration);
 
-    mVelocity *= pow(mDamping, duration);
+    mVelocity *= std::pow(mDamping, duration);
 
     clearForceAccum();
 }
