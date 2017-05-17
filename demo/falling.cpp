@@ -11,6 +11,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <list>
 
 #define PLANE_COUNT 1
 #define BOX_COUNT 1
@@ -30,11 +31,15 @@ public:
     void mouseDrag(int x, int y) override;
 
 private:
-    pegasus::RigidBodies rigidBodies;
-    std::vector<pegasus::Particle::Ptr> particles;
-    std::vector<pegasus::ParticleContactGenerator::Ptr> contactGenerators;
-    pegasus::ParticleForceRegistry::Ptr forceRegistry;
-    std::vector<std::unique_ptr<pegasus::ParticleForceGenerator>> forces;
+    using Particles       = std::list<pegasus::Particle>;
+    using RigidBodies     = std::list<pegasus::RigidBody>;
+    using ForceGenerators = std::list<std::unique_ptr<pegasus::ParticleForceGenerator>>;
+
+    Particles particles;
+    RigidBodies rigidBodies;
+    ForceGenerators forces;
+    pegasus::ParticleForceRegistry forceRegistry;
+    pegasus::ParticleContactGenerators contactGenerators;
     pegasus::ParticleWorld world;
 
     double xAxis;
@@ -44,8 +49,7 @@ private:
 
 // Method definitions
 FallingDemo::FallingDemo()
-    : forceRegistry(std::make_shared<pegasus::ParticleForceRegistry>())
-    , world(TOTAL_COUNT * TOTAL_COUNT, 10)
+    : world(particles, forceRegistry, contactGenerators, TOTAL_COUNT * TOTAL_COUNT, 10)
     , xAxis(0)
     , yAxis(0)
     , zAxis(0)
@@ -53,75 +57,72 @@ FallingDemo::FallingDemo()
     //Create particles
     for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
     {
-        auto particle = std::make_shared<pegasus::Particle>();
-        particle->setPosition(0, double(RADIUS * 3 * (TOTAL_COUNT - PLANE_COUNT - i)), double(0));
-        particle->setVelocity(0, 0, 0);
-        particle->setDamping(0.2f);
-        particle->setMass(1.0f);
-        particles.push_back(particle);
+        particles.emplace_back();
+        particles.back().setPosition(0, double(RADIUS * 3 * (TOTAL_COUNT - PLANE_COUNT - i)), double(0));
+        particles.back().setVelocity(0, 0, 0);
+        particles.back().setDamping(0.2f);
+        particles.back().setMass(1.0f);
     }
 
     //Create rigid bodies
-    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
+    for (auto & particle : particles)
     {
-        if (i < SPHERE_COUNT) 
+        static int i = 0;
+        if (i++ < SPHERE_COUNT)
         {
-            rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(
-                particles[i],
-                std::make_shared<pegasus::geometry::Sphere>(particles[i]->getPosition(), double(RADIUS))
-            ));
+            rigidBodies.emplace_back(
+                particle,
+                std::make_unique<pegasus::geometry::Sphere>(particle.getPosition(), double(RADIUS))
+            );
         }
         else 
         {
-            rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(
-                particles[i],
-                std::make_shared<pegasus::geometry::Box>(
-                    particles[i]->getPosition(),
+            rigidBodies.emplace_back(
+                particle,
+                std::make_unique<pegasus::geometry::Box>(
+                    particle.getPosition(),
                     pegasus::Vector3{ RADIUS, 0, 0 },
                     pegasus::Vector3{ 0, RADIUS, 0 },
                     pegasus::Vector3{ 0, 0, RADIUS })
-            ));
+            );
         }
     }
-
-    //Create plane particle and rigid body
-    auto particlePlane = std::make_shared<pegasus::Particle>();
-    particlePlane->setPosition(pegasus::Vector3(1, 0, 0));
-    particlePlane->setInverseMass(0);
-    particles.push_back(particlePlane);
-    rigidBodies.push_back(std::make_shared<pegasus::RigidBody>(
-        particlePlane,
-        std::make_shared<pegasus::geometry::Plane>(
-            particlePlane->getPosition(), pegasus::Vector3(0, 1.0, 0).unit()
-        )
-    ));
 
     //Create forces
     forces.push_back(std::make_unique<pegasus::ParticleGravity>(pegasus::Vector3{ 0, 0, 0 }));
 
     //Register forces
-    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
+    for (auto & particle : particles)
     {
-        forceRegistry->add(*particles[i], *forces.at(0));
+        forceRegistry.add(particle, *forces.front());
     }
+
+    //Create plane particle and rigid body
+    particles.emplace_back();
+    particles.back().setPosition({1, 0, 0});
+    particles.back().setInverseMass(0);
+    rigidBodies.emplace_back(
+        particles.back(),
+        std::make_unique<pegasus::geometry::Plane>(
+            particles.back().getPosition(), pegasus::Vector3(0, 1.0, 0).unit()
+        )
+    );
 
     //Create contact generators
-    for (auto const& body : rigidBodies) 
+    for (auto & body : rigidBodies)
     {
         contactGenerators.push_back(
-            std::make_shared<pegasus::ShapeContactGenerator>(body, rigidBodies, 0.0f));
+            std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(
+                body, rigidBodies, 0.0f
+            )
+        );
     }
-
-    //Init world
-    world.setParticleContactGenerators(contactGenerators);
-    world.setParticles(particles);
-    world.setParticleForcesRegistry(forceRegistry);
 }
 
 void FallingDemo::display()
 {
     // Clear the view port and set the camera direction
-    auto const& pos = particles.front()->getPosition();
+    auto const& pos = particles.front().getPosition();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     gluLookAt(pos.x, pos.y + 5, pos.z + 5, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
@@ -129,8 +130,8 @@ void FallingDemo::display()
     //Add bodies
     for (auto & body : rigidBodies)
     {
-        auto const& p = body->p->getPosition();
-        auto const& s = body->s->type;
+        auto const& p = body.p->getPosition();
+        auto const& s = body.s->type;
         glPushMatrix();
         glColor3f(1.0f, 0.0f, 0.0f);
         glTranslatef(p.x, p.y, p.z);
@@ -138,8 +139,8 @@ void FallingDemo::display()
         {
             double const planeSideLength = 25;
 
-            auto p0 = static_cast<pegasus::geometry::Plane*>(body->s.get())->getCenterOfMass();
-            auto const planeNormal = static_cast<pegasus::geometry::Plane*>(body->s.get())->getNormal();
+            auto p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
+            auto const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->getNormal();
             auto const posNormalProjection = planeNormal * (p0 * planeNormal);
             auto p1 = p0 + (posNormalProjection - p0) * 2;
             if (p1.x < p0.x) { std::swap(p0.x, p1.x); }
@@ -181,12 +182,12 @@ void FallingDemo::update()
     xAxis *= pow(0.1f, duration);
     yAxis *= pow(0.1f, duration);
     zAxis *= pow(0.1f, duration);
-    particles.front()->addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
+    particles.front().addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
     world.runPhysics(0.01f); //(duration);
 
     for (auto const& body : rigidBodies) {
-        body->s->setCenterOfMass(body->p->getPosition());
+        body.s->setCenterOfMass(body.p->getPosition());
     }
 
     Application::update();

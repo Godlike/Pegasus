@@ -2,15 +2,15 @@
 
 double pegasus::ParticleLink::currentLenght() const
 {
-    auto const relativePos = mA->getPosition() - mB->getPosition();
+    auto const relativePos = mA.getPosition() - mB.getPosition();
     return relativePos.magnitude();
 }
 
 pegasus::ParticleCabel::ParticleCabel(
-    Particle::Ptr a,
-    Particle::Ptr b,
-    double const maxLength,
-    double const restutuition)
+    Particle & a,
+    Particle & b,
+    double maxLength,
+    double restutuition)
     : ParticleLink(a, b)
     , maxLength(maxLength)
     , restitution(restutuition)
@@ -18,8 +18,7 @@ pegasus::ParticleCabel::ParticleCabel(
 }
 
 unsigned int
-pegasus::ParticleCabel::addContact(ParticleContacts& contacts,
-    unsigned int const limit) const
+pegasus::ParticleCabel::addContact(ParticleContacts & contacts, unsigned int limit) const
 {
     auto const length = currentLenght();
 
@@ -27,37 +26,34 @@ pegasus::ParticleCabel::addContact(ParticleContacts& contacts,
         return 0;
     }
 
-    auto normal = (mB->getPosition() - mA->getPosition());
+    Vector3 normal = (mB.getPosition() - mA.getPosition());
     normal.normalize();
 
-    contacts.emplace_back(mA, mB, restitution, normal, length - maxLength);
-
+    contacts.emplace_back(mA, &mB, restitution, normal, length - maxLength);
     return 1;
 }
 
-pegasus::ParticleRod::ParticleRod(Particle::Ptr a, Particle::Ptr b, double const length)
+pegasus::ParticleRod::ParticleRod(Particle & a, Particle & b, double length)
     : ParticleLink(a, b)
     , length(length)
 {
 }
 
 unsigned int
-pegasus::ParticleRod::addContact(ParticleContacts& contacts,
-    unsigned int const limit) const
+pegasus::ParticleRod::addContact(ParticleContacts& contacts, unsigned int limit) const
 {
-    auto const currentLen = currentLenght();
+    double const currentLen = currentLenght();
 
     if (currentLen == length) {
         return 0;
     }
 
-    auto normal = (mB->getPosition() - mA->getPosition());
+    Vector3 normal = (mB.getPosition() - mA.getPosition());
     normal.normalize();
 
-    contacts.emplace_back(mA, mB, double(0),
+    contacts.emplace_back(mA, &mB, 0.0,
         (currentLen > length ? normal : normal * -1), 
         (currentLen > length ? currentLen - length : length - currentLen)
     );
-
     return 1;
 }

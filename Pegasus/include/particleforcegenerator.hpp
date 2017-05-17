@@ -8,34 +8,23 @@
 #include <vector>
 
 namespace pegasus {
+
 class ParticleForceGenerator {
 public:
-    using Ptr = std::shared_ptr<ParticleForceGenerator>;
-
-public:
     virtual ~ParticleForceGenerator() {}
-
     virtual void updateForce(Particle & p) = 0;
 };
 
 class ParticleForceRegistry {
 public:
-    using Ptr = std::shared_ptr<ParticleForceRegistry>;
-    using Registry = std::map<Particle*, std::set<ParticleForceGenerator*> >;
-
-public:
     void add(Particle & p, ParticleForceGenerator & pfg);
-
     void remove(Particle & p);
-
     void remove(Particle & p, ParticleForceGenerator & pfg);
-
     void clear();
-
     void updateForces();
 
 private:
-    Registry mRegistrations;
+    std::map<Particle*, std::set<ParticleForceGenerator*>> mRegistrations;
 };
 
 class ParticleGravity : public ParticleForceGenerator {
@@ -114,7 +103,6 @@ public:
     ParticleFakeSpring(Vector3 const& anchor, double springConstant, double damping);
 
     void updateForce(Particle & p, double duration) const;
-
     void updateForce(Particle & p) override;
 
 private:
@@ -124,6 +112,7 @@ private:
     double mDuration;
 };
 
+template < typename Particles >
 class BlobForceGenerator : public ParticleForceGenerator {
 public:
     Particles & particles;
@@ -134,9 +123,57 @@ public:
     unsigned int maxFloat;
     double maxDistance;
 
-    explicit BlobForceGenerator(Particles& particles);
+public:
+    explicit BlobForceGenerator(Particles & particles)
+    : particles(particles)
+    , maxReplusion(0)
+    , maxAttraction(0)
+    , minNaturalDistance(0)
+    , maxNaturalDistance(0)
+    , floatHead(0)
+    , maxFloat(0)
+    , maxDistance(0)
+    {
+    }
 
-    void updateForce(Particle & particle) override;
+    void updateForce(Particle & particle) override
+    {
+        unsigned int joinCount = 0;
+
+        for(auto const & currentParticle : particles) {
+            if (&currentParticle == &particle)
+                continue;
+
+            // Work out the separation distance
+            auto separation = currentParticle.getPosition() - particle.getPosition();
+            separation.z = 0.0f;
+            auto distance = separation.magnitude();
+
+            if (distance < minNaturalDistance) {
+                // Use a repulsion force.
+                distance = 1.0f - distance / minNaturalDistance;
+                particle.addForce(separation.unit() * (1.0f - distance) * maxReplusion * -1.0f);
+                ++joinCount;
+            } else if (distance > maxNaturalDistance && distance < maxDistance) {
+                // Use an attraction force.
+                distance = (distance - maxNaturalDistance) / (maxDistance - maxNaturalDistance);
+                particle.addForce(separation.unit() * distance * maxAttraction);
+                ++joinCount;
+            }
+        }
+
+        // If the particle is the head, and we've got a join count, then float it.
+        if (   &particle == &(*particles.begin())
+            && joinCount > 0 && maxFloat > 0)
+        {
+            auto force = (static_cast<double>(joinCount) / static_cast<double>(maxFloat)) * floatHead;
+            if (force > floatHead) {
+                force = floatHead;
+            }
+
+            particle.addForce(Vector3(0, force, 0));
+        }
+    }
 };
 
 } // namespace pegasus

@@ -10,9 +10,6 @@ namespace pegasus {
 class Particle 
 {
 public:
-    using Ptr = std::shared_ptr<Particle>;
-
-public:
     Particle();
 
     void integrate(double duration);
@@ -50,8 +47,6 @@ private:
     double mInverseMass;
     Vector3 mForceAccum;
 };
-
-using Particles = std::vector<Particle::Ptr>;
 
 } // namespace pegasus
 

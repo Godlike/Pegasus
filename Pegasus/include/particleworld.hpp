@@ -5,39 +5,39 @@
 #include "Pegasus/include/particlecontacts.hpp"
 #include "Pegasus/include/particleforcegenerator.hpp"
 #include <vector>
+#include <list>
+#include <memory>
 
 namespace pegasus {
 
+using ParticleContactGenerators = std::list<std::unique_ptr<ParticleContactGenerator>>;
+using Particles = std::list<Particle>;
+
 class ParticleWorld {
 public:
-    using ParticleContactGenerators = std::vector<ParticleContactGenerator::Ptr>;
-
-    explicit ParticleWorld(unsigned int maxContacts, unsigned int iterations = 0);
-
-    void runPhysics(double const duration);
+    ParticleWorld(Particles & particles,
+                  ParticleForceRegistry & forceRegistry,
+                  ParticleContactGenerators & contactGenerators,
+                  unsigned int maxContacts,
+                  unsigned int iterations = 0);
 
     void startFrame();
-
-    void setParticles(Particles particles);
-
-    void setParticleForcesRegistry(ParticleForceRegistry::Ptr registry);
-
-    void setParticleContactGenerators(ParticleContactGenerators generators);
+    void runPhysics(double duration);
 
 private:
-    Particles mParticles;
-    ParticleContacts mContacts;
+    Particles & mParticles;
+    ParticleForceRegistry & mForceRegistry;
 
-    ParticleForceRegistry::Ptr mRegistry;
-    ParticleContactGenerators mGeneratos;
-    ParticleContactResolver mResolver;
+    ParticleContacts mContacts;
+    ParticleContactGenerators & mContactGenerators;
+    ParticleContactResolver mContactResolver;
 
     bool mCalculateIterations;
     unsigned int mMaxContacts;
 
+private:
     unsigned int generateContacts();
-
-    void integrate(double const duration);
+    void integrate(double duration);
 };
 
 } // namespace pegasus

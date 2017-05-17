@@ -3,23 +3,20 @@
 #include <algorithm>
 
 pegasus::ParticleContact::ParticleContact(
-    Particle::Ptr const a,
-    Particle::Ptr const b,
-    double const restitution,
+    Particle & a,
+    Particle * b,
+    double restitution,
     Vector3 const& contactNormal,
-    double const penetration)
-    : mA(a)
+    double penetration)
+    : mA(&a)
     , mB(b)
     , mRestitution(restitution)
     , mContactNormal(contactNormal)
     , mPenetration(penetration)
 {
-    if (!mA && !mB) {
-        throw std::invalid_argument("ParticleContact::ParticleContact !mA && !mB");
-    }
 }
 
-void pegasus::ParticleContact::resolve(double const duration) const
+void pegasus::ParticleContact::resolve(double duration) const
 {
     if (duration < 0) {
         return;
@@ -39,7 +36,7 @@ double pegasus::ParticleContact::calculateSeparatingVelocity() const
     return relativeVelocity * mContactNormal;
 }
 
-void pegasus::ParticleContact::resolveVelocity(double const duration) const
+void pegasus::ParticleContact::resolveVelocity(double duration) const
 {
     auto const separatingVelocity = calculateSeparatingVelocity();
     if (separatingVelocity > 0) {
@@ -79,13 +76,13 @@ void pegasus::ParticleContact::resolveVelocity(double const duration) const
     }
 }
 
-void pegasus::ParticleContact::resolveInterpenetration(double const duration) const
+void pegasus::ParticleContact::resolveInterpenetration(double duration) const
 {
     if (mPenetration <= 0) {
         return;
     }
 
-    auto totalInverseMass = mA->getInverseMass();
+    double totalInverseMass = mA->getInverseMass();
     if (mB) {
         totalInverseMass += mB->getInverseMass();
     }
@@ -101,20 +98,18 @@ void pegasus::ParticleContact::resolveInterpenetration(double const duration) co
     }
 }
 
-pegasus::ParticleContactResolver::ParticleContactResolver(unsigned int const iterations)
+pegasus::ParticleContactResolver::ParticleContactResolver(unsigned int iterations)
     : mIterations(iterations)
     , mIterationsUsed(0)
 {
 }
 
-void pegasus::ParticleContactResolver::setIterations(
-    unsigned int const iterations)
+void pegasus::ParticleContactResolver::setIterations(unsigned int iterations)
 {
     mIterations = iterations;
 }
 
-void pegasus::ParticleContactResolver::resolveContacts(
-    ParticleContacts& contacts, double const duration)
+void pegasus::ParticleContactResolver::resolveContacts(ParticleContacts & contacts, double duration)
 {
     mIterationsUsed = 0;
 
@@ -131,63 +126,3 @@ void pegasus::ParticleContactResolver::resolveContacts(
 }
 
 pegasus::ParticleContactGenerator::~ParticleContactGenerator() {}
-
-pegasus::Platform::Platform(
-    Vector3 start, Vector3 end, Particles& particles, const double blobRadius)
-    : start(start)
-    , end(end)
-    , particles(particles)
-    , blobRadius(blobRadius)
-{
-}
-
-unsigned int pegasus::Platform::addContact(ParticleContacts& contacts, unsigned int limit) const
-{
-    static auto const restitution = 0.0f;
-
-    unsigned int used = 0;
-    for (unsigned int i = 0; i < particles.size(); ++i) {
-        if (used >= limit) {
-            break;
-        }
-
-        auto toParticle = particles[i]->getPosition() - start;
-        auto const lineDirection = end - start;
-        auto const projected = toParticle * lineDirection;
-        auto const platformSqLength = lineDirection.squareMagnitude();
-
-        if (projected <= 0) {
-            if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
-                auto contactNormal = toParticle.unit();
-                contactNormal.z = 0;
-                auto const penetration = blobRadius - toParticle.magnitude();
-                contacts.emplace_back(
-                    particles[i], nullptr, restitution, contactNormal, penetration);
-                ++used;
-            }
-
-        } else if (projected >= platformSqLength) {
-            toParticle = particles[i]->getPosition() - end;
-            if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
-                auto contactNormal = toParticle.unit();
-                contactNormal.z = 0;
-                auto const penetration = blobRadius - toParticle.magnitude();
-                contacts.emplace_back(
-                    particles[i], nullptr, restitution, contactNormal, penetration);
-                ++used;
-            }
-        } else {
-            auto distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
-            if (distanceToPlatform < blobRadius * blobRadius) {
-                auto closestPoint = start + lineDirection * (projected / platformSqLength);
-                auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
-                contactNormal.z = 0;
-                auto const penetration = blobRadius - sqrt(distanceToPlatform);
-                contacts.emplace_back(
-                    particles[i], nullptr, restitution, contactNormal, penetration);
-                ++used;
-            }
-        }
-    }
-    return used;
-}
