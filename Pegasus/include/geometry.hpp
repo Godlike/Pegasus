@@ -27,7 +27,7 @@ namespace geometry {
         Vector3 mCenterOfMass;
     };
 
-    enum class SimpleShapeType {
+    enum class SimpleShapeType : int{
         PLANE,
         TRIANGLE,
         SPHERE,
