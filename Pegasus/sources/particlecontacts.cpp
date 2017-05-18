@@ -6,7 +6,7 @@ pegasus::ParticleContact::ParticleContact(
     Particle & a,
     Particle * b,
     double restitution,
-    Vector3 const& contactNormal,
+    Vector3 const & contactNormal,
     double penetration)
     : mA(&a)
     , mB(b)
@@ -98,13 +98,13 @@ void pegasus::ParticleContact::resolveInterpenetration(double duration) const
     }
 }
 
-pegasus::ParticleContactResolver::ParticleContactResolver(unsigned int iterations)
+pegasus::ParticleContactResolver::ParticleContactResolver(uint32_t iterations)
     : mIterations(iterations)
     , mIterationsUsed(0)
 {
 }
 
-void pegasus::ParticleContactResolver::setIterations(unsigned int iterations)
+void pegasus::ParticleContactResolver::setIterations(uint32_t iterations)
 {
     mIterations = iterations;
 }

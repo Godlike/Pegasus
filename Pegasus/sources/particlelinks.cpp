@@ -17,8 +17,8 @@ pegasus::ParticleCabel::ParticleCabel(
 {
 }
 
-unsigned int
-pegasus::ParticleCabel::addContact(ParticleContacts & contacts, unsigned int limit) const
+uint32_t
+pegasus::ParticleCabel::addContact(ParticleContacts & contacts, uint32_t limit) const
 {
     auto const length = currentLenght();
 
@@ -39,8 +39,8 @@ pegasus::ParticleRod::ParticleRod(Particle & a, Particle & b, double length)
 {
 }
 
-unsigned int
-pegasus::ParticleRod::addContact(ParticleContacts& contacts, unsigned int limit) const
+uint32_t
+pegasus::ParticleRod::addContact(ParticleContacts& contacts, uint32_t limit) const
 {
     double const currentLen = currentLenght();
 

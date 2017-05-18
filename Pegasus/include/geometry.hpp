@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <vector>
 #include <utility>
+#include <cstdint>
 
 #include "Pegasus/include/math.hpp"
 
@@ -19,16 +20,16 @@ namespace geometry {
     //Shapes
     class Shape {
     public:
-        explicit Shape(Vector3 const& centerOfMass);
+        explicit Shape(Vector3 const & centerOfMass);
 
-        void setCenterOfMass(Vector3 const& centerOfMass);
+        void setCenterOfMass(Vector3 const & centerOfMass);
         Vector3 getCenterOfMass() const;
 
     private:
         Vector3 mCenterOfMass;
     };
 
-    enum class SimpleShapeType : int{
+    enum class SimpleShapeType : uint32_t {
         PLANE,
         TRIANGLE,
         SPHERE,
@@ -43,14 +44,14 @@ namespace geometry {
     public:
         SimpleShapeType type;
     public:
-        SimpleShape(Vector3 const& centerOfMass, SimpleShapeType type);
+        SimpleShape(Vector3 const & centerOfMass, SimpleShapeType type);
     };
 
     class Plane : public SimpleShape {
     public:
-        Plane(Vector3 const& centerOfMass, Vector3 const& normal);
+        Plane(Vector3 const & centerOfMass, Vector3 const & normal);
 
-        void setNormal(Vector3 const& normal);
+        void setNormal(Vector3 const & normal);
         Vector3 getNormal() const;
 
     private:
@@ -59,9 +60,9 @@ namespace geometry {
 
     class Triangle : public SimpleShape {
     public:
-        Triangle(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c);
+        Triangle(Vector3 const & centerOfMass, Vector3 const & a, Vector3 const & b, Vector3 const & c);
 
-        void setAxes(Vector3 const& a, Vector3 const& b, Vector3 const& c);
+        void setAxes(Vector3 const & a, Vector3 const & b, Vector3 const & c);
         void getAxes(Vector3& a, Vector3& b, Vector3& c) const;
         Vector3 getNormal() const;
 
@@ -79,9 +80,9 @@ namespace geometry {
         using Ptr = std::shared_ptr<Sphere>;
 
     public:
-        Sphere(Vector3 const& centerOfMass, double const r);
+        Sphere(Vector3 const & centerOfMass, double r);
 
-        void setRadius(double const r);
+        void setRadius(double r);
         double getRadius() const;
 
     private:
@@ -90,12 +91,12 @@ namespace geometry {
 
     class Cone : public SimpleShape {
     public:
-        Cone(Vector3 const& centerOfMass, Vector3 const& a, double const r);
+        Cone(Vector3 const & centerOfMass, Vector3 const & a, double r);
 
-        void setAppex(Vector3 const& a);
+        void setAppex(Vector3 const & a);
         Vector3 getAppex() const;
 
-        void setRadius(double const r);
+        void setRadius(double r);
         double getRadius() const;
 
     private:
@@ -105,12 +106,12 @@ namespace geometry {
 
     class Capsule : public SimpleShape {
     public:
-        Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, double const r);
+        Capsule(Vector3 const & centerOfMass, Vector3 const & halfHeight, double r);
 
-        void setHalfHeight(Vector3 const& halfHeight);
+        void setHalfHeight(Vector3 const & halfHeight);
         Vector3 getHalfHeight() const;
 
-        void setRadius(double const r);
+        void setRadius(double r);
         double getRadius() const;
 
     private:
@@ -120,15 +121,15 @@ namespace geometry {
 
     class Cylinder : public Capsule {
     public:
-        Cylinder(Vector3 const& centerOfMass, Vector3 const& halfHeight, double const r);
+        Cylinder(Vector3 const & centerOfMass, Vector3 const & halfHeight, double r);
     };
 
     class Box : public SimpleShape {
     public:
-        Box(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c);
+        Box(Vector3 const & centerOfMass, Vector3 const & a, Vector3 const & b, Vector3 const & c);
 
-        void setAxes(Vector3 const& a, Vector3 const& b, Vector3 const& c);
-        void getAxes(Vector3& a, Vector3& b, Vector3& c) const;
+        void setAxes(Vector3 const & a, Vector3 const & b, Vector3 const & c);
+        void getAxes(Vector3 & a, Vector3 & b, Vector3 & c) const;
 
     private:
         Vector3 mA;
@@ -141,7 +142,7 @@ namespace intersection {
     // Utility functions
     template <typename T>
     bool isPointOnSameSide(
-        T const& p1, T const& p2, T const& a, T const& b)
+        T const & p1, T const & p2, T const & a, T const & b)
     {
         auto const ab = b - a;
         auto const cp1 = ab.vectorProduct(p1 - a);
@@ -151,7 +152,7 @@ namespace intersection {
 
     template <typename Vector, typename VerticesContainer>
     void calculateBoxVertices(
-        Vector const& i, Vector const& j, Vector const& k, VerticesContainer& vertices)
+        Vector const & i, Vector const & j, Vector const & k, VerticesContainer& vertices)
     {
         vertices[0] = (i + j + k);
         vertices[1] = (i - j + k);
@@ -180,7 +181,7 @@ namespace intersection {
 
     template <typename Vector, typename VertIt, typename ProjIt>
     void projectAllVertices(
-        Vector const& axisNormal, VertIt srcBegin, VertIt srcEnd, ProjIt destBegin)
+        Vector const & axisNormal, VertIt srcBegin, VertIt srcEnd, ProjIt destBegin)
     {
         while (srcBegin != srcEnd) {
             *destBegin++ = axisNormal.scalarProduct(*srcBegin++);
@@ -381,7 +382,7 @@ namespace intersection {
                             cache->boxAxes[0].inverse(), cache->boxAxes[1].inverse(), cache->boxAxes[2].inverse() };
         std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n) { n += cache->boxMassCenter; });
         std::transform(cache->boxVertices.begin(), cache->boxVertices.end(), cache->boxPenetrations.begin(),
-            [cache](auto const& p) { return cache->planeDistance - p * cache->planeNormal; });
+            [cache](auto const & p) { return cache->planeDistance - p * cache->planeNormal; });
     }
 
     template <>
@@ -397,7 +398,7 @@ namespace intersection {
         auto cache = static_cast<Cache<Plane,Box>*>(cacheBase);
 
         std::transform(cache->boxFaces.begin(), cache->boxFaces.end(), cache->boxFaceDistances.begin(), 
-            [cache](auto const& v) { return v * cache->planeNormal; });
+            [cache](auto const & v) { return v * cache->planeNormal; });
         auto const minIndex = std::distance(cache->boxFaceDistances.begin(),
             std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end()));
 
@@ -496,7 +497,7 @@ namespace intersection {
         std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n) { n += cache->boxMassCenter; });
         cache->boxNormals = { cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], 
                               cache->boxAxes[0].inverse(), cache->boxAxes[1].inverse(), cache->boxAxes[2].inverse() };
-        for (unsigned int i = 0; i < cache->boxNormals.size(); ++i) {
+        for (uint32_t i = 0; i < cache->boxNormals.size(); ++i) {
             cache->boxFaces[i] = cache->boxNormals[i] + cache->boxMassCenter;
             cache->boxNormals[i].normalize();
             cache->boxFaceDistances[i] = cache->boxFaces[i] * cache->boxNormals[i] - cache->sphereMassCenter * cache->boxNormals[i];
@@ -667,7 +668,7 @@ namespace intersection {
         auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
 
         std::array<double, 6> distances;
-        for (unsigned i = 0; i < distances.size(); ++i) {
+        for (uint32_t i = 0; i < distances.size(); ++i) {
             distances[i] = (cache->aMassCenter - cache->bMassCenter - cache->bBoxFaces[i]).squareMagnitude();
         }
 
@@ -695,27 +696,27 @@ namespace intersection {
     private:
         std::unordered_map<ShapeTypePair,
             std::unique_ptr<intersection::CacheBase>,
-            std::function<size_t(ShapeTypePair const& p)> >
+            std::function<size_t(ShapeTypePair const & p)> >
             intersectionCaches;
 
         std::unordered_map<ShapeTypePair,
             std::function<void(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
-            std::function<size_t(ShapeTypePair const& p)> >
+            std::function<size_t(ShapeTypePair const & p)> >
             initializeFunctors;
 
         std::unordered_map<ShapeTypePair,
             std::function<bool(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
-            std::function<size_t(ShapeTypePair const& p)> >
+            std::function<size_t(ShapeTypePair const & p)> >
             overlapFunctors;
 
         std::unordered_map<ShapeTypePair,
             std::function<Vector3(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
-            std::function<size_t(ShapeTypePair const& p)> >
+            std::function<size_t(ShapeTypePair const & p)> >
             calculateContactNormalFunctors;
 
         std::unordered_map<ShapeTypePair,
             std::function<double(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
-            std::function<size_t(ShapeTypePair const& p)> >
+            std::function<size_t(ShapeTypePair const & p)> >
             calculatePenetrationFunctors;
 
     public:

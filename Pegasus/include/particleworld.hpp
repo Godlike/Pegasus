@@ -18,10 +18,10 @@ public:
     ParticleWorld(Particles & particles,
                   ParticleForceRegistry & forceRegistry,
                   ParticleContactGenerators & contactGenerators,
-                  unsigned int maxContacts,
-                  unsigned int iterations = 0);
+                  uint32_t maxContacts,
+                  uint32_t iterations = 0);
 
-    void startFrame();
+    void startFrame() const;
     void runPhysics(double duration);
 
 private:
@@ -33,11 +33,11 @@ private:
     ParticleContactResolver mContactResolver;
 
     bool mCalculateIterations;
-    unsigned int mMaxContacts;
+    uint32_t mMaxContacts;
 
 private:
-    unsigned int generateContacts();
-    void integrate(double duration);
+    uint32_t generateContacts();
+    void integrate(double duration) const;
 };
 
 } // namespace pegasus

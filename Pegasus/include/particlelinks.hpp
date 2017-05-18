@@ -14,7 +14,7 @@ public:
     {
     }
 
-    virtual unsigned int addContact(ParticleContacts& contacts, unsigned int limit) const override = 0;
+    virtual uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override = 0;
     double currentLenght() const;
 
 protected:
@@ -26,7 +26,7 @@ class ParticleCabel : public ParticleLink {
 public:
     ParticleCabel(Particle & a, Particle & b, double maxLength, double restutuition);
 
-    virtual unsigned int addContact(ParticleContacts & contacts, unsigned int limit) const override;
+    virtual uint32_t addContact(ParticleContacts & contacts, uint32_t limit) const override;
 
 private:
     double const maxLength;
@@ -37,7 +37,7 @@ class ParticleRod : public ParticleLink {
 public:
     ParticleRod(Particle & a, Particle & b, double length);
 
-    virtual unsigned int addContact(ParticleContacts& contacts, unsigned int limit) const override;
+    virtual uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override;
 
 private:
     double const length;

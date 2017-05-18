@@ -33,20 +33,20 @@ using ParticleContacts = std::vector<ParticleContact>;
 
 class ParticleContactResolver {
 public:
-    explicit ParticleContactResolver(unsigned int iterations = 0);
+    explicit ParticleContactResolver(uint32_t iterations = 0);
 
-    void setIterations(unsigned int iterations);
+    void setIterations(uint32_t iterations);
     void resolveContacts(ParticleContacts & contacts, double duration);
 
 private:
-    unsigned int mIterations;
-    unsigned int mIterationsUsed;
+    uint32_t mIterations;
+    uint32_t mIterationsUsed;
 };
 
 class ParticleContactGenerator {
 public:
     virtual ~ParticleContactGenerator();
-    virtual unsigned int addContact(ParticleContacts & contacts, unsigned int limit) const = 0;
+    virtual uint32_t addContact(ParticleContacts & contacts, uint32_t limit) const = 0;
 };
 
 template < typename Particles >
@@ -66,12 +66,12 @@ public:
     {
     }
 
-    unsigned int addContact(ParticleContacts& contacts, unsigned int limit) const override
+    uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override
     {
         static auto const restitution = 0.0f;
 
-        unsigned int used = 0;
-        for (unsigned int i = 0; i < particles.size(); ++i) {
+        uint32_t used = 0;
+        for (uint32_t i = 0; i < particles.size(); ++i) {
             if (used >= limit) {
                 break;
             }
@@ -128,9 +128,9 @@ public:
     {
     }
 
-    unsigned int addContact(ParticleContacts & contacts, unsigned int limit) const override
+    uint32_t addContact(ParticleContacts & contacts, uint32_t limit) const override
     {
-        unsigned int used = 0;
+        uint32_t used = 0;
 
         for (RigidBody & body : mRigidBodies)
         {

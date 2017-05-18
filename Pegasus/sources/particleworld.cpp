@@ -4,8 +4,8 @@ pegasus::ParticleWorld::ParticleWorld(
     Particles & particles,
     ParticleForceRegistry & forceRegistry,
     ParticleContactGenerators & contactGenerators,
-    unsigned int maxContacts,
-    unsigned int iterations)
+    uint32_t maxContacts,
+    uint32_t iterations)
     : mParticles(particles)
     , mForceRegistry(forceRegistry)
     , mContactGenerators(contactGenerators)
@@ -16,7 +16,7 @@ pegasus::ParticleWorld::ParticleWorld(
     mContacts.reserve(mMaxContacts);
 }
 
-void pegasus::ParticleWorld::startFrame()
+void pegasus::ParticleWorld::startFrame() const
 {
     for (auto & p : mParticles) {
         p.clearForceAccum();
@@ -39,9 +39,9 @@ void pegasus::ParticleWorld::runPhysics(double duration)
     }
 }
 
-unsigned int pegasus::ParticleWorld::generateContacts()
+uint32_t pegasus::ParticleWorld::generateContacts()
 {
-    unsigned int limit = mMaxContacts;
+    uint32_t limit = mMaxContacts;
     mContacts.clear();
 
     for (auto const& g : mContactGenerators)
@@ -56,7 +56,7 @@ unsigned int pegasus::ParticleWorld::generateContacts()
     return mMaxContacts - limit;
 }
 
-void pegasus::ParticleWorld::integrate(double duration)
+void pegasus::ParticleWorld::integrate(double duration) const
 {
     for (auto & p : mParticles) {
         p.integrate(duration);

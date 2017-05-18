@@ -55,10 +55,10 @@ FallingDemo::FallingDemo()
     , zAxis(0)
 {
     //Create particles
-    for (unsigned int i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
+    for (uint32_t i = 0; i < TOTAL_COUNT - PLANE_COUNT; ++i) 
     {
         particles.emplace_back();
-        particles.back().setPosition(0, double(RADIUS * 3 * (TOTAL_COUNT - PLANE_COUNT - i)), double(0));
+        particles.back().setPosition(0, double(RADIUS * 3 * (TOTAL_COUNT - PLANE_COUNT - i)), 0.0);
         particles.back().setVelocity(0, 0, 0);
         particles.back().setDamping(0.2f);
         particles.back().setMass(1.0f);
