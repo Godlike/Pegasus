@@ -16,6 +16,7 @@
 namespace pegasus {
 namespace geometry {
 
+    //Shapes
     class Shape {
     public:
         explicit Shape(Vector3 const& centerOfMass);
@@ -135,7 +136,7 @@ namespace geometry {
         Vector3 mC;
     };
 
-    namespace intersection {
+namespace intersection {
 
     // Utility functions
     template <typename T>
@@ -682,7 +683,7 @@ namespace geometry {
         return cache->penetration;
     }
 
-    } // namespace IntersectionQuery
+} // namespace IntersectionQuery
 
 
     // General intersection
