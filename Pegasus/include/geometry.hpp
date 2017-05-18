@@ -281,6 +281,7 @@ namespace intersection {
         double penetration = 0;
     };
 
+    // General intersection queries
     template < typename ShapeA, typename ShapeB >
     void initialize(SimpleShape const * a, SimpleShape const * b, CacheBase  * cacheBase);
 
@@ -684,7 +685,6 @@ namespace intersection {
     }
 
 } // namespace IntersectionQuery
-
 
     // General intersection
     using ShapeTypePair = std::pair<SimpleShapeType, SimpleShapeType>;
