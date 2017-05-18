@@ -53,14 +53,14 @@ unsigned Random::randomBits()
 }
 
 #ifdef SINGLE_PRECISION
-real Random::randomReal()
+double Random::randomDouble()
 {
     // Get the random number
     unsigned bits = randomBits();
 
     // Set up a reinterpret structure for manipulation
     union {
-        real value;
+        double value;
         unsigned word;
     } convert;
 
@@ -73,14 +73,14 @@ real Random::randomReal()
     return convert.value - 1.0f;
 }
 #else
-real Random::randomReal()
+double Random::randomDouble()
 {
     // Get the random number
     auto bits = randomBits();
 
     // Set up a reinterpret structure for manipulation
     union {
-        real value;
+        double value;
         unsigned words[2];
     } convert = {};
 
@@ -92,31 +92,31 @@ real Random::randomReal()
     convert.words[1] = (bits >> 12) | 0x3FF00000; // And the bottom 20
 
     // And return the value
-    return convert.value - static_cast<real>(1);
+    return convert.value - static_cast<double>(1);
 }
 #endif
 
-real Random::randomReal(real min, real max)
+double Random::randomDouble(double min, double max)
 {
-    return randomReal() * (max - min) + min;
+    return randomDouble() * (max - min) + min;
 }
 
-real Random::randomReal(real scale) { return randomReal() * scale; }
+double Random::randomDouble(double scale) { return randomDouble() * scale; }
 
 unsigned Random::randomInt(unsigned max) { return randomBits() % max; }
 
-real Random::randomBinomial(real scale)
+double Random::randomBinomial(double scale)
 {
-    return (randomReal() - randomReal()) * scale;
+    return (randomDouble() - randomDouble()) * scale;
 }
 
-Vector3 Random::randomVector(real scale)
+Vector3 Random::randomVector(double scale)
 {
     return Vector3(randomBinomial(scale), randomBinomial(scale),
         randomBinomial(scale));
 }
 
-Vector3 Random::randomXZVector(real scale)
+Vector3 Random::randomXZVector(double scale)
 {
     return Vector3(randomBinomial(scale), 0, randomBinomial(scale));
 }
@@ -129,6 +129,6 @@ Vector3 Random::randomVector(const Vector3& scale)
 
 Vector3 Random::randomVector(const Vector3& min, const Vector3& max)
 {
-    return Vector3(randomReal(min.x, max.x), randomReal(min.y, max.y),
-        randomReal(min.z, max.z));
+    return Vector3(randomDouble(min.x, max.x), randomDouble(min.y, max.y),
+        randomDouble(min.z, max.z));
 }

@@ -1,5 +1,5 @@
-#ifndef PEGAS_MECHANICS_HPP
-#define PEGAS_MECHANICS_HPP
+#ifndef PEGASUS_MECHANICS_HPP
+#define PEGASUS_MECHANICS_HPP
 
 #include "Pegasus/include/geometry.hpp"
 #include "Pegasus/include/particle.hpp"
@@ -8,26 +8,19 @@
 #include <vector>
 
 namespace pegasus {
-class Body {
-public:
-    virtual ~Body() {}
-};
 
-class RigidBody : public Body {
+class RigidBody {
 public:
-    using Ptr = std::shared_ptr<RigidBody>;
+    Particle * p;
+    std::unique_ptr<geometry::SimpleShape> s;
 
-    RigidBody(Particle::Ptr const& p, geometry::Sphere::Ptr const& s)
-        : p(p)
-        , s(s)
+public:
+    RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s)
+        : p(&p)
+        , s(std::move(s))
     {
     }
-
-    Particle::Ptr const p;
-    geometry::Sphere::Ptr const s;
 };
 
-using RigidBodies = std::vector<RigidBody::Ptr>;
-}
-
-#endif // PEGAS_MECHANICS_HPP
+} // namespace pegasus
+#endif // PEGASUS_MECHANICS_HPP

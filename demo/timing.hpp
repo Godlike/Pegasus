@@ -1,5 +1,5 @@
-#ifndef PEGAS_DEMO_TIMING_H
-#define PEGAS_DEMO_TIMING_H
+#ifndef PEGASUS_DEMO_TIMING_H
+#define PEGASUS_DEMO_TIMING_H
 
 struct TimingData {
     unsigned frameNumber;

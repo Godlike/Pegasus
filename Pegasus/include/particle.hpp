@@ -1,74 +1,53 @@
-#ifndef PEGAS_PARTICLE_HPP
-#define PEGAS_PARTICLE_HPP
+#ifndef PEGASUS_PARTICLE_HPP
+#define PEGASUS_PARTICLE_HPP
 
-#include "Pegasus/include/core.hpp"
 #include "Pegasus/include/math.hpp"
 #include <memory>
 #include <vector>
 
 namespace pegasus {
 
-class Particle {
+class Particle 
+{
 public:
-    using Ptr = std::shared_ptr<Particle>;
-    using ConstPtr = std::shared_ptr<Particle const>;
+    Particle();
 
-    void integrate(real const duration);
+    void integrate(double duration);
 
     Vector3 getPosition() const;
-
     void setPosition(Vector3 const& position);
-
-    void setPosition(real const x, real const y, real const z);
+    void setPosition(double x, double y, double z);
 
     Vector3 getVelocity() const;
-
     void setVelocity(Vector3 const& velocity);
-
-    void setVelocity(real const x, real const y, real const z);
+    void setVelocity(double x, double y, double z);
 
     Vector3 getAcceleration() const;
-
     void setAcceleration(Vector3 const& acceleration);
+    void setAcceleration(double x, double y, double z);
 
-    void setAcceleration(real const x, real const y, real const z);
+    double getDamping() const;
+    void setDamping(double damping);
 
-    real getDamping() const;
-
-    void setDamping(real const damping);
-
-    real getMass() const;
-
-    void setMass(real const mass);
-
+    double getMass() const;
+    void setMass(double mass);
     bool hasFiniteMass() const;
-
-    real getInverseMass() const;
-
-    void setInverseMass(real const inverseMass);
+    double getInverseMass() const;
+    void setInverseMass(double inverseMass);
 
     void addForce(Vector3 const& force);
-
     void clearForceAccum();
 
 private:
     Vector3 mPosition;
-
     Vector3 mVelocity;
-
     Vector3 mAcceleration;
-
-    real mDamping;
-
-    real mMass;
-
-    real mInverseMass;
-
+    double mDamping;
+    double mMass;
+    double mInverseMass;
     Vector3 mForceAccum;
 };
 
-using Particles = std::vector<Particle::Ptr>;
-
 } // namespace pegasus
 
-#endif // PEGAS_PARTICLE_HPP
+#endif // PEGASUS_PARTICLE_HPP

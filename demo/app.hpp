@@ -1,5 +1,5 @@
-#ifndef PEGAS_DEMO_APP_HPP
-#define PEGAS_DEMO_APP_HPP
+#ifndef PEGASUS_DEMO_APP_HPP
+#define PEGASUS_DEMO_APP_HPP
 
 class Application {
 protected:
@@ -30,4 +30,4 @@ public:
     void renderText(float x, float y, const char* text, void* font = nullptr) const;
 };
 
-#endif // PEGAS_DEMO_APP_HPP
+#endif // PEGASUS_DEMO_APP_HPP

@@ -76,7 +76,7 @@ BlobDemo::BlobDemo()
     }
 
     for (auto body : rBodies) {
-        contactGenerators.push_back(std::make_shared<pegasus::SphereContactGenerator>(body, rBodies, static_cast<pegasus::real>(0)));
+        contactGenerators.push_back(std::make_shared<pegasus::ShapeContactGenerator>(body, rBodies, 0.0f));
     }
 
     world.setParticleContactGenerators(contactGenerators);

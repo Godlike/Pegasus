@@ -3,33 +3,30 @@
 #include <algorithm>
 
 pegasus::ParticleContact::ParticleContact(
-    pegasus::Particle::Ptr const& a,
-    pegasus::Particle::Ptr const& b,
-    pegasus::real const restitution,
-    pegasus::Vector3 const& contactNormal,
-    pegasus::real const penetration)
-    : mA(a)
+    Particle & a,
+    Particle * b,
+    double restitution,
+    Vector3 const & contactNormal,
+    double penetration)
+    : mA(&a)
     , mB(b)
     , mRestitution(restitution)
     , mContactNormal(contactNormal)
     , mPenetration(penetration)
 {
-    if (!mA && !mB) {
-        throw std::invalid_argument("ParticleContact::ParticleContact !mA && !mB");
-    }
 }
 
-void pegasus::ParticleContact::resolve(pegasus::real const duration) const
+void pegasus::ParticleContact::resolve(double duration) const
 {
     if (duration < 0) {
-        throw std::invalid_argument("ParticleContact::resolve duration < 0");
+        return;
     }
 
     resolveVelocity(duration);
     resolveInterpenetration(duration);
 }
 
-pegasus::real pegasus::ParticleContact::calculateSeparatingVelocity() const
+double pegasus::ParticleContact::calculateSeparatingVelocity() const
 {
     Vector3 relativeVelocity = mA->getVelocity();
     if (mB) {
@@ -39,7 +36,7 @@ pegasus::real pegasus::ParticleContact::calculateSeparatingVelocity() const
     return relativeVelocity * mContactNormal;
 }
 
-void pegasus::ParticleContact::resolveVelocity(pegasus::real const duration) const
+void pegasus::ParticleContact::resolveVelocity(double duration) const
 {
     auto const separatingVelocity = calculateSeparatingVelocity();
     if (separatingVelocity > 0) {
@@ -79,14 +76,13 @@ void pegasus::ParticleContact::resolveVelocity(pegasus::real const duration) con
     }
 }
 
-void pegasus::ParticleContact::resolveInterpenetration(
-    pegasus::real const duration) const
+void pegasus::ParticleContact::resolveInterpenetration(double duration) const
 {
     if (mPenetration <= 0) {
         return;
     }
 
-    auto totalInverseMass = mA->getInverseMass();
+    double totalInverseMass = mA->getInverseMass();
     if (mB) {
         totalInverseMass += mB->getInverseMass();
     }
@@ -102,93 +98,31 @@ void pegasus::ParticleContact::resolveInterpenetration(
     }
 }
 
-pegasus::ParticleContactResolver::ParticleContactResolver(unsigned int const iterations)
+pegasus::ParticleContactResolver::ParticleContactResolver(uint32_t iterations)
     : mIterations(iterations)
     , mIterationsUsed(0)
 {
 }
 
-void pegasus::ParticleContactResolver::setIterations(
-    unsigned int const iterations)
+void pegasus::ParticleContactResolver::setIterations(uint32_t iterations)
 {
     mIterations = iterations;
 }
 
-void pegasus::ParticleContactResolver::resolveContacts(
-    pegasus::ParticleContactsArray& contacts, pegasus::real const duration)
+void pegasus::ParticleContactResolver::resolveContacts(ParticleContacts & contacts, double duration)
 {
     mIterationsUsed = 0;
 
     std::sort(contacts.begin(), contacts.end(),
-        [](ParticleContact::Ptr const& a, ParticleContact::Ptr const& b) {
-            return a->calculateSeparatingVelocity() < b->calculateSeparatingVelocity();
+        [](ParticleContact const& a, ParticleContact const& b) {
+            return a.calculateSeparatingVelocity() < b.calculateSeparatingVelocity();
         });
 
     while (mIterationsUsed++ < mIterations && !contacts.empty()) {
         auto maxSepVelocityContact = contacts.back();
         contacts.pop_back();
-        maxSepVelocityContact->resolve(duration);
+        maxSepVelocityContact.resolve(duration);
     }
 }
 
 pegasus::ParticleContactGenerator::~ParticleContactGenerator() {}
-
-pegasus::Platform::Platform(
-    pegasus::Vector3 start, pegasus::Vector3 end, Particles& particles, const real blobRadius)
-    : start(start)
-    , end(end)
-    , particles(particles)
-    , blobRadius(blobRadius)
-{
-}
-
-unsigned int pegasus::Platform::addContact(pegasus::ParticleContactGenerator::Contacts& contacts, unsigned int limit) const
-{
-    static auto const restitution = 0.0f;
-
-    unsigned int used = 0;
-    for (unsigned int i = 0; i < particles.size(); ++i) {
-        if (used >= limit) {
-            break;
-        }
-
-        auto toParticle = particles[i]->getPosition() - start;
-        auto const lineDirection = end - start;
-        auto const projected = toParticle * lineDirection;
-        auto const platformSqLength = lineDirection.squareMagnitude();
-
-        if (projected <= 0) {
-            if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
-                auto contactNormal = toParticle.unit();
-                contactNormal.z = 0;
-                auto const penetration = blobRadius - toParticle.magnitude();
-                contacts.push_back(std::make_shared<ParticleContact>(
-                    particles[i], nullptr, restitution, contactNormal, penetration));
-                ++used;
-            }
-
-        } else if (projected >= platformSqLength) {
-            toParticle = particles[i]->getPosition() - end;
-            if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
-                auto contactNormal = toParticle.unit();
-                contactNormal.z = 0;
-                auto const penetration = blobRadius - toParticle.magnitude();
-                contacts.push_back(std::make_shared<ParticleContact>(
-                    particles[i], nullptr, restitution, contactNormal, penetration));
-                ++used;
-            }
-        } else {
-            auto distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
-            if (distanceToPlatform < blobRadius * blobRadius) {
-                auto closestPoint = start + lineDirection * (projected / platformSqLength);
-                auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
-                contactNormal.z = 0;
-                auto const penetration = blobRadius - std::sqrt(distanceToPlatform);
-                contacts.push_back(std::make_shared<ParticleContact>(
-                    particles[i], nullptr, restitution, contactNormal, penetration));
-                ++used;
-            }
-        }
-    }
-    return used;
-}

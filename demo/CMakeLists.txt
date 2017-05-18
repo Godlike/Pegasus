@@ -36,7 +36,7 @@ set(DEMO_SOURCES
     app.cpp
     timing.cpp
     random.cpp
-    blob.cpp
+    falling.cpp
     main.cpp
 )
 

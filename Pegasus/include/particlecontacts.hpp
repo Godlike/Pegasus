@@ -1,107 +1,158 @@
-#ifndef PEGAS_PARTICLE_CONTACTS_HPP
-#define PEGAS_PARTICLE_CONTACTS_HPP
+#ifndef PEGASUS_PARTICLE_CONTACTS_HPP
+#define PEGASUS_PARTICLE_CONTACTS_HPP
 
 #include "Pegasus/include/geometry.hpp"
 #include "Pegasus/include/mechanics.hpp"
-#include "Pegasus/include/particlecontacts.hpp"
 #include "Pegasus/include/particle.hpp"
+
 #include <vector>
 
 namespace pegasus {
 
 class ParticleContact {
 public:
-    using Ptr = std::shared_ptr<ParticleContact>;
+    ParticleContact(Particle & a, Particle * b,
+                    double restitution, Vector3 const& contactNormal, double penetration);
 
-public:
-    ParticleContact(Particle::Ptr const& a, Particle::Ptr const& b,
-        real const restitution, Vector3 const& contactNormal,
-        real const penetration);
-
-    void resolve(real const duration) const;
-    real calculateSeparatingVelocity() const;
+    void resolve(double duration) const;
+    double calculateSeparatingVelocity() const;
 
 private:
-    Particle::Ptr mA;
-    Particle::Ptr mB;
-    real mRestitution;
-    Vector3 const mContactNormal;
-    real mPenetration;
+    Particle * mA;
+    Particle * mB;
+    double mRestitution;
+    Vector3 mContactNormal;
+    double mPenetration;
 
 private:
-    void resolveVelocity(real const duration) const;
-
-    void resolveInterpenetration(real const duration) const;
+    void resolveVelocity(double duration) const;
+    void resolveInterpenetration(double duration) const;
 };
 
-using ParticleContactsArray = std::vector<ParticleContact::Ptr>;
+using ParticleContacts = std::vector<ParticleContact>;
 
 class ParticleContactResolver {
 public:
-    ParticleContactResolver(unsigned int const iterations = 0);
+    explicit ParticleContactResolver(uint32_t iterations = 0);
 
-    void setIterations(unsigned int const iterations);
-
-    void resolveContacts(ParticleContactsArray& contacts,
-        real const duration);
+    void setIterations(uint32_t iterations);
+    void resolveContacts(ParticleContacts & contacts, double duration);
 
 private:
-    unsigned int mIterations;
-    unsigned int mIterationsUsed;
+    uint32_t mIterations;
+    uint32_t mIterationsUsed;
 };
 
 class ParticleContactGenerator {
 public:
-    using Ptr = std::shared_ptr<ParticleContactGenerator>;
-    using Contacts = std::vector<pegasus::ParticleContact::Ptr>;
-
-public:
     virtual ~ParticleContactGenerator();
-    virtual unsigned int addContact(Contacts& contacts,
-        unsigned int const limit) const = 0;
+    virtual uint32_t addContact(ParticleContacts & contacts, uint32_t limit) const = 0;
 };
 
+template < typename Particles >
 class Platform : public ParticleContactGenerator {
 public:
-    Vector3 start;
-    Vector3 end;
-    Particles& particles;
-    real const blobRadius;
+    Vector3 const & start;
+    Vector3 const & end;
+    Particles & particles;
+    double blobRadius;
 
-    Platform(Vector3 start, Vector3 end, Particles& particles, real const blobRadius);
+public:
+    Platform(Vector3 const & start, Vector3 const & end, Particles & particles, double blobRadius)
+        : start(start)
+        , end(end)
+        , particles(particles)
+        , blobRadius(blobRadius)
+    {
+    }
 
-    unsigned int addContact(Contacts& contacts, unsigned int const limit) const override;
+    uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override
+    {
+        static auto const restitution = 0.0f;
+
+        uint32_t used = 0;
+        for (uint32_t i = 0; i < particles.size(); ++i) {
+            if (used >= limit) {
+                break;
+            }
+
+            auto toParticle = particles[i]->getPosition() - start;
+            auto const lineDirection = end - start;
+            auto const projected = toParticle * lineDirection;
+            auto const platformSqLength = lineDirection.squareMagnitude();
+
+            if (projected <= 0) {
+                if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
+                    auto contactNormal = toParticle.unit();
+                    contactNormal.z = 0;
+                    auto const penetration = blobRadius - toParticle.magnitude();
+                    contacts.emplace_back(
+                        particles[i], nullptr, restitution, contactNormal, penetration);
+                    ++used;
+                }
+
+            } else if (projected >= platformSqLength) {
+                toParticle = particles[i]->getPosition() - end;
+                if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
+                    auto contactNormal = toParticle.unit();
+                    contactNormal.z = 0;
+                    auto const penetration = blobRadius - toParticle.magnitude();
+                    contacts.emplace_back(
+                        particles[i], nullptr, restitution, contactNormal, penetration);
+                    ++used;
+                }
+            } else {
+                auto distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
+                if (distanceToPlatform < blobRadius * blobRadius) {
+                    auto closestPoint = start + lineDirection * (projected / platformSqLength);
+                    auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
+                    contactNormal.z = 0;
+                    auto const penetration = blobRadius - sqrt(distanceToPlatform);
+                    contacts.emplace_back(
+                        particles[i], nullptr, restitution, contactNormal, penetration);
+                    ++used;
+                }
+            }
+        }
+        return used;
+    }
 };
 
-class SphereContactGenerator : public ParticleContactGenerator {
+template < typename RigidBodies >
+class ShapeContactGenerator : public ParticleContactGenerator {
 public:
-    using Spheres = std::vector<geometry::Sphere::Ptr>;
-
-    SphereContactGenerator(RigidBody::Ptr const rBody, RigidBodies const& rBodies, real const restitution)
+    ShapeContactGenerator(RigidBody & rBody, RigidBodies & rBodies, double restitution)
         : mRigidBody(rBody)
         , mRigidBodies(rBodies)
         , mRestitution(restitution)
     {
     }
 
-    unsigned int addContact(Contacts& contacts, unsigned int const limit) const override
+    uint32_t addContact(ParticleContacts & contacts, uint32_t limit) const override
     {
-        unsigned int used = 0;
+        uint32_t used = 0;
 
-        for (auto body : mRigidBodies) {
-            if (body == mRigidBody)
+        for (RigidBody & body : mRigidBodies)
+        {
+            if (&body == &mRigidBody) {
                 continue;
+            }
 
-            if (used++ > limit) {
+            if (used > limit) {
                 break;
             }
 
-            geometry::IntersectionQueries<geometry::Sphere, geometry::Sphere> intersection(body->s.get(), mRigidBody->s.get());
-            if (intersection.overlap()) {
-                contacts.push_back(std::make_shared<ParticleContact>(
-                    body->p, mRigidBody->p, mRestitution,
-                    intersection.calculateContactNormal(),
-                    intersection.calculatePenetration()));
+            static geometry::IntersectionQuery intersection;
+            intersection.initialize(body.s.get(), mRigidBody.s.get());
+
+            if (intersection.overlap(body.s.get(), mRigidBody.s.get()))
+            {
+                contacts.emplace_back(
+                    *body.p, mRigidBody.p, mRestitution,
+                    intersection.calculateContactNormal(body.s.get(), mRigidBody.s.get()),
+                    intersection.calculatePenetration(body.s.get(), mRigidBody.s.get())
+                );
+                ++used;
             }
         }
 
@@ -109,11 +160,11 @@ public:
     }
 
 private:
-    RigidBody::Ptr const mRigidBody;
-    RigidBodies const& mRigidBodies;
-    real const mRestitution;
+    RigidBody & mRigidBody;
+    RigidBodies & mRigidBodies;
+    double const mRestitution;
 };
 
 } // namespace pegasus
 
-#endif // PEGAS_PARTICLE_CONTACTS_HPP
+#endif // PEGASUS_PARTICLE_CONTACTS_HPP

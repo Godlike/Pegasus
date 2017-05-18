@@ -1,5 +1,5 @@
-#ifndef PEGAS_RANDOM_H
-#define PEGAS_RANDOM_H
+#ifndef PEGASUS_RANDOM_H
+#define PEGASUS_RANDOM_H
 
 #include "Pegasus/include/math.hpp"
 
@@ -48,17 +48,17 @@ public:
     /**
    * Returns a random floating point number between 0 and 1.
    */
-    real randomReal();
+    double randomDouble();
 
     /**
    * Returns a random floating point number between 0 and scale.
    */
-    real randomReal(real scale);
+    double randomDouble(double scale);
 
     /**
-   * Returns a random floating point number between min and max.
+   * Returns a random floating point number between min and max in the [min, max) range.
    */
-    real randomReal(real min, real max);
+    double randomDouble(double min, double max);
 
     /**
    * Returns a random integer less than the given value.
@@ -69,13 +69,13 @@ public:
    * Returns a random binomially distributed number between -scale
    * and +scale.
    */
-    real randomBinomial(real scale);
+    double randomBinomial(double scale);
 
     /**
    * Returns a random vector where each component is binomially
    * distributed in the range (-scale to scale) [mean = 0.0f].
    */
-    Vector3 randomVector(real scale);
+    Vector3 randomVector(double scale);
 
     /**
    * Returns a random vector where each component is binomially
@@ -97,7 +97,7 @@ public:
    * distributed in the range (-scale to scale) [mean = 0.0f],
    * except the y coordinate which is zero.
    */
-    Vector3 randomXZVector(real scale);
+    Vector3 randomXZVector(double scale);
 
 private:
     // Internal mechanics
@@ -107,4 +107,4 @@ private:
 
 } // namespace pegasus
 
-#endif // PEGAS_BODY_H
+#endif // PEGASUS_BODY_H
