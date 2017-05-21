@@ -1,11 +1,9 @@
 build*
-*.user
 .build*
 .vscode
-*.json
-*.sqlite
-*.json
 .vs
+*.user
+*.sqlite
 *.json
 *.suo
 *.db
