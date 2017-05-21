@@ -184,7 +184,7 @@ void FallingDemo::update()
     zAxis *= pow(0.1f, duration);
     particles.front().addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
-    world.runPhysics(0.01f); //(duration);
+    world.runPhysics(duration);
 
     for (auto const& body : rigidBodies) {
         body.s->setCenterOfMass(body.p->getPosition());
