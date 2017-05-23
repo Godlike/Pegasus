@@ -6,8 +6,6 @@ void Application::initGraphics()
 {
     glClearColor(0.9f, 0.95f, 1.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);
-    glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
     glShadeModel(GL_SMOOTH);
     setView();
 }

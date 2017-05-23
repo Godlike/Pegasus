@@ -12,7 +12,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <list>
-#include <cstdlib>
 #include <random>
 
 #define PLANE_COUNT 1
@@ -141,15 +140,15 @@ FallingDemo::FallingDemo()
     }
     
     //Create plane particle and rigid body
-//    particles.emplace_back();
-//    particles.back().setPosition({1, -10, 0});
-//    particles.back().setInverseMass(0);
-//    rigidBodies.emplace_back(
-//        particles.back(),
-//        std::make_unique<pegasus::geometry::Plane>(
-//            particles.back().getPosition(), pegasus::Vector3(0, 1.0, 0).unit()
-//        )
-//    );
+    particles.emplace_back();
+    particles.back().setPosition({1, -10, 0});
+    particles.back().setInverseMass(0);
+    rigidBodies.emplace_back(
+        particles.back(),
+        std::make_unique<pegasus::geometry::Plane>(
+           particles.back().getPosition(), pegasus::Vector3(0, 1.0, 0).unit()
+        )
+    );
 
     //Create contact generators
     for (auto & body : rigidBodies)
@@ -162,16 +161,15 @@ FallingDemo::FallingDemo()
     }
 
     addBox({ 0, -position, 0 }, boxSide);
-    addBox({ position * 2, position, 0 }, boxSide);
+    addBox({  position * 2, position, 0 }, boxSide);
     addBox({ -position * 2, position, 0 }, boxSide);
     addBox({ 0, position, -position * 2 }, boxSide);
-    addBox({ 0, position, position * 2 }, boxSide);
+    addBox({ 0, position,  position * 2 }, boxSide);
 }
 
 void FallingDemo::display()
 {
     // Clear the view port and set the camera direction
-    auto const& pos = particles.front().getPosition();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     gluLookAt(0, 100, 50, 0, 0, 0, 0.0, 1.0, 0.0);
@@ -234,7 +232,7 @@ void FallingDemo::display()
             glutWireCube(boxAxes.at(0).magnitude() * 2);
             int const kekdex = index + 1;
 
-            double red = (double)(0xb00b1e55 % kekdex) / (double)kekdex;
+            double red  = (double)(0xb00b1e55 % kekdex) / (double)kekdex;
             double glin = (double)(0x31337420 % kekdex) / (double)kekdex;
             double blue = (double)(0xdeadbeef % kekdex) / (double)kekdex;
             glColor3f(red, glin, blue);

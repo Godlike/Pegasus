@@ -277,6 +277,7 @@ namespace intersection {
         Vector3 aMassCenter;
         Vector3 bMassCenter;
         std::array<Vector3, 8> aBoxVertices, bBoxVertices;
+        std::array<Vector3, 6> aBoxAxes, bBoxAxes;
         std::array<Vector3, 6> aBoxFaces, bBoxFaces;
         std::vector<Vector3> separatingAxes;
         std::array<double, 8> aBoxFaceDistances, bBoxFaceDistances;
@@ -617,21 +618,27 @@ namespace intersection {
         auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
 
         cache->aMassCenter = aBox->getCenterOfMass();
-        aBox->getAxes(cache->aBoxFaces[0], cache->aBoxFaces[1], cache->aBoxFaces[2]);
-        cache->aBoxFaces = { cache->aBoxFaces[0], cache->aBoxFaces[1], cache->aBoxFaces[2], 
-                             cache->aBoxFaces[0].inverse(), cache->aBoxFaces[1].inverse(), cache->aBoxFaces[2].inverse() };
-        cache->bMassCenter = bBox->getCenterOfMass();
-        bBox->getAxes(cache->bBoxFaces[0], cache->bBoxFaces[1], cache->bBoxFaces[2]);
-        cache->bBoxFaces = { cache->bBoxFaces[0], cache->bBoxFaces[1], cache->bBoxFaces[2], 
-                             cache->bBoxFaces[0].inverse(), cache->bBoxFaces[1].inverse(), cache->bBoxFaces[2].inverse() };
-        calculateBoxVertices(cache->aBoxFaces[0], cache->aBoxFaces[1], cache->aBoxFaces[2], cache->aBoxVertices);
-        calculateBoxVertices(cache->bBoxFaces[0], cache->bBoxFaces[1], cache->bBoxFaces[2], cache->bBoxVertices);
+        aBox->getAxes(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2]);
+        cache->aBoxAxes = { cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2], 
+                            cache->aBoxAxes[0].inverse(), cache->aBoxAxes[1].inverse(), cache->aBoxAxes[2].inverse() };
+        calculateBoxVertices(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2], cache->aBoxVertices);
         std::for_each(cache->aBoxVertices.begin(), cache->aBoxVertices.end(), [cache](auto& v) { v += cache->aMassCenter; });
+        std::transform(cache->aBoxAxes.begin(), cache->aBoxAxes.end(), cache->aBoxFaces.begin(), 
+                      [cache](Vector3 const & v) { return v += cache->aMassCenter; });
+
+        cache->bMassCenter = bBox->getCenterOfMass();
+        bBox->getAxes(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2]);
+        cache->bBoxAxes = { cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2], 
+                            cache->bBoxAxes[0].inverse(), cache->bBoxAxes[1].inverse(), cache->bBoxAxes[2].inverse() };
+        calculateBoxVertices(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2], cache->bBoxVertices);
         std::for_each(cache->bBoxVertices.begin(), cache->bBoxVertices.end(), [cache](auto& v) { v += cache->bMassCenter; });
-        cache->separatingAxes = { cache->aBoxFaces[0].unit(), cache->aBoxFaces[1].unit(), cache->aBoxFaces[2].unit(),
-                                  cache->bBoxFaces[0].unit(), cache->bBoxFaces[1].unit(), cache->bBoxFaces[2].unit() };
-        calculateSeparatingAxes(cache->aBoxFaces.begin(), cache->aBoxFaces.begin() + 3,
-                                cache->bBoxFaces.begin(), cache->bBoxFaces.begin() + 3,
+        std::transform(cache->bBoxAxes.begin(), cache->bBoxAxes.end(), cache->bBoxFaces.begin(),
+            [cache](Vector3 const & v) { return v += cache->bMassCenter; });
+        
+        cache->separatingAxes = { cache->aBoxAxes[0].unit(), cache->aBoxAxes[1].unit(), cache->aBoxAxes[2].unit(),
+                                  cache->bBoxAxes[0].unit(), cache->bBoxAxes[1].unit(), cache->bBoxAxes[2].unit() };
+        calculateSeparatingAxes(cache->aBoxAxes.begin(), cache->aBoxAxes.begin() + 3,
+                                cache->bBoxAxes.begin(), cache->bBoxAxes.begin() + 3,
                                 back_inserter(cache->separatingAxes));
     }
 
@@ -671,12 +678,12 @@ namespace intersection {
 
         std::array<double, 6> distances;
         for (uint32_t i = 0; i < distances.size(); ++i) {
-            distances[i] = (cache->aMassCenter - cache->bMassCenter - cache->bBoxFaces[i]).squareMagnitude();
+            distances[i] = (cache->aMassCenter - cache->bMassCenter - cache->bBoxAxes[i]).squareMagnitude();
         }
 
         auto const minIt = std::min_element(distances.begin(), distances.end());
         auto const minIndex = std::distance(distances.begin(), minIt);
-        cache->contactNormal = cache->bBoxFaces[minIndex].unit();
+        cache->contactNormal = cache->bBoxAxes[minIndex].unit();
 
         return cache->contactNormal;
     }
@@ -684,24 +691,7 @@ namespace intersection {
     template <>
     inline double calculatePenetration<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
-
-        projectAllVertices(cache->contactNormal, cache->aBoxVertices.begin(), cache->aBoxVertices.end(), cache->aBoxFaceDistances.begin());
-        projectAllVertices(cache->contactNormal, cache->bBoxVertices.begin(), cache->bBoxVertices.end(), cache->bBoxFaceDistances.begin());
-
-        double aBoxMassCenterProj = cache->aMassCenter * cache->contactNormal;
-        double bBoxMassCenterProj = cache->bMassCenter * cache->contactNormal;
-
-        double bottomFaceDistance = 0, topFaceDistance = 0;
-        if (aBoxMassCenterProj < bBoxMassCenterProj) {
-            bottomFaceDistance = *std::min_element(cache->bBoxFaceDistances.begin(), cache->bBoxFaceDistances.end());
-            topFaceDistance = *std::max_element(cache->aBoxFaceDistances.begin(), cache->aBoxFaceDistances.end());
-        } else {
-            bottomFaceDistance = *std::min_element(cache->aBoxFaceDistances.begin(), cache->aBoxFaceDistances.end());
-            topFaceDistance = *std::max_element(cache->bBoxFaceDistances.begin(), cache->bBoxFaceDistances.end());
-        }
-
-        cache->penetration = topFaceDistance - bottomFaceDistance;
+        auto cache = static_cast<Cache<Box, Box>*>(cacheBase);      
         return cache->penetration;
     }
 
