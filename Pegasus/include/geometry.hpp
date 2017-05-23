@@ -279,6 +279,8 @@ namespace intersection {
         std::array<Vector3, 8> aBoxVertices, bBoxVertices;
         std::array<Vector3, 6> aBoxFaces, bBoxFaces;
         std::vector<Vector3> separatingAxes;
+        std::array<double, 8> aBoxFaceDistances, bBoxFaceDistances;
+        Vector3 contactNormal;
         double penetration = 0;
     };
 
@@ -545,7 +547,7 @@ namespace intersection {
         auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);
 
         auto minIt = std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end());
-        return cache->sphereRadius - *minIt;
+        return cache->sphereRadius + *minIt;
     }
 
     // Box, Plane
@@ -674,14 +676,32 @@ namespace intersection {
 
         auto const minIt = std::min_element(distances.begin(), distances.end());
         auto const minIndex = std::distance(distances.begin(), minIt);
+        cache->contactNormal = cache->bBoxFaces[minIndex].unit();
 
-        return cache->bBoxFaces[minIndex].unit();
+        return cache->contactNormal;
     }
 
     template <>
     inline double calculatePenetration<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
+
+        projectAllVertices(cache->contactNormal, cache->aBoxVertices.begin(), cache->aBoxVertices.end(), cache->aBoxFaceDistances.begin());
+        projectAllVertices(cache->contactNormal, cache->bBoxVertices.begin(), cache->bBoxVertices.end(), cache->bBoxFaceDistances.begin());
+
+        double aBoxMassCenterProj = cache->aMassCenter * cache->contactNormal;
+        double bBoxMassCenterProj = cache->bMassCenter * cache->contactNormal;
+
+        double bottomFaceDistance = 0, topFaceDistance = 0;
+        if (aBoxMassCenterProj < bBoxMassCenterProj) {
+            bottomFaceDistance = *std::min_element(cache->bBoxFaceDistances.begin(), cache->bBoxFaceDistances.end());
+            topFaceDistance = *std::max_element(cache->aBoxFaceDistances.begin(), cache->aBoxFaceDistances.end());
+        } else {
+            bottomFaceDistance = *std::min_element(cache->aBoxFaceDistances.begin(), cache->aBoxFaceDistances.end());
+            topFaceDistance = *std::max_element(cache->bBoxFaceDistances.begin(), cache->bBoxFaceDistances.end());
+        }
+
+        cache->penetration = topFaceDistance - bottomFaceDistance;
         return cache->penetration;
     }
 

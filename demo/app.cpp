@@ -6,8 +6,9 @@ void Application::initGraphics()
 {
     glClearColor(0.9f, 0.95f, 1.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);
+    glHint(GL_MULTISAMPLE_FILTER_HINT_NV, GL_NICEST);
     glShadeModel(GL_SMOOTH);
-
     setView();
 }
 
@@ -15,7 +16,7 @@ void Application::setView()
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0, static_cast<double>(width) / static_cast<double>(height), 1.0, 500.0);
+    gluPerspective(45.0, static_cast<double>(width) / static_cast<double>(height), 1.0, 500.0);
     glMatrixMode(GL_MODELVIEW);
 }
 

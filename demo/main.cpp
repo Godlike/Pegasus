@@ -8,9 +8,10 @@ Application* app;
 
 void createWindow(const char* title)
 {
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(640, 320);
-    glutInitWindowPosition(0, 0);
+    glutSetOption(GLUT_MULTISAMPLE, 8);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
+    glutInitWindowSize(1600, 900);
+    glutInitWindowPosition(200, 200);
     glutCreateWindow(title);
 }
 
