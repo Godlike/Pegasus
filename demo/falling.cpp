@@ -15,8 +15,8 @@
 #include <random>
 
 static const uint32_t PLANE_COUNT  = 1;
-static const uint32_t BOX_COUNT    = 0;
-static const uint32_t SPHERE_COUNT = std::pow(5, 3);
+static const uint32_t BOX_COUNT    = std::pow(3, 3);
+static const uint32_t SPHERE_COUNT = std::pow(3, 3);
 static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
 static const double   RADIUS       = 2;
 
@@ -32,6 +32,7 @@ public:
     void mouseDrag(int x, int y) override;
 
     void addBox(pegasus::Vector3 const & pos, double boxSide);
+    void addSphere(pegasus::Vector3 const & pos, double radius);
 
 private:
     using Particles       = std::list<pegasus::Particle>;
@@ -58,10 +59,21 @@ void FallingDemo::addBox(pegasus::Vector3 const & pos, double boxSide)
     rigidBodies.emplace_back(
         particles.back(),
         std::make_unique<pegasus::geometry::Box>(
-            particles.back().getPosition(),
+            pos,
             pegasus::Vector3{ boxSide, 0, 0 },
             pegasus::Vector3{ 0, boxSide, 0 },
             pegasus::Vector3{ 0, 0, boxSide })
+    );
+}
+
+void FallingDemo::addSphere(const pegasus::Vector3 &pos, double radius)
+{
+    particles.emplace_back();
+    particles.back().setPosition(pos);
+    particles.back().setInverseMass(0);
+    rigidBodies.emplace_back(
+        particles.back(),
+        std::make_unique<pegasus::geometry::Sphere>(pos, radius)
     );
 }
 
@@ -75,15 +87,15 @@ FallingDemo::FallingDemo()
     double const boxSide  = 15.0;
     double const position = boxSide;
 
+    static auto randDouble = [](){
+        static std::default_random_engine generator;
+        static std::uniform_real_distribution<double> distribution(-5.0, 5.0);
+        return distribution(generator);
+    };
+
     //Create particles
     for (uint32_t i = 0; i < TOTAL_COUNT; ++i)
     {
-        static auto randDouble = [](){
-            static std::default_random_engine generator;
-            static std::uniform_real_distribution<double> distribution(-5.0, 5.0);
-            return distribution(generator);
-        };
-
         static auto curt = [](auto n) {
             return std::pow(n, 0.34);
         };
@@ -98,26 +110,20 @@ FallingDemo::FallingDemo()
 
         particles.emplace_back();
         particles.back().setPosition(
-            row * RADIUS * 2.1 + RADIUS - offset,
-            planeIndex * RADIUS * 2.1 + boxSide * 3,
-            col * RADIUS * 2.1 + RADIUS - offset
+            row * RADIUS * 2.3 + RADIUS - offset,
+            planeIndex * RADIUS * 2.3 + boxSide * 3,
+            col * RADIUS * 2.3 + RADIUS - offset
         );
-        //particles.back().setVelocity(randDouble(), randDouble(), randDouble());
+        particles.back().setVelocity(randDouble() * 0, randDouble(), randDouble() * 0);
         particles.back().setDamping(1.0f);
     }
 
     //Create rigid bodies
     for (auto & particle : particles)
     {
-        static int i = 0;
-        if (i++ < SPHERE_COUNT)
-        {
-            rigidBodies.emplace_back(
-                particle,
-                std::make_unique<pegasus::geometry::Sphere>(particle.getPosition(), double(RADIUS))
-            );
-        }
-        else 
+        bool const isBox = randDouble() > 0;
+
+        if (isBox)
         {
             rigidBodies.emplace_back(
                 particle,
@@ -126,6 +132,13 @@ FallingDemo::FallingDemo()
                     pegasus::Vector3{ RADIUS, 0, 0 },
                     pegasus::Vector3{ 0, RADIUS, 0 },
                     pegasus::Vector3{ 0, 0, RADIUS })
+            );
+        }
+        else 
+        {
+            rigidBodies.emplace_back(
+                particle,
+                std::make_unique<pegasus::geometry::Sphere>(particle.getPosition(), double(RADIUS))
             );
         }
     }
@@ -144,14 +157,14 @@ FallingDemo::FallingDemo()
     {
         contactGenerators.push_back(
             std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(
-                body, rigidBodies, 0.5f
+                body, rigidBodies, (randDouble() + 5) / 10
             )
         );
     }
 
     //Create plane particle and rigid body
     particles.emplace_back();
-    particles.back().setPosition({1, 0, 0});
+    particles.back().setPosition({1, -7.5, 0});
     particles.back().setInverseMass(0);
     rigidBodies.emplace_back(
         particles.back(),
@@ -160,10 +173,17 @@ FallingDemo::FallingDemo()
         )
     );
 
-    addBox({  position * 2, position, 0 }, boxSide);
-    addBox({ -position * 2, position, 0 }, boxSide);
-    addBox({ 0, position, -position * 2 }, boxSide);
-    addBox({ 0, position,  position * 2 }, boxSide);
+    addBox({  0, -position, 0 }, boxSide);
+    addSphere({  position * 1.4, position, 0 }, boxSide);
+    addSphere({ -position * 1.4, position, 0 }, boxSide);
+    addSphere({ 0, position, -position * 1.4 }, boxSide);
+    addSphere({ 0, position,  position * 1.4 }, boxSide);
+
+
+//    addBox({  position * 2, position, 0 }, boxSide);
+//    addBox({ -position * 2, position, 0 }, boxSide);
+//    addBox({ 0, position, -position * 2 }, boxSide);
+//    addBox({ 0, position,  position * 2 }, boxSide);
 }
 
 void FallingDemo::display()
@@ -171,23 +191,29 @@ void FallingDemo::display()
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(0, 100, 50, 0, 0, 0, 0.0, 1.0, 0.0);
+    gluLookAt(30, 0, 50, 0, 0, 0, 0.0, 1.0, 0.0);
 
     //Add bodies
     for (auto & body : rigidBodies)
     {
+        glPushMatrix();
+        glColor3f(1.0f, 0.0f, 0.0f);
+
         static int index = -1;
         index += 1;
         index %= rigidBodies.size();
 
         auto const& p = body.p->getPosition();
         auto const& s = body.s->type;
-        glPushMatrix();
-        glColor3f(1.0f, 0.0f, 0.0f);
+
+        int const kekdex = index + 1;
+        double red  = (double)(0xb00b1e55 % kekdex) / (double)kekdex;
+        double glin = (double)(0x31337420 % kekdex) / (double)kekdex;
+        double blue = (double)(0xdeadbeef % kekdex) / (double)kekdex;
+
         if (s == pegasus::geometry::SimpleShapeType::PLANE) 
         {
-            glTranslatef(p.x, p.y, p.z);
-
+            glTranslatef(0, 0, 0);
             double const planeSideLength = 100;
 
             pegasus::Vector3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
@@ -216,10 +242,13 @@ void FallingDemo::display()
         }
         else if (s == pegasus::geometry::SimpleShapeType::SPHERE)
         {
+            pegasus::geometry::Sphere * sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
+            double const r = sphere->getRadius();
+
             glTranslatef(p.x, p.y, p.z);
-            glutWireSphere(RADIUS + 0.01, 20, 20);
-            glColor3f(0.0f, 1.0f, 0.0f);
-            glutSolidSphere(RADIUS, 20, 20);
+            glutWireSphere(r + 0.01, 20, 20);
+            glColor3f(red, glin, blue);
+            glutSolidSphere(r, 20, 20);
         }
         else if (s == pegasus::geometry::SimpleShapeType::BOX)
         {            
@@ -229,11 +258,6 @@ void FallingDemo::display()
 
             glTranslatef(p.x, p.y, p.z);
             glutWireCube(boxAxes.at(0).magnitude() * 2);
-            int const kekdex = index + 1;
-
-            double red  = (double)(0xb00b1e55 % kekdex) / (double)kekdex;
-            double glin = (double)(0x31337420 % kekdex) / (double)kekdex;
-            double blue = (double)(0xdeadbeef % kekdex) / (double)kekdex;
             glColor3f(red, glin, blue);
             glutSolidCube(boxAxes.at(0).magnitude() * 2);
         }
@@ -254,7 +278,9 @@ void FallingDemo::update()
     zAxis *= pow(0.1f, duration);
     particles.front().addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
-    world.runPhysics(0.01f);
+    world.runPhysics(0.01);
+
+   // std::cout << 1 / duration << std::endl;
 
     for (auto const& body : rigidBodies) {
         body.s->setCenterOfMass(body.p->getPosition());

@@ -246,13 +246,17 @@ namespace intersection {
     struct Cache<Sphere, Box> : CacheBase
     {
         Vector3 boxMassCenter;
-        std::array<Vector3, 3> boxAxes;
+        std::array<Vector3, 6> boxAxes;
         std::array<Vector3, 6> boxNormals;
         std::array<Vector3, 6> boxFaces;
         std::array<double, 6> boxFaceDistances;
         std::array<Vector3, 8> boxVertices;
         std::array<double, 8> boxVerticesProjections;
         std::array<Vector3, 4> separatingAxes;
+        Vector3 boxContactNormal;
+        Vector3 boxContactAxis;
+        Vector3 sphereContactNormal;
+        Vector3 boxSphereVector;
         Vector3 sphereMassCenter;
         double sphereRadius;
     };
@@ -458,7 +462,7 @@ namespace intersection {
         cache->bRadius = bSphere->getRadius();
         cache->bMassCenter = bSphere->getCenterOfMass();
         cache->baVector = cache->aMassCenter - cache->bMassCenter;
-        cache->radiusSum = cache->aRadius + cache->aRadius;
+        cache->radiusSum = cache->aRadius + cache->bRadius;
     }
 
     template <>
@@ -501,10 +505,11 @@ namespace intersection {
         std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n) { n += cache->boxMassCenter; });
         cache->boxNormals = { cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], 
                               cache->boxAxes[0].inverse(), cache->boxAxes[1].inverse(), cache->boxAxes[2].inverse() };
+        cache->boxAxes = cache->boxNormals;
         for (uint32_t i = 0; i < cache->boxNormals.size(); ++i) {
             cache->boxFaces[i] = cache->boxNormals[i] + cache->boxMassCenter;
             cache->boxNormals[i].normalize();
-            cache->boxFaceDistances[i] = cache->boxFaces[i] * cache->boxNormals[i] - cache->sphereMassCenter * cache->boxNormals[i];
+            cache->boxFaceDistances[i] = (cache->boxFaces[i] - cache->sphereMassCenter).magnitude();
         }
     }
 
@@ -536,20 +541,25 @@ namespace intersection {
     template <>
     inline Vector3 calculateContactNormal<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
-        auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);
+        auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);      
 
         auto minIt = std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end());
         auto minIndex = std::distance(cache->boxFaceDistances.begin(), minIt);
-        return cache->boxNormals[minIndex];
+        cache->boxContactAxis = cache->boxAxes[minIndex];
+        cache->boxContactNormal = cache->boxNormals[minIndex];
+        cache->boxSphereVector = cache->boxMassCenter - cache->sphereMassCenter;
+        cache->sphereContactNormal = cache->boxSphereVector.unit();
+
+        return cache->boxContactNormal;
     }
 
     template <>
     inline double calculatePenetration<Sphere, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);
+        double const penetration = std::abs(cache->sphereContactNormal * cache->boxContactAxis) - cache->boxSphereVector.magnitude() - cache->sphereRadius;
 
-        auto minIt = std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end());
-        return cache->sphereRadius + *minIt;
+        return penetration;
     }
 
     // Box, Plane
@@ -600,7 +610,9 @@ namespace intersection {
     inline Vector3 calculateContactNormal<Box, Sphere>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         auto cache = static_cast<Cache<Box, Sphere>*>(cacheBase);
-        return calculateContactNormal<Sphere, Box>(b, a, &cache->sbCache).inverse();
+        calculateContactNormal<Sphere, Box>(b, a, &cache->sbCache);
+
+        return cache->sbCache.sphereContactNormal;
     }
 
     template <>
