@@ -432,7 +432,7 @@ namespace intersection {
     inline Vector3 calculateContactNormal<Sphere, Plane>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
     {
         auto cache = static_cast<Cache<Sphere, Plane>*>(cacheBase);
-        return calculateContactNormal<Plane, Sphere>(a, b, &cache->psCache).inverse();
+        return calculateContactNormal<Plane, Sphere>(b, a, &cache->psCache).inverse();
     }
 
     template <>
