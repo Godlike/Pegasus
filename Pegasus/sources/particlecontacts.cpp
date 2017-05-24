@@ -1,15 +1,13 @@
 #include "Pegasus/include/particlecontacts.hpp"
 
-#include <algorithm>
-
 pegasus::ParticleContact::ParticleContact(
     Particle & a,
     Particle * b,
     double restitution,
     Vector3 const & contactNormal,
     double penetration)
-    : mA(&a)
-    , mB(b)
+    : mParticleA(&a)
+    , mParticleB(b)
     , mRestitution(restitution)
     , mContactNormal(contactNormal)
     , mPenetration(penetration)
@@ -23,14 +21,14 @@ void pegasus::ParticleContact::resolve(double duration) const
     }
 
     resolveVelocity(duration);
-    resolveInterpenetration(duration);
+    resolveInterpenetration();
 }
 
 double pegasus::ParticleContact::calculateSeparatingVelocity() const
 {
-    Vector3 relativeVelocity = mA->getVelocity();
-    if (mB) {
-        relativeVelocity -= mB->getVelocity();
+    Vector3 relativeVelocity = mParticleA->getVelocity();
+    if (mParticleB) {
+        relativeVelocity -= mParticleB->getVelocity();
     }
 
     return relativeVelocity * mContactNormal;
@@ -44,9 +42,9 @@ void pegasus::ParticleContact::resolveVelocity(double duration) const
     }
 
     auto newSepVelocity = -separatingVelocity * mRestitution;
-    auto accCausedVelocity = mA->getAcceleration();
-    if (mB) {
-        accCausedVelocity -= mB->getAcceleration();
+    auto accCausedVelocity = mParticleA->getAcceleration();
+    if (mParticleB) {
+        accCausedVelocity -= mParticleB->getAcceleration();
     }
     auto const accCausedSepVelocity = accCausedVelocity * mContactNormal * duration;
     if (accCausedSepVelocity < 0) {
@@ -58,9 +56,9 @@ void pegasus::ParticleContact::resolveVelocity(double duration) const
     }
     auto const deltaVelocity = newSepVelocity - separatingVelocity;
 
-    auto totalInverseMass = mA->getInverseMass();
-    if (mB) {
-        totalInverseMass += mB->getInverseMass();
+    auto totalInverseMass = mParticleA->getInverseMass();
+    if (mParticleB) {
+        totalInverseMass += mParticleB->getInverseMass();
     }
 
     if (totalInverseMass <= 0) {
@@ -70,21 +68,21 @@ void pegasus::ParticleContact::resolveVelocity(double duration) const
     auto const impulse = deltaVelocity / totalInverseMass;
     auto const impulsePerIMass = mContactNormal * impulse;
 
-    mA->setVelocity(mA->getVelocity() + impulsePerIMass * mA->getInverseMass());
-    if (mB) {
-        mB->setVelocity(mB->getVelocity() + impulsePerIMass * -mB->getInverseMass());
+    mParticleA->setVelocity(mParticleA->getVelocity() + impulsePerIMass * mParticleA->getInverseMass());
+    if (mParticleB) {
+        mParticleB->setVelocity(mParticleB->getVelocity() + impulsePerIMass * -mParticleB->getInverseMass());
     }
 }
 
-void pegasus::ParticleContact::resolveInterpenetration(double duration) const
+void pegasus::ParticleContact::resolveInterpenetration() const
 {
     if (mPenetration <= 0) {
         return;
     }
 
-    double totalInverseMass = mA->getInverseMass();
-    if (mB) {
-        totalInverseMass += mB->getInverseMass();
+    double totalInverseMass = mParticleA->getInverseMass();
+    if (mParticleB) {
+        totalInverseMass += mParticleB->getInverseMass();
     }
 
     if (totalInverseMass <= 0) {
@@ -92,9 +90,9 @@ void pegasus::ParticleContact::resolveInterpenetration(double duration) const
     }
 
     auto const movePerIMass = mContactNormal * (mPenetration / totalInverseMass);
-    mA->setPosition(mA->getPosition() + movePerIMass * mA->getInverseMass());
-    if (mB) {
-        mB->setPosition(mB->getPosition() - movePerIMass * mB->getInverseMass());
+    mParticleA->setPosition(mParticleA->getPosition() + movePerIMass * mParticleA->getInverseMass());
+    if (mParticleB) {
+        mParticleB->setPosition(mParticleB->getPosition() - movePerIMass * mParticleB->getInverseMass());
     }
 }
 

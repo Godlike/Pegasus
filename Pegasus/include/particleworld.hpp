@@ -4,6 +4,7 @@
 #include "Pegasus/include/particle.hpp"
 #include "Pegasus/include/particlecontacts.hpp"
 #include "Pegasus/include/particleforcegenerator.hpp"
+
 #include <vector>
 #include <list>
 #include <memory>

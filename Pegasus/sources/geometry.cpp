@@ -168,6 +168,16 @@ void pegasus::geometry::Box::getAxes(Vector3 & a, Vector3 & b, Vector3 & c) cons
     c = mC;
 }
 
+bool pegasus::geometry::intersection::isPointOnSameSide(
+        Vector3 const& p1, Vector3 const& p2, Vector3 const& a, Vector3 const& b
+    )
+{
+    auto const ab = b - a;
+    auto const cp1 = ab.vectorProduct(p1 - a);
+    auto const cp2 = ab.vectorProduct(p2 - a);
+    return cp1.scalarProduct(cp2) >= 0;
+}
+
 size_t pegasus::geometry::shapeTypePairHash(const ShapeTypePair &p)
 {
     return std::hash<uint32_t>()(static_cast<uint32_t>(p.first)) ^ std::hash<uint32_t>()(static_cast<uint32_t>(p.second));

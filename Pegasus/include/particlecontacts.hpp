@@ -18,15 +18,15 @@ public:
     double calculateSeparatingVelocity() const;
 
 private:
-    Particle * mA;
-    Particle * mB;
-    double mRestitution;
+    Particle * mParticleA;
+    Particle * mParticleB;
+    double  mRestitution;
     Vector3 mContactNormal;
-    double mPenetration;
+    double  mPenetration;
 
 private:
     void resolveVelocity(double duration) const;
-    void resolveInterpenetration(double duration) const;
+    void resolveInterpenetration() const;
 };
 
 using ParticleContacts = std::vector<ParticleContact>;
@@ -54,8 +54,8 @@ class Platform : public ParticleContactGenerator {
 public:
     Vector3 const & start;
     Vector3 const & end;
-    Particles & particles;
-    double blobRadius;
+    Particles const & particles;
+    double const blobRadius;
 
 public:
     Platform(Vector3 const & start, Vector3 const & end, Particles & particles, double blobRadius)

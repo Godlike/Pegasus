@@ -1,6 +1,8 @@
 #ifndef PEGASUS_GEOMETRY_HPP
 #define PEGASUS_GEOMETRY_HPP
 
+#include "Pegasus/include/math.hpp"
+
 #include <algorithm>
 #include <array>
 #include <functional>
@@ -11,8 +13,6 @@
 #include <vector>
 #include <utility>
 #include <cstdint>
-
-#include "Pegasus/include/math.hpp"
 
 namespace pegasus {
 namespace geometry {
@@ -140,15 +140,8 @@ namespace geometry {
 namespace intersection {
 
     // Utility functions
-    template <typename T>
     bool isPointOnSameSide(
-        T const & p1, T const & p2, T const & a, T const & b)
-    {
-        auto const ab = b - a;
-        auto const cp1 = ab.vectorProduct(p1 - a);
-        auto const cp2 = ab.vectorProduct(p2 - a);
-        return cp1.scalarProduct(cp2) >= 0;
-    }
+        Vector3 const& p1, Vector3 const& p2, Vector3 const& a, Vector3 const& b);
 
     template <typename Vector, typename VerticesContainer>
     void calculateBoxVertices(
@@ -718,7 +711,7 @@ namespace intersection {
         return cache->penetration;
     }
 
-} // namespace IntersectionQuery
+} // namespace intersection
 
     // General intersection
     using ShapeTypePair = std::pair<SimpleShapeType, SimpleShapeType>;

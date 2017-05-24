@@ -1,5 +1,10 @@
 #include "Pegasus/include/particlelinks.hpp"
 
+pegasus::ParticleLink::ParticleLink(Particle& a, Particle& b)
+    : mA(a), mB(b)
+{
+}
+
 double pegasus::ParticleLink::currentLenght() const
 {
     auto const relativePos = mA.getPosition() - mB.getPosition();

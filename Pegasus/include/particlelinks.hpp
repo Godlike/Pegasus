@@ -8,11 +8,7 @@ namespace pegasus {
 
 class ParticleLink : public ParticleContactGenerator {
 public:
-    ParticleLink(Particle & a, Particle & b)
-        : mA(a)
-        , mB(b)
-    {
-    }
+    ParticleLink(Particle& a, Particle& b);
 
     virtual uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override = 0;
     double currentLenght() const;

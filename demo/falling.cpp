@@ -15,8 +15,8 @@
 #include <random>
 
 static const uint32_t PLANE_COUNT  = 1;
-static const uint32_t BOX_COUNT    = std::pow(3, 3);
-static const uint32_t SPHERE_COUNT = std::pow(3, 3);
+static const uint32_t BOX_COUNT    = std::pow(4, 3);
+static const uint32_t SPHERE_COUNT = std::pow(4, 3);
 static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
 static const double   RADIUS       = 2;
 

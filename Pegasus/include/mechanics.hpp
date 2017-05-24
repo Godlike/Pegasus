@@ -5,21 +5,16 @@
 #include "Pegasus/include/particle.hpp"
 
 #include <memory>
-#include <vector>
 
 namespace pegasus {
 
 class RigidBody {
 public:
-    Particle * p;
-    std::unique_ptr<geometry::SimpleShape> s;
+    Particle * const p;
+    std::unique_ptr<geometry::SimpleShape> const s;
 
 public:
-    RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s)
-        : p(&p)
-        , s(std::move(s))
-    {
-    }
+    RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s);
 };
 
 } // namespace pegasus

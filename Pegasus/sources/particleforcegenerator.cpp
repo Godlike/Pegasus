@@ -1,7 +1,5 @@
 #include "Pegasus/include/particleforcegenerator.hpp"
 
-#include <cmath>
-
 void pegasus::ParticleForceRegistry::add(
     Particle & p, ParticleForceGenerator & pfg)
 {
@@ -81,7 +79,7 @@ pegasus::ParticleSpring::ParticleSpring(
     Particle & other, double springConstant, double restLenght)
     : mOther(other)
     , mSpringConstant(springConstant)
-    , mRestLenght(restLenght)
+    , mRestLength(restLenght)
 {
 }
 
@@ -90,7 +88,7 @@ void pegasus::ParticleSpring::updateForce(Particle & p)
     Vector3 force = p.getPosition();
     force -= mOther.getPosition();
 
-    auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
+    auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLength);
 
     force.normalize();
     force *= -magnitude;
@@ -101,7 +99,7 @@ pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
     Vector3 const& anchor, double springConstant, double restLenght)
     : mAnchor(anchor)
     , mSpringConstant(springConstant)
-    , mRestLenght(restLenght)
+    , mRestLength(restLenght)
 {
 }
 
@@ -110,7 +108,7 @@ void pegasus::ParticleAnchoredSpring::updateForce(Particle & p)
     Vector3 force = p.getPosition();
     force -= mAnchor;
 
-    auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLenght);
+    auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLength);
 
     force.normalize();
     force *= -magnitude;
@@ -120,7 +118,7 @@ void pegasus::ParticleAnchoredSpring::updateForce(Particle & p)
 pegasus::ParticleBungee::ParticleBungee(Particle & other, double springConstant, double restLenght)
     : mOther(other)
     , mSpringConstant(springConstant)
-    , mRestLenght(restLenght)
+    , mRestLength(restLenght)
 {
 }
 
@@ -130,11 +128,11 @@ void pegasus::ParticleBungee::updateForce(Particle & p)
     force -= mOther.getPosition();
 
     double magnitude = force.magnitude();
-    if (magnitude <= mRestLenght) {
+    if (magnitude <= mRestLength) {
         return;
     }
 
-    magnitude = mSpringConstant * (magnitude - mRestLenght);
+    magnitude = mSpringConstant * (magnitude - mRestLength);
 
     force.normalize();
     force *= -magnitude;

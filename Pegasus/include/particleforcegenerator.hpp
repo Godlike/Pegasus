@@ -2,10 +2,9 @@
 #define PEGASUS_PARTICLE_FORCE_GENERATOR_HPP
 
 #include "Pegasus/include/particle.hpp"
+
 #include <map>
-#include <memory>
 #include <set>
-#include <vector>
 
 namespace pegasus {
 
@@ -50,38 +49,38 @@ private:
 
 class ParticleSpring : public ParticleForceGenerator {
 public:
-    ParticleSpring(Particle & other, double springConstant, double restLenght);
+    ParticleSpring(Particle & other, double springConstant, double restLength);
 
     void updateForce(Particle & p) override;
 
 private:
     Particle & mOther;
     double const mSpringConstant;
-    double const mRestLenght;
+    double const mRestLength;
 };
 
 class ParticleAnchoredSpring : public ParticleForceGenerator {
 public:
-    ParticleAnchoredSpring(Vector3 const& anchor, double springConstant, double restLenght);
+    ParticleAnchoredSpring(Vector3 const& anchor, double springConstant, double restLength);
 
     void updateForce(Particle & p) override;
 
 private:
     Vector3 const mAnchor;
     double const mSpringConstant;
-    double const mRestLenght;
+    double const mRestLength;
 };
 
 class ParticleBungee : public ParticleForceGenerator {
 public:
-    ParticleBungee(Particle & other, double springConstant, double restLenght);
+    ParticleBungee(Particle & other, double springConstant, double restLength);
 
     void updateForce(Particle & p) override;
 
 private:
     Particle & mOther;
     double const mSpringConstant;
-    double const mRestLenght;
+    double const mRestLength;
 };
 
 class ParticleBuoyancy : public ParticleForceGenerator {
@@ -115,24 +114,24 @@ private:
 template < typename Particles >
 class BlobForceGenerator : public ParticleForceGenerator {
 public:
-    Particles & particles;
-    double maxReplusion;
-    double maxAttraction;
-    double minNaturalDistance, maxNaturalDistance;
-    double floatHead;
-    unsigned int maxFloat;
-    double maxDistance;
-
-public:
-    explicit BlobForceGenerator(Particles & particles)
+    explicit BlobForceGenerator(
+        Particles & particles, 
+        double maxRepulsion = 0,
+        double maxAttraction = 0,
+        double minNaturalDistance = 0, 
+        double maxNaturalDistance = 0,
+        double floatHead = 0,
+        unsigned int maxFloat = 0,
+        double maxDistance = 0
+    )
     : particles(particles)
-    , maxReplusion(0)
-    , maxAttraction(0)
-    , minNaturalDistance(0)
-    , maxNaturalDistance(0)
-    , floatHead(0)
-    , maxFloat(0)
-    , maxDistance(0)
+    , maxRepulsion(maxRepulsion)
+    , maxAttraction(maxAttraction)
+    , minNaturalDistance(minNaturalDistance)
+    , maxNaturalDistance(maxNaturalDistance)
+    , floatHead(floatHead)
+    , maxFloat(maxFloat)
+    , maxDistance(maxDistance)
     {
     }
 
@@ -152,7 +151,7 @@ public:
             if (distance < minNaturalDistance) {
                 // Use a repulsion force.
                 distance = 1.0f - distance / minNaturalDistance;
-                particle.addForce(separation.unit() * (1.0f - distance) * maxReplusion * -1.0f);
+                particle.addForce(separation.unit() * (1.0f - distance) * maxRepulsion * -1.0f);
                 ++joinCount;
             } else if (distance > maxNaturalDistance && distance < maxDistance) {
                 // Use an attraction force.
@@ -174,6 +173,15 @@ public:
             particle.addForce(Vector3(0, force, 0));
         }
     }
+
+private:
+    Particles & particles;
+    double const maxRepulsion;
+    double const maxAttraction;
+    double const minNaturalDistance, maxNaturalDistance;
+    double const floatHead;
+    uint32_t const maxFloat;
+    double maxDistance;
 };
 
 } // namespace pegasus
