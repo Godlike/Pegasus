@@ -114,7 +114,7 @@ FallingDemo::FallingDemo()
             planeIndex * RADIUS * 2.3 + boxSide * 3,
             col * RADIUS * 2.3 + RADIUS - offset
         );
-        particles.back().setVelocity(randDouble() * 0, randDouble(), randDouble() * 0);
+        particles.back().setVelocity(randDouble(), randDouble(), randDouble());
         particles.back().setDamping(1.0f);
     }
 
@@ -164,7 +164,7 @@ FallingDemo::FallingDemo()
 
     //Create plane particle and rigid body
     particles.emplace_back();
-    particles.back().setPosition({1, -7.5, 0});
+    particles.back().setPosition({1, -position, 0});
     particles.back().setInverseMass(0);
     rigidBodies.emplace_back(
         particles.back(),
@@ -173,17 +173,10 @@ FallingDemo::FallingDemo()
         )
     );
 
-    addBox({  0, -position, 0 }, boxSide);
-    addSphere({  position * 1.4, position, 0 }, boxSide);
-    addSphere({ -position * 1.4, position, 0 }, boxSide);
-    addSphere({ 0, position, -position * 1.4 }, boxSide);
-    addSphere({ 0, position,  position * 1.4 }, boxSide);
-
-
-//    addBox({  position * 2, position, 0 }, boxSide);
-//    addBox({ -position * 2, position, 0 }, boxSide);
-//    addBox({ 0, position, -position * 2 }, boxSide);
-//    addBox({ 0, position,  position * 2 }, boxSide);
+    addSphere({  0, -position, 0 }, boxSide);
+    addBox({  position * 2, position, 0 }, boxSide);
+    addBox({ -position * 2, position, 0 }, boxSide);
+    addBox({ 0, position, -position * 2 }, boxSide);
 }
 
 void FallingDemo::display()
@@ -191,7 +184,7 @@ void FallingDemo::display()
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
-    gluLookAt(30, 0, 50, 0, 0, 0, 0.0, 1.0, 0.0);
+    gluLookAt(30, 100, 50, 0, 0, 0, 0.0, 1.0, 0.0);
 
     //Add bodies
     for (auto & body : rigidBodies)
@@ -279,8 +272,6 @@ void FallingDemo::update()
     particles.front().addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
     world.runPhysics(0.01);
-
-   // std::cout << 1 / duration << std::endl;
 
     for (auto const& body : rigidBodies) {
         body.s->setCenterOfMass(body.p->getPosition());
