@@ -14,11 +14,11 @@
 #include <list>
 #include <random>
 
-#define PLANE_COUNT 1
-#define BOX_COUNT 0
-#define SPHERE_COUNT std::pow(3, 3)
-#define TOTAL_COUNT BOX_COUNT+SPHERE_COUNT
-#define RADIUS 4.5
+static const uint32_t PLANE_COUNT  = 1;
+static const uint32_t BOX_COUNT    = 0;
+static const uint32_t SPHERE_COUNT = std::pow(5, 3);
+static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
+static const double   RADIUS       = 2;
 
 class FallingDemo : public Application {
 public:
@@ -98,9 +98,9 @@ FallingDemo::FallingDemo()
 
         particles.emplace_back();
         particles.back().setPosition(
-            row * RADIUS * 2 + RADIUS - offset,
-            planeIndex * RADIUS * 2 + boxSide,
-            col * RADIUS * 2 + RADIUS - offset
+            row * RADIUS * 2.1 + RADIUS - offset,
+            planeIndex * RADIUS * 2.1 + boxSide * 3,
+            col * RADIUS * 2.1 + RADIUS - offset
         );
         //particles.back().setVelocity(randDouble(), randDouble(), randDouble());
         particles.back().setDamping(1.0f);
@@ -138,17 +138,6 @@ FallingDemo::FallingDemo()
     {
         forceRegistry.add(particle, *forces.front());
     }
-    
-    //Create plane particle and rigid body
-    particles.emplace_back();
-    particles.back().setPosition({1, -10, 0});
-    particles.back().setInverseMass(0);
-    rigidBodies.emplace_back(
-        particles.back(),
-        std::make_unique<pegasus::geometry::Plane>(
-           particles.back().getPosition(), pegasus::Vector3(0, 1.0, 0).unit()
-        )
-    );
 
     //Create contact generators
     for (auto & body : rigidBodies)
@@ -160,7 +149,17 @@ FallingDemo::FallingDemo()
         );
     }
 
-    addBox({ 0, -position, 0 }, boxSide);
+    //Create plane particle and rigid body
+    particles.emplace_back();
+    particles.back().setPosition({1, 0, 0});
+    particles.back().setInverseMass(0);
+    rigidBodies.emplace_back(
+        particles.back(),
+        std::make_unique<pegasus::geometry::Plane>(
+           particles.back().getPosition(), pegasus::Vector3(0, 1.0, 0).unit()
+        )
+    );
+
     addBox({  position * 2, position, 0 }, boxSide);
     addBox({ -position * 2, position, 0 }, boxSide);
     addBox({ 0, position, -position * 2 }, boxSide);
@@ -255,7 +254,7 @@ void FallingDemo::update()
     zAxis *= pow(0.1f, duration);
     particles.front().addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
-    world.runPhysics(duration);
+    world.runPhysics(0.01f);
 
     for (auto const& body : rigidBodies) {
         body.s->setCenterOfMass(body.p->getPosition());

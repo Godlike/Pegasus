@@ -280,7 +280,8 @@ namespace intersection {
         std::array<Vector3, 6> aBoxAxes, bBoxAxes;
         std::array<Vector3, 6> aBoxFaces, bBoxFaces;
         std::vector<Vector3> separatingAxes;
-        std::array<double, 8> aBoxFaceDistances, bBoxFaceDistances;
+        std::array<double, 6> aBoxFaceDistances, bBoxFaceDistances;
+        std::array<double, 8> aBoxVerticesDistances, bBoxVerticesDistances;
         Vector3 contactNormal;
         double penetration = 0;
     };
@@ -640,6 +641,9 @@ namespace intersection {
         calculateSeparatingAxes(cache->aBoxAxes.begin(), cache->aBoxAxes.begin() + 3,
                                 cache->bBoxAxes.begin(), cache->bBoxAxes.begin() + 3,
                                 back_inserter(cache->separatingAxes));
+
+        cache->aBoxVerticesDistances = {};
+        cache->bBoxVerticesDistances = {};
     }
 
     template <>
@@ -647,24 +651,21 @@ namespace intersection {
     {
         auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
 
-        std::array<double, 8> aBoxProjections, bBoxProjections;
         for (auto axis : cache->separatingAxes) {
-            projectAllVertices(axis, cache->aBoxVertices.begin(), cache->aBoxVertices.end(), aBoxProjections.begin());
-            projectAllVertices(axis, cache->bBoxVertices.begin(), cache->bBoxVertices.end(), bBoxProjections.begin());
-            std::sort(aBoxProjections.begin(), aBoxProjections.end());
-            std::sort(bBoxProjections.begin(), bBoxProjections.end());
+            projectAllVertices(axis, cache->aBoxVertices.begin(), cache->aBoxVertices.end(), cache->aBoxVerticesDistances.begin());
+            projectAllVertices(axis, cache->bBoxVertices.begin(), cache->bBoxVertices.end(), cache->bBoxVerticesDistances.begin());
+            std::sort(cache->aBoxVerticesDistances.begin(), cache->aBoxVerticesDistances.end());
+            std::sort(cache->bBoxVerticesDistances.begin(), cache->bBoxVerticesDistances.end());
 
-            if (aBoxProjections.back() < bBoxProjections.back()) {
-                if (aBoxProjections.back() < bBoxProjections.front()) {
+            if (cache->aBoxVerticesDistances.back() < cache->bBoxVerticesDistances.back()) {
+                if (cache->aBoxVerticesDistances.back() < cache->bBoxVerticesDistances.front()) {
                     return false;
                 }
-                cache->penetration = aBoxProjections.back() - bBoxProjections.front();
             }
             else {
-                if (bBoxProjections.back() < aBoxProjections.front()) {
+                if (cache->bBoxVerticesDistances.back() < cache->aBoxVerticesDistances.front()) {
                     return false;
                 }
-                cache->penetration = bBoxProjections.back() - aBoxProjections.front();
             }
         }
 
@@ -678,7 +679,7 @@ namespace intersection {
 
         std::array<double, 6> distances;
         for (uint32_t i = 0; i < distances.size(); ++i) {
-            distances[i] = (cache->aMassCenter - cache->bMassCenter - cache->bBoxAxes[i]).squareMagnitude();
+            distances[i] = (cache->aMassCenter - cache->bBoxFaces[i]).magnitude();
         }
 
         auto const minIt = std::min_element(distances.begin(), distances.end());
@@ -690,8 +691,18 @@ namespace intersection {
 
     template <>
     inline double calculatePenetration<Box, Box>(SimpleShape const *a, SimpleShape const *b, CacheBase *cacheBase)
-    {
+    {       
         auto cache = static_cast<Cache<Box, Box>*>(cacheBase);      
+
+        projectAllVertices(cache->contactNormal, cache->aBoxVertices.begin(),
+                           cache->aBoxVertices.end(), cache->aBoxVerticesDistances.begin());
+        projectAllVertices(cache->contactNormal, cache->bBoxVertices.begin(),
+                           cache->bBoxVertices.end(), cache->bBoxVerticesDistances.begin());
+
+        double bMaxVertexDistance = *std::max_element(cache->bBoxVerticesDistances.begin(), cache->bBoxVerticesDistances.end());
+        double aMinVertexDistance = *std::min_element(cache->aBoxVerticesDistances.begin(), cache->aBoxVerticesDistances.end());
+        cache->penetration = bMaxVertexDistance - aMinVertexDistance;
+
         return cache->penetration;
     }
 
@@ -833,28 +844,28 @@ namespace intersection {
                 = &intersection::calculatePenetration<Box, Box>;
         }
 
-        void initialize(SimpleShape const * aSphere, SimpleShape const * bSphere)
+        void initialize(SimpleShape const * a, SimpleShape const * b)
         {
-            initializeFunctors[std::make_pair(aSphere->type, bSphere->type)](
-                aSphere, bSphere, intersectionCaches[std::make_pair(aSphere->type, bSphere->type)].get());
+            initializeFunctors[std::make_pair(a->type, b->type)](
+                a, b, intersectionCaches[std::make_pair(a->type, b->type)].get());
         }
 
-        bool overlap(SimpleShape const* aSphere, SimpleShape const * bSphere)
+        bool overlap(SimpleShape const* a, SimpleShape const * b)
         {
-            return overlapFunctors[std::make_pair(aSphere->type, bSphere->type)](
-                aSphere, bSphere, intersectionCaches[std::make_pair(aSphere->type, bSphere->type)].get());
+            return overlapFunctors[std::make_pair(a->type, b->type)](
+                a, b, intersectionCaches[std::make_pair(a->type, b->type)].get());
         }
 
-        Vector3 calculateContactNormal(SimpleShape const * aSphere, SimpleShape const * bSphere)
+        Vector3 calculateContactNormal(SimpleShape const * a, SimpleShape const * b)
         {
-            return calculateContactNormalFunctors[std::make_pair(aSphere->type, bSphere->type)](
-                aSphere, bSphere, intersectionCaches[std::make_pair(aSphere->type, bSphere->type)].get());
+            return calculateContactNormalFunctors[std::make_pair(a->type, b->type)](
+                a, b, intersectionCaches[std::make_pair(a->type, b->type)].get());
         }
 
-        double calculatePenetration(SimpleShape const * aSphere, SimpleShape const * bSphere)
+        double calculatePenetration(SimpleShape const * a, SimpleShape const * b)
         {
-            return calculatePenetrationFunctors[std::make_pair(aSphere->type, bSphere->type)](
-                aSphere, bSphere, intersectionCaches[std::make_pair(aSphere->type, bSphere->type)].get());
+            return calculatePenetrationFunctors[std::make_pair(a->type, b->type)](
+                a, b, intersectionCaches[std::make_pair(a->type, b->type)].get());
         }
     };
 

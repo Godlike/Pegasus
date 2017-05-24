@@ -143,16 +143,13 @@ public:
             }
 
             static geometry::IntersectionQuery intersection;
-            intersection.initialize(body.s.get(), mRigidBody.s.get());
+            intersection.initialize(mRigidBody.s.get(), body.s.get());
 
-            if (intersection.overlap(body.s.get(), mRigidBody.s.get()))
+            if (intersection.overlap(mRigidBody.s.get(), body.s.get()) && ++used)
             {
-                contacts.emplace_back(
-                    *body.p, mRigidBody.p, mRestitution,
-                    intersection.calculateContactNormal(body.s.get(), mRigidBody.s.get()),
-                    intersection.calculatePenetration(body.s.get(), mRigidBody.s.get())
-                );
-                ++used;
+                Vector3 const contactNormal = intersection.calculateContactNormal(mRigidBody.s.get(), body.s.get());
+                double  const penetration   = intersection.calculatePenetration(mRigidBody.s.get(), body.s.get());
+                contacts.emplace_back(*mRigidBody.p, body.p, mRestitution, contactNormal, penetration);
             }
         }
 
