@@ -1,8 +1,4 @@
 /*
-* Timing functions.
-*
-* Part of the Cyclone physics system.
-*
 * Copyright (c) Ian Millington 2003-2006. All Rights Reserved.
 *
 * This software is distributed under licence. Use of this software

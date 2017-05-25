@@ -34,7 +34,6 @@ public:
     void display() override;
     void update() override;
     void key(unsigned char key) override;
-    void mouseDrag(int x, int y) override;
 
     void addBox(pegasus::Vector3 const & pos, double boxSide);
     void addSphere(pegasus::Vector3 const & pos, double radius);
@@ -286,10 +285,6 @@ void FallingDemo::update()
 }
 
 const char* FallingDemo::getTitle() { return "Pegasus Falling Demo"; }
-
-void FallingDemo::mouseDrag(int x, int y)
-{
-}
 
 void FallingDemo::key(unsigned char key)
 {

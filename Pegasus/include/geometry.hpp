@@ -716,45 +716,6 @@ namespace intersection {
 
 } // namespace intersection
 
-    struct initialize
-    {
-        template < typename ShapeA, typename ShapeB >
-        void operator()(SimpleShape const * shapeA, SimpleShape const * shapeB, intersection::CacheBase * cache) const
-        {
-            return intersection::initialize<ShapeA, ShapeB>(shapeA, shapeB, cache);
-        }
-    };
-
-    
-    struct overlap
-    {
-        template < typename ShapeA, typename ShapeB >
-        bool operator()(SimpleShape const * shapeA, SimpleShape const * shapeB, intersection::CacheBase * cache) const
-        {
-            return intersection::overlap<ShapeA, ShapeB>(shapeA, shapeB, cache);
-        }
-    };
-
-    
-    struct calculateContactNormal
-    {
-        template < typename ShapeA, typename ShapeB >
-        Vector3 operator()(SimpleShape const * shapeA, SimpleShape const * shapeB, intersection::CacheBase * cache) const
-        {
-            return intersection::calculateContactNormal<ShapeA, ShapeB>(shapeA, shapeB, cache);
-        }
-    };
-
-    
-    struct calculatePenetration
-    {
-        template < typename ShapeA, typename ShapeB >
-        double operator()(SimpleShape const * shapeA, SimpleShape const * shapeB, intersection::CacheBase * cache) const
-        {
-            return intersection::calculatePenetration<ShapeA, ShapeB>(shapeA, shapeB, cache);
-        }
-    };
-
     // General intersection
     using ShapeTypePair = std::pair<SimpleShapeType, SimpleShapeType>;
 
