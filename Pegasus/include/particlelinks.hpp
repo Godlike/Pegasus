@@ -22,7 +22,7 @@ public:
     ParticleLink(Particle& a, Particle& b);
 
     virtual uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override = 0;
-    double currentLenght() const;
+    double currentLength() const;
 
 protected:
     Particle & mA;

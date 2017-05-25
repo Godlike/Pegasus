@@ -16,7 +16,7 @@ pegasus::ParticleLink::ParticleLink(Particle& a, Particle& b)
 {
 }
 
-double pegasus::ParticleLink::currentLenght() const
+double pegasus::ParticleLink::currentLength() const
 {
     auto const relativePos = mA.getPosition() - mB.getPosition();
     return relativePos.magnitude();
@@ -36,7 +36,7 @@ pegasus::ParticleCabel::ParticleCabel(
 uint32_t
 pegasus::ParticleCabel::addContact(ParticleContacts & contacts, uint32_t limit) const
 {
-    auto const length = currentLenght();
+    auto const length = currentLength();
 
     if (length < maxLength) {
         return 0;
@@ -58,7 +58,7 @@ pegasus::ParticleRod::ParticleRod(Particle & a, Particle & b, double length)
 uint32_t
 pegasus::ParticleRod::addContact(ParticleContacts& contacts, uint32_t limit) const
 {
-    double const currentLen = currentLenght();
+    double const currentLen = currentLength();
 
     if (currentLen == length) {
         return 0;
