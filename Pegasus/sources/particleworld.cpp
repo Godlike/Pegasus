@@ -1,3 +1,14 @@
+/*
+* Implementation file for random number generation.
+*
+* Part of the Cyclone physics system.
+*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
 #include "Pegasus/include/particleworld.hpp"
 
 pegasus::ParticleWorld::ParticleWorld(

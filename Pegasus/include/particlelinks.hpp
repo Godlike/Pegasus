@@ -1,5 +1,16 @@
-#ifndef PARTICLE_LINKS_HPP
-#define PARTICLE_LINKS_HPP
+/*
+* Implementation file for particle links.
+*
+* Part of the Cyclone physics system.
+*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
+#ifndef PEGASUS_PARTICLE_LINKS_HPP
+#define PEGASUS_PARTICLE_LINKS_HPP
 
 #include "Pegasus/include/particle.hpp"
 #include "Pegasus/include/particlecontacts.hpp"
@@ -41,4 +52,4 @@ private:
 
 } // namespace pegasus
 
-#endif // PARTICLE_LINKS_HPP
+#endif // PEGASUS_PARTICLE_LINKS_HPP

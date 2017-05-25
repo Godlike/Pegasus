@@ -1,5 +1,16 @@
-#ifndef PEGASUS_DEMO_TIMING_H
-#define PEGASUS_DEMO_TIMING_H
+/*
+* Timing functions.
+*
+* Part of the Cyclone physics system.
+*
+* Copyright (c) Ian Millington 2003-2006. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
+#ifndef PEGASUS_DEMO_TIMING_HPP
+#define PEGASUS_DEMO_TIMING_HPP
 
 struct TimingData {
     unsigned frameNumber;
@@ -36,4 +47,4 @@ private:
     TimingData& operator=(const TimingData&);
 };
 
-#endif // CYCLONE_DEMO_TIMING_H
+#endif // PEGASUS_DEMO_TIMING_HPP

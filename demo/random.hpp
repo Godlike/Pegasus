@@ -1,5 +1,16 @@
-#ifndef PEGASUS_RANDOM_H
-#define PEGASUS_RANDOM_H
+/*
+* Implementation file for random number generation.
+*
+* Part of the Cyclone physics system.
+*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
+#ifndef PEGASUS_RANDOM_HPP
+#define PEGASUS_RANDOM_HPP
 
 #include "Pegasus/include/math.hpp"
 
@@ -107,4 +118,4 @@ private:
 
 } // namespace pegasus
 
-#endif // PEGASUS_BODY_H
+#endif // PEGASUS_BODY_HPP

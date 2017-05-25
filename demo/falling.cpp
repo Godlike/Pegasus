@@ -1,3 +1,8 @@
+/*
+* Copyright (C) 2017 by Godlike
+* This code is licensed under the MIT license (MIT)
+* (http://opensource.org/licenses/MIT)
+*/
 #include "demo/app.hpp"
 #include "demo/ogl_headers.hpp"
 #include "demo/timing.hpp"
