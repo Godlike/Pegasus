@@ -87,10 +87,10 @@ void pegasus::ParticleDrag::updateForce(Particle & p)
 }
 
 pegasus::ParticleSpring::ParticleSpring(
-    Particle & other, double springConstant, double restLenght)
+    Particle & other, double springConstant, double restLength)
     : mOther(other)
     , mSpringConstant(springConstant)
-    , mRestLength(restLenght)
+    , mRestLength(restLength)
 {
 }
 
@@ -107,10 +107,10 @@ void pegasus::ParticleSpring::updateForce(Particle & p)
 }
 
 pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
-    Vector3 const& anchor, double springConstant, double restLenght)
+    Vector3 const& anchor, double springConstant, double restLength)
     : mAnchor(anchor)
     , mSpringConstant(springConstant)
-    , mRestLength(restLenght)
+    , mRestLength(restLength)
 {
 }
 
@@ -126,10 +126,10 @@ void pegasus::ParticleAnchoredSpring::updateForce(Particle & p)
     p.addForce(force);
 }
 
-pegasus::ParticleBungee::ParticleBungee(Particle & other, double springConstant, double restLenght)
+pegasus::ParticleBungee::ParticleBungee(Particle & other, double springConstant, double restLength)
     : mOther(other)
     , mSpringConstant(springConstant)
-    , mRestLength(restLenght)
+    , mRestLength(restLength)
 {
 }
 
