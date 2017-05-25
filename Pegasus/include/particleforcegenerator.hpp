@@ -123,9 +123,9 @@ private:
 };
 
 template < typename Particles >
-class BlobForceGenerator : public ParticleForceGenerator {
+class BlobForceGenerator2D : public ParticleForceGenerator {
 public:
-    explicit BlobForceGenerator(
+    explicit BlobForceGenerator2D(
         Particles & particles, 
         double maxRepulsion = 0,
         double maxAttraction = 0,

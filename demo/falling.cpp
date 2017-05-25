@@ -201,7 +201,7 @@ void FallingDemo::display()
         index += 1;
         index %= rigidBodies.size();
 
-        auto const& p = body.p->getPosition();
+        auto const& p = body.p.getPosition();
         auto const& s = body.s->type;
 
         int const kekdex = index + 1;
@@ -279,7 +279,7 @@ void FallingDemo::update()
     world.runPhysics(0.01);
 
     for (auto const& body : rigidBodies) {
-        body.s->setCenterOfMass(body.p->getPosition());
+        body.s->setCenterOfMass(body.p.getPosition());
     }
 
     Application::update();

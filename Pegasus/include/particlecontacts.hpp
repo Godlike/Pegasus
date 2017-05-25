@@ -160,7 +160,7 @@ public:
             {
                 Vector3 const contactNormal = intersection.calculateContactNormal(mRigidBody.s.get(), body.s.get());
                 double  const penetration   = intersection.calculatePenetration(mRigidBody.s.get(), body.s.get());
-                contacts.emplace_back(*mRigidBody.p, body.p, mRestitution, contactNormal, penetration);
+                contacts.emplace_back(mRigidBody.p, &body.p, mRestitution, contactNormal, penetration);
             }
         }
 

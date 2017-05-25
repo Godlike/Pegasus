@@ -56,7 +56,7 @@ void pegasus::Particle::setPosition(Vector3 const& position)
 
 void pegasus::Particle::setPosition(double x, double y, double z)
 {
-    mPosition = Vector3(x, y, z);
+    setPosition({ x, y, z });
 }
 
 pegasus::Vector3 pegasus::Particle::getVelocity() const
@@ -71,7 +71,7 @@ void pegasus::Particle::setVelocity(Vector3 const& velocity)
 
 void pegasus::Particle::setVelocity(double x, double y, double z)
 {
-    mVelocity = Vector3(x, y, z);
+    setVelocity({ x, y, z });
 }
 
 pegasus::Vector3 pegasus::Particle::getAcceleration() const
@@ -86,7 +86,7 @@ void pegasus::Particle::setAcceleration(Vector3 const& acceleration)
 
 void pegasus::Particle::setAcceleration(double x, double y, double z)
 {
-    mAcceleration = Vector3(x, y, z);
+    setAcceleration({ x, y, z });
 }
 
 double pegasus::Particle::getDamping() const

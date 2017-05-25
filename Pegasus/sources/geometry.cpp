@@ -15,7 +15,7 @@ void pegasus::geometry::Shape::setCenterOfMass(Vector3 const & centerOfMass)
     mCenterOfMass = centerOfMass;
 }
 
-pegasus::Vector3 pegasus::geometry::Shape::getCenterOfMass() const
+pegasus::Vector3 const& pegasus::geometry::Shape::getCenterOfMass() const
 {
     return mCenterOfMass;
 }
@@ -37,7 +37,7 @@ void pegasus::geometry::Plane::setNormal(Vector3 const & normal)
     mNormal = normal;
 }
 
-pegasus::Vector3 pegasus::geometry::Plane::getNormal() const
+pegasus::Vector3 const& pegasus::geometry::Plane::getNormal() const
 {
     return mNormal;
 }
@@ -66,7 +66,7 @@ void pegasus::geometry::Triangle::getAxes(Vector3 & a, Vector3 & b, Vector3 & c)
     c = mC;
 }
 
-pegasus::Vector3 pegasus::geometry::Triangle::getNormal() const
+pegasus::Vector3 const& pegasus::geometry::Triangle::getNormal() const
 {
     return mNormal;
 }
@@ -104,7 +104,7 @@ void pegasus::geometry::Cone::setAppex(Vector3 const & a)
     mA = a;
 }
 
-pegasus::Vector3 pegasus::geometry::Cone::getAppex() const
+pegasus::Vector3 const& pegasus::geometry::Cone::getAppex() const
 {
     return mA;
 }
@@ -131,7 +131,7 @@ void pegasus::geometry::Capsule::setHalfHeight(Vector3 const & halfHeight)
     mHalfHeight = halfHeight;
 }
 
-pegasus::Vector3 pegasus::geometry::Capsule::getHalfHeight() const
+pegasus::Vector3 const& pegasus::geometry::Capsule::getHalfHeight() const
 {
     return mHalfHeight;
 }
@@ -173,6 +173,11 @@ void pegasus::geometry::Box::getAxes(Vector3 & a, Vector3 & b, Vector3 & c) cons
     c = mC;
 }
 
+size_t pegasus::geometry::ShapeTypePairHash::operator()(ShapeTypePair const& p) const
+{
+    return std::hash<uint32_t>()(static_cast<uint32_t>(p.first)) ^ std::hash<uint32_t>()(static_cast<uint32_t>(p.second));
+}
+
 bool pegasus::geometry::intersection::isPointOnSameSide(
         Vector3 const& p1, Vector3 const& p2, Vector3 const& a, Vector3 const& b
     )
@@ -181,9 +186,4 @@ bool pegasus::geometry::intersection::isPointOnSameSide(
     auto const cp1 = ab.vectorProduct(p1 - a);
     auto const cp2 = ab.vectorProduct(p2 - a);
     return cp1.scalarProduct(cp2) >= 0;
-}
-
-size_t pegasus::geometry::shapeTypePairHash(const ShapeTypePair &p)
-{
-    return std::hash<uint32_t>()(static_cast<uint32_t>(p.first)) ^ std::hash<uint32_t>()(static_cast<uint32_t>(p.second));
 }

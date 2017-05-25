@@ -28,7 +28,7 @@ namespace geometry {
         explicit Shape(Vector3 const & centerOfMass);
 
         void setCenterOfMass(Vector3 const & centerOfMass);
-        Vector3 getCenterOfMass() const;
+        Vector3 const & getCenterOfMass() const;
 
     private:
         Vector3 mCenterOfMass;
@@ -57,7 +57,7 @@ namespace geometry {
         Plane(Vector3 const & centerOfMass, Vector3 const & normal);
 
         void setNormal(Vector3 const & normal);
-        Vector3 getNormal() const;
+        Vector3 const & getNormal() const;
 
     private:
         Vector3 mNormal;
@@ -69,7 +69,7 @@ namespace geometry {
 
         void setAxes(Vector3 const & a, Vector3 const & b, Vector3 const & c);
         void getAxes(Vector3& a, Vector3& b, Vector3& c) const;
-        Vector3 getNormal() const;
+        Vector3 const & getNormal() const;
 
     private:
         Vector3 mA;
@@ -99,7 +99,7 @@ namespace geometry {
         Cone(Vector3 const & centerOfMass, Vector3 const & a, double r);
 
         void setAppex(Vector3 const & a);
-        Vector3 getAppex() const;
+        Vector3 const & getAppex() const;
 
         void setRadius(double r);
         double getRadius() const;
@@ -114,7 +114,7 @@ namespace geometry {
         Capsule(Vector3 const & centerOfMass, Vector3 const & halfHeight, double r);
 
         void setHalfHeight(Vector3 const & halfHeight);
-        Vector3 getHalfHeight() const;
+        Vector3 const & getHalfHeight() const;
 
         void setRadius(double r);
         double getRadius() const;
@@ -672,10 +672,8 @@ namespace intersection {
                     return false;
                 }
             }
-            else {
-                if (cache->bBoxVerticesDistances.back() < cache->aBoxVerticesDistances.front()) {
-                    return false;
-                }
+            else if (cache->bBoxVerticesDistances.back() < cache->aBoxVerticesDistances.front()) {
+                return false;
             }
         }
 
@@ -718,45 +716,88 @@ namespace intersection {
 
 } // namespace intersection
 
+    struct initialize
+    {
+        template < typename ShapeA, typename ShapeB >
+        void operator()(SimpleShape const * shapeA, SimpleShape const * shapeB, intersection::CacheBase * cache) const
+        {
+            return intersection::initialize<ShapeA, ShapeB>(shapeA, shapeB, cache);
+        }
+    };
+
+    
+    struct overlap
+    {
+        template < typename ShapeA, typename ShapeB >
+        bool operator()(SimpleShape const * shapeA, SimpleShape const * shapeB, intersection::CacheBase * cache) const
+        {
+            return intersection::overlap<ShapeA, ShapeB>(shapeA, shapeB, cache);
+        }
+    };
+
+    
+    struct calculateContactNormal
+    {
+        template < typename ShapeA, typename ShapeB >
+        Vector3 operator()(SimpleShape const * shapeA, SimpleShape const * shapeB, intersection::CacheBase * cache) const
+        {
+            return intersection::calculateContactNormal<ShapeA, ShapeB>(shapeA, shapeB, cache);
+        }
+    };
+
+    
+    struct calculatePenetration
+    {
+        template < typename ShapeA, typename ShapeB >
+        double operator()(SimpleShape const * shapeA, SimpleShape const * shapeB, intersection::CacheBase * cache) const
+        {
+            return intersection::calculatePenetration<ShapeA, ShapeB>(shapeA, shapeB, cache);
+        }
+    };
+
     // General intersection
     using ShapeTypePair = std::pair<SimpleShapeType, SimpleShapeType>;
 
-    size_t shapeTypePairHash(ShapeTypePair const & p);
+    struct ShapeTypePairHash {
+        size_t operator()(ShapeTypePair const& p) const;
+    };
 
     class IntersectionQuery {
     private:
+        static constexpr uint32_t unorderedMapInitialPrimeSize = 11;
+
         std::unordered_map<ShapeTypePair,
             std::unique_ptr<intersection::CacheBase>,
-            std::function<size_t(ShapeTypePair const & p)> >
+            ShapeTypePairHash>
             intersectionCaches;
 
         std::unordered_map<ShapeTypePair,
             std::function<void(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
-            std::function<size_t(ShapeTypePair const & p)> >
+            ShapeTypePairHash>
             initializeFunctors;
 
         std::unordered_map<ShapeTypePair,
             std::function<bool(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
-            std::function<size_t(ShapeTypePair const & p)> >
+            ShapeTypePairHash>
             overlapFunctors;
 
         std::unordered_map<ShapeTypePair,
             std::function<Vector3(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
-            std::function<size_t(ShapeTypePair const & p)> >
+            ShapeTypePairHash>
             calculateContactNormalFunctors;
 
         std::unordered_map<ShapeTypePair,
             std::function<double(SimpleShape const *, SimpleShape const *, intersection::CacheBase*)>,
-            std::function<size_t(ShapeTypePair const & p)> >
+            ShapeTypePairHash>
             calculatePenetrationFunctors;
 
     public:
         IntersectionQuery()
-            : intersectionCaches(11, &shapeTypePairHash)
-            , initializeFunctors(11, &shapeTypePairHash)
-            , overlapFunctors(11, &shapeTypePairHash)
-            , calculateContactNormalFunctors(11, &shapeTypePairHash)
-            , calculatePenetrationFunctors(11, &shapeTypePairHash)
+            : intersectionCaches(unorderedMapInitialPrimeSize, ShapeTypePairHash())
+            , initializeFunctors(unorderedMapInitialPrimeSize, ShapeTypePairHash())
+            , overlapFunctors(unorderedMapInitialPrimeSize, ShapeTypePairHash())
+            , calculateContactNormalFunctors(unorderedMapInitialPrimeSize, ShapeTypePairHash())
+            , calculatePenetrationFunctors(unorderedMapInitialPrimeSize, ShapeTypePairHash())
         {            
             intersectionCaches[std::make_pair(SimpleShapeType::PLANE, SimpleShapeType::PLANE)] 
                 = std::make_unique<intersection::Cache<Plane, Plane>>();

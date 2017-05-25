@@ -8,7 +8,7 @@
 using namespace pegasus;
 
 pegasus::RigidBody::RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s)
-    : p(&p)
+    : p(p)
     , s(std::move(s))
 {
 }

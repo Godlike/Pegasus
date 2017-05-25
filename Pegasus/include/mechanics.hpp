@@ -15,7 +15,7 @@ namespace pegasus {
 
 class RigidBody {
 public:
-    Particle * const p;
+    Particle & p;
     std::unique_ptr<geometry::SimpleShape> const s;
 
 public:
