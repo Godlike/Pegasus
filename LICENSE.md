@@ -1,6 +1,7 @@
 The MIT License (MIT)
 
-Copyright (c) 2017 by Godlike
+Original work Copyright (c) 2003-2009 Ian Millington
+Modified work Copyright (c) 2017 by Godlike
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
