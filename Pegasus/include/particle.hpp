@@ -41,7 +41,7 @@ public:
     void setInverseMass(double inverseMass);
 
     void addForce(Vector3 const& force);
-    void clearForceAccum();
+    void clearForceAccumulator();
 
 private:
     Vector3 mPosition;
@@ -50,7 +50,7 @@ private:
     double mDamping;
     double mMass;
     double mInverseMass;
-    Vector3 mForceAccum;
+    Vector3 mForceAccumulator;
 };
 
 } // namespace pegasus

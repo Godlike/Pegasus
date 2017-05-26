@@ -19,6 +19,8 @@ public:
     Vector3();
     Vector3(double x, double y, double z);
 
+    bool operator==(Vector3 const & other) const;
+
     void operator*=(double r);
     Vector3 operator*=(double r) const;
 

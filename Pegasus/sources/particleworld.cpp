@@ -26,16 +26,12 @@ pegasus::ParticleWorld::ParticleWorld(
 void pegasus::ParticleWorld::startFrame() const
 {
     for (auto & p : mParticles) {
-        p.clearForceAccum();
+        p.clearForceAccumulator();
     }
 }
 
 void pegasus::ParticleWorld::runPhysics(double duration)
 {
-    mForceRegistry.updateForces();
-
-    integrate(duration);
-
     auto usedContacts = generateContacts();
 
     if (usedContacts) {
@@ -44,6 +40,9 @@ void pegasus::ParticleWorld::runPhysics(double duration)
         }
         mContactResolver.resolveContacts(mContacts, duration);
     }
+
+    mForceRegistry.updateForces();
+    integrate(duration);
 }
 
 uint32_t pegasus::ParticleWorld::generateContacts()

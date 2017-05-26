@@ -107,11 +107,10 @@ public:
     Vector3 randomXZVector(double scale);
 
 private:
-    // Internal mechanics
     int p1, p2;
     unsigned buffer[17];
 };
 
 } // namespace pegasus
 
-#endif // PEGASUS_BODY_HPP
+#endif // PEGASUS_RANDOM_HPP

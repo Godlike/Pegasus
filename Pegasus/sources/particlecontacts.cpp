@@ -96,10 +96,13 @@ void pegasus::ParticleContact::resolveInterpenetration() const
         return;
     }
 
-    auto const movePerIMass = mContactNormal * (mPenetration / totalInverseMass);
+    Vector3 const movePerIMass = mContactNormal * (mPenetration / totalInverseMass);
     mParticleA->setPosition(mParticleA->getPosition() + movePerIMass * mParticleA->getInverseMass());
+    mParticleA->addForce((movePerIMass * mParticleA->getInverseMass()).inverse());
+
     if (mParticleB) {
         mParticleB->setPosition(mParticleB->getPosition() - movePerIMass * mParticleB->getInverseMass());
+        mParticleB->addForce((movePerIMass * mParticleB->getInverseMass()).inverse());
     }
 }
 

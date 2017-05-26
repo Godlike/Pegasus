@@ -23,6 +23,11 @@ pegasus::Vector3::Vector3(double x, double y, double z)
 {
 }
 
+bool pegasus::Vector3::operator==(const pegasus::Vector3 &other) const
+{
+    return x == other.x && y == other.y && z == other.z;
+}
+
 void pegasus::Vector3::operator*=(double r)
 {
     x *= r;
@@ -179,3 +184,4 @@ void pegasus::Vector3::trim(double size)
         z *= size;
     }
 }
+

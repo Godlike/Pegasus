@@ -7,6 +7,8 @@
 */
 #include "Pegasus/include/particleforcegenerator.hpp"
 
+#include <cmath>
+
 void pegasus::ParticleForceRegistry::add(
     Particle & p, ParticleForceGenerator & pfg)
 {

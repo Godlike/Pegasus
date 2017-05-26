@@ -31,13 +31,13 @@ void pegasus::Particle::integrate(double duration)
     mPosition.addScaledVector(mVelocity, duration);
 
     Vector3 resultingAcc(mAcceleration);
-    resultingAcc.addScaledVector(mForceAccum, mInverseMass);
+    resultingAcc.addScaledVector(mForceAccumulator, mInverseMass);
 
     mVelocity.addScaledVector(resultingAcc, duration);
 
     mVelocity *= std::pow(mDamping, duration);
 
-    clearForceAccum();
+    clearForceAccumulator();
 }
 
 pegasus::Vector3 pegasus::Particle::getPosition() const
@@ -127,7 +127,10 @@ void pegasus::Particle::setInverseMass(double inverseMass)
 
 void pegasus::Particle::addForce(Vector3 const& force)
 {
-    mForceAccum += force;
+    mForceAccumulator += force;
 }
 
-void pegasus::Particle::clearForceAccum() { mForceAccum = Vector3(); }
+void pegasus::Particle::clearForceAccumulator()
+{
+    mForceAccumulator = Vector3();
+}
