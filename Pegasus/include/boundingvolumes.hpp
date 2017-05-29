@@ -1,12 +1,17 @@
+/*
+* Copyright (C) 2017 by Godlike
+* This code is licensed under the MIT license (MIT)
+* (http://opensource.org/licenses/MIT)
+*/
 #ifndef PEGASUS_OBB_HPP
 #define PEGASUS_OBB_HPP
 
-#include "Eigen/Eigen"
-#include "Eigen/StdVector"
 #include <vector>
 #include <set>
 #include <array>
 #include <memory>
+#include <Eigen/Eigen>
+#include <Eigen/StdVector>
 
 #include "Pegasus/include/geometry.hpp"
 
