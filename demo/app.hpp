@@ -1,5 +1,12 @@
-#ifndef PEGAS_DEMO_APP_HPP
-#define PEGAS_DEMO_APP_HPP
+/*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
+#ifndef PEGASUS_DEMO_APP_HPP
+#define PEGASUS_DEMO_APP_HPP
 
 class Application {
 protected:
@@ -27,7 +34,7 @@ public:
 
     virtual void mouseDrag(int x, int y);
 
-    void renderText(float x, float y, const char* text, void* font = nullptr);
+    void renderText(float x, float y, const char* text, void* font = nullptr) const;
 };
 
-#endif // PEGAS_DEMO_APP_HPP
+#endif // PEGASUS_DEMO_APP_HPP

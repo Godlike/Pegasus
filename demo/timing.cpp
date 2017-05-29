@@ -1,4 +1,11 @@
-#include "timing.hpp"
+/*
+* Copyright (c) Ian Millington 2003-2006. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
+#include "demo/timing.hpp"
 
 static bool qpcFlag;
 
@@ -12,10 +19,12 @@ static bool qpcFlag;
 typedef unsigned long long LONGLONG;
 #else
 #define TIMING_WINDOWS 1
-
 #include <windows.h>
+
+#ifdef TIMING_WINDOWS
 #include <intrin.h>
 #include <mmsystem.h>
+#endif
 
 static double qpcFrequency;
 #endif
@@ -32,8 +41,8 @@ unsigned systemTime()
 #else
     if (qpcFlag) {
         static LONGLONG qpcMillisPerTick;
-        QueryPerformanceCounter((LARGE_INTEGER*)&qpcMillisPerTick);
-        return (unsigned)(qpcMillisPerTick * qpcFrequency);
+        QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&qpcMillisPerTick));
+        return static_cast<unsigned>(qpcMillisPerTick * qpcFrequency);
     } else {
         return unsigned(timeGetTime());
     }
@@ -45,7 +54,7 @@ unsigned TimingData::getTime() { return systemTime(); }
 #if TIMING_WINDOWS
 unsigned long systemClock()
 {
-    return __rdtsc();
+    return static_cast<unsigned long>(__rdtsc());
 }
 #endif
 
@@ -70,7 +79,7 @@ void initTime()
 #else
     LONGLONG time;
 
-    qpcFlag = (QueryPerformanceFrequency((LARGE_INTEGER*)&time) > 0);
+    qpcFlag = (QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&time)) > 0);
 
     // Check if we have access to the performance counter at this
     // resolution.
@@ -80,10 +89,10 @@ void initTime()
 }
 
 // Holds the global frame time that is passed around
-static TimingData* timingData = NULL;
+static TimingData* timingData = nullptr;
 
 // Retrieves the global frame info instance
-TimingData& TimingData::get() { return (TimingData&)*timingData; }
+TimingData& TimingData::get() { return static_cast<TimingData&>(*timingData); }
 
 // Updates the global frame information. Should be called once per frame.
 void TimingData::update()
@@ -109,14 +118,14 @@ void TimingData::update()
     // Update the RWA frame rate if we are able to.
     if (timingData->frameNumber > 1) {
         if (timingData->averageFrameDuration <= 0) {
-            timingData->averageFrameDuration = (double)timingData->lastFrameDuration;
+            timingData->averageFrameDuration = static_cast<double>(timingData->lastFrameDuration);
         } else {
             // RWA over 100 frames.
             timingData->averageFrameDuration *= 0.99;
-            timingData->averageFrameDuration += 0.01 * (double)timingData->lastFrameDuration;
+            timingData->averageFrameDuration += 0.01 * static_cast<double>(timingData->lastFrameDuration);
 
             // Invert to get FPS
-            timingData->fps = (float)(1000.0 / timingData->averageFrameDuration);
+            timingData->fps = static_cast<float>(1000.0 / timingData->averageFrameDuration);
         }
     }
 }
@@ -148,5 +157,5 @@ void TimingData::init()
 void TimingData::deinit()
 {
     delete timingData;
-    timingData = NULL;
+    timingData = nullptr;
 }

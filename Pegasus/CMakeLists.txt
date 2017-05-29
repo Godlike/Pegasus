@@ -19,21 +19,23 @@ include_directories(
     ${PEGASUS_INCLUDE_DIR}
 )
 set(PEGASUS_HEADERS
-    include/core.hpp
     include/particle.hpp
     include/particleforcegenerator.hpp
     include/particlecontacts.hpp
     include/particlelinks.hpp
     include/particleworld.hpp
+    include/geometry.hpp
+    include/mechanics.hpp
     include/math.hpp
 )
 set(PEGASUS_SOURCES
-    sources/core.cpp
     sources/particle.cpp
     sources/particleforcegenerator.cpp
     sources/particlecontacts.cpp
     sources/particlelinks.cpp
     sources/particleworld.cpp
+    sources/geometry.cpp
+    sources/mechanics.cpp
     sources/math.cpp
 )
 

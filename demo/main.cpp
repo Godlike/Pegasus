@@ -1,3 +1,11 @@
+/*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
+
 #include "demo/app.hpp"
 #include "demo/ogl_headers.hpp"
 #include "demo/timing.hpp"
@@ -8,9 +16,10 @@ Application* app;
 
 void createWindow(const char* title)
 {
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(640, 320);
-    glutInitWindowPosition(0, 0);
+    glutSetOption(GLUT_MULTISAMPLE, 8);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
+    glutInitWindowSize(1600, 900);
+    glutInitWindowPosition(200, 200);
     glutCreateWindow(title);
 }
 

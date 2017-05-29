@@ -1,75 +1,61 @@
-#ifndef PEGAS_MATH_HPP
-#define PEGAS_MATH_HPP
+/*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
+#ifndef PEGASUS_MATH_HPP
+#define PEGASUS_MATH_HPP
 
-#include "Pegasus/include/core.hpp"
-
-namespace pegas {
+namespace pegasus {
 
 class Vector3 {
 public:
-    real x;
-
-    real y;
-
-    real z;
+    double x;
+    double y;
+    double z;
 
     Vector3();
+    Vector3(double x, double y, double z);
 
-    Vector3(real const x, real const y, real const z);
+    bool operator==(Vector3 const & other) const;
 
-    void operator*=(real const r);
-
-    Vector3 operator*=(real const r) const;
+    void operator*=(double r);
+    Vector3 operator*=(double r) const;
 
     void operator+=(Vector3 const& v);
-
     Vector3 operator+=(Vector3 v) const;
-
     Vector3 operator+(Vector3 const& v) const;
 
     void operator-=(Vector3 const& v);
-
     Vector3 operator-=(Vector3 const& v) const;
-
     Vector3 operator-(Vector3 const& v) const;
 
-    void addScaledVector(Vector3 const& v, real const s);
+    void addScaledVector(Vector3 const& v, double s);
 
     void componentProduct(Vector3 const& v);
-
     Vector3 componentProduct(Vector3 const& v) const;
 
-    real scalarProduct(Vector3 const& v) const;
-
-    real operator*(Vector3 const& v) const;
-
-    Vector3 operator*(real const r) const;
+    double scalarProduct(Vector3 const& v) const;
+    double operator*(Vector3 const& v) const;
+    Vector3 operator*(double r) const;
 
     Vector3 vectorProduct(Vector3 const& v) const;
-
-    void operator%(Vector3 const& v);
-
+    void operator%=(Vector3 const& v);
     Vector3 operator%(Vector3 const& v) const;
-
-    void inverse();
 
     Vector3 inverse() const;
 
-    real magnitude() const;
-
-    real squareMagnitude() const;
+    double magnitude() const;
+    double squareMagnitude() const;
 
     void normalize();
-
     Vector3 normalize() const;
-
     Vector3 unit() const;
-
-    void trim(real const size);
-
-private:
-    real pad;
+    void trim(double size);
 };
-}
 
-#endif // PEGAS_MATH_HPP
+} // namespace pegasus 
+
+#endif // PEGASUS_MATH_HPP

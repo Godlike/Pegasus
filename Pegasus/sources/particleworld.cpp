@@ -1,74 +1,70 @@
+/*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
 #include "Pegasus/include/particleworld.hpp"
 
-pegas::ParticleWorld::ParticleWorld(unsigned int maxContacts,
-    unsigned int iterations)
-    : mResolver(iterations)
+pegasus::ParticleWorld::ParticleWorld(
+    Particles & particles,
+    ParticleForceRegistry & forceRegistry,
+    ParticleContactGenerators & contactGenerators,
+    uint32_t maxContacts,
+    uint32_t iterations)
+    : mParticles(particles)
+    , mForceRegistry(forceRegistry)
+    , mContactGenerators(contactGenerators)
+    , mContactResolver(iterations)
+    , mCalculateIterations(false)
     , mMaxContacts(maxContacts)
 {
+    mContacts.reserve(mMaxContacts);
 }
 
-void pegas::ParticleWorld::startFrame()
+void pegasus::ParticleWorld::startFrame() const
 {
-    for (auto const& p : mParticles) {
-        p->clearForceAccum();
+    for (auto & p : mParticles) {
+        p.clearForceAccumulator();
     }
 }
 
-void pegas::ParticleWorld::setParticles(
-    pegas::ParticleWorld::Particles particles)
+void pegasus::ParticleWorld::runPhysics(double duration)
 {
-    mParticles = particles;
-}
-
-void pegas::ParticleWorld::setParticleForcesRegistry(
-    pegas::ParticleForceRegistry::Ptr registry)
-{
-    mRegistry = registry;
-}
-
-void pegas::ParticleWorld::setParticleContactGenerators(
-    pegas::ParticleWorld::ParticleContactGenerators generators)
-{
-    mGeneratos = generators;
-}
-
-void pegas::ParticleWorld::runPhysics(pegas::real const duration)
-{
-    pegas::real const duration_ = 0.005;
-
-    mRegistry->updateForces();
-
-    integrate(duration_);
-
-    unsigned int usedContacts = generateContacts();
+    auto usedContacts = generateContacts();
 
     if (usedContacts) {
         if (mCalculateIterations) {
-            mResolver.setIterations(usedContacts * 2);
+            mContactResolver.setIterations(usedContacts * 2);
         }
-        mResolver.resolveContacts(mContacts, duration_);
+        mContactResolver.resolveContacts(mContacts, duration);
     }
+
+    mForceRegistry.updateForces();
+    integrate(duration);
 }
 
-unsigned int pegas::ParticleWorld::generateContacts()
+uint32_t pegasus::ParticleWorld::generateContacts()
 {
-    auto limit = mMaxContacts;
+    uint32_t limit = mMaxContacts;
     mContacts.clear();
 
-    for (auto const& g : mGeneratos) {
-        auto const used = g->addContact(mContacts, limit);
-        limit -= used;
+    for (auto const& g : mContactGenerators)
+    {
+        limit -= g->addContact(mContacts, limit);
 
         if (limit == 0) {
             break;
         }
     }
+
     return mMaxContacts - limit;
 }
 
-void pegas::ParticleWorld::integrate(pegas::real const duration)
+void pegasus::ParticleWorld::integrate(double duration) const
 {
-    for (auto const& p : mParticles) {
-        p->integrate(duration);
+    for (auto & p : mParticles) {
+        p.integrate(duration);
     }
 }

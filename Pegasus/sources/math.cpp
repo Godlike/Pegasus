@@ -1,176 +1,181 @@
+/*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
 #include "Pegasus/include/math.hpp"
 
 #include <cmath>
 
-pegas::Vector3::Vector3()
+pegasus::Vector3::Vector3()
     : x(0)
     , y(0)
     , z(0)
 {
 }
 
-pegas::Vector3::Vector3(pegas::real const x, pegas::real const y,
-    pegas::real const z)
+pegasus::Vector3::Vector3(double x, double y, double z)
     : x(x)
     , y(y)
     , z(z)
 {
 }
 
-void pegas::Vector3::operator*=(pegas::real const r)
+bool pegasus::Vector3::operator==(const pegasus::Vector3 &other) const
+{
+    return x == other.x && y == other.y && z == other.z;
+}
+
+void pegasus::Vector3::operator*=(double r)
 {
     x *= r;
     y *= r;
     z *= r;
 }
 
-pegas::Vector3 pegas::Vector3::operator*=(pegas::real const r) const
+pegasus::Vector3 pegasus::Vector3::operator*=(double r) const
 {
     Vector3 v(*this);
     v *= r;
     return v;
 }
 
-void pegas::Vector3::operator+=(pegas::Vector3 const& v)
+void pegasus::Vector3::operator+=(Vector3 const& v)
 {
     x += v.x;
     y += v.y;
     z += v.z;
 }
 
-pegas::Vector3 pegas::Vector3::operator+=(pegas::Vector3 v) const
+pegasus::Vector3 pegasus::Vector3::operator+=(Vector3 v) const
 {
     v += *this;
     return v;
 }
 
-pegas::Vector3 pegas::Vector3::operator+(const pegas::Vector3& v) const
+pegasus::Vector3 pegasus::Vector3::operator+(const Vector3& v) const
 {
     return (*this) += v;
 }
 
-pegas::Vector3 pegas::Vector3::operator-=(pegas::Vector3 const& v) const
+pegasus::Vector3 pegasus::Vector3::operator-=(Vector3 const& v) const
 {
     Vector3 new_v(*this);
     new_v -= v;
     return new_v;
 }
 
-pegas::Vector3 pegas::Vector3::operator-(pegas::Vector3 const& v) const
+pegasus::Vector3 pegasus::Vector3::operator-(Vector3 const& v) const
 {
     Vector3 new_v(*this);
     new_v -= v;
     return new_v;
 }
 
-void pegas::Vector3::addScaledVector(pegas::Vector3 const& v,
-    pegas::real const s)
+void pegasus::Vector3::addScaledVector(Vector3 const& v, double s)
 {
     x += v.x * s;
     y += v.y * s;
     z += v.z * s;
 }
 
-void pegas::Vector3::componentProduct(pegas::Vector3 const& v)
+void pegasus::Vector3::componentProduct(Vector3 const& v)
 {
     x *= v.x;
     y *= v.y;
     z *= v.z;
 }
 
-pegas::Vector3 pegas::Vector3::componentProduct(pegas::Vector3 const& v) const
+pegasus::Vector3 pegasus::Vector3::componentProduct(Vector3 const& v) const
 {
     Vector3 new_v(*this);
     new_v.componentProduct(v);
     return new_v;
 }
 
-pegas::real pegas::Vector3::scalarProduct(pegas::Vector3 const& v) const
+double pegasus::Vector3::scalarProduct(Vector3 const& v) const
 {
     return x * v.x + y * v.y + z * v.z;
 }
 
-pegas::real pegas::Vector3::operator*(pegas::Vector3 const& v) const
+double pegasus::Vector3::operator*(Vector3 const& v) const
 {
     return scalarProduct(v);
 }
 
-pegas::Vector3 pegas::Vector3::operator*(pegas::real const r) const
+pegasus::Vector3 pegasus::Vector3::operator*(double r) const
 {
-    Vector3 new_v(*this);
+    auto new_v(*this);
     new_v *= r;
     return new_v;
 }
 
-pegas::Vector3 pegas::Vector3::vectorProduct(pegas::Vector3 const& v) const
+pegasus::Vector3 pegasus::Vector3::vectorProduct(Vector3 const& v) const
 {
-    return Vector3(y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x);
+    return { y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x };
 }
 
-void pegas::Vector3::operator%(pegas::Vector3 const& v)
+void pegasus::Vector3::operator%=(Vector3 const& v)
 {
     *this = vectorProduct(v);
 }
 
-pegas::Vector3 pegas::Vector3::operator%(pegas::Vector3 const& v) const
+pegasus::Vector3 pegasus::Vector3::operator%(Vector3 const& v) const
 {
     return vectorProduct(v);
 }
 
-void pegas::Vector3::operator-=(pegas::Vector3 const& v)
+void pegasus::Vector3::operator-=(Vector3 const& v)
 {
     x -= v.x;
     y -= v.y;
     z -= v.z;
 }
 
-void pegas::Vector3::inverse()
-{
-    x = -x;
-    y = -y;
-    z = -z;
-}
-
-pegas::Vector3 pegas::Vector3::inverse() const
+pegasus::Vector3 pegasus::Vector3::inverse() const
 {
     Vector3 v(*this);
-    v.inverse();
+    v.x = -v.x;
+    v.y = -v.y;
+    v.z = -v.z;
     return v;
 }
 
-pegas::real pegas::Vector3::magnitude() const
+double pegasus::Vector3::magnitude() const
 {
-    return std::sqrt(x * x + y * y + z * z);
+    return sqrt(x * x + y * y + z * z);
 }
 
-pegas::real pegas::Vector3::squareMagnitude() const
+double pegasus::Vector3::squareMagnitude() const
 {
     return (x * x + y * y + z * z);
 }
 
-void pegas::Vector3::normalize()
+void pegasus::Vector3::normalize()
 {
-    real const l = magnitude();
+    double const l = magnitude();
     if (l > 0) {
-        (*this) *= (real(1) / l);
+        (*this) *= (double(1) / l);
     }
 }
 
-pegas::Vector3 pegas::Vector3::normalize() const
+pegasus::Vector3 pegasus::Vector3::normalize() const
 {
     Vector3 v(*this);
     v.normalize();
     return v;
 }
 
-pegas::Vector3 pegas::Vector3::unit() const
+pegasus::Vector3 pegasus::Vector3::unit() const
 {
-    Vector3 result = *this;
+    Vector3 result(*this);
     result.normalize();
     return result;
 }
 
-void pegas::Vector3::trim(pegas::real const size)
+void pegasus::Vector3::trim(double size)
 {
     if (squareMagnitude() > size * size) {
         normalize();
@@ -179,3 +184,4 @@ void pegas::Vector3::trim(pegas::real const size)
         z *= size;
     }
 }
+

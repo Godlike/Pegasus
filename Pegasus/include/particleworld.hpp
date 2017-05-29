@@ -1,47 +1,53 @@
-#ifndef PEGAS_PARTICLE_WORLD_HPP
-#define PEGAS_PARTICLE_WORLD_HPP
+/*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
+#ifndef PEGASUS_PARTICLE_WORLD_HPP
+#define PEGASUS_PARTICLE_WORLD_HPP
 
 #include "Pegasus/include/particle.hpp"
 #include "Pegasus/include/particlecontacts.hpp"
 #include "Pegasus/include/particleforcegenerator.hpp"
-#include <vector>
 
-namespace pegas {
+#include <vector>
+#include <list>
+#include <memory>
+
+namespace pegasus {
+
+using ParticleContactGenerators = std::list<std::unique_ptr<ParticleContactGenerator>>;
+using Particles = std::list<Particle>;
 
 class ParticleWorld {
 public:
-    using Particles = std::vector<Particle::Ptr>;
-    using ParticleContacts = std::vector<ParticleContact::Ptr>;
-    using ParticleContactGenerators = std::vector<ParticleContactGenerator::Ptr>;
+    ParticleWorld(Particles & particles,
+                  ParticleForceRegistry & forceRegistry,
+                  ParticleContactGenerators & contactGenerators,
+                  uint32_t maxContacts,
+                  uint32_t iterations = 0);
 
-    ParticleWorld(unsigned int maxContacts, unsigned int iterations = 0);
-
-    void runPhysics(real const duration);
-
-    void startFrame();
-
-    void setParticles(Particles particles);
-
-    void setParticleForcesRegistry(ParticleForceRegistry::Ptr registry);
-
-    void setParticleContactGenerators(ParticleContactGenerators generators);
+    void startFrame() const;
+    void runPhysics(double duration);
 
 private:
-    Particles mParticles;
-    ParticleContacts mContacts;
+    Particles & mParticles;
+    ParticleForceRegistry & mForceRegistry;
 
-    ParticleForceRegistry::Ptr mRegistry;
-    ParticleContactGenerators mGeneratos;
-    ParticleContactResolver mResolver;
+    ParticleContacts mContacts;
+    ParticleContactGenerators & mContactGenerators;
+    ParticleContactResolver mContactResolver;
 
     bool mCalculateIterations;
-    unsigned int mMaxContacts;
+    uint32_t mMaxContacts;
 
-    unsigned int generateContacts();
-
-    void integrate(real const duration);
+private:
+    uint32_t generateContacts();
+    void integrate(double duration) const;
 };
 
-} // namespace pegas
+} // namespace pegasus
 
-#endif // PEGAS_PARTICLE_WORLD_HPP
+#endif // PEGASUS_PARTICLE_WORLD_HPP

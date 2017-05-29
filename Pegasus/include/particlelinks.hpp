@@ -1,61 +1,51 @@
-#ifndef PARTICLE_LINKS_HPP
-#define PARTICLE_LINKS_HPP
+/*
+* Copyright (c) Icosagon 2003. All Rights Reserved.
+*
+* This software is distributed under licence. Use of this software
+* implies agreement with all terms and conditions of the accompanying
+* software licence.
+*/
+#ifndef PEGASUS_PARTICLE_LINKS_HPP
+#define PEGASUS_PARTICLE_LINKS_HPP
 
 #include "Pegasus/include/particle.hpp"
 #include "Pegasus/include/particlecontacts.hpp"
 
-namespace pegas {
+namespace pegasus {
+
 class ParticleLink : public ParticleContactGenerator {
 public:
-    using Ptr = std::shared_ptr<ParticleLink>;
+    ParticleLink(Particle& a, Particle& b);
 
-    ParticleLink(Particle::Ptr& a, Particle::Ptr& b)
-        : mA(a)
-        , mB(b)
-    {
-        if (!mA || !mB) {
-            throw std::invalid_argument("ParticleLink::ParticleLink !mA || !mB");
-        }
-    }
-
-    virtual unsigned int addContact(Contacts& contacts,
-        unsigned int const limit) const override = 0;
-
-    real currentLenght() const;
+    virtual uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override = 0;
+    double currentLength() const;
 
 protected:
-    Particle::Ptr& mA;
-    Particle::Ptr& mB;
+    Particle & mA;
+    Particle & mB;
 };
 
 class ParticleCabel : public ParticleLink {
 public:
-    using Ptr = std::shared_ptr<ParticleCabel>;
+    ParticleCabel(Particle & a, Particle & b, double maxLength, double restutuition);
 
-    ParticleCabel(
-        Particle::Ptr& a, Particle::Ptr& b, real const maxLength, real const restutuition);
-
-    virtual unsigned int addContact(Contacts& contacts,
-        unsigned int const limit) const override;
+    virtual uint32_t addContact(ParticleContacts & contacts, uint32_t limit) const override;
 
 private:
-    real maxLength;
-    real restitution;
+    double const maxLength;
+    double const restitution;
 };
 
 class ParticleRod : public ParticleLink {
 public:
-    using Ptr = std::shared_ptr<ParticleRod>;
+    ParticleRod(Particle & a, Particle & b, double length);
 
-    ParticleRod(Particle::Ptr& a, Particle::Ptr& b, real const length);
-
-    virtual unsigned int addContact(Contacts& contacts,
-        unsigned int const limit) const override;
+    virtual uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override;
 
 private:
-    real length;
+    double const length;
 };
 
-} // namespace pegas
+} // namespace pegasus
 
-#endif // PARTICLE_LINKS_HPP
+#endif // PEGASUS_PARTICLE_LINKS_HPP
