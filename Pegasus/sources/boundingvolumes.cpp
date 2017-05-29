@@ -7,6 +7,7 @@
 
 using namespace pegasus;
 using namespace geometry;
+using namespace volumes;
 using namespace obb;
 
 OrientedBoundingBox::OrientedBoundingBox(Shape const & shape, Indices const & indices) 
