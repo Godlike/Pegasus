@@ -23,8 +23,8 @@
 #include <random>
 #include <utility>
 
-static const uint32_t BOX_COUNT    = std::pow(0, 3) + 2;
-static const uint32_t SPHERE_COUNT = std::pow(0, 3);
+static const uint32_t BOX_COUNT    = std::pow(4, 3);
+static const uint32_t SPHERE_COUNT = std::pow(4, 3);
 static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
 static const double   RADIUS       = 5;
 
@@ -70,7 +70,7 @@ FallingDemo::FallingDemo()
     , xAxis(0)
     , yAxis(0)
     , zAxis(0)
-    , zoom(1)
+    , zoom(8)
     , yEye(0)
     , activeObject(rigidBodies.begin())
 {
@@ -141,7 +141,6 @@ void FallingDemo::sceneReset()
             planeIndex * RADIUS * 2.3 + boxSide * 3,
             col * RADIUS * 2.3 + RADIUS - offset
         );
-//        particles.back().setPosition(0, 0, 0);
         particles.back().setVelocity(randDouble(), randDouble() - 5, randDouble());
         particles.back().setDamping(1.0f);
     }
@@ -149,7 +148,7 @@ void FallingDemo::sceneReset()
     //Create rigid bodies
     for (auto & particle : particles)
     {
-        bool const isBox = randDouble() > 0 || true;
+        bool const isBox = randDouble() > 0;
 
         if (isBox)
         {
@@ -157,9 +156,9 @@ void FallingDemo::sceneReset()
                 particle,
                 std::make_unique<pegasus::geometry::Box>(
                     particle.getPosition(),
-                    pegasus::Vector3{ randDouble() + 6, 0, 0 } * 0.5,
-                    pegasus::Vector3{ 0, randDouble() + 6, 0 } * 0.5,
-                    pegasus::Vector3{ 0, 0, randDouble() + 6 } * 0.5)
+                    pegasus::Vector3{ RADIUS, 0, 0 } * 0.5,
+                    pegasus::Vector3{ 0, RADIUS, 0 } * 0.5,
+                    pegasus::Vector3{ 0, 0, RADIUS } * 0.5)
             );
         }
         else
@@ -201,14 +200,13 @@ void FallingDemo::sceneReset()
         )
     );
 
-    addBox({  0, 0, 0 }, boxSide);
-//    addBox({  position * 2, position, 0 }, boxSide);
-//    addBox({ -position * 2, position, 0 }, boxSide);
-//    addBox({ 0, position, -position * 2 }, boxSide);
-//    addBox({ 0, position, position * 2 }, boxSide);
+    addSphere({  0, -position * 2, 0 }, boxSide);
+    addBox({  position * 2, position, 0 }, boxSide);
+    addBox({ -position * 2, position, 0 }, boxSide);
+    addBox({ 0, position, -position * 2 }, boxSide);
 
     activeObject = rigidBodies.end();
-    std::advance(activeObject, -1);
+    std::advance(activeObject, -4);
 }
 
 void FallingDemo::display()
