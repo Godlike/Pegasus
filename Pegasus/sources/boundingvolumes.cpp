@@ -9,6 +9,11 @@ using namespace pegasus;
 using namespace geometry;
 using namespace volumes;
 
+volumes::Shape::Shape(Vertices const & vertices, Faces const & indices)
+        : vertices(vertices), indices(indices)
+{
+}
+
 obb::OrientedBoundingBox::OrientedBoundingBox(Shape const & shape, Indices const & indices)
     : m_box_shape({}, {}, {}, {})
     , m_shape(shape)
@@ -119,11 +124,11 @@ obb::OrientedBoundingBox::calculateExtremalVertices(
     return extremal;
 }
 
-volumes::Vectors
+volumes::Vertices
 obb::OrientedBoundingBox::calculateBoxVertices(
     Eigen::Matrix3f const & extremal_points, Eigen::Matrix3f const & eigen_vectors)
 {
-    Vectors box(8, Eigen::Vector3f{ 0, 0, 0 });
+    Vertices box(8, Eigen::Vector3f{ 0, 0, 0 });
 
     std::array<Plane, 6> planes;
     for (size_t i = 0; i < 6; ++i)
@@ -164,6 +169,7 @@ aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(const volumes::Shape & shap
     createBox(m_box);
 }
 
+
 geometry::Box aabb::AxisAlignedBoundingBox::getBox() const {
     return m_box_shape;
 }
@@ -171,58 +177,52 @@ geometry::Box aabb::AxisAlignedBoundingBox::getBox() const {
 void aabb::AxisAlignedBoundingBox::calculateExtremalVetices(
         volumes::Shape const & shape, Indices const & indices, aabb::AxisAlignedBoundingBox::Box & box)
 {
-    static auto compareFaces = [&](auto axis_index, auto face_index_a, auto face_index_b) -> bool {
-        static auto compareFaceIndices = [&](auto index_a, auto index_b) -> bool {
-            return shape.vertices[index_a][axis_index] < shape.vertices[index_b][axis_index];
-        };
+    std::vector<Eigen::Vector3f const *> valid_vertices;
+    valid_vertices.reserve(indices.size() * 3);
+    for(auto face_index : indices)
+    {
+        for (auto vertex_index : shape.indices[face_index])
+        {
+            valid_vertices.push_back(&shape.vertices[vertex_index]);
+        }
+    }
 
-        std::size_t const max_index_a = *std::max_element(
-                shape.indices[face_index_a].begin(), shape.indices[face_index_a].end(), compareFaceIndices
-        );
-
-        std::size_t const max_index_b = *std::max_element(
-                shape.indices[face_index_b].begin(), shape.indices[face_index_b].end(), compareFaceIndices
-        );
-
-        return     shape.vertices[shape.indices[face_index_a][max_index_a]][axis_index]
-                 < shape.vertices[shape.indices[face_index_b][max_index_b]][axis_index];
+    static auto axisCompareVertices = [](uint32_t axis, Eigen::Vector3f const * a, Eigen::Vector3f const * b) -> bool {
+        return (*a)[axis] < (*b)[axis];
     };
+    static auto xCompareVertices = std::bind(axisCompareVertices, 0, std::placeholders::_1, std::placeholders::_2);
+    static auto yCompareVertices = std::bind(axisCompareVertices, 1, std::placeholders::_1, std::placeholders::_2);
+    static auto zCompareVertices = std::bind(axisCompareVertices, 2, std::placeholders::_1, std::placeholders::_2);
 
-    static auto xCompareFaces = std::bind(compareFaces, 0, std::placeholders::_1, std::placeholders::_2);
-    static auto yCompareFaces = std::bind(compareFaces, 1, std::placeholders::_1, std::placeholders::_2);
-    static auto zCompareFaces = std::bind(compareFaces, 2, std::placeholders::_1, std::placeholders::_2);
+    std::sort(valid_vertices.begin(), valid_vertices.end(), xCompareVertices);
+    box.xMin = *valid_vertices.front();
+    box.xMax = *valid_vertices.back();
 
-    std::size_t const x_min_index = *std::min_element(indices.begin(), indices.end(), xCompareFaces);
-    std::size_t const x_max_index = *std::max_element(indices.begin(), indices.end(), xCompareFaces);
-    std::size_t const y_min_index = *std::min_element(indices.begin(), indices.end(), yCompareFaces);
-    std::size_t const y_max_index = *std::max_element(indices.begin(), indices.end(), yCompareFaces);
-    std::size_t const z_min_index = *std::min_element(indices.begin(), indices.end(), zCompareFaces);
-    std::size_t const z_max_index = *std::max_element(indices.begin(), indices.end(), zCompareFaces);
+    std::sort(valid_vertices.begin(), valid_vertices.end(), yCompareVertices);
+    box.yMin = *valid_vertices.front();
+    box.yMax = *valid_vertices.back();
 
-    box.xMin = shape.vertices[shape.indices[x_min_index][0]];
-    box.xMax = shape.vertices[shape.indices[x_max_index][0]];
-    box.yMin = shape.vertices[shape.indices[y_min_index][1]];
-    box.yMax = shape.vertices[shape.indices[y_max_index][1]];
-    box.zMin = shape.vertices[shape.indices[z_min_index][2]];
-    box.zMax = shape.vertices[shape.indices[z_max_index][2]];
+    std::sort(valid_vertices.begin(), valid_vertices.end(), zCompareVertices);
+    box.zMin = *valid_vertices.front();
+    box.zMax = *valid_vertices.back();
 }
 
 void aabb::AxisAlignedBoundingBox::calculateMean(aabb::AxisAlignedBoundingBox::Box & box)
 {
-    box.extremalMean << (box.xMax + box.xMin) / 2.0f,
-            (box.yMax + box.yMin) / 2.0f,
-            (box.zMax + box.zMin) / 2.0f;
-    box.xAxis = box.extremalMean - box.xMax;
-    box.yAxis = box.extremalMean - box.yMax;
-    box.zAxis = box.extremalMean - box.zMax;
+    box.extremalMean[0] = (box.xMax[0] + box.xMin[0]) / 2.0f;
+    box.extremalMean[1] = (box.yMax[1] + box.yMin[1]) / 2.0f;
+    box.extremalMean[2] = (box.zMax[2] + box.zMin[2]) / 2.0f;
+    box.xAxis = box.xMax - box.extremalMean;
+    box.yAxis = box.yMax - box.extremalMean;
+    box.zAxis = box.zMax - box.extremalMean;
 }
 
 void aabb::AxisAlignedBoundingBox::createBox(aabb::AxisAlignedBoundingBox::Box & box)
 {
     m_box_shape = geometry::Box(
             {box.extremalMean[0], box.extremalMean[1], box.extremalMean[2]},
-            {box.xAxis[0], box.xAxis[1], box.xAxis[2]},
-            {box.yAxis[0], box.yAxis[1], box.yAxis[2]},
-            {box.zAxis[0], box.zAxis[1], box.zAxis[2]}
+            {box.xAxis[0], 0, 0},
+            {0, box.yAxis[1], 0},
+            {0, 0, box.zAxis[2]}
     );
 }

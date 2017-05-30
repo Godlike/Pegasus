@@ -20,18 +20,20 @@ namespace pegasus {
 namespace geometry {
 namespace volumes {
 
-using Vectors = std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>;
-using Indices = std::set<std::size_t>;
-using Face    = std::array<std::size_t, 3>;
-using Faces   = std::vector<Face>;
-using Plane   = Eigen::Hyperplane<float, 3>;
+using Vertices = std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>;
+using Indices  = std::set<std::size_t>;
+using Face     = std::array<std::size_t, 3>;
+using Faces    = std::vector<Face>;
+using Plane    = Eigen::Hyperplane<float, 3>;
 
 struct Shape
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    Vectors const vertices;
-    Faces   const indices;
+    Shape(Vertices const & vertices, Faces const & indices);
+
+    Vertices const & vertices;
+    Faces   const & indices;
 };
 
 namespace obb {
@@ -49,7 +51,7 @@ public:
         Eigen::Matrix3f eigen_vectors;
         Eigen::Matrix3f eigen_vectors_normalized;
         Eigen::Matrix3f extremal_vertices;
-        Vectors cube_vertices;
+        Vertices cube_vertices;
     };
 
     OrientedBoundingBox(Shape const & shape, Indices const & indices);
@@ -73,7 +75,7 @@ private:
     static Eigen::Matrix3f calculateExtremalVertices(
         Eigen::Matrix3f const & eigen_vectors, Shape const & shape, Indices const & indices
     );
-    static Vectors calculateBoxVertices(
+    static Vertices calculateBoxVertices(
         Eigen::Matrix3f const & extremal_points, Eigen::Matrix3f const & eigen_vectors
     );
 };
