@@ -122,6 +122,37 @@ private:
 };
 } // namespace aabb
 
+
+namespace sphere {
+class BoundingSphere
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    struct Sphere
+    {
+    };
+
+    BoundingSphere(Shape const & shape, Indices const & indices)
+        : m_sphere_shape({}, 0)
+        , m_shape(shape)
+        , m_indices(indices)
+    {
+    }
+
+    geometry::Sphere getSphere() const
+    {
+        return m_sphere_shape;
+    }
+
+private:
+    geometry::Sphere m_sphere_shape;
+    Sphere m_sphere;
+    Shape const & m_shape;
+    Indices const & m_indices;
+};
+} // namespace sphere
+
 } // namespace volumes
 } // namespace geometry
 } // namespace pegasus
