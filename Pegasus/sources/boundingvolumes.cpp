@@ -138,7 +138,8 @@ obb::OrientedBoundingBox::calculateBoxVertices(
             Eigen::Vector3f(extremal_points.col(index)).dot(Eigen::Vector3f(eigen_vectors.col(index))));
     }
 
-    Faces faces = { { 0, 1, 2 },{ 0, 1, 5 },{ 0, 2, 4 },{ 0, 4, 5 },{ 2, 3, 4 },{ 1, 2, 3 },{ 1, 3, 5 },{ 3, 4, 5 } };
+    Faces faces = { { 0, 1, 2 }, { 0, 1, 5 }, { 0, 2, 4 }, { 0, 4, 5 },
+                    { 2, 3, 4 }, { 1, 2, 3 }, { 1, 3, 5 }, { 3, 4, 5 } };
     for (size_t i = 0; i < faces.size(); ++i)
     {
         Eigen::Vector4f const v0 = planes[faces[i][0]].coeffs();
@@ -164,6 +165,7 @@ aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(const volumes::Shape & shap
         , m_shape(shape)
         , m_indices(indices)
 {
+    //ToDo: Calculate extremal vertices from a convex hull
     calculateExtremalVetices(m_shape, indices, m_box);
     calculateMean(m_box);
     createBox(m_box);
@@ -177,6 +179,9 @@ geometry::Box aabb::AxisAlignedBoundingBox::getBox() const {
 void aabb::AxisAlignedBoundingBox::calculateExtremalVetices(
         volumes::Shape const & shape, Indices const & indices, aabb::AxisAlignedBoundingBox::Box & box)
 {
+    using namespace std::placeholders;
+
+    //ToDo: optimize it, currently O(n), should be possible to do O(log(n))
     std::vector<Eigen::Vector3f const *> valid_vertices;
     valid_vertices.reserve(indices.size() * 3);
     for(auto face_index : indices)
@@ -187,12 +192,15 @@ void aabb::AxisAlignedBoundingBox::calculateExtremalVetices(
         }
     }
 
-    static auto axisCompareVertices = [](uint32_t axis, Eigen::Vector3f const * a, Eigen::Vector3f const * b) -> bool {
+    static auto axisCompareVertices = [](
+        uint32_t axis, Eigen::Vector3f const * a, Eigen::Vector3f const * b
+    ) -> bool
+    {
         return (*a)[axis] < (*b)[axis];
     };
-    static auto xCompareVertices = std::bind(axisCompareVertices, 0, std::placeholders::_1, std::placeholders::_2);
-    static auto yCompareVertices = std::bind(axisCompareVertices, 1, std::placeholders::_1, std::placeholders::_2);
-    static auto zCompareVertices = std::bind(axisCompareVertices, 2, std::placeholders::_1, std::placeholders::_2);
+    static auto xCompareVertices = std::bind(axisCompareVertices, 0, _1, _2);
+    static auto yCompareVertices = std::bind(axisCompareVertices, 1, _1, _2);
+    static auto zCompareVertices = std::bind(axisCompareVertices, 2, _1, _2);
 
     std::sort(valid_vertices.begin(), valid_vertices.end(), xCompareVertices);
     box.xMin = *valid_vertices.front();
