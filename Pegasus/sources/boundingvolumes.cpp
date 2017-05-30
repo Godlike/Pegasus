@@ -7,9 +7,14 @@
 
 using namespace pegasus;
 using namespace geometry;
-using namespace obb;
+using namespace volumes;
 
-OrientedBoundingBox::OrientedBoundingBox(Shape const & shape, Indices const & indices) 
+volumes::Shape::Shape(Vertices const & vertices, Faces const & indices)
+        : vertices(vertices), indices(indices)
+{
+}
+
+obb::OrientedBoundingBox::OrientedBoundingBox(Shape const & shape, Indices const & indices)
     : m_box_shape({}, {}, {}, {})
     , m_shape(shape)
     , m_indices(indices)
@@ -30,13 +35,13 @@ OrientedBoundingBox::OrientedBoundingBox(Shape const & shape, Indices const & in
     );
 }
 
-geometry::Box OrientedBoundingBox::getBox() const
+geometry::Box obb::OrientedBoundingBox::getBox() const
 {
     return m_box_shape;
 }
 
-Eigen::Vector3f 
-OrientedBoundingBox::calculateMeanVertex(
+Eigen::Vector3f
+obb::OrientedBoundingBox::calculateMeanVertex(
     Shape const & shape, Indices const & indices)
 {
     Eigen::Vector3f sum{ 0, 0, 0 };
@@ -54,7 +59,7 @@ OrientedBoundingBox::calculateMeanVertex(
 }
 
 Eigen::Matrix3f
-OrientedBoundingBox::calculateCovarianceMatrix(
+obb::OrientedBoundingBox::calculateCovarianceMatrix(
     Shape const & shape, Indices const & indices, Eigen::Vector3f const & mean)
 {
     Eigen::Matrix3f C = Eigen::Matrix3f::Zero();
@@ -89,15 +94,15 @@ OrientedBoundingBox::calculateCovarianceMatrix(
     return C;
 }
 
-Eigen::Matrix3f 
-OrientedBoundingBox::calculateEigenVectors(Eigen::Matrix3f const & covariance)
+Eigen::Matrix3f
+obb::OrientedBoundingBox::calculateEigenVectors(Eigen::Matrix3f const & covariance)
 {
     Eigen::EigenSolver<Eigen::Matrix3f> es(covariance);
     return es.eigenvectors().real();;
 }
 
-Eigen::Matrix3f 
-OrientedBoundingBox::calculateExtremalVertices(
+Eigen::Matrix3f
+obb::OrientedBoundingBox::calculateExtremalVertices(
     Eigen::Matrix3f const & eigen_vectors, Shape const & shape, Indices const & indices)
 {
     std::vector<Eigen::Vector3f const *, Eigen::aligned_allocator<Eigen::Vector3f const*>> vertices;
@@ -119,11 +124,11 @@ OrientedBoundingBox::calculateExtremalVertices(
     return extremal;
 }
 
-OrientedBoundingBox::Vectors 
-OrientedBoundingBox::calculateBoxVertices(
+volumes::Vertices
+obb::OrientedBoundingBox::calculateBoxVertices(
     Eigen::Matrix3f const & extremal_points, Eigen::Matrix3f const & eigen_vectors)
 {
-    Vectors box(8, Eigen::Vector3f{ 0, 0, 0 });
+    Vertices box(8, Eigen::Vector3f{ 0, 0, 0 });
 
     std::array<Plane, 6> planes;
     for (size_t i = 0; i < 6; ++i)
@@ -152,4 +157,72 @@ OrientedBoundingBox::calculateBoxVertices(
     }
 
     return box;
+}
+
+aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(const volumes::Shape & shape, Indices const & indices)
+        : m_box_shape({}, {}, {}, {})
+        , m_shape(shape)
+        , m_indices(indices)
+{
+    calculateExtremalVetices(m_shape, indices, m_box);
+    calculateMean(m_box);
+    createBox(m_box);
+}
+
+
+geometry::Box aabb::AxisAlignedBoundingBox::getBox() const {
+    return m_box_shape;
+}
+
+void aabb::AxisAlignedBoundingBox::calculateExtremalVetices(
+        volumes::Shape const & shape, Indices const & indices, aabb::AxisAlignedBoundingBox::Box & box)
+{
+    std::vector<Eigen::Vector3f const *> valid_vertices;
+    valid_vertices.reserve(indices.size() * 3);
+    for(auto face_index : indices)
+    {
+        for (auto vertex_index : shape.indices[face_index])
+        {
+            valid_vertices.push_back(&shape.vertices[vertex_index]);
+        }
+    }
+
+    static auto axisCompareVertices = [](uint32_t axis, Eigen::Vector3f const * a, Eigen::Vector3f const * b) -> bool {
+        return (*a)[axis] < (*b)[axis];
+    };
+    static auto xCompareVertices = std::bind(axisCompareVertices, 0, std::placeholders::_1, std::placeholders::_2);
+    static auto yCompareVertices = std::bind(axisCompareVertices, 1, std::placeholders::_1, std::placeholders::_2);
+    static auto zCompareVertices = std::bind(axisCompareVertices, 2, std::placeholders::_1, std::placeholders::_2);
+
+    std::sort(valid_vertices.begin(), valid_vertices.end(), xCompareVertices);
+    box.xMin = *valid_vertices.front();
+    box.xMax = *valid_vertices.back();
+
+    std::sort(valid_vertices.begin(), valid_vertices.end(), yCompareVertices);
+    box.yMin = *valid_vertices.front();
+    box.yMax = *valid_vertices.back();
+
+    std::sort(valid_vertices.begin(), valid_vertices.end(), zCompareVertices);
+    box.zMin = *valid_vertices.front();
+    box.zMax = *valid_vertices.back();
+}
+
+void aabb::AxisAlignedBoundingBox::calculateMean(aabb::AxisAlignedBoundingBox::Box & box)
+{
+    box.extremalMean[0] = (box.xMax[0] + box.xMin[0]) / 2.0f;
+    box.extremalMean[1] = (box.yMax[1] + box.yMin[1]) / 2.0f;
+    box.extremalMean[2] = (box.zMax[2] + box.zMin[2]) / 2.0f;
+    box.xAxis = box.xMax - box.extremalMean;
+    box.yAxis = box.yMax - box.extremalMean;
+    box.zAxis = box.zMax - box.extremalMean;
+}
+
+void aabb::AxisAlignedBoundingBox::createBox(aabb::AxisAlignedBoundingBox::Box & box)
+{
+    m_box_shape = geometry::Box(
+            {box.extremalMean[0], box.extremalMean[1], box.extremalMean[2]},
+            {box.xAxis[0], 0, 0},
+            {0, box.yAxis[1], 0},
+            {0, 0, box.zAxis[2]}
+    );
 }
