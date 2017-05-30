@@ -82,47 +82,92 @@ private:
 } // namespace obb
 
 namespace aabb {
-    class AxisAlignedBoundingBox
+class AxisAlignedBoundingBox
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    struct Box
     {
-    public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        struct Box
-        {
-            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-            Eigen::Vector3f xMin;
-            Eigen::Vector3f xMax;
-            Eigen::Vector3f yMin;
-            Eigen::Vector3f yMax;
-            Eigen::Vector3f zMin;
-            Eigen::Vector3f zMax;
-            Eigen::Vector3f extremalMean;
-            Eigen::Vector3f xAxis;
-            Eigen::Vector3f yAxis;
-            Eigen::Vector3f zAxis;
-        };
-
-        AxisAlignedBoundingBox(Shape const & shape, Indices const & indices);
-
-        geometry::Box getBox() const;
-
-    private:
-        geometry::Box m_box_shape;
-        Box m_box;
-        Shape const & m_shape;
-        Indices const & m_indices;
-
-        static void calculateExtremalVetices(Shape const & shape, Indices const & indices, Box & box);
-
-        static void calculateMean(Box & box);
-
-        void createBox(Box & box);
-
+        Eigen::Vector3f xMin;
+        Eigen::Vector3f xMax;
+        Eigen::Vector3f yMin;
+        Eigen::Vector3f yMax;
+        Eigen::Vector3f zMin;
+        Eigen::Vector3f zMax;
+        Eigen::Vector3f extremalMean;
+        Eigen::Vector3f xAxis;
+        Eigen::Vector3f yAxis;
+        Eigen::Vector3f zAxis;
     };
+
+    AxisAlignedBoundingBox(Shape const & shape, Indices const & indices);
+
+    geometry::Box getBox() const;
+
+private:
+    geometry::Box m_box_shape;
+    Box m_box;
+    Shape const & m_shape;
+    Indices const & m_indices;
+
+    static void calculateExtremalVetices(Shape const & shape, Indices const & indices, Box & box);
+
+    static void calculateMean(Box & box);
+
+    void createBox(Box & box);
+
+};
 } // namespace aabb
 
 } // namespace volumes
 } // namespace geometry
 } // namespace pegasus
 #endif // PEGASUS_OBB_HPP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
