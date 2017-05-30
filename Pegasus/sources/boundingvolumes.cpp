@@ -120,7 +120,7 @@ OrientedBoundingBox::calculateExtremalVertices(
     return extremal;
 }
 
-OrientedBoundingBox::Vectors 
+volumes::Vectors
 OrientedBoundingBox::calculateBoxVertices(
     Eigen::Matrix3f const & extremal_points, Eigen::Matrix3f const & eigen_vectors)
 {

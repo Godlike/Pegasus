@@ -6,6 +6,7 @@
 #ifndef PEGASUS_OBB_HPP
 #define PEGASUS_OBB_HPP
 
+#include <functional>
 #include <vector>
 #include <set>
 #include <array>
@@ -141,9 +142,9 @@ namespace aabb {
                        < shape.vertices[shape.indices[face_index_b][max_index_b]][axis_index];
             };
 
-            static auto xCompareFaces = std::bind(compareFaces, 0);
-            static auto yCompareFaces = std::bind(compareFaces, 1);
-            static auto zCompareFaces = std::bind(compareFaces, 2);
+            static auto xCompareFaces = std::bind(compareFaces, 0, std::placeholders::_1, std::placeholders::_2);
+            static auto yCompareFaces = std::bind(compareFaces, 1, std::placeholders::_1, std::placeholders::_2);
+            static auto zCompareFaces = std::bind(compareFaces, 2, std::placeholders::_1, std::placeholders::_2);
 
             std::size_t const x_min_index = *std::min_element(indices.begin(), indices.end(), xCompareFaces);
             std::size_t const x_max_index = *std::max_element(indices.begin(), indices.end(), xCompareFaces);
