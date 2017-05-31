@@ -14,41 +14,12 @@ volumes::Shape::Shape(Vertices const & vertices, Faces const & indices)
 {
 }
 
-obb::OrientedBoundingBox::OrientedBoundingBox(Shape const & shape, Indices const & indices)
-    : m_box_shape({}, {}, {}, {})
-    , m_shape(shape)
-    , m_indices(indices)
-{
-    //Todo: implement convex hull step
-    m_box.mean = calculateMeanVertex(m_shape, m_indices);
-    m_box.covariance = calculateCovarianceMatrix(m_shape, m_indices, m_box.mean);
-    m_box.eigen_vectors = calculateEigenVectors(m_box.covariance);
-    m_box.eigen_vectors_normalized = m_box.eigen_vectors.normalized();
-    m_box.extremal_vertices = calculateExtremalVertices(m_box.covariance, m_shape, m_indices);
-    m_box.cube_vertices = calculateBoxVertices(m_box.extremal_vertices, m_box.eigen_vectors_normalized);
-
-    m_box_shape = geometry::Box(
-        { m_box.mean[0], m_box.mean[1], m_box.mean[2] }, 
-        { m_box.eigen_vectors.col(0)[0], m_box.eigen_vectors.col(0)[1], m_box.eigen_vectors.col(0)[2] },
-        { m_box.eigen_vectors.col(1)[0], m_box.eigen_vectors.col(1)[1], m_box.eigen_vectors.col(1)[2] },
-        { m_box.eigen_vectors.col(2)[0], m_box.eigen_vectors.col(2)[1], m_box.eigen_vectors.col(2)[2] }
-    );
-}
-
-geometry::Box obb::OrientedBoundingBox::getBox() const
-{
-    return m_box_shape;
-}
-
-Eigen::Vector3f
-obb::OrientedBoundingBox::calculateMeanVertex(
-    Shape const & shape, Indices const & indices)
-{
+Eigen::Vector3f volumes::calculateMeanVertex(const volumes::Shape & shape, Indices const & indices) {
     Eigen::Vector3f sum{ 0, 0, 0 };
     for (auto index : indices)
     {
         auto const & face = shape.indices[index];
-        
+
         sum += shape.vertices[face[0]];
         sum += shape.vertices[face[1]];
         sum += shape.vertices[face[2]];
@@ -58,16 +29,15 @@ obb::OrientedBoundingBox::calculateMeanVertex(
     return mean;
 }
 
-Eigen::Matrix3f
-obb::OrientedBoundingBox::calculateCovarianceMatrix(
-    Shape const & shape, Indices const & indices, Eigen::Vector3f const & mean)
+Eigen::Matrix3f volumes::calculateCovarianceMatrix(
+        volumes::Shape const & shape, volumes::Indices const & indices, Eigen::Vector3f const & mean)
 {
     Eigen::Matrix3f C = Eigen::Matrix3f::Zero();
 
-    for (auto const & index : indices) 
+    for (auto const & index : indices)
     {
         auto const & face = shape.indices[index];
-        
+
         Eigen::Vector3f const p = shape.vertices[face[0]] - mean;
         Eigen::Vector3f const q = shape.vertices[face[1]] - mean;
         Eigen::Vector3f const r = shape.vertices[face[2]] - mean;
@@ -94,16 +64,20 @@ obb::OrientedBoundingBox::calculateCovarianceMatrix(
     return C;
 }
 
-Eigen::Matrix3f
-obb::OrientedBoundingBox::calculateEigenVectors(Eigen::Matrix3f const & covariance)
+Eigen::Vector3f volumes::calculateEigenValues(Eigen::Matrix3f const & covariance)
+{
+    Eigen::EigenSolver<Eigen::Matrix3f> es(covariance);
+    es.eigenvalues().real();
+}
+
+Eigen::Matrix3f volumes::calculateEigenVectors(Eigen::Matrix3f const & covariance)
 {
     Eigen::EigenSolver<Eigen::Matrix3f> es(covariance);
     return es.eigenvectors().real();;
 }
 
-Eigen::Matrix3f
-obb::OrientedBoundingBox::calculateExtremalVertices(
-    Eigen::Matrix3f const & eigen_vectors, Shape const & shape, Indices const & indices)
+Eigen::Matrix3f volumes::calculateExtremalVertices(
+        Eigen::Matrix3f const & eigen_vectors, volumes::Shape const & shape, volumes::Indices const & indices)
 {
     std::vector<Eigen::Vector3f const *, Eigen::aligned_allocator<Eigen::Vector3f const*>> vertices;
     for (auto index : indices)
@@ -117,11 +91,37 @@ obb::OrientedBoundingBox::calculateExtremalVertices(
     {
         Eigen::Vector3f const vec = eigen_vectors.col(i);
         auto max_vertex = *std::max_element(vertices.begin(), vertices.end(),
-            [&vec](auto a, auto b) { return a->dot(vec) < b->dot(vec); });
+                                            [&vec](auto a, auto b) { return a->dot(vec) < b->dot(vec); });
         extremal.col(i) = *max_vertex;
     }
 
     return extremal;
+}
+
+obb::OrientedBoundingBox::OrientedBoundingBox(Shape const & shape, Indices const & indices)
+    : m_box_shape({}, {}, {}, {})
+    , m_shape(shape)
+    , m_indices(indices)
+{
+    //Todo: implement convex hull step
+    m_box.mean = volumes::calculateMeanVertex(m_shape, m_indices);
+    m_box.covariance = volumes::calculateCovarianceMatrix(m_shape, m_indices, m_box.mean);
+    m_box.eigen_vectors = volumes::calculateEigenVectors(m_box.covariance);
+    m_box.extremal_vertices = volumes::calculateExtremalVertices(m_box.covariance, m_shape, m_indices);
+    m_box.eigen_vectors_normalized = m_box.eigen_vectors.normalized();
+    m_box.cube_vertices = calculateBoxVertices(m_box.extremal_vertices, m_box.eigen_vectors_normalized);
+
+    m_box_shape = geometry::Box(
+        { m_box.mean[0], m_box.mean[1], m_box.mean[2] }, 
+        { m_box.eigen_vectors.col(0)[0], m_box.eigen_vectors.col(0)[1], m_box.eigen_vectors.col(0)[2] },
+        { m_box.eigen_vectors.col(1)[0], m_box.eigen_vectors.col(1)[1], m_box.eigen_vectors.col(1)[2] },
+        { m_box.eigen_vectors.col(2)[0], m_box.eigen_vectors.col(2)[1], m_box.eigen_vectors.col(2)[2] }
+    );
+}
+
+geometry::Box obb::OrientedBoundingBox::getBox() const
+{
+    return m_box_shape;
 }
 
 volumes::Vertices
@@ -234,3 +234,90 @@ void aabb::AxisAlignedBoundingBox::createBox(aabb::AxisAlignedBoundingBox::Box &
             {0, 0, box.zAxis[2]}
     );
 }
+
+sphere::BoundingSphere::BoundingSphere(const volumes::Shape & shape, Indices const & indices)
+        : m_sphere_shape({}, 0)
+        , m_shape(shape)
+        , m_indices(indices)
+{
+    m_sphere.mean = volumes::calculateMeanVertex(shape, indices);
+    m_sphere.covariance = volumes::calculateCovarianceMatrix(shape, indices, m_sphere.mean);
+    m_sphere.eigen_values = volumes::calculateEigenValues(m_sphere.covariance);
+    m_sphere.eigen_vectors = volumes::calculateEigenVectors(m_sphere.covariance);
+    m_sphere.eigen_vectors_normalized = m_sphere.eigen_vectors.normalized();
+    m_sphere_shape = calculateBoundingSphere(
+            m_sphere.eigen_vectors_normalized, m_sphere.eigen_values, m_shape, m_indices);
+    m_sphere_shape = refineSphere(m_sphere_shape, shape, indices);
+}
+
+geometry::Sphere sphere::BoundingSphere::getSphere() const
+{
+    return m_sphere_shape;
+}
+
+geometry::Sphere sphere::BoundingSphere::calculateBoundingSphere(
+        Eigen::Matrix3f const & eigen_vectors, Eigen::Vector3f const & eigen_values,
+        const volumes::Shape & shape, Indices const & indices
+)
+{
+    //Find max dispersion axis
+    uint32_t max_eigen_value_index = (eigen_values[0] < eigen_values[1] ? 1 : 0);
+    if (eigen_values[max_eigen_value_index] < eigen_values[2]) {
+        max_eigen_value_index = 2;
+    }
+    Eigen::Vector3f max_dispersion_axis = eigen_vectors.col(max_eigen_value_index).normalized();
+
+    //Find extremal points on it
+    unsigned long min_vertex_index = 0;
+    unsigned long max_vertex_index = 0;
+    for (auto face_index : indices) {
+        for (auto vertex_index : shape.indices[face_index]) {
+            auto const currentVertexProjection = shape.vertices[vertex_index].dot(max_dispersion_axis);
+            if (currentVertexProjection > shape.vertices[max_vertex_index].dot(max_dispersion_axis))
+            {
+                max_vertex_index = vertex_index;
+            }
+            if (currentVertexProjection < shape.vertices[min_vertex_index].dot(max_dispersion_axis))
+            {
+                min_vertex_index = vertex_index;
+            }
+        }
+    }
+
+    //Calculate sphere
+    auto const diameter = (shape.vertices[max_vertex_index] - shape.vertices[min_vertex_index]).norm();
+    auto const radius = diameter / 2.0f;
+    auto const center = (shape.vertices[max_vertex_index] - shape.vertices[min_vertex_index]) / 2.0f
+                        + shape.vertices[min_vertex_index];
+
+    return geometry::Sphere(
+            {center[0], center[1], center[2]}, static_cast<double>(radius)
+    );
+}
+
+geometry::Sphere sphere::BoundingSphere::refineSphere(
+        geometry::Sphere const & sphere, const volumes::Shape & shape, Indices const & indices
+)
+{
+    Vector3 const sphereMassCenter = sphere.getCenterOfMass();
+    float sphereRadius = static_cast<float>(sphere.getRadius());
+    Eigen::Vector3f sphereCenter(sphereMassCenter.x, sphereMassCenter.y, sphereMassCenter.z);
+
+    //Find point outside of the sphere and resize sphere
+    for (auto face_index : indices) {
+        for (auto vertex_index : shape.indices[face_index]) {
+            if ((shape.vertices[vertex_index] - sphereCenter).squaredNorm() > std::pow(sphereRadius, 2))
+            {
+                Eigen::Vector3f oppositeSphereVertex =
+                        (shape.vertices[vertex_index] * -1.0f).normalized() * sphereRadius;
+                sphereCenter =
+                        (oppositeSphereVertex - shape.vertices[vertex_index]) / 2.0f
+                        + shape.vertices[vertex_index];
+                sphereRadius = (sphereCenter - oppositeSphereVertex).norm();
+            }
+        }
+    }
+
+    return geometry::Sphere({sphereCenter[0], sphereCenter[1], sphereCenter[2]}, sphereRadius);
+}
+
