@@ -6,11 +6,9 @@
 #ifndef PEGASUS_OBB_HPP
 #define PEGASUS_OBB_HPP
 
-#include <functional>
 #include <vector>
 #include <set>
 #include <array>
-#include <memory>
 #include <cmath>
 #include <Eigen/Eigen>
 #include <Eigen/StdVector>
@@ -171,48 +169,3 @@ private:
 } // namespace geometry
 } // namespace pegasus
 #endif // PEGASUS_OBB_HPP
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

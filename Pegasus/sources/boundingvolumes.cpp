@@ -5,6 +5,8 @@
 */
 #include "Pegasus/include/boundingvolumes.hpp"
 
+#include <functional>
+
 using namespace pegasus;
 using namespace geometry;
 using namespace volumes;
@@ -320,4 +322,3 @@ geometry::Sphere sphere::BoundingSphere::refineSphere(
 
     return geometry::Sphere({sphereCenter[0], sphereCenter[1], sphereCenter[2]}, sphereRadius);
 }
-
