@@ -18,7 +18,7 @@ void createWindow(const char* title)
 {
     glutSetOption(GLUT_MULTISAMPLE, 8);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
-    glutInitWindowSize(1600, 900);
+    glutInitWindowSize(1366, 768);
     glutInitWindowPosition(200, 200);
     glutCreateWindow(title);
 }
@@ -43,7 +43,10 @@ void mouse(int button, int state, int x, int y)
     app->mouse(button, state, x, y);
 }
 
-void reshape(int width, int height) { app->resize(width, height); }
+void reshape(int width, int height)
+{
+    app->resize(width, height);
+}
 
 void keyboard(unsigned char key, int x, int y)
 {
@@ -51,7 +54,10 @@ void keyboard(unsigned char key, int x, int y)
     app->key(key);
 }
 
-void motion(int x, int y) { app->mouseDrag(x, y); }
+void motion(int x, int y)
+{
+    app->mouseDrag(x, y);
+}
 
 int main(int argc, char** argv)
 {

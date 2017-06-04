@@ -23,8 +23,8 @@
 #include <random>
 #include <utility>
 
-static const uint32_t BOX_COUNT    = std::pow(4, 3);
-static const uint32_t SPHERE_COUNT = std::pow(4, 3);
+static const uint32_t BOX_COUNT    = std::pow(3, 3);
+static const uint32_t SPHERE_COUNT = std::pow(3, 3);
 static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
 static const double   RADIUS       = 5;
 
@@ -37,7 +37,7 @@ public:
     void display() override;
     void update() override;
     void key(unsigned char key) override;
-    void displayText(float x, float y, int r, int g, int b, void* vptr);
+    static void displayText(float x, float y, int r, int g, int b, void* vptr);
 
     void addBox(pegasus::Vector3 const & pos, double boxSide);
     void addSphere(pegasus::Vector3 const & pos, double radius);
@@ -92,7 +92,7 @@ void FallingDemo::addBox(pegasus::Vector3 const & pos, double boxSide)
     );
 }
 
-void FallingDemo::addSphere(const pegasus::Vector3 &pos, double radius)
+void FallingDemo::addSphere(pegasus::Vector3 const & pos, double radius)
 {
     particles.emplace_back();
     particles.back().setPosition(pos);
@@ -321,30 +321,30 @@ void FallingDemo::display()
 
 void FallingDemo::update()
 {
-    for (uint32_t i = 0; i < 1/*31*/; ++i)
-    {
-        world.startFrame();
+    world.startFrame();
 
-        auto duration = static_cast<float>(TimingData::get().lastFrameDuration * 0.001f);
-        if (duration <= 0.0f)
-            return;
+    auto duration = static_cast<float>(TimingData::get().lastFrameDuration * 0.001f);
+    if (duration <= 0.0f)
+        return;
 
-        xAxis *= pow(0.1f, duration);
-        yAxis *= pow(0.1f, duration);
-        zAxis *= pow(0.1f, duration);
-        activeObject->p.addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
+    xAxis *= pow(0.1f, duration);
+    yAxis *= pow(0.1f, duration);
+    zAxis *= pow(0.1f, duration);
+    activeObject->p.addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
-        world.runPhysics(0.01 / 1/*31*/);
+    world.runPhysics(0.01);
 
-        for (auto const& body : rigidBodies) {
-            body.s->setCenterOfMass(body.p.getPosition());
-        }
+    for (auto const& body : rigidBodies) {
+        body.s->setCenterOfMass(body.p.getPosition());
     }
 
     Application::update();
 }
 
-const char* FallingDemo::getTitle() { return "Pegasus Falling Demo"; }
+const char* FallingDemo::getTitle()
+{
+    return "Pegasus Falling Demo";
+}
 
 void FallingDemo::displayText(float x, float y, int r, int g, int b, void* vptr)
 {
@@ -419,4 +419,7 @@ void FallingDemo::key(unsigned char key)
     }
 }
 
-Application* getApplication() { return new FallingDemo(); }
+Application* getApplication()
+{
+    return new FallingDemo();
+}

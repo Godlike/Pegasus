@@ -10,9 +10,15 @@
 
 using namespace pegasus;
 
-Random::Random() { seed(0); }
+Random::Random()
+{
+    seed(0);
+}
 
-Random::Random(unsigned seed) { Random::seed(seed); }
+Random::Random(unsigned seed)
+{
+    Random::seed(seed);
+}
 
 void Random::seed(unsigned s)
 {
@@ -32,7 +38,7 @@ void Random::seed(unsigned s)
     p2 = 10;
 }
 
-unsigned Random::rotl(unsigned n, unsigned r) const
+unsigned Random::rotl(unsigned n, unsigned r)
 {
     return (n << r) | (n >> (32 - r));
 }
@@ -44,10 +50,8 @@ unsigned Random::rotr(unsigned n, unsigned r)
 
 unsigned Random::randomBits()
 {
-    unsigned result;
-
     // Rotate the buffer and store it back to itself
-    result = buffer[p1] = rotl(buffer[p2], 13) + rotl(buffer[p1], 9);
+    unsigned result = buffer[p1] = rotl(buffer[p2], 13) + rotl(buffer[p1], 9);
 
     // Rotate pointers
     if (--p1 < 0)
@@ -108,9 +112,15 @@ double Random::randomDouble(double min, double max)
     return randomDouble() * (max - min) + min;
 }
 
-double Random::randomDouble(double scale) { return randomDouble() * scale; }
+double Random::randomDouble(double scale)
+{
+    return randomDouble() * scale;
+}
 
-unsigned Random::randomInt(unsigned max) { return randomBits() % max; }
+unsigned Random::randomInt(unsigned max)
+{
+    return randomBits() % max;
+}
 
 double Random::randomBinomial(double scale)
 {

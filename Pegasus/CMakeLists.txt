@@ -22,6 +22,11 @@ include(EigenConfig)
 add_subdirectory(${EIGEN_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIR})
 
+#GLM
+include(GlmConfig)
+add_subdirectory(${GLM_SOURCE_DIR})
+include_directories(${GLM_INCLUDE_DIR})
+
 #Target
 include_directories(
     ${PEGASUS_INCLUDE_DIR}
@@ -53,6 +58,4 @@ add_library(${PEGASUS_LIB}
     ${PEGASUS_HEADERS}
     ${PEGASUS_SOURCES}
 )
-target_link_libraries(${PEGASUS_LIB}
-    ${EIGEN_LIBRARIES}
-)
+target_link_libraries(${PEGASUS_LIB})
