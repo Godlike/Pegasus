@@ -8,9 +8,11 @@
 
 #include "Pegasus/include/geometry.hpp"
 
+#include <functional>
 #include <vector>
 #include <set>
 #include <array>
+#include <memory>
 #include <cmath>
 #include <Eigen/Eigen>
 #include <Eigen/StdVector>
@@ -162,3 +164,48 @@ private:
 } // namespace geometry
 } // namespace pegasus
 #endif // PEGASUS_OBB_HPP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
