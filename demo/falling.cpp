@@ -107,7 +107,7 @@ void FallingDemo::sceneReset()
 {
     rigidBodies.clear();
     forces.clear();
-    forceRegistry.clear();
+    forceRegistry.Clear();
     contactGenerators.clear();
     particles.clear();
 
@@ -176,7 +176,7 @@ void FallingDemo::sceneReset()
     //Register forces
     for (auto & particle : particles)
     {
-        forceRegistry.add(particle, *forces.front());
+        forceRegistry.Add(particle, *forces.front());
     }
 
     //Create contact generators

@@ -41,7 +41,7 @@ void pegasus::ParticleWorld::runPhysics(double duration)
         mContactResolver.resolveContacts(mContacts, duration);
     }
 
-    mForceRegistry.updateForces();
+    mForceRegistry.UpdateForces();
     integrate(duration);
 }
 
