@@ -110,12 +110,12 @@ void pegasus::ParticleContact::ResolveInterpenetration() const
 
     Vector3 const movePerIMass = m_contactNormal * (m_penetration / totalInverseMass);
     m_pParticleA->SetPosition(m_pParticleA->GetPosition() + movePerIMass * m_pParticleA->GetInverseMass());
-    m_pParticleA->AddForce((movePerIMass * m_pParticleA->GetInverseMass()).inverse());
+    m_pParticleA->AddForce((movePerIMass * m_pParticleA->GetInverseMass()).Inverse());
 
     if (m_pParticleB)
     {
         m_pParticleB->SetPosition(m_pParticleB->GetPosition() - movePerIMass * m_pParticleB->GetInverseMass());
-        m_pParticleB->AddForce((movePerIMass * m_pParticleB->GetInverseMass()).inverse());
+        m_pParticleB->AddForce((movePerIMass * m_pParticleB->GetInverseMass()).Inverse());
     }
 }
 

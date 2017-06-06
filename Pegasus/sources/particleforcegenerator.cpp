@@ -85,10 +85,10 @@ void pegasus::ParticleDrag::UpdateForce(Particle& p)
 {
     Vector3 force = p.GetVelocity();
 
-    double dragCoeff = force.magnitude();
+    double dragCoeff = force.Magnitude();
     dragCoeff = m_k1 * dragCoeff + m_k2 * dragCoeff * dragCoeff;
 
-    force.normalize();
+    force.Normalize();
     force *= -dragCoeff;
     p.AddForce(force);
 }
@@ -106,9 +106,9 @@ void pegasus::ParticleSpring::UpdateForce(Particle& p)
     Vector3 force = p.GetPosition();
     force -= m_other.GetPosition();
 
-    auto const magnitude = m_springConstant * std::fabs(force.magnitude() - m_restLength);
+    auto const magnitude = m_springConstant * std::fabs(force.Magnitude() - m_restLength);
 
-    force.normalize();
+    force.Normalize();
     force *= -magnitude;
     p.AddForce(force);
 }
@@ -126,9 +126,9 @@ void pegasus::ParticleAnchoredSpring::UpdateForce(Particle& p)
     Vector3 force = p.GetPosition();
     force -= m_anchor;
 
-    auto const magnitude = m_springConstant * std::fabs(force.magnitude() - m_restLength);
+    auto const magnitude = m_springConstant * std::fabs(force.Magnitude() - m_restLength);
 
-    force.normalize();
+    force.Normalize();
     force *= -magnitude;
     p.AddForce(force);
 }
@@ -145,7 +145,7 @@ void pegasus::ParticleBungee::UpdateForce(Particle& p)
     Vector3 force = p.GetPosition();
     force -= m_other.GetPosition();
 
-    double magnitude = force.magnitude();
+    double magnitude = force.Magnitude();
     if (magnitude <= m_restLength)
     {
         return;
@@ -153,7 +153,7 @@ void pegasus::ParticleBungee::UpdateForce(Particle& p)
 
     magnitude = m_springConstant * (magnitude - m_restLength);
 
-    force.normalize();
+    force.Normalize();
     force *= -magnitude;
     p.AddForce(force);
 }

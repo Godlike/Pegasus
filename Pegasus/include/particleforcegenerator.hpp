@@ -160,20 +160,20 @@ public:
             // Work out the separation distance
             auto separation = currentParticle.GetPosition() - particle.GetPosition();
             separation.z = 0.0f;
-            auto distance = separation.magnitude();
+            auto distance = separation.Magnitude();
 
             if (distance < m_minNaturalDistance)
             {
                 // Use a repulsion force.
                 distance = 1.0f - distance / m_minNaturalDistance;
-                particle.AddForce(separation.unit() * (1.0f - distance) * m_maxRepulsion * -1.0f);
+                particle.AddForce(separation.Unit() * (1.0f - distance) * m_maxRepulsion * -1.0f);
                 ++joinCount;
             }
             else if (distance > m_maxNaturalDistance && distance < m_maxDistance)
             {
                 // Use an attraction force.
                 distance = (distance - m_maxNaturalDistance) / (m_maxDistance - m_maxNaturalDistance);
-                particle.AddForce(separation.unit() * distance * m_maxAttraction);
+                particle.AddForce(separation.Unit() * distance * m_maxAttraction);
                 ++joinCount;
             }
         }

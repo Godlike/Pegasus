@@ -8,63 +8,68 @@
 #include "Pegasus/include/ParticleWorld.hpp"
 
 pegasus::ParticleWorld::ParticleWorld(
-    Particles & particles,
-    ParticleForceRegistry & forceRegistry,
-    ParticleContactGenerators & contactGenerators,
+    Particles& particles,
+    ParticleForceRegistry& forceRegistry,
+    ParticleContactGenerators& contactGenerators,
     uint32_t maxContacts,
     uint32_t iterations)
-    : mParticles(particles)
-    , mForceRegistry(forceRegistry)
-    , mContactGenerators(contactGenerators)
-    , mContactResolver(iterations)
-    , mCalculateIterations(false)
-    , mMaxContacts(maxContacts)
+    : m_particles(particles)
+    , m_forceRegistry(forceRegistry)
+    , m_contactGenerators(contactGenerators)
+    , m_contactResolver(iterations)
+    , m_calculateIterations(false)
+    , m_maxContacts(maxContacts)
 {
-    mContacts.reserve(mMaxContacts);
+    m_contacts.reserve(m_maxContacts);
 }
 
-void pegasus::ParticleWorld::startFrame() const
+void pegasus::ParticleWorld::StartFrame() const
 {
-    for (auto & p : mParticles) {
+    for (auto& p : m_particles)
+    {
         p.ClearForceAccumulator();
     }
 }
 
-void pegasus::ParticleWorld::runPhysics(double duration)
+void pegasus::ParticleWorld::RunPhysics(double duration)
 {
-    auto usedContacts = generateContacts();
+    auto usedContacts = GenerateContacts();
 
-    if (usedContacts) {
-        if (mCalculateIterations) {
-            mContactResolver.SetIterations(usedContacts * 2);
+    if (usedContacts)
+    {
+        if (m_calculateIterations)
+        {
+            m_contactResolver.SetIterations(usedContacts * 2);
         }
-        mContactResolver.ResolveContacts(mContacts, duration);
+        m_contactResolver.ResolveContacts(m_contacts, duration);
     }
 
-    mForceRegistry.UpdateForces();
-    integrate(duration);
+    m_forceRegistry.UpdateForces();
+    Integrate(duration);
 }
 
-uint32_t pegasus::ParticleWorld::generateContacts()
+uint32_t pegasus::ParticleWorld::GenerateContacts()
 {
-    uint32_t limit = mMaxContacts;
-    mContacts.clear();
+    uint32_t limit = m_maxContacts;
+    m_contacts.clear();
 
-    for (auto const& g : mContactGenerators)
+    for (auto const& g : m_contactGenerators)
     {
-        limit -= g->AddContact(mContacts, limit);
+        limit -= g->AddContact(m_contacts, limit);
 
-        if (limit == 0) {
+        if (limit == 0)
+        {
             break;
         }
     }
 
-    return mMaxContacts - limit;
+    return m_maxContacts - limit;
 }
 
-void pegasus::ParticleWorld::integrate(double duration) const
+void pegasus::ParticleWorld::Integrate(double duration) const
 {
-    for (auto & p : mParticles) {
+    for (auto& p : m_particles)
+    {
         p.Integrate(duration);
     }
 }

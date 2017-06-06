@@ -16,38 +16,37 @@
 #include <list>
 #include <memory>
 
-namespace pegasus {
-
+namespace pegasus
+{
 using ParticleContactGenerators = std::list<std::unique_ptr<ParticleContactGenerator>>;
 using Particles = std::list<Particle>;
 
-class ParticleWorld {
+class ParticleWorld
+{
 public:
-    ParticleWorld(Particles & particles,
-                  ParticleForceRegistry & forceRegistry,
-                  ParticleContactGenerators & contactGenerators,
+    ParticleWorld(Particles& particles,
+                  ParticleForceRegistry& forceRegistry,
+                  ParticleContactGenerators& contactGenerators,
                   uint32_t maxContacts,
                   uint32_t iterations = 0);
 
-    void startFrame() const;
-    void runPhysics(double duration);
+    void StartFrame() const;
+    void RunPhysics(double duration);
 
 private:
-    Particles & mParticles;
-    ParticleForceRegistry & mForceRegistry;
+    Particles& m_particles;
+    ParticleForceRegistry& m_forceRegistry;
 
-    ParticleContacts mContacts;
-    ParticleContactGenerators & mContactGenerators;
-    ParticleContactResolver mContactResolver;
+    ParticleContacts m_contacts;
+    ParticleContactGenerators& m_contactGenerators;
+    ParticleContactResolver m_contactResolver;
 
-    bool mCalculateIterations;
-    uint32_t mMaxContacts;
+    bool m_calculateIterations;
+    uint32_t m_maxContacts;
 
-private:
-    uint32_t generateContacts();
-    void integrate(double duration) const;
+    uint32_t GenerateContacts();
+    void Integrate(double duration) const;
 };
-
 } // namespace pegasus
 
 #endif // PEGASUS_PARTICLE_WORLD_HPP

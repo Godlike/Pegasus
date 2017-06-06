@@ -196,7 +196,7 @@ void FallingDemo::sceneReset()
     rigidBodies.emplace_front(
         particles.front(),
         std::make_unique<pegasus::geometry::Plane>(
-           particles.front().GetPosition(), pegasus::Vector3(0, 1.0, 0).unit()
+           particles.front().GetPosition(), pegasus::Vector3(0, 1.0, 0).Unit()
         )
     );
 
@@ -250,14 +250,14 @@ void FallingDemo::display()
 
             if (p1.x < p0.x) { std::swap(p0.x, p1.x); }
 
-            pegasus::Vector3 b = (planeNormal % p1 % planeNormal).unit() * planeSideLength;
-            pegasus::Vector3 c = (planeNormal % b).unit() * planeSideLength;
+            pegasus::Vector3 b = (planeNormal % p1 % planeNormal).Unit() * planeSideLength;
+            pegasus::Vector3 c = (planeNormal % b).Unit() * planeSideLength;
 
             std::array<pegasus::Vector3, 4> quadVertices{
-                b.inverse() - c + posNormalProjection,
+                b.Inverse() - c + posNormalProjection,
                 b - c + posNormalProjection,
                 b + c + posNormalProjection,
-                b.inverse() + c + posNormalProjection
+                b.Inverse() + c + posNormalProjection
             };
 
             glBegin(GL_QUADS);
@@ -302,7 +302,7 @@ void FallingDemo::display()
             box->GetAxes(boxAxes.at(0), boxAxes.at(1), boxAxes.at(2));
 
             glTranslatef(p.x, p.y, p.z);
-            glScalef(boxAxes.at(0).magnitude(), boxAxes.at(1).magnitude(), boxAxes.at(2).magnitude());
+            glScalef(boxAxes.at(0).Magnitude(), boxAxes.at(1).Magnitude(), boxAxes.at(2).Magnitude());
             glutWireCube(2.01);
 
             if (&*activeObject != &body)
@@ -321,7 +321,7 @@ void FallingDemo::display()
 
 void FallingDemo::update()
 {
-    world.startFrame();
+    world.StartFrame();
 
     auto duration = static_cast<float>(TimingData::get().lastFrameDuration * 0.001f);
     if (duration <= 0.0f)
@@ -332,7 +332,7 @@ void FallingDemo::update()
     zAxis *= pow(0.1f, duration);
     activeObject->p.AddForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
-    world.runPhysics(0.01);
+    world.RunPhysics(0.01);
 
     for (auto const& body : rigidBodies) {
         body.s->setCenterOfMass(body.p.GetPosition());

@@ -30,12 +30,12 @@ void pegasus::Particle::Integrate(double duration)
         return;
     }
 
-    m_position.addScaledVector(m_velocity, duration);
+    m_position.AddScaledVector(m_velocity, duration);
 
     Vector3 resultingAcc(m_acceleration);
-    resultingAcc.addScaledVector(m_forceAccumulator, m_inverseMass);
+    resultingAcc.AddScaledVector(m_forceAccumulator, m_inverseMass);
 
-    m_velocity.addScaledVector(resultingAcc, duration);
+    m_velocity.AddScaledVector(resultingAcc, duration);
 
     m_velocity *= std::pow(m_damping, duration);
 

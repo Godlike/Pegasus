@@ -18,7 +18,6 @@ public:
     Particle & p;
     std::unique_ptr<geometry::SimpleShape> const s;
 
-public:
     RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s);
 };
 

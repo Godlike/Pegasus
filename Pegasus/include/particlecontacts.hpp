@@ -88,15 +88,15 @@ public:
             auto toParticle = particles[i]->GetPosition() - start;
             auto const lineDirection = end - start;
             auto const projected = toParticle * lineDirection;
-            auto const platformSqLength = lineDirection.squareMagnitude();
+            auto const platformSqLength = lineDirection.SquareMagnitude();
 
             if (projected <= 0)
             {
-                if (toParticle.squareMagnitude() < blobRadius * blobRadius)
+                if (toParticle.SquareMagnitude() < blobRadius * blobRadius)
                 {
-                    auto contactNormal = toParticle.unit();
+                    auto contactNormal = toParticle.Unit();
                     contactNormal.z = 0;
-                    auto const penetration = blobRadius - toParticle.magnitude();
+                    auto const penetration = blobRadius - toParticle.Magnitude();
                     contacts.emplace_back(
                         particles[i], nullptr, restitution, contactNormal, penetration);
                     ++used;
@@ -105,11 +105,11 @@ public:
             else if (projected >= platformSqLength)
             {
                 toParticle = particles[i]->GetPosition() - end;
-                if (toParticle.squareMagnitude() < blobRadius * blobRadius)
+                if (toParticle.SquareMagnitude() < blobRadius * blobRadius)
                 {
-                    auto contactNormal = toParticle.unit();
+                    auto contactNormal = toParticle.Unit();
                     contactNormal.z = 0;
-                    auto const penetration = blobRadius - toParticle.magnitude();
+                    auto const penetration = blobRadius - toParticle.Magnitude();
                     contacts.emplace_back(
                         particles[i], nullptr, restitution, contactNormal, penetration);
                     ++used;
@@ -117,11 +117,11 @@ public:
             }
             else
             {
-                auto distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
+                auto distanceToPlatform = toParticle.SquareMagnitude() - projected * projected / platformSqLength;
                 if (distanceToPlatform < blobRadius * blobRadius)
                 {
                     auto closestPoint = start + lineDirection * (projected / platformSqLength);
-                    auto contactNormal = (particles[i]->GetPosition() - closestPoint).unit();
+                    auto contactNormal = (particles[i]->GetPosition() - closestPoint).Unit();
                     contactNormal.z = 0;
                     auto const penetration = blobRadius - sqrt(distanceToPlatform);
                     contacts.emplace_back(

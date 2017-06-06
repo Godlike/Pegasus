@@ -180,8 +180,8 @@ void CalculateSeparatingAxes(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2,
     {
         for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2)
         {
-            auto const axis = it1->vectorProduct(*it2).unit();
-            if (axis.squareMagnitude() != 0.0f)
+            auto const axis = it1->VectorProduct(*it2).Unit();
+            if (axis.SquareMagnitude() != 0.0f)
             {
                 destBegin++ = axis;
             }
@@ -195,7 +195,7 @@ void ProjectAllVertices(
 {
     while (srcBegin != srcEnd)
     {
-        *destBegin++ = axisNormal.scalarProduct(*srcBegin++);
+        *destBegin++ = axisNormal.ScalarProduct(*srcBegin++);
     }
 }
 
@@ -337,7 +337,7 @@ template <>
 inline bool Overlap<Plane, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Plane, Plane>*>(cacheBase);
-    return cache->crossProduct.squareMagnitude() != 0;
+    return cache->crossProduct.SquareMagnitude() != 0;
 }
 
 template <>
@@ -380,7 +380,7 @@ template <>
 inline Vector3 CalculateContactNormal<Plane, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Plane, Sphere>*>(cacheBase);
-    return cache->planeNormal.inverse();
+    return cache->planeNormal.Inverse();
 }
 
 template <>
@@ -405,7 +405,7 @@ inline void Initialize<Plane, Box>(SimpleShape const* a, SimpleShape const* b, C
     cache->boxMassCenter = box->getCenterOfMass();
     CalculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices);
     cache->boxFaces = {cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2],
-        cache->boxAxes[0].inverse(), cache->boxAxes[1].inverse(), cache->boxAxes[2].inverse()};
+        cache->boxAxes[0].Inverse(), cache->boxAxes[1].Inverse(), cache->boxAxes[2].Inverse()};
     std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n) { n += cache->boxMassCenter; });
     std::transform(cache->boxVertices.begin(), cache->boxVertices.end(), cache->boxPenetrations.begin(),
                    [cache](auto const& p) { return cache->planeDistance - p * cache->planeNormal; });
@@ -428,7 +428,7 @@ inline Vector3 CalculateContactNormal<Plane, Box>(SimpleShape const* a, SimpleSh
     auto const minIndex = std::distance(cache->boxFaceDistances.begin(),
                                         std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end()));
 
-    return cache->boxFaces[minIndex].unit();
+    return cache->boxFaces[minIndex].Unit();
 }
 
 template <>
@@ -457,7 +457,7 @@ template <>
 inline Vector3 CalculateContactNormal<Sphere, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Plane>*>(cacheBase);
-    return CalculateContactNormal<Plane, Sphere>(b, a, &cache->psCache).inverse();
+    return CalculateContactNormal<Plane, Sphere>(b, a, &cache->psCache).Inverse();
 }
 
 template <>
@@ -487,21 +487,21 @@ template <>
 inline bool Overlap<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
-    return pow(cache->radiusSum, 2) > cache->baVector.squareMagnitude();
+    return pow(cache->radiusSum, 2) > cache->baVector.SquareMagnitude();
 }
 
 template <>
 inline Vector3 CalculateContactNormal<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
-    return cache->baVector.unit();
+    return cache->baVector.Unit();
 }
 
 template <>
 inline double CalculatePenetration<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
-    return (cache->radiusSum - cache->baVector.magnitude());
+    return (cache->radiusSum - cache->baVector.Magnitude());
 }
 
 // Sphere, Box
@@ -520,14 +520,14 @@ inline void Initialize<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, 
     CalculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices);
     std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n) { n += cache->boxMassCenter; });
     cache->boxNormals = {cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2],
-        cache->boxAxes[0].inverse(), cache->boxAxes[1].inverse(), cache->boxAxes[2].inverse()};
+        cache->boxAxes[0].Inverse(), cache->boxAxes[1].Inverse(), cache->boxAxes[2].Inverse()};
     cache->boxAxes = cache->boxNormals;
 
     for (uint32_t i = 0; i < cache->boxNormals.size(); ++i)
     {
         cache->boxFaces[i] = cache->boxNormals[i] + cache->boxMassCenter;
-        cache->boxNormals[i].normalize();
-        cache->boxFaceDistances[i] = (cache->boxFaces[i] - cache->sphereMassCenter).magnitude();
+        cache->boxNormals[i].Normalize();
+        cache->boxFaceDistances[i] = (cache->boxFaces[i] - cache->sphereMassCenter).Magnitude();
     }
 }
 
@@ -538,14 +538,14 @@ inline bool Overlap<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, Cac
 
     cache->boxSphereVector = cache->sphereMassCenter - cache->boxMassCenter;
 
-    if (cache->boxSphereVector.squareMagnitude())
+    if (cache->boxSphereVector.SquareMagnitude())
     {
         cache->boxContactPoint = cache->boxMassCenter;
 
         for (uint32_t i = 0; i < 3; ++i)
         {
             double d = cache->boxSphereVector * cache->boxNormals[i];
-            double axisNorm = cache->boxAxes[i].magnitude();
+            double axisNorm = cache->boxAxes[i].Magnitude();
 
             if (d > axisNorm)
             {
@@ -565,10 +565,10 @@ inline bool Overlap<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, Cac
         cache->boxSphereVector = cache->boxAxes.front();
     }
 
-    cache->sphereContactNormal = (cache->boxContactPoint - cache->sphereMassCenter).unit();
+    cache->sphereContactNormal = (cache->boxContactPoint - cache->sphereMassCenter).Unit();
     cache->sphereContactPoint = cache->sphereContactNormal * cache->sphereRadius + cache->sphereMassCenter;
 
-    return (cache->sphereMassCenter - cache->boxContactPoint).squareMagnitude()
+    return (cache->sphereMassCenter - cache->boxContactPoint).SquareMagnitude()
             <= std::pow(cache->sphereRadius, 2);
 }
 
@@ -584,9 +584,9 @@ inline Vector3 CalculateContactNormal<Sphere, Box>(SimpleShape const* a, SimpleS
 
     if (cache->boxContactPoint == cache->sphereMassCenter)
     {
-        cache->boxContactPoint = cache->boxMassCenter + cache->boxSphereVector.unit() 
-            * (cache->boxAxes[minIndex] * cache->boxSphereVector.unit());
-        cache->sphereContactNormal = (cache->boxContactPoint - cache->sphereMassCenter).unit();
+        cache->boxContactPoint = cache->boxMassCenter + cache->boxSphereVector.Unit() 
+            * (cache->boxAxes[minIndex] * cache->boxSphereVector.Unit());
+        cache->sphereContactNormal = (cache->boxContactPoint - cache->sphereMassCenter).Unit();
         cache->sphereContactPoint = cache->sphereContactNormal * cache->sphereRadius + cache->sphereMassCenter;
     }
 
@@ -600,10 +600,10 @@ inline double CalculatePenetration<Sphere, Box>(SimpleShape const* a, SimpleShap
 
     if (cache->boxContactPoint == cache->boxMassCenter)
     {
-        return cache->boxAxes.front().magnitude();
+        return cache->boxAxes.front().Magnitude();
     }
 
-    return (cache->sphereContactPoint - cache->boxContactPoint).magnitude();
+    return (cache->sphereContactPoint - cache->boxContactPoint).Magnitude();
 }
 
 // Box, Plane
@@ -677,7 +677,7 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Cac
     cache->aMassCenter = aBox->getCenterOfMass();
     aBox->GetAxes(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2]);
     cache->aBoxAxes = {cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2],
-        cache->aBoxAxes[0].inverse(), cache->aBoxAxes[1].inverse(), cache->aBoxAxes[2].inverse()};
+        cache->aBoxAxes[0].Inverse(), cache->aBoxAxes[1].Inverse(), cache->aBoxAxes[2].Inverse()};
     CalculateBoxVertices(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2], cache->aBoxVertices);
     std::for_each(cache->aBoxVertices.begin(), cache->aBoxVertices.end(), [cache](auto& v) { v += cache->aMassCenter; });
     std::transform(cache->aBoxAxes.begin(), cache->aBoxAxes.end(), cache->aBoxFaces.begin(),
@@ -686,14 +686,14 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Cac
     cache->bMassCenter = bBox->getCenterOfMass();
     bBox->GetAxes(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2]);
     cache->bBoxAxes = {cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2],
-        cache->bBoxAxes[0].inverse(), cache->bBoxAxes[1].inverse(), cache->bBoxAxes[2].inverse()};
+        cache->bBoxAxes[0].Inverse(), cache->bBoxAxes[1].Inverse(), cache->bBoxAxes[2].Inverse()};
     CalculateBoxVertices(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2], cache->bBoxVertices);
     std::for_each(cache->bBoxVertices.begin(), cache->bBoxVertices.end(), [cache](auto& v) { v += cache->bMassCenter; });
     std::transform(cache->bBoxAxes.begin(), cache->bBoxAxes.end(), cache->bBoxFaces.begin(),
                    [cache](Vector3 const& v) { return v += cache->bMassCenter; });
 
-    cache->separatingAxes = {cache->aBoxAxes[0].unit(), cache->aBoxAxes[1].unit(), cache->aBoxAxes[2].unit(),
-        cache->bBoxAxes[0].unit(), cache->bBoxAxes[1].unit(), cache->bBoxAxes[2].unit()};
+    cache->separatingAxes = {cache->aBoxAxes[0].Unit(), cache->aBoxAxes[1].Unit(), cache->aBoxAxes[2].Unit(),
+        cache->bBoxAxes[0].Unit(), cache->bBoxAxes[1].Unit(), cache->bBoxAxes[2].Unit()};
     CalculateSeparatingAxes(cache->aBoxAxes.begin(), cache->aBoxAxes.begin() + 3,
                             cache->bBoxAxes.begin(), cache->bBoxAxes.begin() + 3,
                             back_inserter(cache->separatingAxes));
@@ -738,12 +738,12 @@ inline Vector3 CalculateContactNormal<Box, Box>(SimpleShape const* a, SimpleShap
     std::array<double, 6> distances;
     for (uint32_t i = 0; i < distances.size(); ++i)
     {
-        distances[i] = (cache->aMassCenter - cache->bBoxFaces[i]).magnitude();
+        distances[i] = (cache->aMassCenter - cache->bBoxFaces[i]).Magnitude();
     }
 
     auto const minIt = std::min_element(distances.begin(), distances.end());
     auto const minIndex = std::distance(distances.begin(), minIt);
-    cache->contactNormal = cache->bBoxAxes[minIndex].unit();
+    cache->contactNormal = cache->bBoxAxes[minIndex].Unit();
 
     return cache->contactNormal;
 }

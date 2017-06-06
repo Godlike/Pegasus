@@ -16,7 +16,7 @@ pegasus::ParticleLink::ParticleLink(Particle& a, Particle& b)
 double pegasus::ParticleLink::CurrentLength() const
 {
     auto const relativePos = m_aParticle.GetPosition() - m_bParticle.GetPosition();
-    return relativePos.magnitude();
+    return relativePos.Magnitude();
 }
 
 pegasus::ParticleCabel::ParticleCabel(
@@ -41,7 +41,7 @@ pegasus::ParticleCabel::AddContact(ParticleContacts& contacts, uint32_t limit) c
     }
 
     Vector3 normal = (m_bParticle.GetPosition() - m_aParticle.GetPosition());
-    normal.normalize();
+    normal.Normalize();
 
     contacts.emplace_back(m_aParticle, &m_bParticle, m_restitution, normal, length - m_maxLength);
     return 1;
@@ -64,7 +64,7 @@ pegasus::ParticleRod::AddContact(ParticleContacts& contacts, uint32_t limit) con
     }
 
     Vector3 normal = (m_bParticle.GetPosition() - m_aParticle.GetPosition());
-    normal.normalize();
+    normal.Normalize();
 
     contacts.emplace_back(m_aParticle, &m_bParticle, 0.0,
                           (currentLen > m_length ? normal : normal * -1),

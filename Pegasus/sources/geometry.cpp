@@ -183,7 +183,7 @@ bool pegasus::geometry::intersection::IsSameSidePoint(
 )
 {
     auto const ab = b - a;
-    auto const cp1 = ab.vectorProduct(p1 - a);
-    auto const cp2 = ab.vectorProduct(p2 - a);
-    return cp1.scalarProduct(cp2) >= 0;
+    auto const cp1 = ab.VectorProduct(p1 - a);
+    auto const cp2 = ab.VectorProduct(p2 - a);
+    return cp1.ScalarProduct(cp2) >= 0;
 }
