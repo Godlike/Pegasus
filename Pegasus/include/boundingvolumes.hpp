@@ -12,8 +12,6 @@
 #include <vector>
 #include <set>
 #include <array>
-#include <memory>
-#include <cmath>
 #include <Eigen/Eigen>
 #include <Eigen/StdVector>
 
@@ -37,20 +35,20 @@ struct Shape
     Faces    const & indices;
 };
 
-Eigen::Vector3f calculateMeanVertex(
+Eigen::Vector3f CalculateMeanVertex(
     volumes::Shape const & shape, volumes::Indices const & indices
 );
-Eigen::Matrix3f calculateCovarianceMatrix(
+Eigen::Matrix3f CalculateCovarianceMatrix(
     volumes::Shape const & shape, volumes::Indices const & indices, Eigen::Vector3f const & mean
 );
-Eigen::Vector3f calculateEigenValues(
+Eigen::Vector3f CalculateEigenValues(
     Eigen::Matrix3f const & covariance
 );
-Eigen::Matrix3f calculateEigenVectors(
+Eigen::Matrix3f CalculateEigenVectors(
     Eigen::Matrix3f const & covariance
 );
-Eigen::Matrix3f calculateExtremalVertices(
-    Eigen::Matrix3f const & eigen_vectors, volumes::Shape const & shape, volumes::Indices const & indices
+Eigen::Matrix3f CalculateExtremalVertices(
+    Eigen::Matrix3f const & eigenVectors, volumes::Shape const & shape, volumes::Indices const & indices
 );
 
 namespace obb {
@@ -65,23 +63,23 @@ public:
 
         Eigen::Vector3f mean;
         Eigen::Matrix3f covariance;
-        Eigen::Matrix3f eigen_vectors;
-        Eigen::Matrix3f eigen_vectors_normalized;
-        Eigen::Matrix3f extremal_vertices;
-        Vertices cube_vertices;
+        Eigen::Matrix3f eigenVectors;
+        Eigen::Matrix3f eigenVectorsNormalized;
+        Eigen::Matrix3f extremalVertices;
+        Vertices cubeVertices;
     };
 
     OrientedBoundingBox(Shape const & shape, Indices const & indices);
-    geometry::Box getBox() const;
+    geometry::Box GetBox() const;
 
 private:
-    geometry::Box m_box_shape;
+    geometry::Box m_boxShape;
     Box m_box;
     Shape const & m_shape;
     Indices const & m_indices;
 
-    Vertices calculateBoxVertices(
-            Eigen::Matrix3f const & extremal_points, Eigen::Matrix3f const & eigen_vectors
+    Vertices CalculateBoxVertices(
+        Eigen::Matrix3f const & extremalPoints, Eigen::Matrix3f const & eigenVectors
     ) const;
 };
 } // namespace obb
@@ -109,17 +107,17 @@ public:
     };
 
     AxisAlignedBoundingBox(Shape const & shape, Indices const & indices);
-    geometry::Box getBox() const;
+    geometry::Box GetBox() const;
 
 private:
-    geometry::Box m_box_shape;
+    geometry::Box m_boxShape;
     Box m_box;
     Shape const & m_shape;
     Indices const & m_indices;
 
-    static void calculateExtremalVetices(Shape const & shape, Indices const & indices, Box & box);
-    static void calculateMean(Box & box);
-    void createBox(Box & box);
+    static void CalculateExtremalVetices(Shape const & shape, Indices const & indices, Box & box);
+    static void CalculateMean(Box & box);
+    void CreateBox(Box & box);
 
 };
 } // namespace aabb
@@ -136,25 +134,25 @@ public:
 
         Eigen::Vector3f mean;
         Eigen::Matrix3f covariance;
-        Eigen::Vector3f eigen_values;
-        Eigen::Matrix3f eigen_vectors;
-        Eigen::Matrix3f eigen_vectors_normalized;
+        Eigen::Vector3f eigenValues;
+        Eigen::Matrix3f eigenVectors;
+        Eigen::Matrix3f eigenVectorsNormalized;
     };
 
     BoundingSphere(Shape const & shape, Indices const & indices);
-    geometry::Sphere getSphere() const;
+    geometry::Sphere GetSphere() const;
 
 private:
-    geometry::Sphere m_sphere_shape;
+    geometry::Sphere m_sphereShape;
     Sphere m_sphere;
     Shape   const & m_shape;
     Indices const & m_indices;
 
-    static geometry::Sphere calculateBoundingSphere(
-        Eigen::Matrix3f const & eigen_vectors, Eigen::Vector3f const & eigen_values,
+    static geometry::Sphere CalculateBoundingSphere(
+        Eigen::Matrix3f const & eigenVectors, Eigen::Vector3f const & eigenValues,
         Shape const & shape, Indices const & indices
     );
-    static geometry::Sphere refineSphere(
+    static geometry::Sphere RefineSphere(
         geometry::Sphere const & sphere, Shape const & shape, Indices const & indices
     );
 };
