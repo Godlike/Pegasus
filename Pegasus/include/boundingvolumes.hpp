@@ -3,8 +3,8 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#ifndef PEGASUS_OBB_HPP
-#define PEGASUS_OBB_HPP
+#ifndef PEGASUS_BOUNDING_VOLUMES_HPP
+#define PEGASUS_BOUNDING_VOLUMES_HPP
 
 #include "Pegasus/include/geometry.hpp"
 
@@ -163,49 +163,4 @@ private:
 } // namespace volumes
 } // namespace geometry
 } // namespace pegasus
-#endif // PEGASUS_OBB_HPP
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif // PEGASUS_BOUNDING_VOLUMES_HPP

@@ -322,4 +322,3 @@ geometry::Sphere sphere::BoundingSphere::refineSphere(
 
     return geometry::Sphere({sphereCenter[0], sphereCenter[1], sphereCenter[2]}, sphereRadius);
 }
-
