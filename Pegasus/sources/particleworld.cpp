@@ -36,9 +36,9 @@ void pegasus::ParticleWorld::runPhysics(double duration)
 
     if (usedContacts) {
         if (mCalculateIterations) {
-            mContactResolver.setIterations(usedContacts * 2);
+            mContactResolver.SetIterations(usedContacts * 2);
         }
-        mContactResolver.resolveContacts(mContacts, duration);
+        mContactResolver.ResolveContacts(mContacts, duration);
     }
 
     mForceRegistry.UpdateForces();
