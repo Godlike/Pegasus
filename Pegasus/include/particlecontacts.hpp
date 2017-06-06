@@ -53,7 +53,7 @@ private:
 class ParticleContactGenerator {
 public:
     virtual ~ParticleContactGenerator();
-    virtual uint32_t addContact(ParticleContacts & contacts, uint32_t limit) const = 0;
+    virtual uint32_t AddContact(ParticleContacts & contacts, uint32_t limit) const = 0;
 };
 
 template < typename Particles >
@@ -73,7 +73,7 @@ public:
     {
     }
 
-    uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override
+    uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override
     {
         static auto const restitution = 0.0f;
 
@@ -135,7 +135,7 @@ public:
     {
     }
 
-    uint32_t addContact(ParticleContacts & contacts, uint32_t limit) const override
+    uint32_t AddContact(ParticleContacts & contacts, uint32_t limit) const override
     {
         uint32_t used = 0;
 

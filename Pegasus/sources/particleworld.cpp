@@ -52,7 +52,7 @@ uint32_t pegasus::ParticleWorld::generateContacts()
 
     for (auto const& g : mContactGenerators)
     {
-        limit -= g->addContact(mContacts, limit);
+        limit -= g->AddContact(mContacts, limit);
 
         if (limit == 0) {
             break;

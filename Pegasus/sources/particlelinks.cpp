@@ -8,64 +8,67 @@
 #include "Pegasus/include/ParticleLinks.hpp"
 
 pegasus::ParticleLink::ParticleLink(Particle& a, Particle& b)
-    : mA(a), mB(b)
+    : m_aParticle(a)
+    , m_bParticle(b)
 {
 }
 
-double pegasus::ParticleLink::currentLength() const
+double pegasus::ParticleLink::CurrentLength() const
 {
-    auto const relativePos = mA.GetPosition() - mB.GetPosition();
+    auto const relativePos = m_aParticle.GetPosition() - m_bParticle.GetPosition();
     return relativePos.magnitude();
 }
 
 pegasus::ParticleCabel::ParticleCabel(
-    Particle & a,
-    Particle & b,
+    Particle& a,
+    Particle& b,
     double maxLength,
     double restutuition)
     : ParticleLink(a, b)
-    , maxLength(maxLength)
-    , restitution(restutuition)
+    , m_maxLength(maxLength)
+    , m_restitution(restutuition)
 {
 }
 
 uint32_t
-pegasus::ParticleCabel::addContact(ParticleContacts & contacts, uint32_t limit) const
+pegasus::ParticleCabel::AddContact(ParticleContacts& contacts, uint32_t limit) const
 {
-    auto const length = currentLength();
+    auto const length = CurrentLength();
 
-    if (length < maxLength) {
+    if (length < m_maxLength)
+    {
         return 0;
     }
 
-    Vector3 normal = (mB.GetPosition() - mA.GetPosition());
+    Vector3 normal = (m_bParticle.GetPosition() - m_aParticle.GetPosition());
     normal.normalize();
 
-    contacts.emplace_back(mA, &mB, restitution, normal, length - maxLength);
+    contacts.emplace_back(m_aParticle, &m_bParticle, m_restitution, normal, length - m_maxLength);
     return 1;
 }
 
-pegasus::ParticleRod::ParticleRod(Particle & a, Particle & b, double length)
+pegasus::ParticleRod::ParticleRod(Particle& a, Particle& b, double length)
     : ParticleLink(a, b)
-    , length(length)
+    , m_length(length)
 {
 }
 
 uint32_t
-pegasus::ParticleRod::addContact(ParticleContacts& contacts, uint32_t limit) const
+pegasus::ParticleRod::AddContact(ParticleContacts& contacts, uint32_t limit) const
 {
-    double const currentLen = currentLength();
+    double const currentLen = CurrentLength();
 
-    if (currentLen == length) {
+    if (currentLen == m_length)
+    {
         return 0;
     }
 
-    Vector3 normal = (mB.GetPosition() - mA.GetPosition());
+    Vector3 normal = (m_bParticle.GetPosition() - m_aParticle.GetPosition());
     normal.normalize();
 
-    contacts.emplace_back(mA, &mB, 0.0,
-        (currentLen > length ? normal : normal * -1), 
-        (currentLen > length ? currentLen - length : length - currentLen)
+    contacts.emplace_back(m_aParticle, &m_bParticle, 0.0,
+                          (currentLen > m_length ? normal : normal * -1),
+                          (currentLen > m_length ? currentLen - m_length : m_length - currentLen)
     );
     return 1;
 }
