@@ -244,7 +244,7 @@ void FallingDemo::display()
             double const planeSideLength = 100;
 
             pegasus::Vector3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
-            pegasus::Vector3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->getNormal();
+            pegasus::Vector3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetNormal();
             pegasus::Vector3 const posNormalProjection = planeNormal * (p0 * planeNormal);
             pegasus::Vector3 p1 = p0 + (posNormalProjection - p0) * 2;
 
@@ -279,7 +279,7 @@ void FallingDemo::display()
         else if (s == pegasus::geometry::SimpleShapeType::SPHERE)
         {
             pegasus::geometry::Sphere * sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
-            double const r = sphere->getRadius();
+            double const r = sphere->GetRadius();
 
             glTranslatef(p.x, p.y, p.z);
             glutWireSphere(r + 0.01, 20, 20);
@@ -299,7 +299,7 @@ void FallingDemo::display()
         {            
             pegasus::geometry::Box * box = static_cast<pegasus::geometry::Box*>(body.s.get());
             std::array<pegasus::Vector3, 3> boxAxes;
-            box->getAxes(boxAxes.at(0), boxAxes.at(1), boxAxes.at(2));
+            box->GetAxes(boxAxes.at(0), boxAxes.at(1), boxAxes.at(2));
 
             glTranslatef(p.x, p.y, p.z);
             glScalef(boxAxes.at(0).magnitude(), boxAxes.at(1).magnitude(), boxAxes.at(2).magnitude());

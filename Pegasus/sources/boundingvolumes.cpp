@@ -307,7 +307,7 @@ geometry::Sphere sphere::BoundingSphere::RefineSphere(
 )
 {
     Vector3 const sphereMassCenter = sphere.getCenterOfMass();
-    float sphereRadius = static_cast<float>(sphere.getRadius());
+    float sphereRadius = static_cast<float>(sphere.GetRadius());
     Eigen::Vector3f sphereCenter(static_cast<float>(sphereMassCenter.x),
                                  static_cast<float>(sphereMassCenter.y),
                                  static_cast<float>(sphereMassCenter.z));

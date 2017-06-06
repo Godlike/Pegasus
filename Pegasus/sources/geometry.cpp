@@ -5,172 +5,172 @@
 */
 #include "Pegasus/include/Geometry.hpp"
 
-pegasus::geometry::Shape::Shape(Vector3 const & centerOfMass)
-    : mCenterOfMass(centerOfMass)
+pegasus::geometry::Shape::Shape(Vector3 const& centerOfMass)
+    : m_centerOfMass(centerOfMass)
 {
 }
 
-void pegasus::geometry::Shape::setCenterOfMass(Vector3 const & centerOfMass)
+void pegasus::geometry::Shape::setCenterOfMass(Vector3 const& centerOfMass)
 {
-    mCenterOfMass = centerOfMass;
+    m_centerOfMass = centerOfMass;
 }
 
 pegasus::Vector3 const& pegasus::geometry::Shape::getCenterOfMass() const
 {
-    return mCenterOfMass;
+    return m_centerOfMass;
 }
 
-pegasus::geometry::SimpleShape::SimpleShape(Vector3 const & centerOfMass, SimpleShapeType type)
+pegasus::geometry::SimpleShape::SimpleShape(Vector3 const& centerOfMass, SimpleShapeType type)
     : Shape(centerOfMass)
     , type(type)
 {
 }
 
-pegasus::geometry::Plane::Plane(Vector3 const & centerOfMass, Vector3 const & normal)
+pegasus::geometry::Plane::Plane(Vector3 const& centerOfMass, Vector3 const& normal)
     : SimpleShape(centerOfMass, SimpleShapeType::PLANE)
-    , mNormal(normal)
+    , m_normal(normal)
 {
 }
 
-void pegasus::geometry::Plane::setNormal(Vector3 const & normal)
+void pegasus::geometry::Plane::SetNormal(Vector3 const& normal)
 {
-    mNormal = normal;
+    m_normal = normal;
 }
 
-pegasus::Vector3 const& pegasus::geometry::Plane::getNormal() const
+pegasus::Vector3 const& pegasus::geometry::Plane::GetNormal() const
 {
-    return mNormal;
+    return m_normal;
 }
 
-pegasus::geometry::Triangle::Triangle(Vector3 const & centerOfMass, Vector3 const & a, Vector3 const & b, Vector3 const & c)
+pegasus::geometry::Triangle::Triangle(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c)
     : SimpleShape(centerOfMass, SimpleShapeType::TRIANGLE)
-    , mA(a)
-    , mB(b)
-    , mC(c)
+    , m_aVertex(a)
+    , m_bVertex(b)
+    , m_cVertex(c)
 {
-    calculateNormal();
+    CalculateNormal();
 }
 
-void pegasus::geometry::Triangle::setAxes(Vector3 const & a, Vector3 const & b, Vector3 const & c)
+void pegasus::geometry::Triangle::SetAxes(Vector3 const& a, Vector3 const& b, Vector3 const& c)
 {
-    mA = a;
-    mB = b;
-    mC = c;
-    calculateNormal();
+    m_aVertex = a;
+    m_bVertex = b;
+    m_cVertex = c;
+    CalculateNormal();
 }
 
-void pegasus::geometry::Triangle::getAxes(Vector3 & a, Vector3 & b, Vector3 & c) const
+void pegasus::geometry::Triangle::GetAxes(Vector3& a, Vector3& b, Vector3& c) const
 {
-    a = mA;
-    b = mB;
-    c = mC;
+    a = m_aVertex;
+    b = m_bVertex;
+    c = m_cVertex;
 }
 
-pegasus::Vector3 const& pegasus::geometry::Triangle::getNormal() const
+pegasus::Vector3 const& pegasus::geometry::Triangle::GetNormal() const
 {
-    return mNormal;
+    return m_normal;
 }
 
-void pegasus::geometry::Triangle::calculateNormal()
+void pegasus::geometry::Triangle::CalculateNormal()
 {
-    mNormal = (mB - mA) % (mC - mA);
+    m_normal = (m_bVertex - m_aVertex) % (m_cVertex - m_aVertex);
 }
 
-pegasus::geometry::Sphere::Sphere(Vector3 const & centerOfMass, double r)
+pegasus::geometry::Sphere::Sphere(Vector3 const& centerOfMass, double r)
     : SimpleShape(centerOfMass, SimpleShapeType::SPHERE)
-    , mR(r)
+    , m_radius(r)
 {
 }
 
-void pegasus::geometry::Sphere::setRadius(double r)
+void pegasus::geometry::Sphere::SetRadius(double r)
 {
-    mR = r;
+    m_radius = r;
 }
 
-double pegasus::geometry::Sphere::getRadius() const
+double pegasus::geometry::Sphere::GetRadius() const
 {
-    return mR;
+    return m_radius;
 }
 
-pegasus::geometry::Cone::Cone(Vector3 const & centerOfMass, Vector3 const & a, double r)
+pegasus::geometry::Cone::Cone(Vector3 const& centerOfMass, Vector3 const& a, double r)
     : SimpleShape(centerOfMass, SimpleShapeType::CONE)
-    , mA(a)
-    , mR(r)
+    , m_appex(a)
+    , m_radius(r)
 {
 }
 
-void pegasus::geometry::Cone::setAppex(Vector3 const & a)
+void pegasus::geometry::Cone::SetAppex(Vector3 const& a)
 {
-    mA = a;
+    m_appex = a;
 }
 
-pegasus::Vector3 const& pegasus::geometry::Cone::getAppex() const
+pegasus::Vector3 const& pegasus::geometry::Cone::GetAppex() const
 {
-    return mA;
+    return m_appex;
 }
 
-void pegasus::geometry::Cone::setRadius(double r)
+void pegasus::geometry::Cone::SetRadius(double r)
 {
-    mR = r;
+    m_radius = r;
 }
 
-double pegasus::geometry::Cone::getRadius() const
+double pegasus::geometry::Cone::GetRadius() const
 {
-    return mR;
+    return m_radius;
 }
 
-pegasus::geometry::Capsule::Capsule(Vector3 const & centerOfMass, Vector3 const & halfHeight, double r)
+pegasus::geometry::Capsule::Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, double r)
     : SimpleShape(centerOfMass, SimpleShapeType::CAPSULE)
-    , mHalfHeight(halfHeight)
-    , mR(r)
+    , m_halfHeight(halfHeight)
+    , m_radius(r)
 {
 }
 
-void pegasus::geometry::Capsule::setHalfHeight(Vector3 const & halfHeight)
+void pegasus::geometry::Capsule::SetHalfHeight(Vector3 const& halfHeight)
 {
-    mHalfHeight = halfHeight;
+    m_halfHeight = halfHeight;
 }
 
-pegasus::Vector3 const& pegasus::geometry::Capsule::getHalfHeight() const
+pegasus::Vector3 const& pegasus::geometry::Capsule::GetHalfHeight() const
 {
-    return mHalfHeight;
+    return m_halfHeight;
 }
 
-void pegasus::geometry::Capsule::setRadius(double r)
+void pegasus::geometry::Capsule::SetRadius(double r)
 {
-    mR = r;
+    m_radius = r;
 }
 
-double pegasus::geometry::Capsule::getRadius() const
+double pegasus::geometry::Capsule::GetRadius() const
 {
-    return mR;
+    return m_radius;
 }
 
-pegasus::geometry::Cylinder::Cylinder(Vector3 const & centerOfMass, Vector3 const & halfHeight, double r)
+pegasus::geometry::Cylinder::Cylinder(Vector3 const& centerOfMass, Vector3 const& halfHeight, double r)
     : Capsule(centerOfMass, halfHeight, r)
 {
 }
 
-pegasus::geometry::Box::Box(Vector3 const & centerOfMass, Vector3 const & a, Vector3 const & b, Vector3 const & c)
+pegasus::geometry::Box::Box(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c)
     : SimpleShape(centerOfMass, SimpleShapeType::BOX)
-    , mA(a)
-    , mB(b)
-    , mC(c)
+    , m_aAxis(a)
+    , m_bAxis(b)
+    , m_cAxis(c)
 {
 }
 
-void pegasus::geometry::Box::setAxes(Vector3 const & a, Vector3 const & b, Vector3 const & c)
+void pegasus::geometry::Box::SetAxes(Vector3 const& a, Vector3 const& b, Vector3 const& c)
 {
-    mA = a;
-    mB = b;
-    mC = c;
+    m_aAxis = a;
+    m_bAxis = b;
+    m_cAxis = c;
 }
 
-void pegasus::geometry::Box::getAxes(Vector3 & a, Vector3 & b, Vector3 & c) const
+void pegasus::geometry::Box::GetAxes(Vector3& a, Vector3& b, Vector3& c) const
 {
-    a = mA;
-    b = mB;
-    c = mC;
+    a = m_aAxis;
+    b = m_bAxis;
+    c = m_cAxis;
 }
 
 size_t pegasus::geometry::ShapeTypePairHash::operator()(ShapeTypePair const& p) const
@@ -178,9 +178,9 @@ size_t pegasus::geometry::ShapeTypePairHash::operator()(ShapeTypePair const& p) 
     return std::hash<uint32_t>()(static_cast<uint32_t>(p.first)) ^ std::hash<uint32_t>()(static_cast<uint32_t>(p.second));
 }
 
-bool pegasus::geometry::intersection::isPointOnSameSide(
-        Vector3 const& p1, Vector3 const& p2, Vector3 const& a, Vector3 const& b
-    )
+bool pegasus::geometry::intersection::IsSameSidePoint(
+    Vector3 const& p1, Vector3 const& p2, Vector3 const& a, Vector3 const& b
+)
 {
     auto const ab = b - a;
     auto const cp1 = ab.vectorProduct(p1 - a);

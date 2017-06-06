@@ -150,12 +150,12 @@ public:
             }
 
             static geometry::IntersectionQuery intersection;
-            intersection.initialize(mRigidBody.s.get(), body.s.get());
+            intersection.Initialize(mRigidBody.s.get(), body.s.get());
 
-            if (intersection.overlap(mRigidBody.s.get(), body.s.get()) && ++used)
+            if (intersection.Overlap(mRigidBody.s.get(), body.s.get()) && ++used)
             {
-                Vector3 const contactNormal = intersection.calculateContactNormal(mRigidBody.s.get(), body.s.get());
-                double  const penetration   = intersection.calculatePenetration(mRigidBody.s.get(), body.s.get());
+                Vector3 const contactNormal = intersection.CalculateContactNormal(mRigidBody.s.get(), body.s.get());
+                double  const penetration   = intersection.CalculatePenetration(mRigidBody.s.get(), body.s.get());
                 contacts.emplace_back(mRigidBody.p, &body.p, mRestitution, contactNormal, penetration);
             }
         }
