@@ -10,25 +10,26 @@
 
 #include "Pegasus/include/Math.hpp"
 
-namespace pegasus {
-
+namespace pegasus
+{
 /**
  * Keeps track of one random stream: i.e. a seed and its output.
- * This is used to get random numbers. Rather than a funcion, this
+ * This is used to Get random numbers. Rather than a funcion, this
  * allows there to be several streams of repeatable random numbers
  * at the same time. Uses the RandRotB algorithm.
  */
-class Random {
+class Random
+{
 public:
     /**
    * left bitwise rotation
    */
 
-    static unsigned rotl(unsigned n, unsigned r);
+    static unsigned Rotl(unsigned n, unsigned r);
     /**
    * right bitwise rotation
    */
-    static unsigned rotr(unsigned n, unsigned r);
+    static unsigned Rotr(unsigned n, unsigned r);
 
     /**
    * Creates a new random number stream with a seed based on
@@ -44,45 +45,45 @@ public:
     /**
    * Sets the seed value for the random stream.
    */
-    void seed(unsigned seed);
+    void Seed(unsigned seed);
 
     /**
    * Returns the next random bitstring from the stream. This is
    * the fastest method.
    */
-    unsigned randomBits();
+    unsigned RandomBits();
 
     /**
    * Returns a random floating point number between 0 and 1.
    */
-    double randomDouble();
+    double RandomDouble();
 
     /**
    * Returns a random floating point number between 0 and scale.
    */
-    double randomDouble(double scale);
+    double RandomDouble(double scale);
 
     /**
    * Returns a random floating point number between min and max in the [min, max) range.
    */
-    double randomDouble(double min, double max);
+    double RandomDouble(double min, double max);
 
     /**
    * Returns a random integer less than the given value.
    */
-    unsigned randomInt(unsigned max);
+    unsigned RandomInt(unsigned max);
 
     /**
    * Returns a random binomially distributed number between -scale
    * and +scale.
    */
-    double randomBinomial(double scale);
+    double RandomBinomial(double scale);
 
     /**
    * Returns a random vector where each component is binomially
    * distributed in the range (-scale to scale) [mean = 0.0f].
    */
-    Vector3 randomVector(double scale);
+    Vector3 RandomVector(double scale);
 
     /**
    * Returns a random vector where each component is binomially
@@ -90,27 +91,27 @@ public:
    * where scale is the corresponding component of the given
    * vector.
    */
-    Vector3 randomVector(const Vector3& scale);
+    Vector3 RandomVector(const Vector3& scale);
 
     /**
    * Returns a random vector in the cube defined by the given
    * minimum and maximum vectors. The probability is uniformly
    * distributed in this region.
    */
-    Vector3 randomVector(const Vector3& min, const Vector3& max);
+    Vector3 RandomVector(const Vector3& min, const Vector3& max);
 
     /**
    * Returns a random vector where each component is binomially
    * distributed in the range (-scale to scale) [mean = 0.0f],
    * except the y coordinate which is zero.
    */
-    Vector3 randomXZVector(double scale);
+    Vector3 RandomXzVector(double scale);
 
 private:
-    int p1, p2;
-    unsigned buffer[17];
+    int m_p1;
+    int m_p2;
+    unsigned m_buffer[17];
 };
-
 } // namespace pegasus
 
 #endif // PEGASUS_RANDOM_HPP

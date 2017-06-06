@@ -33,10 +33,10 @@ public:
     FallingDemo();
     virtual ~FallingDemo() {}
 
-    const char* getTitle() override;
-    void display() override;
-    void update() override;
-    void key(unsigned char key) override;
+    const char* GetTitle() override;
+    void Display() override;
+    void Update() override;
+    void Key(unsigned char key) override;
     static void displayText(float x, float y, int r, int g, int b, void* vptr);
 
     void addBox(pegasus::Vector3 const & pos, double boxSide);
@@ -209,7 +209,7 @@ void FallingDemo::sceneReset()
     std::advance(activeObject, -4);
 }
 
-void FallingDemo::display()
+void FallingDemo::Display()
 {
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -319,11 +319,11 @@ void FallingDemo::display()
     }
 }
 
-void FallingDemo::update()
+void FallingDemo::Update()
 {
     world.StartFrame();
 
-    auto duration = static_cast<float>(TimingData::get().lastFrameDuration * 0.001f);
+    auto duration = static_cast<float>(TimingData::Get().lastFrameDuration * 0.001f);
     if (duration <= 0.0f)
         return;
 
@@ -338,10 +338,10 @@ void FallingDemo::update()
         body.s->setCenterOfMass(body.p.GetPosition());
     }
 
-    Application::update();
+    Application::Update();
 }
 
-const char* FallingDemo::getTitle()
+const char* FallingDemo::GetTitle()
 {
     return "Pegasus Falling Demo";
 }
@@ -362,7 +362,7 @@ void FallingDemo::displayText(float x, float y, int r, int g, int b, void* vptr)
     }
 }
 
-void FallingDemo::key(unsigned char key)
+void FallingDemo::Key(unsigned char key)
 {
     switch (key) {
     case 'w':
@@ -419,7 +419,7 @@ void FallingDemo::key(unsigned char key)
     }
 }
 
-Application* getApplication()
+Application* GetApplication()
 {
     return new FallingDemo();
 }

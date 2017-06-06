@@ -8,38 +8,33 @@
 #ifndef PEGASUS_DEMO_TIMING_HPP
 #define PEGASUS_DEMO_TIMING_HPP
 
-struct TimingData {
+struct TimingData
+{
     unsigned frameNumber;
-
     unsigned lastFrameTimestamp;
-
     unsigned lastFrameDuration;
-
     unsigned long lastFrameClockstamp;
-
     unsigned long lastFrameClockTicks;
-
     bool isPaused;
-
     double averageFrameDuration;
-
     float fps;
 
-    static TimingData& get();
-
-    static void update();
-
-    static void init();
-
-    static void deinit();
-
-    static unsigned getTime();
-
-    static unsigned long getClock();
+    static TimingData& Get();
+    static void Update();
+    static void Init();
+    static void Deinit();
+    static unsigned GetTime();
+    static unsigned long GetClock();
 
 private:
-    TimingData() {}
-    TimingData(const TimingData&) {}
+    TimingData()
+    {
+    }
+
+    TimingData(const TimingData&)
+    {
+    }
+
     TimingData& operator=(const TimingData&);
 };
 

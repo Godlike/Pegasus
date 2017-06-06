@@ -10,23 +10,23 @@
 
 #include <cstring>
 
-void Application::initGraphics()
+void Application::InitGraphics()
 {
     glClearColor(0.9f, 0.95f, 1.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
-    setView();
+    SetView();
 }
 
-void Application::setView()
+void Application::SetView()
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, static_cast<double>(width) / static_cast<double>(height), 1.0, 500.0);
+    gluPerspective(45.0, static_cast<double>(m_width) / static_cast<double>(m_height), 1.0, 500.0);
     glMatrixMode(GL_MODELVIEW);
 }
 
-void Application::display()
+void Application::Display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -36,33 +36,33 @@ void Application::display()
     glEnd();
 }
 
-const char* Application::getTitle() { return "Pegas Demo"; }
+const char* Application::GetTitle() { return "Pegas Demo"; }
 
-void Application::deinit() {}
+void Application::Deinit() {}
 
-void Application::update() { glutPostRedisplay(); }
+void Application::Update() { glutPostRedisplay(); }
 
-void Application::key(unsigned char key) {}
+void Application::Key(unsigned char key) {}
 
-void Application::resize(int width, int height)
+void Application::Resize(int width, int height)
 {
     // Avoid the divide by zero.
     if (height <= 0)
         height = 1;
 
     // Set the internal variables and update the view
-    Application::width = width;
-    Application::height = height;
+    Application::m_width = width;
+    Application::m_height = height;
     glViewport(0, 0, width, height);
-    setView();
+    SetView();
 }
 
-void Application::mouse(int button, int state, int x, int y) {}
+void Application::Mouse(int button, int state, int x, int y) {}
 
-void Application::mouseDrag(int x, int y) {}
+void Application::MouseDrag(int x, int y) {}
 
 // The following methods aren't intended to be overloaded
-void Application::renderText(float x, float y, const char* text, void* font) const
+void Application::RenderText(float x, float y, const char* text, void* font) const
 {
     glDisable(GL_DEPTH_TEST);
 
@@ -70,7 +70,7 @@ void Application::renderText(float x, float y, const char* text, void* font) con
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0.0, static_cast<double>(width), 0.0, static_cast<double>(height), -1.0, 1.0);
+    glOrtho(0.0, static_cast<double>(m_width), 0.0, static_cast<double>(m_height), -1.0, 1.0);
 
     // Move to modelview mode.
     glMatrixMode(GL_MODELVIEW);
