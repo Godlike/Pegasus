@@ -5,7 +5,7 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "demo/timing.hpp"
+#include "demo/Timing.hpp"
 
 static bool qpcFlag;
 

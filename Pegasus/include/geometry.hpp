@@ -6,7 +6,7 @@
 #ifndef PEGASUS_GEOMETRY_HPP
 #define PEGASUS_GEOMETRY_HPP
 
-#include "Pegasus/include/math.hpp"
+#include "Pegasus/include/Math.hpp"
 
 #include <algorithm>
 #include <array>

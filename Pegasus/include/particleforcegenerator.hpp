@@ -8,7 +8,7 @@
 #ifndef PEGASUS_PARTICLE_FORCE_GENERATOR_HPP
 #define PEGASUS_PARTICLE_FORCE_GENERATOR_HPP
 
-#include "Pegasus/include/particle.hpp"
+#include "Pegasus/include/Particle.hpp"
 
 #include <map>
 #include <set>

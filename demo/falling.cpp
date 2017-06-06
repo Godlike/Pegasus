@@ -3,14 +3,14 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "demo/app.hpp"
-#include "demo/ogl_headers.hpp"
-#include "demo/timing.hpp"
-#include "Pegasus/include/geometry.hpp"
-#include "Pegasus/include/mechanics.hpp"
-#include "Pegasus/include/particlecontacts.hpp"
-#include "Pegasus/include/particleforcegenerator.hpp"
-#include "Pegasus/include/particleworld.hpp"
+#include "demo/Application.hpp"
+#include "demo/OglHeaders.hpp"
+#include "demo/Timing.hpp"
+#include "Pegasus/include/Geometry.hpp"
+#include "Pegasus/include/Mechanics.hpp"
+#include "Pegasus/include/ParticleContacts.hpp"
+#include "Pegasus/include/ParticleForceGenerator.hpp"
+#include "Pegasus/include/ParticleWorld.hpp"
 
 #include <cassert>
 #include <cstring>

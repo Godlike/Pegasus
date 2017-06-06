@@ -8,7 +8,7 @@
 #ifndef PEGASUS_PARTICLE_HPP
 #define PEGASUS_PARTICLE_HPP
 
-#include "Pegasus/include/math.hpp"
+#include "Pegasus/include/Math.hpp"
 
 namespace pegasus {
 

@@ -5,8 +5,8 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "demo/app.hpp"
-#include "demo/ogl_headers.hpp"
+#include "demo/Application.hpp"
+#include "demo/OglHeaders.hpp"
 
 #include <cstring>
 

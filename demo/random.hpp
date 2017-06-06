@@ -8,7 +8,7 @@
 #ifndef PEGASUS_RANDOM_HPP
 #define PEGASUS_RANDOM_HPP
 
-#include "Pegasus/include/math.hpp"
+#include "Pegasus/include/Math.hpp"
 
 namespace pegasus {
 

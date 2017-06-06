@@ -5,7 +5,7 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "demo/random.hpp"
+#include "demo/Random.hpp"
 #include <ctime>
 
 using namespace pegasus;

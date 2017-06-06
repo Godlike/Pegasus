@@ -3,7 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "Pegasus/include/boundingvolumes.hpp"
+#include "Pegasus/include/BoundingVolumes.hpp"
 
 using namespace pegasus;
 using namespace geometry;

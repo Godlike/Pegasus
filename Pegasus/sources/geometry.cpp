@@ -3,7 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "Pegasus/include/geometry.hpp"
+#include "Pegasus/include/Geometry.hpp"
 
 pegasus::geometry::Shape::Shape(Vector3 const & centerOfMass)
     : mCenterOfMass(centerOfMass)

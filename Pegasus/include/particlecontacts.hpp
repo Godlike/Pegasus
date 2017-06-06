@@ -8,9 +8,9 @@
 #ifndef PEGASUS_PARTICLE_CONTACTS_HPP
 #define PEGASUS_PARTICLE_CONTACTS_HPP
 
-#include "Pegasus/include/geometry.hpp"
-#include "Pegasus/include/mechanics.hpp"
-#include "Pegasus/include/particle.hpp"
+#include "Pegasus/include/Geometry.hpp"
+#include "Pegasus/include/Mechanics.hpp"
+#include "Pegasus/include/Particle.hpp"
 
 #include <vector>
 

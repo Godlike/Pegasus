@@ -5,7 +5,7 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "Pegasus/include/particleworld.hpp"
+#include "Pegasus/include/ParticleWorld.hpp"
 
 pegasus::ParticleWorld::ParticleWorld(
     Particles & particles,

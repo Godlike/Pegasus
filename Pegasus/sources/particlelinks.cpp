@@ -5,7 +5,7 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "Pegasus/include/particlelinks.hpp"
+#include "Pegasus/include/ParticleLinks.hpp"
 
 pegasus::ParticleLink::ParticleLink(Particle& a, Particle& b)
     : mA(a), mB(b)

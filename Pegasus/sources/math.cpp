@@ -5,7 +5,7 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "Pegasus/include/math.hpp"
+#include "Pegasus/include/Math.hpp"
 
 #include <cmath>
 

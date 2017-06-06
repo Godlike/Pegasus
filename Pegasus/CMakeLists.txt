@@ -27,26 +27,26 @@ include_directories(
     ${PEGASUS_INCLUDE_DIR}
 )
 set(PEGASUS_HEADERS
-    include/particle.hpp
-    include/particleforcegenerator.hpp
-    include/particlecontacts.hpp
-    include/particlelinks.hpp
-    include/particleworld.hpp
-    include/geometry.hpp
-    include/mechanics.hpp
-    include/math.hpp
-    include/boundingvolumes.hpp
+    include/Particle.hpp
+    include/ParticleForceGenerator.hpp
+    include/ParticleContacts.hpp
+    include/ParticleLinks.hpp
+    include/ParticleWorld.hpp
+    include/Geometry.hpp
+    include/Mechanics.hpp
+    include/Math.hpp
+    include/BoundingVolumes.hpp
 )
 set(PEGASUS_SOURCES
-    sources/particle.cpp
-    sources/particleforcegenerator.cpp
-    sources/particlecontacts.cpp
-    sources/particlelinks.cpp
-    sources/particleworld.cpp
-    sources/geometry.cpp
-    sources/mechanics.cpp
-    sources/math.cpp
-    sources/boundingvolumes.cpp
+    sources/Particle.cpp
+    sources/ParticleForceGenerator.cpp
+    sources/ParticleContacts.cpp
+    sources/ParticleLinks.cpp
+    sources/ParticleWorld.cpp
+    sources/Geometry.cpp
+    sources/Mechanics.cpp
+    sources/Math.cpp
+    sources/BoundingVolumes.cpp
 )
 
 add_library(${PEGASUS_LIB}

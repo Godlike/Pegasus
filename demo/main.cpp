@@ -6,9 +6,9 @@
 * software licence.
 */
 
-#include "demo/app.hpp"
-#include "demo/ogl_headers.hpp"
-#include "demo/timing.hpp"
+#include "demo/Application.hpp"
+#include "demo/OglHeaders.hpp"
+#include "demo/Timing.hpp"
 
 extern Application* getApplication();
 
