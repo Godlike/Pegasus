@@ -33,9 +33,9 @@ void pegasus::ParticleContact::resolve(double duration) const
 
 double pegasus::ParticleContact::calculateSeparatingVelocity() const
 {
-    Vector3 relativeVelocity = mParticleA->getVelocity();
+    Vector3 relativeVelocity = mParticleA->GetVelocity();
     if (mParticleB) {
-        relativeVelocity -= mParticleB->getVelocity();
+        relativeVelocity -= mParticleB->GetVelocity();
     }
 
     return relativeVelocity * mContactNormal;
@@ -49,9 +49,9 @@ void pegasus::ParticleContact::resolveVelocity(double duration) const
     }
 
     auto newSepVelocity = -separatingVelocity * mRestitution;
-    auto accCausedVelocity = mParticleA->getAcceleration();
+    auto accCausedVelocity = mParticleA->GetAcceleration();
     if (mParticleB) {
-        accCausedVelocity -= mParticleB->getAcceleration();
+        accCausedVelocity -= mParticleB->GetAcceleration();
     }
     auto const accCausedSepVelocity = accCausedVelocity * mContactNormal * duration;
     if (accCausedSepVelocity < 0) {
@@ -63,9 +63,9 @@ void pegasus::ParticleContact::resolveVelocity(double duration) const
     }
     auto const deltaVelocity = newSepVelocity - separatingVelocity;
 
-    auto totalInverseMass = mParticleA->getInverseMass();
+    auto totalInverseMass = mParticleA->GetInverseMass();
     if (mParticleB) {
-        totalInverseMass += mParticleB->getInverseMass();
+        totalInverseMass += mParticleB->GetInverseMass();
     }
 
     if (totalInverseMass <= 0) {
@@ -75,9 +75,9 @@ void pegasus::ParticleContact::resolveVelocity(double duration) const
     auto const impulse = deltaVelocity / totalInverseMass;
     auto const impulsePerIMass = mContactNormal * impulse;
 
-    mParticleA->setVelocity(mParticleA->getVelocity() + impulsePerIMass * mParticleA->getInverseMass());
+    mParticleA->SetVelocity(mParticleA->GetVelocity() + impulsePerIMass * mParticleA->GetInverseMass());
     if (mParticleB) {
-        mParticleB->setVelocity(mParticleB->getVelocity() + impulsePerIMass * -mParticleB->getInverseMass());
+        mParticleB->SetVelocity(mParticleB->GetVelocity() + impulsePerIMass * -mParticleB->GetInverseMass());
     }
 }
 
@@ -87,9 +87,9 @@ void pegasus::ParticleContact::resolveInterpenetration() const
         return;
     }
 
-    double totalInverseMass = mParticleA->getInverseMass();
+    double totalInverseMass = mParticleA->GetInverseMass();
     if (mParticleB) {
-        totalInverseMass += mParticleB->getInverseMass();
+        totalInverseMass += mParticleB->GetInverseMass();
     }
 
     if (totalInverseMass <= 0) {
@@ -97,12 +97,12 @@ void pegasus::ParticleContact::resolveInterpenetration() const
     }
 
     Vector3 const movePerIMass = mContactNormal * (mPenetration / totalInverseMass);
-    mParticleA->setPosition(mParticleA->getPosition() + movePerIMass * mParticleA->getInverseMass());
-    mParticleA->addForce((movePerIMass * mParticleA->getInverseMass()).inverse());
+    mParticleA->SetPosition(mParticleA->GetPosition() + movePerIMass * mParticleA->GetInverseMass());
+    mParticleA->AddForce((movePerIMass * mParticleA->GetInverseMass()).inverse());
 
     if (mParticleB) {
-        mParticleB->setPosition(mParticleB->getPosition() - movePerIMass * mParticleB->getInverseMass());
-        mParticleB->addForce((movePerIMass * mParticleB->getInverseMass()).inverse());
+        mParticleB->SetPosition(mParticleB->GetPosition() - movePerIMass * mParticleB->GetInverseMass());
+        mParticleB->AddForce((movePerIMass * mParticleB->GetInverseMass()).inverse());
     }
 }
 

@@ -26,7 +26,7 @@ pegasus::ParticleWorld::ParticleWorld(
 void pegasus::ParticleWorld::startFrame() const
 {
     for (auto & p : mParticles) {
-        p.clearForceAccumulator();
+        p.ClearForceAccumulator();
     }
 }
 
@@ -65,6 +65,6 @@ uint32_t pegasus::ParticleWorld::generateContacts()
 void pegasus::ParticleWorld::integrate(double duration) const
 {
     for (auto & p : mParticles) {
-        p.integrate(duration);
+        p.Integrate(duration);
     }
 }

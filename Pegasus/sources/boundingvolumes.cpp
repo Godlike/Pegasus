@@ -11,17 +11,18 @@ using namespace pegasus;
 using namespace geometry;
 using namespace volumes;
 
-volumes::Shape::Shape(volumes::Vertices const & vertices, volumes::Faces const & indices)
-    : vertices(vertices), indices(indices)
+volumes::Shape::Shape(volumes::Vertices const& vertices, volumes::Faces const& indices)
+    : vertices(vertices)
+    , indices(indices)
 {
 }
 
-Eigen::Vector3f volumes::CalculateMeanVertex(volumes::Shape const & shape, volumes::Indices const & indices)
+Eigen::Vector3f volumes::CalculateMeanVertex(volumes::Shape const& shape, volumes::Indices const& indices)
 {
     Eigen::Vector3f sum{0, 0, 0};
     for (auto index : indices)
     {
-        auto const & face = shape.indices[index];
+        auto const& face = shape.indices[index];
 
         sum += shape.vertices[face[0]];
         sum += shape.vertices[face[1]];
@@ -33,13 +34,13 @@ Eigen::Vector3f volumes::CalculateMeanVertex(volumes::Shape const & shape, volum
 }
 
 Eigen::Matrix3f volumes::CalculateCovarianceMatrix(
-    volumes::Shape const & shape, volumes::Indices const & indices, Eigen::Vector3f const & mean)
+    volumes::Shape const& shape, volumes::Indices const& indices, Eigen::Vector3f const& mean)
 {
     Eigen::Matrix3f c = Eigen::Matrix3f::Zero();
 
     for (auto index : indices)
     {
-        auto const & face = shape.indices[index];
+        auto const& face = shape.indices[index];
 
         Eigen::Vector3f const p = shape.vertices[face[0]] - mean;
         Eigen::Vector3f const q = shape.vertices[face[1]] - mean;
@@ -67,25 +68,25 @@ Eigen::Matrix3f volumes::CalculateCovarianceMatrix(
     return c;
 }
 
-Eigen::Vector3f volumes::CalculateEigenValues(Eigen::Matrix3f const & covariance)
+Eigen::Vector3f volumes::CalculateEigenValues(Eigen::Matrix3f const& covariance)
 {
     Eigen::EigenSolver<Eigen::Matrix3f> es(covariance);
     return es.eigenvalues().real();
 }
 
-Eigen::Matrix3f volumes::CalculateEigenVectors(Eigen::Matrix3f const & covariance)
+Eigen::Matrix3f volumes::CalculateEigenVectors(Eigen::Matrix3f const& covariance)
 {
     Eigen::EigenSolver<Eigen::Matrix3f> es(covariance);
     return es.eigenvectors().real();;
 }
 
 Eigen::Matrix3f volumes::CalculateExtremalVertices(
-    Eigen::Matrix3f const & eigenVectors, volumes::Shape const & shape, volumes::Indices const & indices)
+    Eigen::Matrix3f const& eigenVectors, volumes::Shape const& shape, volumes::Indices const& indices)
 {
     std::vector<Eigen::Vector3f const *, Eigen::aligned_allocator<Eigen::Vector3f const*>> vertices;
     for (auto index : indices)
     {
-        auto const & face = shape.indices[index];
+        auto const& face = shape.indices[index];
         vertices.insert(vertices.end(), {&shape.vertices[face[0]], &shape.vertices[face[1]], &shape.vertices[face[2]]});
     }
 
@@ -101,10 +102,10 @@ Eigen::Matrix3f volumes::CalculateExtremalVertices(
     return extremal;
 }
 
-obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const & shape, volumes::Indices const & indices)
+obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const& shape, volumes::Indices const& indices)
     : m_boxShape({}, {}, {}, {})
-      , m_shape(shape)
-      , m_indices(indices)
+    , m_shape(shape)
+    , m_indices(indices)
 {
     //Todo: implement convex hull step
     m_box.mean = volumes::CalculateMeanVertex(m_shape, m_indices);
@@ -129,7 +130,7 @@ geometry::Box obb::OrientedBoundingBox::GetBox() const
 
 volumes::Vertices
 obb::OrientedBoundingBox::CalculateBoxVertices(
-    Eigen::Matrix3f const & extremalPoints, Eigen::Matrix3f const & eigenVectors) const
+    Eigen::Matrix3f const& extremalPoints, Eigen::Matrix3f const& eigenVectors) const
 {
     Vertices box(8, Eigen::Vector3f{0, 0, 0});
 
@@ -164,10 +165,10 @@ obb::OrientedBoundingBox::CalculateBoxVertices(
 }
 
 aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(
-    const volumes::Shape & shape, volumes::Indices const & indices)
+    const volumes::Shape& shape, volumes::Indices const& indices)
     : m_boxShape({}, {}, {}, {})
-      , m_shape(shape)
-      , m_indices(indices)
+    , m_shape(shape)
+    , m_indices(indices)
 {
     //ToDo: Calculate extremal vertices from a convex hull
     CalculateExtremalVetices(m_shape, indices, m_box);
@@ -181,7 +182,7 @@ geometry::Box aabb::AxisAlignedBoundingBox::GetBox() const
 }
 
 void aabb::AxisAlignedBoundingBox::CalculateExtremalVetices(
-    volumes::Shape const & shape, volumes::Indices const & indices, aabb::AxisAlignedBoundingBox::Box & box)
+    volumes::Shape const& shape, volumes::Indices const& indices, aabb::AxisAlignedBoundingBox::Box& box)
 {
     using namespace std::placeholders;
 
@@ -197,7 +198,7 @@ void aabb::AxisAlignedBoundingBox::CalculateExtremalVetices(
     }
 
     static auto axisCompareVertices = []
-            (uint32_t axis, Eigen::Vector3f const * a, Eigen::Vector3f const * b)
+            (uint32_t axis, Eigen::Vector3f const* a, Eigen::Vector3f const* b)
             {
                 return (*a)[axis] < (*b)[axis];
             };
@@ -218,7 +219,7 @@ void aabb::AxisAlignedBoundingBox::CalculateExtremalVetices(
     box.zMax = *validVertices.back();
 }
 
-void aabb::AxisAlignedBoundingBox::CalculateMean(aabb::AxisAlignedBoundingBox::Box & box)
+void aabb::AxisAlignedBoundingBox::CalculateMean(aabb::AxisAlignedBoundingBox::Box& box)
 {
     box.extremalMean[0] = (box.xMax[0] + box.xMin[0]) / 2.0f;
     box.extremalMean[1] = (box.yMax[1] + box.yMin[1]) / 2.0f;
@@ -228,7 +229,7 @@ void aabb::AxisAlignedBoundingBox::CalculateMean(aabb::AxisAlignedBoundingBox::B
     box.zAxis = box.zMax - box.extremalMean;
 }
 
-void aabb::AxisAlignedBoundingBox::CreateBox(aabb::AxisAlignedBoundingBox::Box & box)
+void aabb::AxisAlignedBoundingBox::CreateBox(aabb::AxisAlignedBoundingBox::Box& box)
 {
     m_boxShape = geometry::Box(
         {box.extremalMean[0], box.extremalMean[1], box.extremalMean[2]},
@@ -238,10 +239,10 @@ void aabb::AxisAlignedBoundingBox::CreateBox(aabb::AxisAlignedBoundingBox::Box &
     );
 }
 
-sphere::BoundingSphere::BoundingSphere(volumes::Shape const & shape, volumes::Indices const & indices)
+sphere::BoundingSphere::BoundingSphere(volumes::Shape const& shape, volumes::Indices const& indices)
     : m_sphereShape({}, 0)
-      , m_shape(shape)
-      , m_indices(indices)
+    , m_shape(shape)
+    , m_indices(indices)
 {
     m_sphere.mean = volumes::CalculateMeanVertex(shape, indices);
     m_sphere.covariance = volumes::CalculateCovarianceMatrix(shape, indices, m_sphere.mean);
@@ -259,8 +260,8 @@ geometry::Sphere sphere::BoundingSphere::GetSphere() const
 }
 
 geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
-    Eigen::Matrix3f const & eigenVectors, Eigen::Vector3f const & eigenValues,
-    volumes::Shape const & shape, volumes::Indices const & indices
+    Eigen::Matrix3f const& eigenVectors, Eigen::Vector3f const& eigenValues,
+    volumes::Shape const& shape, volumes::Indices const& indices
 )
 {
     //Find max dispersion axis
@@ -302,7 +303,7 @@ geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
 }
 
 geometry::Sphere sphere::BoundingSphere::RefineSphere(
-    geometry::Sphere const & sphere, volumes::Shape const & shape, volumes::Indices const & indices
+    geometry::Sphere const& sphere, volumes::Shape const& shape, volumes::Indices const& indices
 )
 {
     Vector3 const sphereMassCenter = sphere.getCenterOfMass();

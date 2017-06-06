@@ -80,8 +80,8 @@ FallingDemo::FallingDemo()
 void FallingDemo::addBox(pegasus::Vector3 const & pos, double boxSide)
 {
     particles.emplace_back();
-    particles.back().setPosition(pos);
-    particles.back().setInverseMass(0);
+    particles.back().SetPosition(pos);
+    particles.back().SetInverseMass(0);
     rigidBodies.emplace_back(
         particles.back(),
         std::make_unique<pegasus::geometry::Box>(
@@ -95,8 +95,8 @@ void FallingDemo::addBox(pegasus::Vector3 const & pos, double boxSide)
 void FallingDemo::addSphere(pegasus::Vector3 const & pos, double radius)
 {
     particles.emplace_back();
-    particles.back().setPosition(pos);
-    particles.back().setInverseMass(0);
+    particles.back().SetPosition(pos);
+    particles.back().SetInverseMass(0);
     rigidBodies.emplace_back(
         particles.back(),
         std::make_unique<pegasus::geometry::Sphere>(pos, radius)
@@ -136,13 +136,13 @@ void FallingDemo::sceneReset()
         int col = index2d - row * edge;
 
         particles.emplace_back();
-        particles.back().setPosition(
+        particles.back().SetPosition(
             row * RADIUS * 2.3 + RADIUS - offset,
             planeIndex * RADIUS * 2.3 + boxSide * 3,
             col * RADIUS * 2.3 + RADIUS - offset
         );
-        particles.back().setVelocity(randDouble(), randDouble() - 5, randDouble());
-        particles.back().setDamping(1.0f);
+        particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
+        particles.back().SetDamping(1.0f);
     }
 
     //Create rigid bodies
@@ -155,7 +155,7 @@ void FallingDemo::sceneReset()
             rigidBodies.emplace_back(
                 particle,
                 std::make_unique<pegasus::geometry::Box>(
-                    particle.getPosition(),
+                    particle.GetPosition(),
                     pegasus::Vector3{ RADIUS, 0, 0 } * 0.5,
                     pegasus::Vector3{ 0, RADIUS, 0 } * 0.5,
                     pegasus::Vector3{ 0, 0, RADIUS } * 0.5)
@@ -165,7 +165,7 @@ void FallingDemo::sceneReset()
         {
             rigidBodies.emplace_back(
                 particle,
-                std::make_unique<pegasus::geometry::Sphere>(particle.getPosition(), double(randDouble() + 6) / 2)
+                std::make_unique<pegasus::geometry::Sphere>(particle.GetPosition(), double(randDouble() + 6) / 2)
             );
         }
     }
@@ -191,12 +191,12 @@ void FallingDemo::sceneReset()
 
     //Create plane particle and rigid body
     particles.emplace_front();
-    particles.front().setPosition({1, -position * 2, 0});
-    particles.front().setInverseMass(0);
+    particles.front().SetPosition({1, -position * 2, 0});
+    particles.front().SetInverseMass(0);
     rigidBodies.emplace_front(
         particles.front(),
         std::make_unique<pegasus::geometry::Plane>(
-           particles.front().getPosition(), pegasus::Vector3(0, 1.0, 0).unit()
+           particles.front().GetPosition(), pegasus::Vector3(0, 1.0, 0).unit()
         )
     );
 
@@ -215,7 +215,7 @@ void FallingDemo::display()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
-    auto const& pos = activeObject->p.getPosition();
+    auto const& pos = activeObject->p.GetPosition();
     gluLookAt(pos.x, pos.y + 30 * zoom + yEye * zoom, pos.z + 30 * zoom, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
 
     displayText(0, 0, 0x7FFFFFFF, 0, 0, &activeObject->p);
@@ -230,7 +230,7 @@ void FallingDemo::display()
         index += 1;
         index %= rigidBodies.size();
 
-        auto const& p = body.p.getPosition();
+        auto const& p = body.p.GetPosition();
         auto const& s = body.s->type;
 
         int const kekdex = index + 1;
@@ -330,12 +330,12 @@ void FallingDemo::update()
     xAxis *= pow(0.1f, duration);
     yAxis *= pow(0.1f, duration);
     zAxis *= pow(0.1f, duration);
-    activeObject->p.addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
+    activeObject->p.AddForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
     world.runPhysics(0.01);
 
     for (auto const& body : rigidBodies) {
-        body.s->setCenterOfMass(body.p.getPosition());
+        body.s->setCenterOfMass(body.p.GetPosition());
     }
 
     Application::update();
@@ -390,7 +390,7 @@ void FallingDemo::key(unsigned char key)
         break;
     case 'r':
     case 'R':
-        activeObject->p.setVelocity(0, 0, 0);
+        activeObject->p.SetVelocity(0, 0, 0);
         break;
     case '+':
         zoom -= 0.1;

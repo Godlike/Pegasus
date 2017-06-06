@@ -83,7 +83,7 @@ public:
                 break;
             }
 
-            auto toParticle = particles[i]->getPosition() - start;
+            auto toParticle = particles[i]->GetPosition() - start;
             auto const lineDirection = end - start;
             auto const projected = toParticle * lineDirection;
             auto const platformSqLength = lineDirection.squareMagnitude();
@@ -99,7 +99,7 @@ public:
                 }
 
             } else if (projected >= platformSqLength) {
-                toParticle = particles[i]->getPosition() - end;
+                toParticle = particles[i]->GetPosition() - end;
                 if (toParticle.squareMagnitude() < blobRadius * blobRadius) {
                     auto contactNormal = toParticle.unit();
                     contactNormal.z = 0;
@@ -112,7 +112,7 @@ public:
                 auto distanceToPlatform = toParticle.squareMagnitude() - projected * projected / platformSqLength;
                 if (distanceToPlatform < blobRadius * blobRadius) {
                     auto closestPoint = start + lineDirection * (projected / platformSqLength);
-                    auto contactNormal = (particles[i]->getPosition() - closestPoint).unit();
+                    auto contactNormal = (particles[i]->GetPosition() - closestPoint).unit();
                     contactNormal.z = 0;
                     auto const penetration = blobRadius - sqrt(distanceToPlatform);
                     contacts.emplace_back(

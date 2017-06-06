@@ -59,11 +59,11 @@ pegasus::ParticleGravity::ParticleGravity(Vector3 const& g)
 
 void pegasus::ParticleGravity::updateForce(Particle & p)
 {
-    if (!p.hasFiniteMass()) {
+    if (!p.HasFiniteMass()) {
         return;
     }
 
-    p.addForce(mGravity * p.getMass());
+    p.AddForce(mGravity * p.GetMass());
 }
 
 pegasus::ParticleDrag::ParticleDrag(double k1, double k2)
@@ -74,14 +74,14 @@ pegasus::ParticleDrag::ParticleDrag(double k1, double k2)
 
 void pegasus::ParticleDrag::updateForce(Particle & p)
 {
-    Vector3 force = p.getVelocity();
+    Vector3 force = p.GetVelocity();
 
     double dragCoeff = force.magnitude();
     dragCoeff = mK1 * dragCoeff + mK2 * dragCoeff * dragCoeff;
 
     force.normalize();
     force *= -dragCoeff;
-    p.addForce(force);
+    p.AddForce(force);
 }
 
 pegasus::ParticleSpring::ParticleSpring(
@@ -94,14 +94,14 @@ pegasus::ParticleSpring::ParticleSpring(
 
 void pegasus::ParticleSpring::updateForce(Particle & p)
 {
-    Vector3 force = p.getPosition();
-    force -= mOther.getPosition();
+    Vector3 force = p.GetPosition();
+    force -= mOther.GetPosition();
 
     auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLength);
 
     force.normalize();
     force *= -magnitude;
-    p.addForce(force);
+    p.AddForce(force);
 }
 
 pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
@@ -114,14 +114,14 @@ pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
 
 void pegasus::ParticleAnchoredSpring::updateForce(Particle & p)
 {
-    Vector3 force = p.getPosition();
+    Vector3 force = p.GetPosition();
     force -= mAnchor;
 
     auto const magnitude = mSpringConstant * std::fabs(force.magnitude() - mRestLength);
 
     force.normalize();
     force *= -magnitude;
-    p.addForce(force);
+    p.AddForce(force);
 }
 
 pegasus::ParticleBungee::ParticleBungee(Particle & other, double springConstant, double restLength)
@@ -133,8 +133,8 @@ pegasus::ParticleBungee::ParticleBungee(Particle & other, double springConstant,
 
 void pegasus::ParticleBungee::updateForce(Particle & p)
 {
-    Vector3 force = p.getPosition();
-    force -= mOther.getPosition();
+    Vector3 force = p.GetPosition();
+    force -= mOther.GetPosition();
 
     double magnitude = force.magnitude();
     if (magnitude <= mRestLength) {
@@ -145,7 +145,7 @@ void pegasus::ParticleBungee::updateForce(Particle & p)
 
     force.normalize();
     force *= -magnitude;
-    p.addForce(force);
+    p.AddForce(force);
 }
 
 pegasus::ParticleBuoyancy::ParticleBuoyancy(
@@ -159,7 +159,7 @@ pegasus::ParticleBuoyancy::ParticleBuoyancy(
 
 void pegasus::ParticleBuoyancy::updateForce(Particle & p)
 {
-    double const depth = p.getPosition().y;
+    double const depth = p.GetPosition().y;
 
     if (depth >= mWaterHeight + mMaxDepth) {
         return;
@@ -172,7 +172,7 @@ void pegasus::ParticleBuoyancy::updateForce(Particle & p)
         force.y = mLiquidDensity * mVolume * (depth - mMaxDepth - mWaterHeight) / 2.0f * mMaxDepth;
     }
 
-    p.addForce(force);
+    p.AddForce(force);
 }
 
 pegasus::ParticleFakeSpring::ParticleFakeSpring(
@@ -186,22 +186,22 @@ pegasus::ParticleFakeSpring::ParticleFakeSpring(
 
 void pegasus::ParticleFakeSpring::updateForce(Particle & p, double duration) const
 {
-    if (!p.hasFiniteMass()) {
+    if (!p.HasFiniteMass()) {
         return;
     }
 
-    Vector3 const position = p.getPosition() - mAnchor;
+    Vector3 const position = p.GetPosition() - mAnchor;
     double const gamma = 0.5f * std::sqrt(4 * mSpringConstant - mDamping * mDamping);
 
     if (gamma == 0.0f)
         return;
 
-    auto const c = position * (mDamping / (2.0f * gamma)) + p.getVelocity() * (1.0f / gamma);
+    auto const c = position * (mDamping / (2.0f * gamma)) + p.GetVelocity() * (1.0f / gamma);
     auto target = position * std::cos(gamma * duration) + c * sin(gamma * duration);
     target *= std::exp(-0.5f * duration * mDamping);
 
-    auto const accel = (target - position) * (1.0f / duration * duration) - p.getVelocity() * duration;
-    p.addForce(accel * p.getMass());
+    auto const accel = (target - position) * (1.0f / duration * duration) - p.GetVelocity() * duration;
+    p.AddForce(accel * p.GetMass());
 }
 
 void pegasus::ParticleFakeSpring::updateForce(Particle & p)

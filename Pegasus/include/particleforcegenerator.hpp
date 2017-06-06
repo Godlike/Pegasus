@@ -151,19 +151,19 @@ public:
                 continue;
 
             // Work out the separation distance
-            auto separation = currentParticle.getPosition() - particle.getPosition();
+            auto separation = currentParticle.GetPosition() - particle.GetPosition();
             separation.z = 0.0f;
             auto distance = separation.magnitude();
 
             if (distance < minNaturalDistance) {
                 // Use a repulsion force.
                 distance = 1.0f - distance / minNaturalDistance;
-                particle.addForce(separation.unit() * (1.0f - distance) * maxRepulsion * -1.0f);
+                particle.AddForce(separation.unit() * (1.0f - distance) * maxRepulsion * -1.0f);
                 ++joinCount;
             } else if (distance > maxNaturalDistance && distance < maxDistance) {
                 // Use an attraction force.
                 distance = (distance - maxNaturalDistance) / (maxDistance - maxNaturalDistance);
-                particle.addForce(separation.unit() * distance * maxAttraction);
+                particle.AddForce(separation.unit() * distance * maxAttraction);
                 ++joinCount;
             }
         }
@@ -177,7 +177,7 @@ public:
                 force = floatHead;
             }
 
-            particle.addForce(Vector3(0, force, 0));
+            particle.AddForce(Vector3(0, force, 0));
         }
     }
 
