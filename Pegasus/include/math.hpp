@@ -8,9 +8,10 @@
 #ifndef PEGASUS_MATH_HPP
 #define PEGASUS_MATH_HPP
 
-namespace pegasus {
-
-class Vector3 {
+namespace pegasus
+{
+class Vector3
+{
 public:
     double x;
     double y;
@@ -19,7 +20,7 @@ public:
     Vector3();
     Vector3(double x, double y, double z);
 
-    bool operator==(Vector3 const & other) const;
+    bool operator==(Vector3 const& other) const;
 
     void operator*=(double r);
     Vector3 operator*=(double r) const;
@@ -32,30 +33,28 @@ public:
     Vector3 operator-=(Vector3 const& v) const;
     Vector3 operator-(Vector3 const& v) const;
 
-    void addScaledVector(Vector3 const& v, double s);
+    void AddScaledVector(Vector3 const& v, double s);
 
-    void componentProduct(Vector3 const& v);
-    Vector3 componentProduct(Vector3 const& v) const;
+    void ComponentProduct(Vector3 const& v);
+    Vector3 ComponentProduct(Vector3 const& v) const;
 
-    double scalarProduct(Vector3 const& v) const;
+    double ScalarProduct(Vector3 const& v) const;
     double operator*(Vector3 const& v) const;
     Vector3 operator*(double r) const;
 
-    Vector3 vectorProduct(Vector3 const& v) const;
+    Vector3 VectorProduct(Vector3 const& v) const;
     void operator%=(Vector3 const& v);
     Vector3 operator%(Vector3 const& v) const;
 
-    Vector3 inverse() const;
+    Vector3 Inverse() const;
 
-    double magnitude() const;
-    double squareMagnitude() const;
+    double Magnitude() const;
+    double SquareMagnitude() const;
 
-    void normalize();
-    Vector3 normalize() const;
-    Vector3 unit() const;
-    void trim(double size);
+    void Normalize();
+    Vector3 Unit() const;
+    void Trim(double size);
 };
-
 } // namespace pegasus 
 
 #endif // PEGASUS_MATH_HPP

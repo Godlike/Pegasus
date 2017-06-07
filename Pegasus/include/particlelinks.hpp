@@ -8,44 +8,46 @@
 #ifndef PEGASUS_PARTICLE_LINKS_HPP
 #define PEGASUS_PARTICLE_LINKS_HPP
 
-#include "Pegasus/include/particle.hpp"
-#include "Pegasus/include/particlecontacts.hpp"
+#include "Pegasus/include/Particle.hpp"
+#include "Pegasus/include/ParticleContacts.hpp"
 
-namespace pegasus {
-
-class ParticleLink : public ParticleContactGenerator {
+namespace pegasus
+{
+class ParticleLink : public ParticleContactGenerator
+{
 public:
     ParticleLink(Particle& a, Particle& b);
 
-    virtual uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override = 0;
-    double currentLength() const;
+    virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override = 0;
+    double CurrentLength() const;
 
 protected:
-    Particle & mA;
-    Particle & mB;
+    Particle& m_aParticle;
+    Particle& m_bParticle;
 };
 
-class ParticleCabel : public ParticleLink {
+class ParticleCabel : public ParticleLink
+{
 public:
-    ParticleCabel(Particle & a, Particle & b, double maxLength, double restutuition);
+    ParticleCabel(Particle& a, Particle& b, double maxLength, double restutuition);
 
-    virtual uint32_t addContact(ParticleContacts & contacts, uint32_t limit) const override;
+    virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override;
 
 private:
-    double const maxLength;
-    double const restitution;
+    double const m_maxLength;
+    double const m_restitution;
 };
 
-class ParticleRod : public ParticleLink {
+class ParticleRod : public ParticleLink
+{
 public:
-    ParticleRod(Particle & a, Particle & b, double length);
+    ParticleRod(Particle& a, Particle& b, double length);
 
-    virtual uint32_t addContact(ParticleContacts& contacts, uint32_t limit) const override;
+    virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override;
 
 private:
-    double const length;
+    double const m_length;
 };
-
 } // namespace pegasus
 
 #endif // PEGASUS_PARTICLE_LINKS_HPP

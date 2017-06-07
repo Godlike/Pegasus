@@ -3,14 +3,14 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "demo/app.hpp"
-#include "demo/ogl_headers.hpp"
-#include "demo/timing.hpp"
-#include "Pegasus/include/geometry.hpp"
-#include "Pegasus/include/mechanics.hpp"
-#include "Pegasus/include/particlecontacts.hpp"
-#include "Pegasus/include/particleforcegenerator.hpp"
-#include "Pegasus/include/particleworld.hpp"
+#include "demo/Application.hpp"
+#include "demo/OglHeaders.hpp"
+#include "demo/Timing.hpp"
+#include "Pegasus/include/Geometry.hpp"
+#include "Pegasus/include/Mechanics.hpp"
+#include "Pegasus/include/ParticleContacts.hpp"
+#include "Pegasus/include/ParticleForceGenerator.hpp"
+#include "Pegasus/include/ParticleWorld.hpp"
 
 #include <cassert>
 #include <cstring>
@@ -23,8 +23,8 @@
 #include <random>
 #include <utility>
 
-static const uint32_t BOX_COUNT    = std::pow(4, 3);
-static const uint32_t SPHERE_COUNT = std::pow(4, 3);
+static const uint32_t BOX_COUNT    = std::pow(3, 3);
+static const uint32_t SPHERE_COUNT = std::pow(3, 3);
 static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
 static const double   RADIUS       = 5;
 
@@ -33,11 +33,11 @@ public:
     FallingDemo();
     virtual ~FallingDemo() {}
 
-    const char* getTitle() override;
-    void display() override;
-    void update() override;
-    void key(unsigned char key) override;
-    void displayText(float x, float y, int r, int g, int b, void* vptr);
+    const char* GetTitle() override;
+    void Display() override;
+    void Update() override;
+    void Key(unsigned char key) override;
+    static void displayText(float x, float y, int r, int g, int b, void* vptr);
 
     void addBox(pegasus::Vector3 const & pos, double boxSide);
     void addSphere(pegasus::Vector3 const & pos, double radius);
@@ -80,8 +80,8 @@ FallingDemo::FallingDemo()
 void FallingDemo::addBox(pegasus::Vector3 const & pos, double boxSide)
 {
     particles.emplace_back();
-    particles.back().setPosition(pos);
-    particles.back().setInverseMass(0);
+    particles.back().SetPosition(pos);
+    particles.back().SetInverseMass(0);
     rigidBodies.emplace_back(
         particles.back(),
         std::make_unique<pegasus::geometry::Box>(
@@ -92,11 +92,11 @@ void FallingDemo::addBox(pegasus::Vector3 const & pos, double boxSide)
     );
 }
 
-void FallingDemo::addSphere(const pegasus::Vector3 &pos, double radius)
+void FallingDemo::addSphere(pegasus::Vector3 const & pos, double radius)
 {
     particles.emplace_back();
-    particles.back().setPosition(pos);
-    particles.back().setInverseMass(0);
+    particles.back().SetPosition(pos);
+    particles.back().SetInverseMass(0);
     rigidBodies.emplace_back(
         particles.back(),
         std::make_unique<pegasus::geometry::Sphere>(pos, radius)
@@ -107,7 +107,7 @@ void FallingDemo::sceneReset()
 {
     rigidBodies.clear();
     forces.clear();
-    forceRegistry.clear();
+    forceRegistry.Clear();
     contactGenerators.clear();
     particles.clear();
 
@@ -136,13 +136,13 @@ void FallingDemo::sceneReset()
         int col = index2d - row * edge;
 
         particles.emplace_back();
-        particles.back().setPosition(
+        particles.back().SetPosition(
             row * RADIUS * 2.3 + RADIUS - offset,
             planeIndex * RADIUS * 2.3 + boxSide * 3,
             col * RADIUS * 2.3 + RADIUS - offset
         );
-        particles.back().setVelocity(randDouble(), randDouble() - 5, randDouble());
-        particles.back().setDamping(1.0f);
+        particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
+        particles.back().SetDamping(1.0f);
     }
 
     //Create rigid bodies
@@ -155,7 +155,7 @@ void FallingDemo::sceneReset()
             rigidBodies.emplace_back(
                 particle,
                 std::make_unique<pegasus::geometry::Box>(
-                    particle.getPosition(),
+                    particle.GetPosition(),
                     pegasus::Vector3{ RADIUS, 0, 0 } * 0.5,
                     pegasus::Vector3{ 0, RADIUS, 0 } * 0.5,
                     pegasus::Vector3{ 0, 0, RADIUS } * 0.5)
@@ -165,7 +165,7 @@ void FallingDemo::sceneReset()
         {
             rigidBodies.emplace_back(
                 particle,
-                std::make_unique<pegasus::geometry::Sphere>(particle.getPosition(), double(randDouble() + 6) / 2)
+                std::make_unique<pegasus::geometry::Sphere>(particle.GetPosition(), double(randDouble() + 6) / 2)
             );
         }
     }
@@ -176,7 +176,7 @@ void FallingDemo::sceneReset()
     //Register forces
     for (auto & particle : particles)
     {
-        forceRegistry.add(particle, *forces.front());
+        forceRegistry.Add(particle, *forces.front());
     }
 
     //Create contact generators
@@ -191,12 +191,12 @@ void FallingDemo::sceneReset()
 
     //Create plane particle and rigid body
     particles.emplace_front();
-    particles.front().setPosition({1, -position * 2, 0});
-    particles.front().setInverseMass(0);
+    particles.front().SetPosition({1, -position * 2, 0});
+    particles.front().SetInverseMass(0);
     rigidBodies.emplace_front(
         particles.front(),
         std::make_unique<pegasus::geometry::Plane>(
-           particles.front().getPosition(), pegasus::Vector3(0, 1.0, 0).unit()
+           particles.front().GetPosition(), pegasus::Vector3(0, 1.0, 0).Unit()
         )
     );
 
@@ -209,13 +209,13 @@ void FallingDemo::sceneReset()
     std::advance(activeObject, -4);
 }
 
-void FallingDemo::display()
+void FallingDemo::Display()
 {
     // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
 
-    auto const& pos = activeObject->p.getPosition();
+    auto const& pos = activeObject->p.GetPosition();
     gluLookAt(pos.x, pos.y + 30 * zoom + yEye * zoom, pos.z + 30 * zoom, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
 
     displayText(0, 0, 0x7FFFFFFF, 0, 0, &activeObject->p);
@@ -230,7 +230,7 @@ void FallingDemo::display()
         index += 1;
         index %= rigidBodies.size();
 
-        auto const& p = body.p.getPosition();
+        auto const& p = body.p.GetPosition();
         auto const& s = body.s->type;
 
         int const kekdex = index + 1;
@@ -244,20 +244,20 @@ void FallingDemo::display()
             double const planeSideLength = 100;
 
             pegasus::Vector3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
-            pegasus::Vector3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->getNormal();
+            pegasus::Vector3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetNormal();
             pegasus::Vector3 const posNormalProjection = planeNormal * (p0 * planeNormal);
             pegasus::Vector3 p1 = p0 + (posNormalProjection - p0) * 2;
 
             if (p1.x < p0.x) { std::swap(p0.x, p1.x); }
 
-            pegasus::Vector3 b = (planeNormal % p1 % planeNormal).unit() * planeSideLength;
-            pegasus::Vector3 c = (planeNormal % b).unit() * planeSideLength;
+            pegasus::Vector3 b = (planeNormal % p1 % planeNormal).Unit() * planeSideLength;
+            pegasus::Vector3 c = (planeNormal % b).Unit() * planeSideLength;
 
             std::array<pegasus::Vector3, 4> quadVertices{
-                b.inverse() - c + posNormalProjection,
+                b.Inverse() - c + posNormalProjection,
                 b - c + posNormalProjection,
                 b + c + posNormalProjection,
-                b.inverse() + c + posNormalProjection
+                b.Inverse() + c + posNormalProjection
             };
 
             glBegin(GL_QUADS);
@@ -279,7 +279,7 @@ void FallingDemo::display()
         else if (s == pegasus::geometry::SimpleShapeType::SPHERE)
         {
             pegasus::geometry::Sphere * sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
-            double const r = sphere->getRadius();
+            double const r = sphere->GetRadius();
 
             glTranslatef(p.x, p.y, p.z);
             glutWireSphere(r + 0.01, 20, 20);
@@ -299,10 +299,10 @@ void FallingDemo::display()
         {            
             pegasus::geometry::Box * box = static_cast<pegasus::geometry::Box*>(body.s.get());
             std::array<pegasus::Vector3, 3> boxAxes;
-            box->getAxes(boxAxes.at(0), boxAxes.at(1), boxAxes.at(2));
+            box->GetAxes(boxAxes.at(0), boxAxes.at(1), boxAxes.at(2));
 
             glTranslatef(p.x, p.y, p.z);
-            glScalef(boxAxes.at(0).magnitude(), boxAxes.at(1).magnitude(), boxAxes.at(2).magnitude());
+            glScalef(boxAxes.at(0).Magnitude(), boxAxes.at(1).Magnitude(), boxAxes.at(2).Magnitude());
             glutWireCube(2.01);
 
             if (&*activeObject != &body)
@@ -319,32 +319,32 @@ void FallingDemo::display()
     }
 }
 
-void FallingDemo::update()
+void FallingDemo::Update()
 {
-    for (uint32_t i = 0; i < 1/*31*/; ++i)
-    {
-        world.startFrame();
+    world.StartFrame();
 
-        auto duration = static_cast<float>(TimingData::get().lastFrameDuration * 0.001f);
-        if (duration <= 0.0f)
-            return;
+    auto duration = static_cast<float>(TimingData::Get().lastFrameDuration * 0.001f);
+    if (duration <= 0.0f)
+        return;
 
-        xAxis *= pow(0.1f, duration);
-        yAxis *= pow(0.1f, duration);
-        zAxis *= pow(0.1f, duration);
-        activeObject->p.addForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
+    xAxis *= pow(0.1f, duration);
+    yAxis *= pow(0.1f, duration);
+    zAxis *= pow(0.1f, duration);
+    activeObject->p.AddForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
-        world.runPhysics(0.01 / 1/*31*/);
+    world.RunPhysics(0.01);
 
-        for (auto const& body : rigidBodies) {
-            body.s->setCenterOfMass(body.p.getPosition());
-        }
+    for (auto const& body : rigidBodies) {
+        body.s->setCenterOfMass(body.p.GetPosition());
     }
 
-    Application::update();
+    Application::Update();
 }
 
-const char* FallingDemo::getTitle() { return "Pegasus Falling Demo"; }
+const char* FallingDemo::GetTitle()
+{
+    return "Pegasus Falling Demo";
+}
 
 void FallingDemo::displayText(float x, float y, int r, int g, int b, void* vptr)
 {
@@ -362,7 +362,7 @@ void FallingDemo::displayText(float x, float y, int r, int g, int b, void* vptr)
     }
 }
 
-void FallingDemo::key(unsigned char key)
+void FallingDemo::Key(unsigned char key)
 {
     switch (key) {
     case 'w':
@@ -390,7 +390,7 @@ void FallingDemo::key(unsigned char key)
         break;
     case 'r':
     case 'R':
-        activeObject->p.setVelocity(0, 0, 0);
+        activeObject->p.SetVelocity(0, 0, 0);
         break;
     case '+':
         zoom -= 0.1;
@@ -419,4 +419,7 @@ void FallingDemo::key(unsigned char key)
     }
 }
 
-Application* getApplication() { return new FallingDemo(); }
+Application* GetApplication()
+{
+    return new FallingDemo();
+}

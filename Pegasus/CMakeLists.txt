@@ -15,31 +15,42 @@ endif ()
 project(${PEGASUS_NAME})
 set(CMAKE_CXX_STANDARD 14)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+#Eigen
+include(EigenConfig)
+add_subdirectory(${EIGEN_SOURCE_DIR})
+include_directories(${EIGEN_INCLUDE_DIR})
+
+#Target
 include_directories(
     ${PEGASUS_INCLUDE_DIR}
 )
 set(PEGASUS_HEADERS
-    include/particle.hpp
-    include/particleforcegenerator.hpp
-    include/particlecontacts.hpp
-    include/particlelinks.hpp
-    include/particleworld.hpp
-    include/geometry.hpp
-    include/mechanics.hpp
-    include/math.hpp
+    include/Particle.hpp
+    include/ParticleForceGenerator.hpp
+    include/ParticleContacts.hpp
+    include/ParticleLinks.hpp
+    include/ParticleWorld.hpp
+    include/Geometry.hpp
+    include/Mechanics.hpp
+    include/Math.hpp
+    include/BoundingVolumes.hpp
 )
 set(PEGASUS_SOURCES
-    sources/particle.cpp
-    sources/particleforcegenerator.cpp
-    sources/particlecontacts.cpp
-    sources/particlelinks.cpp
-    sources/particleworld.cpp
-    sources/geometry.cpp
-    sources/mechanics.cpp
-    sources/math.cpp
+    sources/Particle.cpp
+    sources/ParticleForceGenerator.cpp
+    sources/ParticleContacts.cpp
+    sources/ParticleLinks.cpp
+    sources/ParticleWorld.cpp
+    sources/Geometry.cpp
+    sources/Mechanics.cpp
+    sources/Math.cpp
+    sources/BoundingVolumes.cpp
 )
 
 add_library(${PEGASUS_LIB}
     ${PEGASUS_HEADERS}
     ${PEGASUS_SOURCES}
 )
+target_link_libraries(${PEGASUS_LIB})

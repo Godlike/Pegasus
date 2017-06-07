@@ -27,17 +27,17 @@ include_directories (
     ${PEGASUS_INCLUDE_DIR}
 )
 set(DEMO_HEADERS
-    app.hpp
-    timing.hpp
-    random.hpp
-    ogl_headers.hpp
+    Application.hpp
+    Timing.hpp
+    Random.hpp
+    OglHeaders.hpp
 )
 set(DEMO_SOURCES
-    app.cpp
-    timing.cpp
-    random.cpp
-    falling.cpp
-    main.cpp
+    Application.cpp
+    Timing.cpp
+    Random.cpp
+    Falling.cpp
+    Main.cpp
 )
 
 add_executable (${PROJECT_NAME} 

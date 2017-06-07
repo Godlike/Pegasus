@@ -6,8 +6,8 @@
 #ifndef PEGASUS_MECHANICS_HPP
 #define PEGASUS_MECHANICS_HPP
 
-#include "Pegasus/include/geometry.hpp"
-#include "Pegasus/include/particle.hpp"
+#include "Pegasus/include/Geometry.hpp"
+#include "Pegasus/include/Particle.hpp"
 
 #include <memory>
 
@@ -18,7 +18,6 @@ public:
     Particle & p;
     std::unique_ptr<geometry::SimpleShape> const s;
 
-public:
     RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s);
 };
 

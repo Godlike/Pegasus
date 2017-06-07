@@ -5,132 +5,149 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "Pegasus/include/particlecontacts.hpp"
+#include "Pegasus/include/ParticleContacts.hpp"
 
 pegasus::ParticleContact::ParticleContact(
-    Particle & a,
-    Particle * b,
+    Particle& a,
+    Particle* b,
     double restitution,
-    Vector3 const & contactNormal,
+    Vector3 const& contactNormal,
     double penetration)
-    : mParticleA(&a)
-    , mParticleB(b)
-    , mRestitution(restitution)
-    , mContactNormal(contactNormal)
-    , mPenetration(penetration)
+    : m_pParticleA(&a)
+    , m_pParticleB(b)
+    , m_restitution(restitution)
+    , m_contactNormal(contactNormal)
+    , m_penetration(penetration)
 {
 }
 
-void pegasus::ParticleContact::resolve(double duration) const
+void pegasus::ParticleContact::Resolve(double duration) const
 {
-    if (duration < 0) {
+    if (duration < 0)
+    {
         return;
     }
 
-    resolveVelocity(duration);
-    resolveInterpenetration();
+    ResolveVelocity(duration);
+    ResolveInterpenetration();
 }
 
-double pegasus::ParticleContact::calculateSeparatingVelocity() const
+double pegasus::ParticleContact::CalculateSeparatingVelocity() const
 {
-    Vector3 relativeVelocity = mParticleA->getVelocity();
-    if (mParticleB) {
-        relativeVelocity -= mParticleB->getVelocity();
+    Vector3 relativeVelocity = m_pParticleA->GetVelocity();
+    if (m_pParticleB)
+    {
+        relativeVelocity -= m_pParticleB->GetVelocity();
     }
 
-    return relativeVelocity * mContactNormal;
+    return relativeVelocity * m_contactNormal;
 }
 
-void pegasus::ParticleContact::resolveVelocity(double duration) const
+void pegasus::ParticleContact::ResolveVelocity(double duration) const
 {
-    auto const separatingVelocity = calculateSeparatingVelocity();
-    if (separatingVelocity > 0) {
+    auto const separatingVelocity = CalculateSeparatingVelocity();
+    if (separatingVelocity > 0)
+    {
         return;
     }
 
-    auto newSepVelocity = -separatingVelocity * mRestitution;
-    auto accCausedVelocity = mParticleA->getAcceleration();
-    if (mParticleB) {
-        accCausedVelocity -= mParticleB->getAcceleration();
+    auto newSepVelocity = -separatingVelocity * m_restitution;
+    auto accCausedVelocity = m_pParticleA->GetAcceleration();
+    if (m_pParticleB)
+    {
+        accCausedVelocity -= m_pParticleB->GetAcceleration();
     }
-    auto const accCausedSepVelocity = accCausedVelocity * mContactNormal * duration;
-    if (accCausedSepVelocity < 0) {
-        newSepVelocity += mRestitution * accCausedSepVelocity;
+    auto const accCausedSepVelocity = accCausedVelocity * m_contactNormal * duration;
+    if (accCausedSepVelocity < 0)
+    {
+        newSepVelocity += m_restitution * accCausedSepVelocity;
 
-        if (newSepVelocity < 0) {
+        if (newSepVelocity < 0)
+        {
             newSepVelocity = 0;
         }
     }
     auto const deltaVelocity = newSepVelocity - separatingVelocity;
 
-    auto totalInverseMass = mParticleA->getInverseMass();
-    if (mParticleB) {
-        totalInverseMass += mParticleB->getInverseMass();
+    auto totalInverseMass = m_pParticleA->GetInverseMass();
+    if (m_pParticleB)
+    {
+        totalInverseMass += m_pParticleB->GetInverseMass();
     }
 
-    if (totalInverseMass <= 0) {
+    if (totalInverseMass <= 0)
+    {
         return;
     }
 
     auto const impulse = deltaVelocity / totalInverseMass;
-    auto const impulsePerIMass = mContactNormal * impulse;
+    auto const impulsePerIMass = m_contactNormal * impulse;
 
-    mParticleA->setVelocity(mParticleA->getVelocity() + impulsePerIMass * mParticleA->getInverseMass());
-    if (mParticleB) {
-        mParticleB->setVelocity(mParticleB->getVelocity() + impulsePerIMass * -mParticleB->getInverseMass());
+    m_pParticleA->SetVelocity(m_pParticleA->GetVelocity() + impulsePerIMass * m_pParticleA->GetInverseMass());
+    if (m_pParticleB)
+    {
+        m_pParticleB->SetVelocity(m_pParticleB->GetVelocity() + impulsePerIMass * -m_pParticleB->GetInverseMass());
     }
 }
 
-void pegasus::ParticleContact::resolveInterpenetration() const
+void pegasus::ParticleContact::ResolveInterpenetration() const
 {
-    if (mPenetration <= 0) {
+    if (m_penetration <= 0)
+    {
         return;
     }
 
-    double totalInverseMass = mParticleA->getInverseMass();
-    if (mParticleB) {
-        totalInverseMass += mParticleB->getInverseMass();
+    double totalInverseMass = m_pParticleA->GetInverseMass();
+    if (m_pParticleB)
+    {
+        totalInverseMass += m_pParticleB->GetInverseMass();
     }
 
-    if (totalInverseMass <= 0) {
+    if (totalInverseMass <= 0)
+    {
         return;
     }
 
-    Vector3 const movePerIMass = mContactNormal * (mPenetration / totalInverseMass);
-    mParticleA->setPosition(mParticleA->getPosition() + movePerIMass * mParticleA->getInverseMass());
-    mParticleA->addForce((movePerIMass * mParticleA->getInverseMass()).inverse());
+    Vector3 const movePerIMass = m_contactNormal * (m_penetration / totalInverseMass);
+    m_pParticleA->SetPosition(m_pParticleA->GetPosition() + movePerIMass * m_pParticleA->GetInverseMass());
+    m_pParticleA->AddForce((movePerIMass * m_pParticleA->GetInverseMass()).Inverse());
 
-    if (mParticleB) {
-        mParticleB->setPosition(mParticleB->getPosition() - movePerIMass * mParticleB->getInverseMass());
-        mParticleB->addForce((movePerIMass * mParticleB->getInverseMass()).inverse());
+    if (m_pParticleB)
+    {
+        m_pParticleB->SetPosition(m_pParticleB->GetPosition() - movePerIMass * m_pParticleB->GetInverseMass());
+        m_pParticleB->AddForce((movePerIMass * m_pParticleB->GetInverseMass()).Inverse());
     }
 }
 
 pegasus::ParticleContactResolver::ParticleContactResolver(uint32_t iterations)
-    : mIterations(iterations)
-    , mIterationsUsed(0)
+    : m_iterations(iterations)
+    , m_iterationsUsed(0)
 {
 }
 
-void pegasus::ParticleContactResolver::setIterations(uint32_t iterations)
+void pegasus::ParticleContactResolver::SetIterations(uint32_t iterations)
 {
-    mIterations = iterations;
+    m_iterations = iterations;
 }
 
-void pegasus::ParticleContactResolver::resolveContacts(ParticleContacts & contacts, double duration)
+void pegasus::ParticleContactResolver::ResolveContacts(ParticleContacts& contacts, double duration)
 {
-    mIterationsUsed = 0;
+    m_iterationsUsed = 0;
 
     std::sort(contacts.begin(), contacts.end(),
-        [](ParticleContact const& a, ParticleContact const& b) {
-            return a.calculateSeparatingVelocity() < b.calculateSeparatingVelocity();
-        });
+              [](ParticleContact const& a, ParticleContact const& b)
+              {
+                  return a.CalculateSeparatingVelocity() < b.CalculateSeparatingVelocity();
+              });
 
-    while (mIterationsUsed++ < mIterations && !contacts.empty()) {
+    while (m_iterationsUsed++ < m_iterations && !contacts.empty())
+    {
         auto maxSepVelocityContact = contacts.back();
         contacts.pop_back();
-        maxSepVelocityContact.resolve(duration);
+        maxSepVelocityContact.Resolve(duration);
     }
 }
 
-pegasus::ParticleContactGenerator::~ParticleContactGenerator() {}
+pegasus::ParticleContactGenerator::~ParticleContactGenerator()
+{
+}
