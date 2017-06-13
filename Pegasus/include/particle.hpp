@@ -8,7 +8,7 @@
 #ifndef PEGASUS_PARTICLE_HPP
 #define PEGASUS_PARTICLE_HPP
 
-#include "Pegasus/include/Math.hpp"
+#include <Pegasus/third_party/glm/glm/glm.hpp>
 
 namespace pegasus
 {
@@ -19,16 +19,16 @@ public:
 
     void Integrate(double duration);
 
-    Vector3 GetPosition() const;
-    void SetPosition(Vector3 const& position);
+    glm::dvec3 GetPosition() const;
+    void SetPosition(glm::dvec3 const& position);
     void SetPosition(double x, double y, double z);
 
-    Vector3 GetVelocity() const;
-    void SetVelocity(Vector3 const& velocity);
+    glm::dvec3 GetVelocity() const;
+    void SetVelocity(glm::dvec3 const& velocity);
     void SetVelocity(double x, double y, double z);
 
-    Vector3 GetAcceleration() const;
-    void SetAcceleration(Vector3 const& acceleration);
+    glm::dvec3 GetAcceleration() const;
+    void SetAcceleration(glm::dvec3 const& acceleration);
     void SetAcceleration(double x, double y, double z);
 
     double GetDamping() const;
@@ -40,17 +40,17 @@ public:
     double GetInverseMass() const;
     void SetInverseMass(double inverseMass);
 
-    void AddForce(Vector3 const& force);
+    void AddForce(glm::dvec3 const& force);
     void ClearForceAccumulator();
 
 private:
-    Vector3 m_position;
-    Vector3 m_velocity;
-    Vector3 m_acceleration;
+    glm::dvec3 m_position;
+    glm::dvec3 m_velocity;
+    glm::dvec3 m_acceleration;
     double m_damping;
     double m_mass;
     double m_inverseMass;
-    Vector3 m_forceAccumulator;
+    glm::dvec3 m_forceAccumulator;
 };
 } // namespace pegasus
 

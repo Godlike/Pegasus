@@ -28,9 +28,7 @@ add_subdirectory(${EIGEN_SOURCE_DIR})
 include_directories(${EIGEN_INCLUDE_DIR})
 
 #Target
-include_directories(
-    ${PEGASUS_INCLUDE_DIR}
-)
+include_directories(${PEGASUS_INCLUDE_DIR})
 set(PEGASUS_HEADERS
     include/Particle.hpp
     include/ParticleForceGenerator.hpp

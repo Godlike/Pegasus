@@ -4,6 +4,7 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include "Pegasus/include/BoundingVolumes.hpp"
+#include "Pegasus/include/Math.hpp"
 
 #include <cmath>
 
@@ -306,7 +307,8 @@ geometry::Sphere sphere::BoundingSphere::RefineSphere(
     geometry::Sphere const& sphere, volumes::Shape const& shape, volumes::Indices const& indices
 )
 {
-    Vector3 const sphereMassCenter = sphere.getCenterOfMass();
+    auto tempCentroid = sphere.getCenterOfMass();
+    Vector3 const sphereMassCenter(tempCentroid.x, tempCentroid.y, tempCentroid.z);
     float sphereRadius = static_cast<float>(sphere.GetRadius());
     Eigen::Vector3f sphereCenter(static_cast<float>(sphereMassCenter.x),
                                  static_cast<float>(sphereMassCenter.y),

@@ -11,9 +11,11 @@
 
 #include <memory>
 
-namespace pegasus {
+namespace pegasus 
+{
 
-class RigidBody {
+class RigidBody 
+{
 public:
     Particle & p;
     std::unique_ptr<geometry::SimpleShape> const s;

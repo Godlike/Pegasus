@@ -6,6 +6,7 @@
 #include "demo/Application.hpp"
 #include "demo/OglHeaders.hpp"
 #include "demo/Timing.hpp"
+#include "Pegasus/include/Particle.hpp"
 #include "Pegasus/include/Geometry.hpp"
 #include "Pegasus/include/Mechanics.hpp"
 #include "Pegasus/include/ParticleContacts.hpp"
@@ -22,6 +23,7 @@
 #include <list>
 #include <random>
 #include <utility>
+#include <Pegasus/third_party/glm/glm/glm.hpp>
 
 static const uint32_t BOX_COUNT    = std::pow(3, 3);
 static const uint32_t SPHERE_COUNT = std::pow(3, 3);
@@ -39,8 +41,8 @@ public:
     void Key(unsigned char key) override;
     static void displayText(float x, float y, int r, int g, int b, void* vptr);
 
-    void addBox(pegasus::Vector3 const & pos, double boxSide);
-    void addSphere(pegasus::Vector3 const & pos, double radius);
+    void addBox(glm::dvec3 const & pos, double boxSide);
+    void addSphere(glm::dvec3 const & pos, double radius);
 
     void sceneReset();
 
@@ -77,7 +79,7 @@ FallingDemo::FallingDemo()
     sceneReset();
 }
 
-void FallingDemo::addBox(pegasus::Vector3 const & pos, double boxSide)
+void FallingDemo::addBox(glm::dvec3 const & pos, double boxSide)
 {
     particles.emplace_back();
     particles.back().SetPosition(pos);
@@ -86,13 +88,13 @@ void FallingDemo::addBox(pegasus::Vector3 const & pos, double boxSide)
         particles.back(),
         std::make_unique<pegasus::geometry::Box>(
             pos,
-            pegasus::Vector3{ boxSide, 0, 0 },
-            pegasus::Vector3{ 0, boxSide, 0 },
-            pegasus::Vector3{ 0, 0, boxSide })
+            glm::dvec3{ boxSide, 0, 0 },
+            glm::dvec3{ 0, boxSide, 0 },
+            glm::dvec3{ 0, 0, boxSide })
     );
 }
 
-void FallingDemo::addSphere(pegasus::Vector3 const & pos, double radius)
+void FallingDemo::addSphere(glm::dvec3 const & pos, double radius)
 {
     particles.emplace_back();
     particles.back().SetPosition(pos);
@@ -148,7 +150,7 @@ void FallingDemo::sceneReset()
     //Create rigid bodies
     for (auto & particle : particles)
     {
-        bool const isBox = randDouble() > 0;
+        bool const isBox = false && randDouble() > 0;
 
         if (isBox)
         {
@@ -156,9 +158,9 @@ void FallingDemo::sceneReset()
                 particle,
                 std::make_unique<pegasus::geometry::Box>(
                     particle.GetPosition(),
-                    pegasus::Vector3{ RADIUS, 0, 0 } * 0.5,
-                    pegasus::Vector3{ 0, RADIUS, 0 } * 0.5,
-                    pegasus::Vector3{ 0, 0, RADIUS } * 0.5)
+                    glm::dvec3{ RADIUS, 0, 0 } * 0.5,
+                    glm::dvec3{ 0, RADIUS, 0 } * 0.5,
+                    glm::dvec3{ 0, 0, RADIUS } * 0.5)
             );
         }
         else
@@ -171,7 +173,7 @@ void FallingDemo::sceneReset()
     }
 
     //Create forces
-    forces.push_back(std::make_unique<pegasus::ParticleGravity>(pegasus::Vector3{ 0, -9.8, 0 }));
+    forces.push_back(std::make_unique<pegasus::ParticleGravity>(glm::dvec3{ 0, -9.8, 0 }));
 
     //Register forces
     for (auto & particle : particles)
@@ -196,7 +198,7 @@ void FallingDemo::sceneReset()
     rigidBodies.emplace_front(
         particles.front(),
         std::make_unique<pegasus::geometry::Plane>(
-           particles.front().GetPosition(), pegasus::Vector3(0, 1.0, 0).Unit()
+           particles.front().GetPosition(), glm::normalize(glm::dvec3(0, 1.0, 0))
         )
     );
 
@@ -243,21 +245,21 @@ void FallingDemo::Display()
             glTranslatef(0, 0, 0);
             double const planeSideLength = 100;
 
-            pegasus::Vector3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
-            pegasus::Vector3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetNormal();
-            pegasus::Vector3 const posNormalProjection = planeNormal * (p0 * planeNormal);
-            pegasus::Vector3 p1 = p0 + (posNormalProjection - p0) * 2;
+            glm::dvec3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
+            glm::dvec3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetNormal();
+            glm::dvec3 const posNormalProjection = planeNormal * (p0 * planeNormal);
+            glm::dvec3 p1 = p0 + (posNormalProjection - p0) * 2.0;
 
             if (p1.x < p0.x) { std::swap(p0.x, p1.x); }
 
-            pegasus::Vector3 b = (planeNormal % p1 % planeNormal).Unit() * planeSideLength;
-            pegasus::Vector3 c = (planeNormal % b).Unit() * planeSideLength;
+            glm::dvec3 b = glm::normalize(glm::cross(glm::cross(planeNormal, p1), planeNormal)) * planeSideLength;
+            glm::dvec3 c = glm::normalize(glm::cross(planeNormal, b)) * planeSideLength;
 
-            std::array<pegasus::Vector3, 4> quadVertices{
-                b.Inverse() - c + posNormalProjection,
+            std::array<glm::dvec3, 4> quadVertices{
+                b * -1.0 - c + posNormalProjection,
                 b - c + posNormalProjection,
                 b + c + posNormalProjection,
-                b.Inverse() + c + posNormalProjection
+                b * -1.0 + c + posNormalProjection
             };
 
             glBegin(GL_QUADS);
@@ -298,11 +300,11 @@ void FallingDemo::Display()
         else if (s == pegasus::geometry::SimpleShapeType::BOX)
         {            
             pegasus::geometry::Box * box = static_cast<pegasus::geometry::Box*>(body.s.get());
-            std::array<pegasus::Vector3, 3> boxAxes;
+            std::array<glm::dvec3, 3> boxAxes;
             box->GetAxes(boxAxes.at(0), boxAxes.at(1), boxAxes.at(2));
 
             glTranslatef(p.x, p.y, p.z);
-            glScalef(boxAxes.at(0).Magnitude(), boxAxes.at(1).Magnitude(), boxAxes.at(2).Magnitude());
+            glScalef(boxAxes.at(0).length(), boxAxes.at(1).length(), boxAxes.at(2).length());
             glutWireCube(2.01);
 
             if (&*activeObject != &body)
@@ -330,7 +332,7 @@ void FallingDemo::Update()
     xAxis *= pow(0.1f, duration);
     yAxis *= pow(0.1f, duration);
     zAxis *= pow(0.1f, duration);
-    activeObject->p.AddForce(pegasus::Vector3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
+    activeObject->p.AddForce(glm::dvec3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
 
     world.RunPhysics(0.01);
 
