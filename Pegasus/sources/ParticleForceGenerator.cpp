@@ -85,7 +85,7 @@ void pegasus::ParticleDrag::UpdateForce(Particle& p)
 {
     glm::dvec3 force = p.GetVelocity();
 
-    double dragCoeff = force.length();
+    double dragCoeff = glm::length(force);
     dragCoeff = m_k1 * dragCoeff + m_k2 * dragCoeff * dragCoeff;
 
     force = glm::normalize(force) * -dragCoeff;
@@ -105,7 +105,7 @@ void pegasus::ParticleSpring::UpdateForce(Particle& p)
     glm::dvec3 force = p.GetPosition();
     force -= m_other.GetPosition();
 
-    auto const magnitude = m_springConstant * std::fabs(force.length() - m_restLength);
+    auto const magnitude = m_springConstant * std::fabs(glm::length(force) - m_restLength);
 
     force = glm::normalize(force) * -magnitude;
     p.AddForce(force);
@@ -124,7 +124,7 @@ void pegasus::ParticleAnchoredSpring::UpdateForce(Particle& p)
     glm::dvec3 force = p.GetPosition();
     force -= m_anchor;
 
-    auto const magnitude = m_springConstant * std::fabs(force.length() - m_restLength);
+    auto const magnitude = m_springConstant * std::fabs(glm::length(force) - m_restLength);
 
     force = glm::normalize(force) * -magnitude;
     p.AddForce(force);
@@ -142,7 +142,7 @@ void pegasus::ParticleBungee::UpdateForce(Particle& p)
     glm::dvec3 force = p.GetPosition();
     force -= m_other.GetPosition();
 
-    double magnitude = force.length();
+    double magnitude = glm::length(force);
     if (magnitude <= m_restLength)
     {
         return;

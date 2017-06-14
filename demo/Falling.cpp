@@ -150,7 +150,7 @@ void FallingDemo::sceneReset()
     //Create rigid bodies
     for (auto & particle : particles)
     {
-        bool const isBox = false && randDouble() > 0;
+        bool const isBox = randDouble() > 0;
 
         if (isBox)
         {
@@ -301,10 +301,10 @@ void FallingDemo::Display()
         {            
             pegasus::geometry::Box * box = static_cast<pegasus::geometry::Box*>(body.s.get());
             std::array<glm::dvec3, 3> boxAxes;
-            box->GetAxes(boxAxes.at(0), boxAxes.at(1), boxAxes.at(2));
+            box->GetAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
 
             glTranslatef(p.x, p.y, p.z);
-            glScalef(boxAxes.at(0).length(), boxAxes.at(1).length(), boxAxes.at(2).length());
+            glScaled(glm::length(boxAxes[0]), glm::length(boxAxes[1]), glm::length(boxAxes[2]));
             glutWireCube(2.01);
 
             if (&*activeObject != &body)

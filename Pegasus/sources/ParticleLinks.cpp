@@ -16,7 +16,7 @@ pegasus::ParticleLink::ParticleLink(Particle& a, Particle& b)
 double pegasus::ParticleLink::CurrentLength() const
 {
     auto const relativePos = m_aParticle.GetPosition() - m_bParticle.GetPosition();
-    return relativePos.length();
+    return glm::length(relativePos);
 }
 
 pegasus::ParticleCabel::ParticleCabel(

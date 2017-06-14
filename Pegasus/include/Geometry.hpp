@@ -180,7 +180,7 @@ void CalculateSeparatingAxes(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2,
         for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2)
         {
             auto const axis = glm::normalize(glm::cross(*it1, *it2));
-            if (axis.length() != 0.0f)
+            if (glm::length(axis) != 0.0f)
             {
                 destBegin++ = axis;
             }
@@ -336,7 +336,7 @@ template <>
 inline bool Overlap<Plane, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Plane, Plane>*>(cacheBase);
-    return cache->crossProduct.length() != 0;
+    return glm::length(cache->crossProduct) != 0;
 }
 
 template <>
@@ -488,7 +488,7 @@ template <>
 inline bool Overlap<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
-    return cache->radiusSum > cache->baVector.length();
+    return cache->radiusSum > glm::length(cache->baVector);
 }
 
 template <>
@@ -502,7 +502,7 @@ template <>
 inline double CalculatePenetration<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
-    return cache->radiusSum - cache->baVector.length();
+    return cache->radiusSum - glm::length(cache->baVector);
 }
 
 // Sphere, Box
@@ -528,7 +528,7 @@ inline void Initialize<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, 
     {
         cache->boxFaces[i] = cache->boxNormals[i] + cache->boxMassCenter;
         cache->boxNormals[i] = glm::normalize(cache->boxNormals[i]);
-        cache->boxFaceDistances[i] = (cache->boxFaces[i] - cache->sphereMassCenter).length();
+        cache->boxFaceDistances[i] = glm::length(cache->boxFaces[i] - cache->sphereMassCenter);
     }
 }
 
@@ -539,14 +539,14 @@ inline bool Overlap<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, Cac
 
     cache->boxSphereVector = cache->sphereMassCenter - cache->boxMassCenter;
 
-    if (cache->boxSphereVector.length())
+    if (glm::length(cache->boxSphereVector))
     {
         cache->boxContactPoint = cache->boxMassCenter;
 
         for (uint32_t i = 0; i < 3; ++i)
         {
             double d = glm::dot(cache->boxSphereVector, cache->boxNormals[i]);
-            double axisNorm = cache->boxAxes[i].length();
+            double axisNorm = glm::length(cache->boxAxes[i]);
 
             if (d > axisNorm)
             {
@@ -569,7 +569,7 @@ inline bool Overlap<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, Cac
     cache->sphereContactNormal = glm::normalize(cache->boxContactPoint - cache->sphereMassCenter);
     cache->sphereContactPoint = cache->sphereContactNormal * cache->sphereRadius + cache->sphereMassCenter;
 
-    return (cache->sphereMassCenter - cache->boxContactPoint).length() <= cache->sphereRadius;
+    return glm::length(cache->sphereMassCenter - cache->boxContactPoint) <= cache->sphereRadius;
 }
 
 template <>
@@ -600,10 +600,10 @@ inline double CalculatePenetration<Sphere, Box>(SimpleShape const* a, SimpleShap
 
     if (cache->boxContactPoint == cache->boxMassCenter)
     {
-        return cache->boxAxes.front().length();
+        return glm::length(cache->boxAxes.front());
     }
 
-    return (cache->sphereContactPoint - cache->boxContactPoint).length();
+    return glm::length(cache->sphereContactPoint - cache->boxContactPoint);
 }
 
 // Box, Plane
@@ -740,7 +740,7 @@ inline glm::dvec3 CalculateContactNormal<Box, Box>(SimpleShape const* a, SimpleS
     std::array<double, 6> distances;
     for (uint32_t i = 0; i < distances.size(); ++i)
     {
-        distances[i] = (cache->aMassCenter - cache->bBoxFaces[i]).length();
+        distances[i] = glm::length(cache->aMassCenter - cache->bBoxFaces[i]);
     }
 
     auto const minIt = std::min_element(distances.begin(), distances.end());

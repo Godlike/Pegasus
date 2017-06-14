@@ -88,15 +88,15 @@ public:
             auto toParticle = particles[i]->GetPosition() - start;
             auto const lineDirection = end - start;
             auto const projected = toParticle * lineDirection;
-            auto const platformSqLength = std::pow(lineDirection.length(), 2);
+            auto const platformSqLength = std::pow(glm::length(lineDirection), 2);
 
             if (projected <= 0)
             {
-                if (toParticle.length() < blobRadius)
+                if (glm::length(toParticle) < blobRadius)
                 {
                     auto contactNormal = toParticle.Unit();
                     contactNormal.z = 0;
-                    auto const penetration = blobRadius - toParticle.length();
+                    auto const penetration = blobRadius - glm::length(toParticle);
                     contacts.emplace_back(
                         particles[i], nullptr, restitution, contactNormal, penetration);
                     ++used;
@@ -105,11 +105,11 @@ public:
             else if (projected >= platformSqLength)
             {
                 toParticle = particles[i]->GetPosition() - end;
-                if (toParticle.length() < blobRadius)
+                if (glm::length(toParticle) < blobRadius)
                 {
                     auto contactNormal = toParticle.Unit();
                     contactNormal.z = 0;
-                    auto const penetration = blobRadius - toParticle.length();
+                    auto const penetration = blobRadius - glm::length(toParticle);
                     contacts.emplace_back(
                         particles[i], nullptr, restitution, contactNormal, penetration);
                     ++used;
@@ -117,7 +117,7 @@ public:
             }
             else
             {
-                auto distanceToPlatform = std::pow(toParticle.length(), 2) - projected * projected / platformSqLength;
+                auto distanceToPlatform = std::pow(glm::length(toParticle), 2) - projected * projected / platformSqLength;
                 if (distanceToPlatform < blobRadius * blobRadius)
                 {
                     auto closestPoint = start + lineDirection * (projected / platformSqLength);

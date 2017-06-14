@@ -162,7 +162,7 @@ public:
             // Work out the separation distance
             glm::dvec3 separation = currentParticle.GetPosition() - particle.GetPosition();
             separation.z = 0.0f;
-            double distance = separation.length();
+            double distance = glm::length(separation);
 
             if (distance < m_minNaturalDistance)
             {
