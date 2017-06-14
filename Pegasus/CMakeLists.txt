@@ -15,20 +15,16 @@ endif ()
 project(${PEGASUS_NAME})
 set(CMAKE_CXX_STANDARD 14)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
 #GLM
-include(GlmConfig)
 add_subdirectory(${GLM_SOURCE_DIR})
-include_directories(${GLM_INCLUDE_DIR})
 
 #Eigen
-include(EigenConfig)
 add_subdirectory(${EIGEN_SOURCE_DIR})
-include_directories(${EIGEN_INCLUDE_DIR})
 
 #Target
-include_directories(${PEGASUS_INCLUDE_DIR})
+include_directories(
+    ${PEGASUS_INCLUDE_DIR}
+)
 set(PEGASUS_HEADERS
     include/Particle.hpp
     include/ParticleForceGenerator.hpp
