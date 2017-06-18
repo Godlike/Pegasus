@@ -11,12 +11,10 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${PEGASUS_ROOT}/Pegasus/cmake")
 
 include(GlmConfig)
-include(EigenConfig)
     
 set(PEGASUS_INCLUDE_DIR
     ${PEGASUS_ROOT}
     ${GLM_INCLUDE_DIR}
-    ${EIGEN_INCLUDE_DIR}
     CACHE LIST "Pegasus include directories."
 )
 set(PEGASUS_LIB ${PEGASUS_NAME} CACHE STRING "Pegasus library name.")

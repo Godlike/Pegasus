@@ -18,9 +18,6 @@ set(CMAKE_CXX_STANDARD 14)
 #GLM
 add_subdirectory(${GLM_SOURCE_DIR})
 
-#Eigen
-add_subdirectory(${EIGEN_SOURCE_DIR})
-
 #Target
 include_directories(
     ${PEGASUS_INCLUDE_DIR}
