@@ -11,7 +11,7 @@ pegasus::ParticleContact::ParticleContact(
     Particle& a,
     Particle* b,
     double restitution,
-    Vector3 const& contactNormal,
+    glm::dvec3 const& contactNormal,
     double penetration)
     : m_pParticleA(&a)
     , m_pParticleB(b)
@@ -34,13 +34,13 @@ void pegasus::ParticleContact::Resolve(double duration) const
 
 double pegasus::ParticleContact::CalculateSeparatingVelocity() const
 {
-    Vector3 relativeVelocity = m_pParticleA->GetVelocity();
+    glm::dvec3 relativeVelocity = m_pParticleA->GetVelocity();
     if (m_pParticleB)
     {
         relativeVelocity -= m_pParticleB->GetVelocity();
     }
 
-    return relativeVelocity * m_contactNormal;
+    return glm::dot(relativeVelocity, m_contactNormal);
 }
 
 void pegasus::ParticleContact::ResolveVelocity(double duration) const
@@ -57,7 +57,7 @@ void pegasus::ParticleContact::ResolveVelocity(double duration) const
     {
         accCausedVelocity -= m_pParticleB->GetAcceleration();
     }
-    auto const accCausedSepVelocity = accCausedVelocity * m_contactNormal * duration;
+    auto const accCausedSepVelocity = glm::dot(accCausedVelocity, m_contactNormal * duration);
     if (accCausedSepVelocity < 0)
     {
         newSepVelocity += m_restitution * accCausedSepVelocity;
@@ -108,14 +108,14 @@ void pegasus::ParticleContact::ResolveInterpenetration() const
         return;
     }
 
-    Vector3 const movePerIMass = m_contactNormal * (m_penetration / totalInverseMass);
+    glm::dvec3 const movePerIMass = m_contactNormal * (m_penetration / totalInverseMass);
     m_pParticleA->SetPosition(m_pParticleA->GetPosition() + movePerIMass * m_pParticleA->GetInverseMass());
-    m_pParticleA->AddForce((movePerIMass * m_pParticleA->GetInverseMass()).Inverse());
+    m_pParticleA->AddForce((movePerIMass * m_pParticleA->GetInverseMass()) * -1.0);
 
     if (m_pParticleB)
     {
         m_pParticleB->SetPosition(m_pParticleB->GetPosition() - movePerIMass * m_pParticleB->GetInverseMass());
-        m_pParticleB->AddForce((movePerIMass * m_pParticleB->GetInverseMass()).Inverse());
+        m_pParticleB->AddForce((movePerIMass * m_pParticleB->GetInverseMass()) * -1.0);
     }
 }
 

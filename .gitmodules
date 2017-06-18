@@ -1,6 +1,6 @@
 [submodule "third_party/FreeGLUT"]
 	path = third_party/FreeGLUT
 	url = git@github.com:dcnieho/FreeGLUT.git
-[submodule "Pegasus/third_party/eigen"]
-	path = Pegasus/third_party/eigen
-	url = git@github.com:RLovelett/eigen.git
+[submodule "Pegasus/third_party/glm"]
+	path = Pegasus/third_party/glm
+	url = git@github.com:g-truc/glm.git

@@ -30,24 +30,21 @@ void pegasus::Particle::Integrate(double duration)
         return;
     }
 
-    m_position.AddScaledVector(m_velocity, duration);
+    m_position += m_velocity * duration;
 
-    Vector3 resultingAcc(m_acceleration);
-    resultingAcc.AddScaledVector(m_forceAccumulator, m_inverseMass);
-
-    m_velocity.AddScaledVector(resultingAcc, duration);
-
+    glm::dvec3 const resultingAcc = m_acceleration + m_forceAccumulator, m_inverseMass;  
+    m_velocity += resultingAcc * duration;
     m_velocity *= std::pow(m_damping, duration);
 
     ClearForceAccumulator();
 }
 
-pegasus::Vector3 pegasus::Particle::GetPosition() const
+glm::dvec3 pegasus::Particle::GetPosition() const
 {
     return m_position;
 }
 
-void pegasus::Particle::SetPosition(Vector3 const& position)
+void pegasus::Particle::SetPosition(glm::dvec3 const& position)
 {
     m_position = position;
 }
@@ -57,12 +54,12 @@ void pegasus::Particle::SetPosition(double x, double y, double z)
     SetPosition({x, y, z});
 }
 
-pegasus::Vector3 pegasus::Particle::GetVelocity() const
+glm::dvec3 pegasus::Particle::GetVelocity() const
 {
     return m_velocity;
 }
 
-void pegasus::Particle::SetVelocity(Vector3 const& velocity)
+void pegasus::Particle::SetVelocity(glm::dvec3 const& velocity)
 {
     m_velocity = velocity;
 }
@@ -72,12 +69,12 @@ void pegasus::Particle::SetVelocity(double x, double y, double z)
     SetVelocity({x, y, z});
 }
 
-pegasus::Vector3 pegasus::Particle::GetAcceleration() const
+glm::dvec3 pegasus::Particle::GetAcceleration() const
 {
     return m_acceleration;
 }
 
-void pegasus::Particle::SetAcceleration(Vector3 const& acceleration)
+void pegasus::Particle::SetAcceleration(glm::dvec3 const& acceleration)
 {
     m_acceleration = acceleration;
 }
@@ -128,12 +125,12 @@ void pegasus::Particle::SetInverseMass(double inverseMass)
     m_inverseMass = inverseMass;
 }
 
-void pegasus::Particle::AddForce(Vector3 const& force)
+void pegasus::Particle::AddForce(glm::dvec3 const& force)
 {
     m_forceAccumulator += force;
 }
 
 void pegasus::Particle::ClearForceAccumulator()
 {
-    m_forceAccumulator = Vector3();
+    m_forceAccumulator = glm::dvec3();
 }

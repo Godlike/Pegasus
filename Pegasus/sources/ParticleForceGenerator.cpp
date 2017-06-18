@@ -60,7 +60,7 @@ void pegasus::ParticleForceRegistry::UpdateForces()
     }
 }
 
-pegasus::ParticleGravity::ParticleGravity(Vector3 const& g)
+pegasus::ParticleGravity::ParticleGravity(glm::dvec3 const& g)
     : m_gravity(g)
 {
 }
@@ -83,13 +83,12 @@ pegasus::ParticleDrag::ParticleDrag(double k1, double k2)
 
 void pegasus::ParticleDrag::UpdateForce(Particle& p)
 {
-    Vector3 force = p.GetVelocity();
+    glm::dvec3 force = p.GetVelocity();
 
-    double dragCoeff = force.Magnitude();
+    double dragCoeff = glm::length(force);
     dragCoeff = m_k1 * dragCoeff + m_k2 * dragCoeff * dragCoeff;
 
-    force.Normalize();
-    force *= -dragCoeff;
+    force = glm::normalize(force) * -dragCoeff;
     p.AddForce(force);
 }
 
@@ -103,18 +102,17 @@ pegasus::ParticleSpring::ParticleSpring(
 
 void pegasus::ParticleSpring::UpdateForce(Particle& p)
 {
-    Vector3 force = p.GetPosition();
+    glm::dvec3 force = p.GetPosition();
     force -= m_other.GetPosition();
 
-    auto const magnitude = m_springConstant * std::fabs(force.Magnitude() - m_restLength);
+    auto const magnitude = m_springConstant * std::fabs(glm::length(force) - m_restLength);
 
-    force.Normalize();
-    force *= -magnitude;
+    force = glm::normalize(force) * -magnitude;
     p.AddForce(force);
 }
 
 pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
-    Vector3 const& anchor, double springConstant, double restLength)
+    glm::dvec3 const& anchor, double springConstant, double restLength)
     : m_anchor(anchor)
     , m_springConstant(springConstant)
     , m_restLength(restLength)
@@ -123,13 +121,12 @@ pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
 
 void pegasus::ParticleAnchoredSpring::UpdateForce(Particle& p)
 {
-    Vector3 force = p.GetPosition();
+    glm::dvec3 force = p.GetPosition();
     force -= m_anchor;
 
-    auto const magnitude = m_springConstant * std::fabs(force.Magnitude() - m_restLength);
+    auto const magnitude = m_springConstant * std::fabs(glm::length(force) - m_restLength);
 
-    force.Normalize();
-    force *= -magnitude;
+    force = glm::normalize(force) * -magnitude;
     p.AddForce(force);
 }
 
@@ -142,10 +139,10 @@ pegasus::ParticleBungee::ParticleBungee(Particle& other, double springConstant, 
 
 void pegasus::ParticleBungee::UpdateForce(Particle& p)
 {
-    Vector3 force = p.GetPosition();
+    glm::dvec3 force = p.GetPosition();
     force -= m_other.GetPosition();
 
-    double magnitude = force.Magnitude();
+    double magnitude = glm::length(force);
     if (magnitude <= m_restLength)
     {
         return;
@@ -153,8 +150,7 @@ void pegasus::ParticleBungee::UpdateForce(Particle& p)
 
     magnitude = m_springConstant * (magnitude - m_restLength);
 
-    force.Normalize();
-    force *= -magnitude;
+    force = glm::normalize(force) * -magnitude;
     p.AddForce(force);
 }
 
@@ -176,7 +172,7 @@ void pegasus::ParticleBuoyancy::UpdateForce(Particle& p)
         return;
     }
 
-    Vector3 force;
+    glm::dvec3 force;
     if (depth <= m_waterHeight - m_maxDepth)
     {
         force.y = m_liquidDensity * m_volume;
@@ -190,7 +186,7 @@ void pegasus::ParticleBuoyancy::UpdateForce(Particle& p)
 }
 
 pegasus::ParticleFakeSpring::ParticleFakeSpring(
-    Vector3 const& anchor, double springConstant, double damping)
+    glm::dvec3 const& anchor, double springConstant, double damping)
     : m_anchor(anchor)
     , m_springConstant(springConstant)
     , m_damping(damping)
@@ -205,7 +201,7 @@ void pegasus::ParticleFakeSpring::UpdateForce(Particle& p, double duration) cons
         return;
     }
 
-    Vector3 const position = p.GetPosition() - m_anchor;
+    glm::dvec3 const position = p.GetPosition() - m_anchor;
     double const gamma = 0.5f * std::sqrt(4 * m_springConstant - m_damping * m_damping);
 
     if (gamma == 0.0f)

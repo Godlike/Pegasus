@@ -4,7 +4,10 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include "Pegasus/include/BoundingVolumes.hpp"
+#include "Pegasus/include/Math.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
 #include <cmath>
 
 using namespace pegasus;
@@ -17,9 +20,9 @@ volumes::Shape::Shape(volumes::Vertices const& vertices, volumes::Faces const& i
 {
 }
 
-Eigen::Vector3f volumes::CalculateMeanVertex(volumes::Shape const& shape, volumes::Indices const& indices)
+glm::dvec3 volumes::CalculateMeanVertex(volumes::Shape const& shape, volumes::Indices const& indices)
 {
-    Eigen::Vector3f sum{0, 0, 0};
+    glm::dvec3 sum{0, 0, 0};
     for (auto index : indices)
     {
         auto const& face = shape.indices[index];
@@ -29,29 +32,29 @@ Eigen::Vector3f volumes::CalculateMeanVertex(volumes::Shape const& shape, volume
         sum += shape.vertices[face[2]];
     }
 
-    Eigen::Vector3f const mean = 1.0f / (3.0f * indices.size()) * sum;
+    glm::dvec3 const mean = 1.0 / (3.0 * indices.size()) * sum;
     return mean;
 }
 
-Eigen::Matrix3f volumes::CalculateCovarianceMatrix(
-    volumes::Shape const& shape, volumes::Indices const& indices, Eigen::Vector3f const& mean)
+glm::dmat3 volumes::CalculateCovarianceMatrix(
+    volumes::Shape const& shape, volumes::Indices const& indices, glm::dvec3 const& mean)
 {
-    Eigen::Matrix3f c = Eigen::Matrix3f::Zero();
+    glm::dmat3 c(0.0);
 
     for (auto index : indices)
     {
         auto const& face = shape.indices[index];
 
-        Eigen::Vector3f const p = shape.vertices[face[0]] - mean;
-        Eigen::Vector3f const q = shape.vertices[face[1]] - mean;
-        Eigen::Vector3f const r = shape.vertices[face[2]] - mean;
+        glm::dvec3 const p = shape.vertices[face[0]] - mean;
+        glm::dvec3 const q = shape.vertices[face[1]] - mean;
+        glm::dvec3 const r = shape.vertices[face[2]] - mean;
 
         for (uint8_t j = 0; j < 3; ++j)
         {
             for (uint8_t k = 0; k < 3; ++k)
             {
-                float const v = p[j] * p[k] + q[j] * q[k] + r[j] * r[k];
-                c(j, k) += v;
+                double const v = p[j] * p[k] + q[j] * q[k] + r[j] * r[k];
+                c[j][k] += v;
             }
         }
     }
@@ -61,42 +64,30 @@ Eigen::Matrix3f volumes::CalculateCovarianceMatrix(
     {
         for (uint8_t k = 0; k < 3; ++k)
         {
-            c(j, k) *= a;
+            c[j][k] *= a;
         }
     }
 
     return c;
 }
 
-Eigen::Vector3f volumes::CalculateEigenValues(Eigen::Matrix3f const& covariance)
+glm::dmat3 volumes::CalculateExtremalVertices(
+    glm::dmat3 const& eigenVectors, volumes::Shape const& shape, volumes::Indices const& indices)
 {
-    Eigen::EigenSolver<Eigen::Matrix3f> es(covariance);
-    return es.eigenvalues().real();
-}
-
-Eigen::Matrix3f volumes::CalculateEigenVectors(Eigen::Matrix3f const& covariance)
-{
-    Eigen::EigenSolver<Eigen::Matrix3f> es(covariance);
-    return es.eigenvectors().real();;
-}
-
-Eigen::Matrix3f volumes::CalculateExtremalVertices(
-    Eigen::Matrix3f const& eigenVectors, volumes::Shape const& shape, volumes::Indices const& indices)
-{
-    std::vector<Eigen::Vector3f const *, Eigen::aligned_allocator<Eigen::Vector3f const*>> vertices;
+    std::vector<glm::dvec3 const *> vertices;
     for (auto index : indices)
     {
         auto const& face = shape.indices[index];
         vertices.insert(vertices.end(), {&shape.vertices[face[0]], &shape.vertices[face[1]], &shape.vertices[face[2]]});
     }
 
-    Eigen::Matrix3f extremal = Eigen::Matrix3f::Zero();
+    glm::dmat3 extremal(0);
     for (uint8_t i = 0; i < 3; ++i)
     {
-        Eigen::Vector3f const vec = eigenVectors.col(i);
+        glm::dvec3 const vec = eigenVectors[i];
         auto maxVertex = *std::max_element(vertices.begin(), vertices.end(),
-                                           [&vec](auto a, auto b) { return a->dot(vec) < b->dot(vec); });
-        extremal.col(i) = *maxVertex;
+                                           [&vec](auto a, auto b) { return glm::dot(*a, vec) < glm::dot(*b, vec); });
+        extremal[i] = *maxVertex;
     }
 
     return extremal;
@@ -110,16 +101,19 @@ obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const& shape, volum
     //Todo: implement convex hull step
     m_box.mean = volumes::CalculateMeanVertex(m_shape, m_indices);
     m_box.covariance = volumes::CalculateCovarianceMatrix(m_shape, m_indices, m_box.mean);
-    m_box.eigenVectors = volumes::CalculateEigenVectors(m_box.covariance);
+
+    pegasus::math::JacobiEigenvalue jacobiEigen(m_box.covariance);
+    m_box.eigenVectors = jacobiEigen.GetEigenvectors();
     m_box.extremalVertices = volumes::CalculateExtremalVertices(m_box.covariance, m_shape, m_indices);
-    m_box.eigenVectorsNormalized = m_box.eigenVectors.normalized();
+    
+    for (uint8_t i = 0; i < 3; ++i) 
+    {
+        m_box.eigenVectorsNormalized[i] = glm::normalize(m_box.eigenVectors[i]);
+    }
     m_box.cubeVertices = CalculateBoxVertices(m_box.extremalVertices, m_box.eigenVectorsNormalized);
 
     m_boxShape = geometry::Box(
-        {m_box.mean[0], m_box.mean[1], m_box.mean[2]},
-        {m_box.eigenVectors.col(0)[0], m_box.eigenVectors.col(0)[1], m_box.eigenVectors.col(0)[2]},
-        {m_box.eigenVectors.col(1)[0], m_box.eigenVectors.col(1)[1], m_box.eigenVectors.col(1)[2]},
-        {m_box.eigenVectors.col(2)[0], m_box.eigenVectors.col(2)[1], m_box.eigenVectors.col(2)[2]}
+        m_box.mean, m_box.eigenVectors[0], m_box.eigenVectors[1], m_box.eigenVectors[2]
     );
 }
 
@@ -130,38 +124,14 @@ geometry::Box obb::OrientedBoundingBox::GetBox() const
 
 volumes::Vertices
 obb::OrientedBoundingBox::CalculateBoxVertices(
-    Eigen::Matrix3f const& extremalPoints, Eigen::Matrix3f const& eigenVectors) const
+    glm::dmat3 const& extremalPoints, glm::dmat3 const& normalizedEigenVectors) const
 {
-    Vertices box(8, Eigen::Vector3f{0, 0, 0});
+    glm::dvec3 const i = normalizedEigenVectors[0] * glm::length(extremalPoints[0]);
+    glm::dvec3 const j = normalizedEigenVectors[1] * glm::length(extremalPoints[1]);
+    glm::dvec3 const k = normalizedEigenVectors[2] * glm::length(extremalPoints[2]);
 
-    std::array<Plane, 6> planes;
-    for (uint8_t i = 0; i < 6; ++i)
-    {
-        uint8_t const index = (i < 3) ? i : i - 3;
-        planes[i] = Plane(Eigen::Vector3f(eigenVectors.col(index)) * (i < 3 ? 1 : -1),
-                          Eigen::Vector3f(extremalPoints.col(index)).dot(Eigen::Vector3f(eigenVectors.col(index))));
-    }
-
-    Faces faces = {{0, 1, 2}, {0, 1, 5}, {0, 2, 4}, {0, 4, 5},
-        {2, 3, 4}, {1, 2, 3}, {1, 3, 5}, {3, 4, 5}};
-    for (size_t i = 0; i < faces.size(); ++i)
-    {
-        Eigen::Vector4f const v0 = planes[faces[i][0]].coeffs();
-        Eigen::Vector4f const v1 = planes[faces[i][1]].coeffs();
-        Eigen::Vector4f const v2 = planes[faces[i][2]].coeffs();
-
-        Eigen::Matrix3f A = Eigen::Matrix3f::Identity();
-        A.row(0) = v0.head<3>();
-        A.row(1) = v1.head<3>();
-        A.row(2) = v2.head<3>();
-
-        Eigen::Vector3f b;
-        b << -v0[3] , -v1[3] , -v2[3];
-
-        box[i] = A.jacobiSvd(Eigen::ComputeFullU | Eigen::ComputeFullV).solve(b);
-    }
-
-    return box;
+    return { i + j + k, i - j + k, -i + j + k, -i -j + k,  
+             i + j - k, i - j - k, -i + j - k, -i -j - k };
 }
 
 aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(
@@ -187,7 +157,7 @@ void aabb::AxisAlignedBoundingBox::CalculateExtremalVetices(
     using namespace std::placeholders;
 
     //ToDo: optimize it, currently O(n), should be possible to do O(log(n))
-    std::vector<Eigen::Vector3f const *> validVertices;
+    std::vector<glm::dvec3 const *> validVertices;
     validVertices.reserve(indices.size() * 3);
     for (auto faceIndex : indices)
     {
@@ -198,7 +168,7 @@ void aabb::AxisAlignedBoundingBox::CalculateExtremalVetices(
     }
 
     static auto axisCompareVertices = []
-            (uint32_t axis, Eigen::Vector3f const* a, Eigen::Vector3f const* b)
+            (uint32_t axis, glm::dvec3 const* a, glm::dvec3 const* b)
             {
                 return (*a)[axis] < (*b)[axis];
             };
@@ -232,7 +202,7 @@ void aabb::AxisAlignedBoundingBox::CalculateMean(aabb::AxisAlignedBoundingBox::B
 void aabb::AxisAlignedBoundingBox::CreateBox(aabb::AxisAlignedBoundingBox::Box& box)
 {
     m_boxShape = geometry::Box(
-        {box.extremalMean[0], box.extremalMean[1], box.extremalMean[2]},
+        box.extremalMean,
         {box.xAxis[0], 0, 0},
         {0, box.yAxis[1], 0},
         {0, 0, box.zAxis[2]}
@@ -246,9 +216,15 @@ sphere::BoundingSphere::BoundingSphere(volumes::Shape const& shape, volumes::Ind
 {
     m_sphere.mean = volumes::CalculateMeanVertex(shape, indices);
     m_sphere.covariance = volumes::CalculateCovarianceMatrix(shape, indices, m_sphere.mean);
-    m_sphere.eigenValues = volumes::CalculateEigenValues(m_sphere.covariance);
-    m_sphere.eigenVectors = volumes::CalculateEigenVectors(m_sphere.covariance);
-    m_sphere.eigenVectorsNormalized = m_sphere.eigenVectors.normalized();
+
+    pegasus::math::JacobiEigenvalue jacobiEigen(m_sphere.covariance);
+    m_sphere.eigenValues = jacobiEigen.GetEigenvalues();
+    m_sphere.eigenVectors = jacobiEigen.GetEigenvectors();
+
+    for (uint8_t i = 0; i < 3; ++i)
+    {
+        m_sphere.eigenVectorsNormalized[i] = glm::normalize(m_sphere.eigenVectors[i]);
+    }   
     m_sphereShape = CalculateBoundingSphere(
         m_sphere.eigenVectorsNormalized, m_sphere.eigenValues, m_shape, m_indices);
     m_sphereShape = RefineSphere(m_sphereShape, shape, indices);
@@ -260,7 +236,7 @@ geometry::Sphere sphere::BoundingSphere::GetSphere() const
 }
 
 geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
-    Eigen::Matrix3f const& eigenVectors, Eigen::Vector3f const& eigenValues,
+    glm::dmat3 const& eigenVectors, glm::dvec3 const& eigenValues,
     volumes::Shape const& shape, volumes::Indices const& indices
 )
 {
@@ -270,7 +246,7 @@ geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
     {
         maxEigenValueIndex = 2;
     }
-    Eigen::Vector3f maxDispersionAxis = eigenVectors.col(maxEigenValueIndex).normalized();
+    glm::dvec3 maxDispersionAxis = glm::normalize(eigenVectors[maxEigenValueIndex]);
 
     //Find extremal points on it
     size_t minVertexIndex = 0;
@@ -279,12 +255,12 @@ geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
     {
         for (auto vertex_index : shape.indices[face_index])
         {
-            auto const currentVertexProjection = shape.vertices[vertex_index].dot(maxDispersionAxis);
-            if (currentVertexProjection > shape.vertices[maxVertexIndex].dot(maxDispersionAxis))
+            auto const currentVertexProjection = glm::dot(shape.vertices[vertex_index], maxDispersionAxis);
+            if (currentVertexProjection > glm::dot(shape.vertices[maxVertexIndex], maxDispersionAxis))
             {
                 maxVertexIndex = vertex_index;
             }
-            if (currentVertexProjection < shape.vertices[minVertexIndex].dot(maxDispersionAxis))
+            if (currentVertexProjection < glm::dot(shape.vertices[minVertexIndex], maxDispersionAxis))
             {
                 minVertexIndex = vertex_index;
             }
@@ -292,42 +268,34 @@ geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
     }
 
     //Calculate sphere
-    auto const diameter = (shape.vertices[maxVertexIndex] - shape.vertices[minVertexIndex]).norm();
-    auto const radius = diameter / 2.0f;
-    auto const center = (shape.vertices[maxVertexIndex] - shape.vertices[minVertexIndex]) / 2.0f
+    auto const diameter = glm::length(shape.vertices[maxVertexIndex] - shape.vertices[minVertexIndex]);
+    auto const radius = diameter / 2.0;
+    auto const center = (shape.vertices[maxVertexIndex] - shape.vertices[minVertexIndex]) / 2.0
             + shape.vertices[minVertexIndex];
 
-    return geometry::Sphere(
-        {center[0], center[1], center[2]}, static_cast<double>(radius)
-    );
+    return geometry::Sphere(center, radius);
 }
 
 geometry::Sphere sphere::BoundingSphere::RefineSphere(
     geometry::Sphere const& sphere, volumes::Shape const& shape, volumes::Indices const& indices
 )
 {
-    Vector3 const sphereMassCenter = sphere.getCenterOfMass();
-    float sphereRadius = static_cast<float>(sphere.GetRadius());
-    Eigen::Vector3f sphereCenter(static_cast<float>(sphereMassCenter.x),
-                                 static_cast<float>(sphereMassCenter.y),
-                                 static_cast<float>(sphereMassCenter.z));
+    double sphereRadius = sphere.GetRadius();
+    glm::dvec3 sphereCenter = sphere.getCenterOfMass();
 
     //Find point outside of the sphere and resize sphere
     for (auto faceIndex : indices)
     {
         for (auto vertexIndex : shape.indices[faceIndex])
         {
-            if ((shape.vertices[vertexIndex] - sphereCenter).squaredNorm() > std::pow(sphereRadius, 2))
+            if (glm::length2(shape.vertices[vertexIndex] - sphereCenter) > std::pow(sphereRadius, 2))
             {
-                Eigen::Vector3f oppositeSphereVertex =
-                        (shape.vertices[vertexIndex] * -1.0f).normalized() * sphereRadius;
-                sphereCenter =
-                        (oppositeSphereVertex - shape.vertices[vertexIndex]) / 2.0f
-                        + shape.vertices[vertexIndex];
-                sphereRadius = (sphereCenter - oppositeSphereVertex).norm();
+                glm::dvec3 oppositeSphereVertex = glm::normalize(shape.vertices[vertexIndex] * -1.0) * sphereRadius;
+                sphereCenter = (oppositeSphereVertex - shape.vertices[vertexIndex]) / 2.0 + shape.vertices[vertexIndex];
+                sphereRadius = glm::length(sphereCenter - oppositeSphereVertex);
             }
         }
     }
 
-    return geometry::Sphere({sphereCenter[0], sphereCenter[1], sphereCenter[2]}, sphereRadius);
+    return geometry::Sphere(sphereCenter, sphereRadius);
 }

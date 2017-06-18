@@ -6,7 +6,10 @@
 #ifndef PEGASUS_GEOMETRY_HPP
 #define PEGASUS_GEOMETRY_HPP
 
-#include "Pegasus/include/Math.hpp"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
+#include <glm/gtx/optimum_pow.hpp>
+#include <glm/glm.hpp>
 
 #include <algorithm>
 #include <array>
@@ -27,13 +30,13 @@ namespace geometry
 class Shape
 {
 public:
-    explicit Shape(Vector3 const& centerOfMass);
+    explicit Shape(glm::dvec3 const& centerOfMass);
 
-    void setCenterOfMass(Vector3 const& centerOfMass);
-    Vector3 const& getCenterOfMass() const;
+    void setCenterOfMass(glm::dvec3 const& centerOfMass);
+    glm::dvec3 const& getCenterOfMass() const;
 
 private:
-    Vector3 m_centerOfMass;
+    glm::dvec3 m_centerOfMass;
 };
 
 enum class SimpleShapeType : uint32_t
@@ -53,35 +56,35 @@ class SimpleShape : public Shape
 public:
     SimpleShapeType type;
 public:
-    SimpleShape(Vector3 const& centerOfMass, SimpleShapeType type);
+    SimpleShape(glm::dvec3 const& centerOfMass, SimpleShapeType type);
 };
 
 class Plane : public SimpleShape
 {
 public:
-    Plane(Vector3 const& centerOfMass, Vector3 const& normal);
+    Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
 
-    void SetNormal(Vector3 const& normal);
-    Vector3 const& GetNormal() const;
+    void SetNormal(glm::dvec3 const& normal);
+    glm::dvec3 const& GetNormal() const;
 
 private:
-    Vector3 m_normal;
+    glm::dvec3 m_normal;
 };
 
 class Triangle : public SimpleShape
 {
 public:
-    Triangle(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c);
+    Triangle(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
 
-    void SetAxes(Vector3 const& a, Vector3 const& b, Vector3 const& c);
-    void GetAxes(Vector3& a, Vector3& b, Vector3& c) const;
-    Vector3 const& GetNormal() const;
+    void SetAxes(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
+    void GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c) const;
+    glm::dvec3 const& GetNormal() const;
 
 private:
-    Vector3 m_aVertex;
-    Vector3 m_bVertex;
-    Vector3 m_cVertex;
-    Vector3 m_normal;
+    glm::dvec3 m_aVertex;
+    glm::dvec3 m_bVertex;
+    glm::dvec3 m_cVertex;
+    glm::dvec3 m_normal;
 
     void CalculateNormal();
 };
@@ -89,7 +92,7 @@ private:
 class Sphere : public SimpleShape
 {
 public:
-    Sphere(Vector3 const& centerOfMass, double r);
+    Sphere(glm::dvec3 const& centerOfMass, double r);
 
     void SetRadius(double r);
     double GetRadius() const;
@@ -101,16 +104,16 @@ private:
 class Cone : public SimpleShape
 {
 public:
-    Cone(Vector3 const& centerOfMass, Vector3 const& a, double r);
+    Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r);
 
-    void SetAppex(Vector3 const& a);
-    Vector3 const& GetAppex() const;
+    void SetAppex(glm::dvec3 const& a);
+    glm::dvec3 const& GetAppex() const;
 
     void SetRadius(double r);
     double GetRadius() const;
 
 private:
-    Vector3 m_appex;
+    glm::dvec3 m_appex;
     double m_radius
     ;
 };
@@ -118,58 +121,57 @@ private:
 class Capsule : public SimpleShape
 {
 public:
-    Capsule(Vector3 const& centerOfMass, Vector3 const& halfHeight, double r);
+    Capsule(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
 
-    void SetHalfHeight(Vector3 const& halfHeight);
-    Vector3 const& GetHalfHeight() const;
+    void SetHalfHeight(glm::dvec3 const& halfHeight);
+    glm::dvec3 const& GetHalfHeight() const;
 
     void SetRadius(double r);
     double GetRadius() const;
 
 private:
-    Vector3 m_halfHeight;
+    glm::dvec3 m_halfHeight;
     double m_radius;
 };
 
 class Cylinder : public Capsule
 {
 public:
-    Cylinder(Vector3 const& centerOfMass, Vector3 const& halfHeight, double r);
+    Cylinder(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
 };
 
 class Box : public SimpleShape
 {
 public:
-    Box(Vector3 const& centerOfMass, Vector3 const& a, Vector3 const& b, Vector3 const& c);
+    Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
 
-    void SetAxes(Vector3 const& a, Vector3 const& b, Vector3 const& c);
-    void GetAxes(Vector3& a, Vector3& b, Vector3& c) const;
+    void SetAxes(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
+    void GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c) const;
 
 private:
-    Vector3 m_aAxis;
-    Vector3 m_bAxis;
-    Vector3 m_cAxis;
+    glm::dvec3 m_aAxis;
+    glm::dvec3 m_bAxis;
+    glm::dvec3 m_cAxis;
 };
 
 namespace intersection
 {
 // Utility functions
 bool IsSameSidePoint(
-    Vector3 const& p1, Vector3 const& p2, Vector3 const& a, Vector3 const& b);
+    glm::dvec3 const& p1, glm::dvec3 const& p2, glm::dvec3 const& a, glm::dvec3 const& b);
 
-template <typename Vector, typename VerticesContainer>
+template <typename VerticesContainerIt>
 void CalculateBoxVertices(
-    Vector const& i, Vector const& j, Vector const& k, VerticesContainer& vertices)
+    glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k, VerticesContainerIt verticesIterator)
 {
-    vertices[0] = (i + j + k);
-    vertices[1] = (i - j + k);
-    vertices[2] = (j - i + k);
-    vertices[3] = (i * -1 - j + k);
-
-    vertices[4] = (i + j - k);
-    vertices[5] = (i - j - k);
-    vertices[6] = (j - i - k);
-    vertices[7] = (i * -1 - j - k);
+    *verticesIterator = (i + j + k);
+    *(verticesIterator + 1) = (i - j + k);
+    *(verticesIterator + 2) = (j - i + k);
+    *(verticesIterator + 3) = (i * -1.0 - j + k);
+    *(verticesIterator + 4) = (i + j - k);
+    *(verticesIterator + 5) = (i - j - k);
+    *(verticesIterator + 6) = (j - i - k);
+    *(verticesIterator + 7) = (i * -1.0 - j - k);
 }
 
 template <typename SrcIt1, typename SrcIt2, typename DestIt>
@@ -180,8 +182,8 @@ void CalculateSeparatingAxes(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2,
     {
         for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2)
         {
-            auto const axis = it1->VectorProduct(*it2).Unit();
-            if (axis.SquareMagnitude() != 0.0f)
+            auto const axis = glm::normalize(glm::cross(*it1, *it2));
+            if (glm::length2(axis) != 0.0)
             {
                 destBegin++ = axis;
             }
@@ -195,7 +197,7 @@ void ProjectAllVertices(
 {
     while (srcBegin != srcEnd)
     {
-        *destBegin++ = axisNormal.ScalarProduct(*srcBegin++);
+        *destBegin++ = glm::dot(axisNormal, (*srcBegin++));
     }
 }
 
@@ -212,17 +214,17 @@ struct Cache : CacheBase
 template <>
 struct Cache<Plane, Plane> : CacheBase
 {
-    Vector3 aNormal;
-    Vector3 bNormal;
-    Vector3 crossProduct;
+    glm::dvec3 aNormal;
+    glm::dvec3 bNormal;
+    glm::dvec3 crossProduct;
 };
 
 template <>
 struct Cache<Plane, Sphere> : CacheBase
 {
-    Vector3 planeMassCenter;
-    Vector3 planeNormal;
-    Vector3 sphereMassCenter;
+    glm::dvec3 planeMassCenter;
+    glm::dvec3 planeNormal;
+    glm::dvec3 sphereMassCenter;
     double sphereRadius;
     double penetration;
 };
@@ -230,13 +232,13 @@ struct Cache<Plane, Sphere> : CacheBase
 template <>
 struct Cache<Plane, Box> : CacheBase
 {
-    Vector3 boxMassCenter;
-    std::array<Vector3, 3> boxAxes;
-    std::array<Vector3, 8> boxVertices;
-    std::array<Vector3, 6> boxFaces;
+    glm::dvec3 boxMassCenter;
+    std::array<glm::dvec3, 3> boxAxes;
+    std::array<glm::dvec3, 8> boxVertices;
+    std::array<glm::dvec3, 6> boxFaces;
     std::array<double, 6> boxFaceDistances;
     std::array<double, 8> boxPenetrations;
-    Vector3 planeNormal;
+    glm::dvec3 planeNormal;
     double planeDistance;
 };
 
@@ -249,10 +251,10 @@ struct Cache<Sphere, Plane> : CacheBase
 template <>
 struct Cache<Sphere, Sphere> : CacheBase
 {
-    Vector3 bMassCenter;
-    Vector3 baVector;
+    glm::dvec3 bMassCenter;
+    glm::dvec3 baVector;
     double bRadius;
-    Vector3 aMassCenter;
+    glm::dvec3 aMassCenter;
     double aRadius;
     double radiusSum;
 };
@@ -260,30 +262,30 @@ struct Cache<Sphere, Sphere> : CacheBase
 template <>
 struct Cache<Sphere, Box> : CacheBase
 {
-    Vector3 boxMassCenter;
-    std::array<Vector3, 6> boxAxes;
-    std::array<Vector3, 6> boxNormals;
-    std::array<Vector3, 6> boxFaces;
+    glm::dvec3 boxMassCenter;
+    std::array<glm::dvec3, 6> boxAxes;
+    std::array<glm::dvec3, 6> boxNormals;
+    std::array<glm::dvec3, 6> boxFaces;
     std::array<double, 6> boxFaceDistances;
-    std::array<Vector3, 8> boxVertices;
+    std::array<glm::dvec3, 8> boxVertices;
     std::array<double, 8> boxVerticesProjections;
-    std::array<Vector3, 4> separatingAxes;
-    Vector3 boxContactNormal;
-    Vector3 boxContactAxis;
-    Vector3 boxSphereVector;
-    Vector3 sphereContactNormal;
-    Vector3 sphereMassCenter;
+    std::array<glm::dvec3, 4> separatingAxes;
+    glm::dvec3 boxContactNormal;
+    glm::dvec3 boxContactAxis;
+    glm::dvec3 boxSphereVector;
+    glm::dvec3 sphereContactNormal;
+    glm::dvec3 sphereMassCenter;
     double sphereRadius;
-    Vector3 boxContactPoint;
-    Vector3 sphereContactPoint;
+    glm::dvec3 boxContactPoint;
+    glm::dvec3 sphereContactPoint;
 };
 
 template <>
 struct Cache<Box, Plane> : CacheBase
 {
     Cache<Plane, Box> pbCache;
-    Vector3 planeMassCenter;
-    Vector3 boxContactNormal;
+    glm::dvec3 planeMassCenter;
+    glm::dvec3 boxContactNormal;
 };
 
 template <>
@@ -295,15 +297,15 @@ struct Cache<Box, Sphere> : CacheBase
 template <>
 struct Cache<Box, Box> : CacheBase
 {
-    Vector3 aMassCenter;
-    Vector3 bMassCenter;
-    std::array<Vector3, 8> aBoxVertices, bBoxVertices;
-    std::array<Vector3, 6> aBoxAxes, bBoxAxes;
-    std::array<Vector3, 6> aBoxFaces, bBoxFaces;
-    std::vector<Vector3> separatingAxes;
+    glm::dvec3 aMassCenter;
+    glm::dvec3 bMassCenter;
+    std::array<glm::dvec3, 8> aBoxVertices, bBoxVertices;
+    std::array<glm::dvec3, 6> aBoxAxes, bBoxAxes;
+    std::array<glm::dvec3, 6> aBoxFaces, bBoxFaces;
+    std::vector<glm::dvec3> separatingAxes;
     std::array<double, 6> aBoxFaceDistances, bBoxFaceDistances;
     std::array<double, 8> aBoxVerticesDistances, bBoxVerticesDistances;
-    Vector3 contactNormal;
+    glm::dvec3 contactNormal;
     double penetration = 0;
 };
 
@@ -315,7 +317,7 @@ template <typename ShapeA, typename ShapeB>
 bool Overlap(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase);
 
 template <typename ShapeA, typename ShapeB>
-Vector3 CalculateContactNormal(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase);
+glm::dvec3 CalculateContactNormal(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase);
 
 template <typename ShapeA, typename ShapeB>
 double CalculatePenetration(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase);
@@ -330,18 +332,18 @@ inline void Initialize<Plane, Plane>(SimpleShape const* a, SimpleShape const* b,
 
     cache->aNormal = aPlane->GetNormal();
     cache->bNormal = bPlane->GetNormal();
-    cache->crossProduct = cache->aNormal % cache->bNormal;
+    cache->crossProduct = glm::cross(cache->aNormal, cache->bNormal);
 }
 
 template <>
 inline bool Overlap<Plane, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Plane, Plane>*>(cacheBase);
-    return cache->crossProduct.SquareMagnitude() != 0;
+    return glm::length2(cache->crossProduct) != 0;
 }
 
 template <>
-inline Vector3 CalculateContactNormal<Plane, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
+inline glm::dvec3 CalculateContactNormal<Plane, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Plane, Plane>*>(cacheBase);
     return cache->bNormal;
@@ -366,7 +368,7 @@ inline void Initialize<Plane, Sphere>(SimpleShape const* a, SimpleShape const* b
     cache->sphereMassCenter = sphere->getCenterOfMass();
     cache->sphereRadius = sphere->GetRadius();
     cache->penetration = cache->sphereRadius - 
-        (cache->sphereMassCenter * cache->planeNormal - cache->planeMassCenter * cache->planeNormal);
+        (glm::dot(cache->sphereMassCenter, cache->planeNormal) - glm::dot(cache->planeMassCenter, cache->planeNormal));
 }
 
 template <>
@@ -377,10 +379,10 @@ inline bool Overlap<Plane, Sphere>(SimpleShape const* a, SimpleShape const* b, C
 }
 
 template <>
-inline Vector3 CalculateContactNormal<Plane, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
+inline glm::dvec3 CalculateContactNormal<Plane, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Plane, Sphere>*>(cacheBase);
-    return cache->planeNormal.Inverse();
+    return cache->planeNormal * -1.0;
 }
 
 template <>
@@ -399,16 +401,18 @@ inline void Initialize<Plane, Box>(SimpleShape const* a, SimpleShape const* b, C
     auto cache = static_cast<Cache<Plane, Box>*>(cacheBase);
 
     cache->planeNormal = plane->GetNormal();
-    cache->planeDistance = plane->getCenterOfMass() * cache->planeNormal;
+    cache->planeDistance = glm::dot(plane->getCenterOfMass(), cache->planeNormal);
 
     box->GetAxes(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2]);
     cache->boxMassCenter = box->getCenterOfMass();
-    CalculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices);
-    cache->boxFaces = {cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2],
-        cache->boxAxes[0].Inverse(), cache->boxAxes[1].Inverse(), cache->boxAxes[2].Inverse()};
+    CalculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices.begin());
+    cache->boxFaces = {
+        cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2],
+        cache->boxAxes[0] * -1.0, cache->boxAxes[1] * -1.0, cache->boxAxes[2] * -1.0
+    };
     std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n) { n += cache->boxMassCenter; });
     std::transform(cache->boxVertices.begin(), cache->boxVertices.end(), cache->boxPenetrations.begin(),
-                   [cache](auto const& p) { return cache->planeDistance - p * cache->planeNormal; });
+                   [cache](glm::dvec3 const& p) { return cache->planeDistance - glm::dot(p, cache->planeNormal); });
 }
 
 template <>
@@ -419,16 +423,16 @@ inline bool Overlap<Plane, Box>(SimpleShape const* a, SimpleShape const* b, Cach
 }
 
 template <>
-inline Vector3 CalculateContactNormal<Plane, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
+inline glm::dvec3 CalculateContactNormal<Plane, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Plane, Box>*>(cacheBase);
 
     std::transform(cache->boxFaces.begin(), cache->boxFaces.end(), cache->boxFaceDistances.begin(),
-                   [cache](auto const& v) { return v * cache->planeNormal; });
+                   [cache](glm::dvec3 const& v) { return glm::dot(v, cache->planeNormal); });
     auto const minIndex = std::distance(cache->boxFaceDistances.begin(),
                                         std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end()));
 
-    return cache->boxFaces[minIndex].Unit();
+    return glm::normalize(cache->boxFaces[minIndex]);
 }
 
 template <>
@@ -454,10 +458,10 @@ inline bool Overlap<Sphere, Plane>(SimpleShape const* a, SimpleShape const* b, C
 }
 
 template <>
-inline Vector3 CalculateContactNormal<Sphere, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
+inline glm::dvec3 CalculateContactNormal<Sphere, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Plane>*>(cacheBase);
-    return CalculateContactNormal<Plane, Sphere>(b, a, &cache->psCache).Inverse();
+    return CalculateContactNormal<Plane, Sphere>(b, a, &cache->psCache) * -1.0;
 }
 
 template <>
@@ -487,21 +491,21 @@ template <>
 inline bool Overlap<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
-    return pow(cache->radiusSum, 2) > cache->baVector.SquareMagnitude();
+    return glm::pow2(cache->radiusSum) > glm::length2(cache->baVector);
 }
 
 template <>
-inline Vector3 CalculateContactNormal<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
+inline glm::dvec3 CalculateContactNormal<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
-    return cache->baVector.Unit();
+    return glm::normalize(cache->baVector);
 }
 
 template <>
 inline double CalculatePenetration<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
-    return (cache->radiusSum - cache->baVector.Magnitude());
+    return cache->radiusSum - glm::length(cache->baVector);
 }
 
 // Sphere, Box
@@ -517,17 +521,17 @@ inline void Initialize<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, 
 
     cache->boxMassCenter = box->getCenterOfMass();
     box->GetAxes(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2]);
-    CalculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices);
+    CalculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices.begin());
     std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n) { n += cache->boxMassCenter; });
     cache->boxNormals = {cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2],
-        cache->boxAxes[0].Inverse(), cache->boxAxes[1].Inverse(), cache->boxAxes[2].Inverse()};
+        cache->boxAxes[0] * -1.0, cache->boxAxes[1] * -1.0, cache->boxAxes[2] * -1.0};
     cache->boxAxes = cache->boxNormals;
 
     for (uint32_t i = 0; i < cache->boxNormals.size(); ++i)
     {
         cache->boxFaces[i] = cache->boxNormals[i] + cache->boxMassCenter;
-        cache->boxNormals[i].Normalize();
-        cache->boxFaceDistances[i] = (cache->boxFaces[i] - cache->sphereMassCenter).Magnitude();
+        cache->boxNormals[i] = glm::normalize(cache->boxNormals[i]);
+        cache->boxFaceDistances[i] = glm::length(cache->boxFaces[i] - cache->sphereMassCenter);
     }
 }
 
@@ -538,14 +542,14 @@ inline bool Overlap<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, Cac
 
     cache->boxSphereVector = cache->sphereMassCenter - cache->boxMassCenter;
 
-    if (cache->boxSphereVector.SquareMagnitude())
+    if (glm::length2(cache->boxSphereVector))
     {
         cache->boxContactPoint = cache->boxMassCenter;
 
         for (uint32_t i = 0; i < 3; ++i)
         {
-            double d = cache->boxSphereVector * cache->boxNormals[i];
-            double axisNorm = cache->boxAxes[i].Magnitude();
+            double d = glm::dot(cache->boxSphereVector, cache->boxNormals[i]);
+            double axisNorm = glm::length(cache->boxAxes[i]);
 
             if (d > axisNorm)
             {
@@ -565,15 +569,14 @@ inline bool Overlap<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, Cac
         cache->boxSphereVector = cache->boxAxes.front();
     }
 
-    cache->sphereContactNormal = (cache->boxContactPoint - cache->sphereMassCenter).Unit();
+    cache->sphereContactNormal = glm::normalize(cache->boxContactPoint - cache->sphereMassCenter);
     cache->sphereContactPoint = cache->sphereContactNormal * cache->sphereRadius + cache->sphereMassCenter;
 
-    return (cache->sphereMassCenter - cache->boxContactPoint).SquareMagnitude()
-            <= std::pow(cache->sphereRadius, 2);
+    return glm::length2(cache->sphereMassCenter - cache->boxContactPoint) <= glm::pow2(cache->sphereRadius);
 }
 
 template <>
-inline Vector3 CalculateContactNormal<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
+inline glm::dvec3 CalculateContactNormal<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);
 
@@ -584,9 +587,9 @@ inline Vector3 CalculateContactNormal<Sphere, Box>(SimpleShape const* a, SimpleS
 
     if (cache->boxContactPoint == cache->sphereMassCenter)
     {
-        cache->boxContactPoint = cache->boxMassCenter + cache->boxSphereVector.Unit() 
-            * (cache->boxAxes[minIndex] * cache->boxSphereVector.Unit());
-        cache->sphereContactNormal = (cache->boxContactPoint - cache->sphereMassCenter).Unit();
+        cache->boxContactPoint = cache->boxMassCenter + glm::normalize(cache->boxSphereVector)
+            * glm::dot(cache->boxAxes[minIndex], glm::normalize(cache->boxSphereVector));
+        cache->sphereContactNormal = glm::normalize(cache->boxContactPoint - cache->sphereMassCenter);
         cache->sphereContactPoint = cache->sphereContactNormal * cache->sphereRadius + cache->sphereMassCenter;
     }
 
@@ -600,10 +603,10 @@ inline double CalculatePenetration<Sphere, Box>(SimpleShape const* a, SimpleShap
 
     if (cache->boxContactPoint == cache->boxMassCenter)
     {
-        return cache->boxAxes.front().Magnitude();
+        return glm::length(cache->boxAxes.front());
     }
 
-    return (cache->sphereContactPoint - cache->boxContactPoint).Magnitude();
+    return glm::length(cache->sphereContactPoint - cache->boxContactPoint);
 }
 
 // Box, Plane
@@ -622,7 +625,7 @@ inline bool Overlap<Box, Plane>(SimpleShape const* a, SimpleShape const* b, Cach
 }
 
 template <>
-inline Vector3 CalculateContactNormal<Box, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
+inline glm::dvec3 CalculateContactNormal<Box, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto plane = static_cast<Plane const *>(b);
     return plane->GetNormal();
@@ -651,7 +654,7 @@ inline bool Overlap<Box, Sphere>(SimpleShape const* a, SimpleShape const* b, Cac
 }
 
 template <>
-inline Vector3 CalculateContactNormal<Box, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
+inline glm::dvec3 CalculateContactNormal<Box, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Box, Sphere>*>(cacheBase);
     CalculateContactNormal<Sphere, Box>(b, a, &cache->sbCache);
@@ -677,23 +680,25 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Cac
     cache->aMassCenter = aBox->getCenterOfMass();
     aBox->GetAxes(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2]);
     cache->aBoxAxes = {cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2],
-        cache->aBoxAxes[0].Inverse(), cache->aBoxAxes[1].Inverse(), cache->aBoxAxes[2].Inverse()};
-    CalculateBoxVertices(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2], cache->aBoxVertices);
+        cache->aBoxAxes[0] * -1.0, cache->aBoxAxes[1] * -1.0, cache->aBoxAxes[2] * -1.0};
+    CalculateBoxVertices(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2], cache->aBoxVertices.begin());
     std::for_each(cache->aBoxVertices.begin(), cache->aBoxVertices.end(), [cache](auto& v) { v += cache->aMassCenter; });
     std::transform(cache->aBoxAxes.begin(), cache->aBoxAxes.end(), cache->aBoxFaces.begin(),
-                   [cache](Vector3 const& v) { return v += cache->aMassCenter; });
+                   [cache](glm::dvec3 const & v) { return v + cache->aMassCenter; });
 
     cache->bMassCenter = bBox->getCenterOfMass();
     bBox->GetAxes(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2]);
     cache->bBoxAxes = {cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2],
-        cache->bBoxAxes[0].Inverse(), cache->bBoxAxes[1].Inverse(), cache->bBoxAxes[2].Inverse()};
-    CalculateBoxVertices(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2], cache->bBoxVertices);
+        cache->bBoxAxes[0] * -1.0, cache->bBoxAxes[1] * -1.0, cache->bBoxAxes[2] * -1.0};
+    CalculateBoxVertices(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2], cache->bBoxVertices.begin());
     std::for_each(cache->bBoxVertices.begin(), cache->bBoxVertices.end(), [cache](auto& v) { v += cache->bMassCenter; });
     std::transform(cache->bBoxAxes.begin(), cache->bBoxAxes.end(), cache->bBoxFaces.begin(),
-                   [cache](Vector3 const& v) { return v += cache->bMassCenter; });
+                   [cache](glm::dvec3 const& v) { return v + cache->bMassCenter; });
 
-    cache->separatingAxes = {cache->aBoxAxes[0].Unit(), cache->aBoxAxes[1].Unit(), cache->aBoxAxes[2].Unit(),
-        cache->bBoxAxes[0].Unit(), cache->bBoxAxes[1].Unit(), cache->bBoxAxes[2].Unit()};
+    cache->separatingAxes = { 
+        glm::normalize(cache->aBoxAxes[0]), glm::normalize(cache->aBoxAxes[1]), glm::normalize(cache->aBoxAxes[2]),
+        glm::normalize(cache->bBoxAxes[0]), glm::normalize(cache->bBoxAxes[1]), glm::normalize(cache->bBoxAxes[2])
+    };
     CalculateSeparatingAxes(cache->aBoxAxes.begin(), cache->aBoxAxes.begin() + 3,
                             cache->bBoxAxes.begin(), cache->bBoxAxes.begin() + 3,
                             back_inserter(cache->separatingAxes));
@@ -731,19 +736,19 @@ inline bool Overlap<Box, Box>(SimpleShape const* a, SimpleShape const* b, CacheB
 }
 
 template <>
-inline Vector3 CalculateContactNormal<Box, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
+inline glm::dvec3 CalculateContactNormal<Box, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
 
     std::array<double, 6> distances;
     for (uint32_t i = 0; i < distances.size(); ++i)
     {
-        distances[i] = (cache->aMassCenter - cache->bBoxFaces[i]).Magnitude();
+        distances[i] = glm::length(cache->aMassCenter - cache->bBoxFaces[i]);
     }
 
     auto const minIt = std::min_element(distances.begin(), distances.end());
     auto const minIndex = std::distance(distances.begin(), minIt);
-    cache->contactNormal = cache->bBoxAxes[minIndex].Unit();
+    cache->contactNormal = glm::normalize(cache->bBoxAxes[minIndex]);
 
     return cache->contactNormal;
 }
@@ -892,7 +897,7 @@ public:
             a, b, m_intersectionCaches[std::make_pair(a->type, b->type)].get());
     }
 
-    Vector3 CalculateContactNormal(SimpleShape const* a, SimpleShape const* b)
+    glm::dvec3 CalculateContactNormal(SimpleShape const* a, SimpleShape const* b)
     {
         return m_calculateContactNormalFunctors[std::make_pair(a->type, b->type)](
             a, b, m_intersectionCaches[std::make_pair(a->type, b->type)].get());
@@ -923,7 +928,7 @@ public:
             m_overlapFunctors;
 
         std::unordered_map<ShapeTypePair,
-            Vector3(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
+            glm::dvec3(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
             ShapeTypePairHash>
             m_calculateContactNormalFunctors;
 

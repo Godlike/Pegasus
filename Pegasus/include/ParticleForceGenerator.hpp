@@ -10,6 +10,8 @@
 
 #include "Pegasus/include/Particle.hpp"
 
+#include <glm/glm.hpp>
+
 #include <map>
 #include <set>
 
@@ -41,11 +43,11 @@ private:
 class ParticleGravity : public ParticleForceGenerator
 {
 public:
-    explicit ParticleGravity(Vector3 const& g);
+    explicit ParticleGravity(glm::dvec3 const& g);
     void UpdateForce(Particle& p) override;
 
 private:
-    Vector3 const m_gravity;
+    glm::dvec3 const m_gravity;
 };
 
 class ParticleDrag : public ParticleForceGenerator
@@ -74,11 +76,11 @@ private:
 class ParticleAnchoredSpring : public ParticleForceGenerator
 {
 public:
-    ParticleAnchoredSpring(Vector3 const& anchor, double springConstant, double restLength);
+    ParticleAnchoredSpring(glm::dvec3 const& anchor, double springConstant, double restLength);
     void UpdateForce(Particle& p) override;
 
 private:
-    Vector3 const m_anchor;
+    glm::dvec3 const m_anchor;
     double const m_springConstant;
     double const m_restLength;
 };
@@ -112,12 +114,12 @@ private:
 class ParticleFakeSpring : public ParticleForceGenerator
 {
 public:
-    ParticleFakeSpring(Vector3 const& anchor, double springConstant, double damping);
+    ParticleFakeSpring(glm::dvec3 const& anchor, double springConstant, double damping);
     void UpdateForce(Particle& p, double duration) const;
     void UpdateForce(Particle& p) override;
 
 private:
-    Vector3 const m_anchor;
+    glm::dvec3 const m_anchor;
     double const m_springConstant;
     double const m_damping;
     double m_duration;
@@ -158,22 +160,22 @@ public:
                 continue;
 
             // Work out the separation distance
-            auto separation = currentParticle.GetPosition() - particle.GetPosition();
+            glm::dvec3 separation = currentParticle.GetPosition() - particle.GetPosition();
             separation.z = 0.0f;
-            auto distance = separation.Magnitude();
+            double distance = glm::length(separation);
 
             if (distance < m_minNaturalDistance)
             {
                 // Use a repulsion force.
                 distance = 1.0f - distance / m_minNaturalDistance;
-                particle.AddForce(separation.Unit() * (1.0f - distance) * m_maxRepulsion * -1.0f);
+                particle.AddForce(glm::normalize(separation) * (1.0f - distance) * m_maxRepulsion * -1.0);
                 ++joinCount;
             }
             else if (distance > m_maxNaturalDistance && distance < m_maxDistance)
             {
                 // Use an attraction force.
                 distance = (distance - m_maxNaturalDistance) / (m_maxDistance - m_maxNaturalDistance);
-                particle.AddForce(separation.Unit() * distance * m_maxAttraction);
+                particle.AddForce(glm::normalize(separation) * distance * m_maxAttraction);
                 ++joinCount;
             }
         }
@@ -188,7 +190,7 @@ public:
                 force = m_floatHead;
             }
 
-            particle.AddForce(Vector3(0, force, 0));
+            particle.AddForce(glm::dvec3(0, force, 0));
         }
     }
 
