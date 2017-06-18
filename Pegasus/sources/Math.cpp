@@ -7,175 +7,89 @@
 */
 #include "Pegasus/include/Math.hpp"
 
-#include <cmath>
+#include <glm/gtc/constants.inl>
+#include <array>
 
-pegasus::Vector3::Vector3()
-    : x(0)
-    , y(0)
-    , z(0)
+pegasus::math::JacobiEigenvalue::JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold, uint32_t maxIterations)
+    : m_symmetricMatrix{symmetricMatrix}
+    , m_coverageThreshold{glm::abs(coverageThreshold)}
+    , m_maxIterations{maxIterations}
 {
+    Calculate();
 }
 
-pegasus::Vector3::Vector3(double x, double y, double z)
-    : x(x)
-    , y(y)
-    , z(z)
+glm::dmat3 const& pegasus::math::JacobiEigenvalue::GetEigenvectors() const
 {
+    return m_eigenvectors;
 }
 
-bool pegasus::Vector3::operator==(const pegasus::Vector3& other) const
+glm::dvec3 const& pegasus::math::JacobiEigenvalue::GetEigenvalues() const
 {
-    return x == other.x && y == other.y && z == other.z;
+    return m_eigenvalues;
 }
 
-void pegasus::Vector3::operator*=(double r)
+void pegasus::math::JacobiEigenvalue::FindMaxNormOffDiagonal(glm::dmat3 const& mat, uint8_t& i, uint8_t& j)
 {
-    x *= r;
-    y *= r;
-    z *= r;
-}
+    i = 0;
+    j = 1;
 
-pegasus::Vector3 pegasus::Vector3::operator*=(double r) const
-{
-    Vector3 v(*this);
-    v *= r;
-    return v;
-}
-
-void pegasus::Vector3::operator+=(Vector3 const& v)
-{
-    x += v.x;
-    y += v.y;
-    z += v.z;
-}
-
-pegasus::Vector3 pegasus::Vector3::operator+=(Vector3 v) const
-{
-    v += *this;
-    return v;
-}
-
-pegasus::Vector3 pegasus::Vector3::operator+(const Vector3& v) const
-{
-    return (*this) += v;
-}
-
-pegasus::Vector3 pegasus::Vector3::operator-=(Vector3 const& v) const
-{
-    Vector3 new_v(*this);
-    new_v -= v;
-    return new_v;
-}
-
-pegasus::Vector3 pegasus::Vector3::operator-(Vector3 const& v) const
-{
-    Vector3 new_v(*this);
-    new_v -= v;
-    return new_v;
-}
-
-void pegasus::Vector3::AddScaledVector(Vector3 const& v, double s)
-{
-    x += v.x * s;
-    y += v.y * s;
-    z += v.z * s;
-}
-
-void pegasus::Vector3::ComponentProduct(Vector3 const& v)
-{
-    x *= v.x;
-    y *= v.y;
-    z *= v.z;
-}
-
-pegasus::Vector3 pegasus::Vector3::ComponentProduct(Vector3 const& v) const
-{
-    Vector3 new_v(*this);
-    new_v.ComponentProduct(v);
-    return new_v;
-}
-
-double pegasus::Vector3::ScalarProduct(Vector3 const& v) const
-{
-    return x * v.x + y * v.y + z * v.z;
-}
-
-double pegasus::Vector3::operator*(Vector3 const& v) const
-{
-    return ScalarProduct(v);
-}
-
-pegasus::Vector3 pegasus::Vector3::operator*(double r) const
-{
-    auto new_v(*this);
-    new_v *= r;
-    return new_v;
-}
-
-pegasus::Vector3 pegasus::Vector3::VectorProduct(Vector3 const& v) const
-{
-    return {y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x};
-}
-
-void pegasus::Vector3::operator%=(Vector3 const& v)
-{
-    *this = VectorProduct(v);
-}
-
-pegasus::Vector3 pegasus::Vector3::operator%(Vector3 const& v) const
-{
-    return VectorProduct(v);
-}
-
-void pegasus::Vector3::operator-=(Vector3 const& v)
-{
-    x -= v.x;
-    y -= v.y;
-    z -= v.z;
-}
-
-pegasus::Vector3 pegasus::Vector3::Inverse() const
-{
-    Vector3 v(*this);
-    v.x = -v.x;
-    v.y = -v.y;
-    v.z = -v.z;
-    return v;
-}
-
-double pegasus::Vector3::Magnitude() const
-{
-    return sqrt(x * x + y * y + z * z);
-}
-
-double pegasus::Vector3::SquareMagnitude() const
-{
-    return (x * x + y * y + z * z);
-}
-
-void pegasus::Vector3::Normalize()
-{
-    double const l = Magnitude();
-    if (l > 0)
+    for (uint8_t p = 0; p < 3; ++p)
     {
-        (*this) *= (double(1) / l);
+        for (uint8_t q = 0; q < 3; ++q)
+        {
+            if (p != q)
+            {
+                if (glm::abs(mat[i][j]) < glm::abs(mat[p][q]))
+                {
+                    i = p;
+                    j = q;
+                }
+            }
+        }
     }
 }
 
-pegasus::Vector3 pegasus::Vector3::Unit() const
+double pegasus::math::JacobiEigenvalue::CalculateRotationAngle(glm::dmat3 const& mat, uint8_t i, uint8_t j) const
 {
-    Vector3 result(*this);
-    result.Normalize();
-    return result;
+    if (glm::abs(mat[i][i] - mat[j][j]) < m_coverageThreshold)
+    {
+        return (glm::pi<double>() / 4.0) * (mat[i][j] > 0 ? 1.0 : -1.0);
+    }
+
+    return 0.5 * glm::atan(2.0 * mat[i][j] / (mat[i][i] - mat[j][j]));
 }
 
-void pegasus::Vector3::Trim(double size)
+glm::dmat3 pegasus::math::JacobiEigenvalue::MakeGivensRotationMatrix(double theta, uint8_t i, uint8_t j)
 {
-    if (SquareMagnitude() > size * size)
+    glm::dmat3 g;
+    g[i][i] = glm::cos(theta);
+    g[i][j] = glm::sin(theta);
+    g[j][i] = -glm::sin(theta);
+    g[j][j] = glm::cos(theta);
+
+    return g;
+}
+
+void pegasus::math::JacobiEigenvalue::Calculate()
+{
+    glm::dmat3 D(m_symmetricMatrix);
+    glm::dmat3 S;
+
+    uint16_t iterations = 0;
+    bool iterate = true;
+    while (iterate)
     {
-        Normalize();
-        x *= size;
-        y *= size;
-        z *= size;
+        uint8_t i, j;
+        FindMaxNormOffDiagonal(D, i, j);
+
+        glm::dmat3 S1 = MakeGivensRotationMatrix(CalculateRotationAngle(D, i, j), i, j);
+        S = S * S1;
+        D = (glm::transpose(S1) * D) * S1;
+
+        FindMaxNormOffDiagonal(D, i, j);
+        iterate = (++iterations < m_maxIterations) && (glm::abs(D[i][j]) > m_coverageThreshold);
     }
+
+    m_eigenvalues = { D[0][0], D[1][1], D[2][2] };
+    m_eigenvectors = S;
 }

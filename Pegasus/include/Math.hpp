@@ -8,53 +8,35 @@
 #ifndef PEGASUS_MATH_HPP
 #define PEGASUS_MATH_HPP
 
+#include <glm/glm.hpp>
+
 namespace pegasus
 {
-class Vector3
+namespace math
+{
+
+class JacobiEigenvalue
 {
 public:
-    double x;
-    double y;
-    double z;
+    explicit JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold = 1.0e-4, uint32_t maxIterations = 100);
 
-    Vector3();
-    Vector3(double x, double y, double z);
+    glm::dmat3 const& GetEigenvectors() const;
+    glm::dvec3 const& GetEigenvalues() const;
 
-    bool operator==(Vector3 const& other) const;
+private:
+    glm::dmat3 const& m_symmetricMatrix;
+    double const m_coverageThreshold;
+    uint32_t const m_maxIterations;
+    glm::dmat3 m_eigenvectors;
+    glm::dvec3 m_eigenvalues;
 
-    void operator*=(double r);
-    Vector3 operator*=(double r) const;
-
-    void operator+=(Vector3 const& v);
-    Vector3 operator+=(Vector3 v) const;
-    Vector3 operator+(Vector3 const& v) const;
-
-    void operator-=(Vector3 const& v);
-    Vector3 operator-=(Vector3 const& v) const;
-    Vector3 operator-(Vector3 const& v) const;
-
-    void AddScaledVector(Vector3 const& v, double s);
-
-    void ComponentProduct(Vector3 const& v);
-    Vector3 ComponentProduct(Vector3 const& v) const;
-
-    double ScalarProduct(Vector3 const& v) const;
-    double operator*(Vector3 const& v) const;
-    Vector3 operator*(double r) const;
-
-    Vector3 VectorProduct(Vector3 const& v) const;
-    void operator%=(Vector3 const& v);
-    Vector3 operator%(Vector3 const& v) const;
-
-    Vector3 Inverse() const;
-
-    double Magnitude() const;
-    double SquareMagnitude() const;
-
-    void Normalize();
-    Vector3 Unit() const;
-    void Trim(double size);
+    static void FindMaxNormOffDiagonal(glm::dmat3 const& mat, uint8_t& i, uint8_t& j);
+    double CalculateRotationAngle(glm::dmat3 const& mat, uint8_t i, uint8_t j) const;
+    static glm::dmat3 MakeGivensRotationMatrix(double theta, uint8_t i, uint8_t j);
+    void Calculate();
 };
+
+} // namespace math
 } // namespace pegasus 
 
 #endif // PEGASUS_MATH_HPP
