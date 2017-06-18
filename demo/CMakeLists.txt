@@ -29,13 +29,11 @@ include_directories (
 set(DEMO_HEADERS
     Application.hpp
     Timing.hpp
-    Random.hpp
     OglHeaders.hpp
 )
 set(DEMO_SOURCES
     Application.cpp
     Timing.cpp
-    Random.cpp
     Falling.cpp
     Main.cpp
 )
