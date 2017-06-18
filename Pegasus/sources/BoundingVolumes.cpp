@@ -273,7 +273,7 @@ geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
     auto const center = (shape.vertices[maxVertexIndex] - shape.vertices[minVertexIndex]) / 2.0
             + shape.vertices[minVertexIndex];
 
-    return geometry::Sphere(center, static_cast<double>(radius));
+    return geometry::Sphere(center, radius);
 }
 
 geometry::Sphere sphere::BoundingSphere::RefineSphere(

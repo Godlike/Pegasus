@@ -85,16 +85,16 @@ public:
                 break;
             }
 
-            auto toParticle = particles[i]->GetPosition() - start;
-            auto const lineDirection = end - start;
-            auto const projected = toParticle * lineDirection;
-            auto const platformSqLength = std::pow(glm::length(lineDirection), 2);
+            glm::dvec3 toParticle = particles[i]->GetPosition() - start;
+            glm::dvec3 const lineDirection = end - start;
+            double const projected = glm::dot(toParticle,  lineDirection);
+            double const platformSqLength = glm::length2(lineDirection);
 
             if (projected <= 0)
             {
                 if (glm::length(toParticle) < blobRadius)
                 {
-                    auto contactNormal = toParticle.Unit();
+                    auto contactNormal = glm::normalize(toParticle);
                     contactNormal.z = 0;
                     auto const penetration = blobRadius - glm::length(toParticle);
                     contacts.emplace_back(
@@ -102,14 +102,14 @@ public:
                     ++used;
                 }
             }
-            else if (projected >= platformSqLength)
+            else if (glm::pow2(projected) >= platformSqLength)
             {
                 toParticle = particles[i]->GetPosition() - end;
-                if (glm::length(toParticle) < blobRadius)
+                if (glm::length2(toParticle) < glm::pow2(blobRadius))
                 {
-                    auto contactNormal = toParticle.Unit();
+                    glm::dvec3 contactNormal = glm::normalize(toParticle);
                     contactNormal.z = 0;
-                    auto const penetration = blobRadius - glm::length(toParticle);
+                    double const penetration = blobRadius - glm::length(toParticle);
                     contacts.emplace_back(
                         particles[i], nullptr, restitution, contactNormal, penetration);
                     ++used;
@@ -117,13 +117,13 @@ public:
             }
             else
             {
-                auto distanceToPlatform = std::pow(glm::length(toParticle), 2) - projected * projected / platformSqLength;
+                auto distanceToPlatform = glm::length2(toParticle) - glm::pow2(projected) / platformSqLength;
                 if (distanceToPlatform < blobRadius * blobRadius)
                 {
-                    auto closestPoint = start + lineDirection * (projected / platformSqLength);
-                    auto contactNormal = (particles[i]->GetPosition() - closestPoint).Unit();
+                    glm::dvec3 closestPoint = start + lineDirection * (projected / platformSqLength);
+                    glm::dvec3 contactNormal = glm::normalize(particles[i]->GetPosition() - closestPoint);
                     contactNormal.z = 0;
-                    auto const penetration = blobRadius - sqrt(distanceToPlatform);
+                    double const penetration = blobRadius - glm::sqrt(distanceToPlatform);
                     contacts.emplace_back(
                         particles[i], nullptr, restitution, contactNormal, penetration);
                     ++used;

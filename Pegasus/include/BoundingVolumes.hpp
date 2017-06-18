@@ -6,7 +6,7 @@
 #ifndef PEGASUS_BOUNDING_VOLUMES_HPP
 #define PEGASUS_BOUNDING_VOLUMES_HPP
 
-#include <Pegasus/include/Geometry.hpp>
+#include "Pegasus/include/Geometry.hpp"
 
 #include <vector>
 #include <set>

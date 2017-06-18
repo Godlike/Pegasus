@@ -6,6 +6,9 @@
 #ifndef PEGASUS_GEOMETRY_HPP
 #define PEGASUS_GEOMETRY_HPP
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
+#include <glm/gtx/optimum_pow.hpp>
 #include <glm/glm.hpp>
 
 #include <algorithm>
@@ -180,7 +183,7 @@ void CalculateSeparatingAxes(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2,
         for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2)
         {
             auto const axis = glm::normalize(glm::cross(*it1, *it2));
-            if (glm::length(axis) != 0.0f)
+            if (glm::length2(axis) != 0.0)
             {
                 destBegin++ = axis;
             }
@@ -336,7 +339,7 @@ template <>
 inline bool Overlap<Plane, Plane>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Plane, Plane>*>(cacheBase);
-    return glm::length(cache->crossProduct) != 0;
+    return glm::length2(cache->crossProduct) != 0;
 }
 
 template <>
@@ -488,7 +491,7 @@ template <>
 inline bool Overlap<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Sphere>*>(cacheBase);
-    return cache->radiusSum > glm::length(cache->baVector);
+    return glm::pow2(cache->radiusSum) > glm::length2(cache->baVector);
 }
 
 template <>
@@ -539,7 +542,7 @@ inline bool Overlap<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, Cac
 
     cache->boxSphereVector = cache->sphereMassCenter - cache->boxMassCenter;
 
-    if (glm::length(cache->boxSphereVector))
+    if (glm::length2(cache->boxSphereVector))
     {
         cache->boxContactPoint = cache->boxMassCenter;
 
@@ -569,7 +572,7 @@ inline bool Overlap<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, Cac
     cache->sphereContactNormal = glm::normalize(cache->boxContactPoint - cache->sphereMassCenter);
     cache->sphereContactPoint = cache->sphereContactNormal * cache->sphereRadius + cache->sphereMassCenter;
 
-    return glm::length(cache->sphereMassCenter - cache->boxContactPoint) <= cache->sphereRadius;
+    return glm::length2(cache->sphereMassCenter - cache->boxContactPoint) <= glm::pow2(cache->sphereRadius);
 }
 
 template <>
