@@ -6,12 +6,8 @@
 #ifndef PEGASUS_BOUNDING_VOLUMES_HPP
 #define PEGASUS_BOUNDING_VOLUMES_HPP
 
-#include "Pegasus/include/Geometry.hpp"
+#include <Pegasus/include/Geometry.hpp>
 
-#include <Eigen/Eigen>
-#include <Eigen/StdVector>
-
-#include <functional>
 #include <vector>
 #include <set>
 #include <array>
@@ -22,36 +18,27 @@ namespace geometry
 {
 namespace volumes
 {
-using Vertices = std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>;
-using Indices = std::set<std::size_t>;
-using Face = std::array<std::size_t, 3>;
-using Faces = std::vector<Face>;
-using Plane = Eigen::Hyperplane<float, 3>;
+using Vertices = std::vector<glm::dvec3>;
+using Indices  = std::set<std::size_t>;
+using Face     = std::array<std::size_t, 3>;
+using Faces    = std::vector<Face>;
 
 struct Shape
 {
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     Shape(volumes::Vertices const& vertices, volumes::Faces const& indices);
 
     Vertices const& vertices;
     Faces const& indices;
 };
 
-Eigen::Vector3f CalculateMeanVertex(
+glm::dvec3 CalculateMeanVertex(
     volumes::Shape const& shape, volumes::Indices const& indices
 );
-Eigen::Matrix3f CalculateCovarianceMatrix(
-    volumes::Shape const& shape, volumes::Indices const& indices, Eigen::Vector3f const& mean
+glm::dmat3 CalculateCovarianceMatrix(
+    volumes::Shape const& shape, volumes::Indices const& indices, glm::dvec3 const& mean
 );
-Eigen::Vector3f CalculateEigenValues(
-    Eigen::Matrix3f const& covariance
-);
-Eigen::Matrix3f CalculateEigenVectors(
-    Eigen::Matrix3f const& covariance
-);
-Eigen::Matrix3f CalculateExtremalVertices(
-    Eigen::Matrix3f const& eigenVectors, volumes::Shape const& shape, volumes::Indices const& indices
+glm::dmat3 CalculateExtremalVertices(
+    glm::dmat3 const& eigenVectors, volumes::Shape const& shape, volumes::Indices const& indices
 );
 
 namespace obb
@@ -59,17 +46,13 @@ namespace obb
 class OrientedBoundingBox
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     struct Box
     {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        Eigen::Vector3f mean;
-        Eigen::Matrix3f covariance;
-        Eigen::Matrix3f eigenVectors;
-        Eigen::Matrix3f eigenVectorsNormalized;
-        Eigen::Matrix3f extremalVertices;
+        glm::dvec3 mean;
+        glm::dmat3 covariance;
+        glm::dmat3 eigenVectors;
+        glm::dmat3 eigenVectorsNormalized;
+        glm::dmat3 extremalVertices;
         Vertices cubeVertices;
     };
 
@@ -83,7 +66,7 @@ private:
     Indices const& m_indices;
 
     Vertices CalculateBoxVertices(
-        Eigen::Matrix3f const& extremalPoints, Eigen::Matrix3f const& eigenVectors
+        glm::dmat3 const& extremalPoints, glm::dmat3 const& normalizedEigenVectors
     ) const;
 };
 } // namespace obb
@@ -93,22 +76,18 @@ namespace aabb
 class AxisAlignedBoundingBox
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     struct Box
     {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        Eigen::Vector3f xMin;
-        Eigen::Vector3f xMax;
-        Eigen::Vector3f yMin;
-        Eigen::Vector3f yMax;
-        Eigen::Vector3f zMin;
-        Eigen::Vector3f zMax;
-        Eigen::Vector3f extremalMean;
-        Eigen::Vector3f xAxis;
-        Eigen::Vector3f yAxis;
-        Eigen::Vector3f zAxis;
+        glm::dvec3 xMin;
+        glm::dvec3 xMax;
+        glm::dvec3 yMin;
+        glm::dvec3 yMax;
+        glm::dvec3 zMin;
+        glm::dvec3 zMax;
+        glm::dvec3 extremalMean;
+        glm::dvec3 xAxis;
+        glm::dvec3 yAxis;
+        glm::dvec3 zAxis;
     };
 
     AxisAlignedBoundingBox(Shape const& shape, Indices const& indices);
@@ -131,17 +110,13 @@ namespace sphere
 class BoundingSphere
 {
 public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
     struct Sphere
     {
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        Eigen::Vector3f mean;
-        Eigen::Matrix3f covariance;
-        Eigen::Vector3f eigenValues;
-        Eigen::Matrix3f eigenVectors;
-        Eigen::Matrix3f eigenVectorsNormalized;
+        glm::dvec3 mean;
+        glm::dmat3 covariance;
+        glm::dvec3 eigenValues;
+        glm::dmat3 eigenVectors;
+        glm::dmat3 eigenVectorsNormalized;
     };
 
     BoundingSphere(Shape const& shape, Indices const& indices);
@@ -154,7 +129,7 @@ private:
     Indices const& m_indices;
 
     static geometry::Sphere CalculateBoundingSphere(
-        Eigen::Matrix3f const& eigenVectors, Eigen::Vector3f const& eigenValues,
+        glm::dmat3 const& eigenVectors, glm::dvec3 const& eigenValues,
         Shape const& shape, Indices const& indices
     );
     static geometry::Sphere RefineSphere(
