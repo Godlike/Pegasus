@@ -84,9 +84,9 @@ glm::dmat3 volumes::CalculateExtremalVertices(
     glm::dmat3 extremal(0);
     for (uint8_t i = 0; i < 3; ++i)
     {
-        glm::dvec3 const vec = eigenVectors[i];
-        auto maxVertex = *std::max_element(vertices.begin(), vertices.end(),
-                                           [&vec](auto a, auto b) { return glm::dot(*a, vec) < glm::dot(*b, vec); });
+        auto maxVertex = *std::max_element(vertices.begin(), vertices.end(), [&eigenVectors, i](auto a, auto b) -> bool {
+           return glm::abs(glm::dot(*a, eigenVectors[i])) < glm::abs(glm::dot(*b, eigenVectors[i]));
+        });
         extremal[i] = *maxVertex;
     }
 
@@ -104,7 +104,7 @@ obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const& shape, volum
 
     pegasus::math::JacobiEigenvalue jacobiEigen(m_box.covariance);
     m_box.eigenVectors = jacobiEigen.GetEigenvectors();
-    m_box.extremalVertices = volumes::CalculateExtremalVertices(m_box.covariance, m_shape, m_indices);
+    m_box.extremalVertices = volumes::CalculateExtremalVertices(m_box.eigenVectors, m_shape, m_indices);
     
     for (uint8_t i = 0; i < 3; ++i) 
     {
@@ -112,8 +112,16 @@ obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const& shape, volum
     }
     m_box.cubeVertices = CalculateBoxVertices(m_box.extremalVertices, m_box.eigenVectorsNormalized);
 
+    m_box.boxAxes[0] = m_box.eigenVectorsNormalized[0] * glm::dot(m_box.extremalVertices[0], m_box.eigenVectorsNormalized[0]);
+    m_box.boxAxes[1] = m_box.eigenVectorsNormalized[1] * glm::dot(m_box.extremalVertices[1], m_box.eigenVectorsNormalized[1]);
+    m_box.boxAxes[2] = m_box.eigenVectorsNormalized[2] * glm::dot(m_box.extremalVertices[2], m_box.eigenVectorsNormalized[2]);
+    m_box.boxCenter = (m_box.boxAxes[0] + m_box.boxAxes[1] + m_box.boxAxes[2]) / 3.0;
+
     m_boxShape = geometry::Box(
-        m_box.mean, m_box.eigenVectors[0], m_box.eigenVectors[1], m_box.eigenVectors[2]
+        m_box.mean,
+        m_box.eigenVectorsNormalized[0] * glm::dot(m_box.extremalVertices[0], m_box.eigenVectorsNormalized[0]),
+        m_box.eigenVectorsNormalized[1] * glm::dot(m_box.extremalVertices[1], m_box.eigenVectorsNormalized[1]),
+        m_box.eigenVectorsNormalized[2] * glm::dot(m_box.extremalVertices[2], m_box.eigenVectorsNormalized[2])
     );
 }
 
@@ -130,8 +138,8 @@ obb::OrientedBoundingBox::CalculateBoxVertices(
     glm::dvec3 const j = normalizedEigenVectors[1] * glm::length(extremalPoints[1]);
     glm::dvec3 const k = normalizedEigenVectors[2] * glm::length(extremalPoints[2]);
 
-    return { i + j + k, i - j + k, -i + j + k, -i -j + k,  
-             i + j - k, i - j - k, -i + j - k, -i -j - k };
+    return { i + j + k, i - j + k, -i + j + k, -i - j + k,
+             i + j - k, i - j - k, -i + j - k, -i - j - k };
 }
 
 aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(
@@ -167,11 +175,9 @@ void aabb::AxisAlignedBoundingBox::CalculateExtremalVetices(
         }
     }
 
-    static auto axisCompareVertices = []
-            (uint32_t axis, glm::dvec3 const* a, glm::dvec3 const* b)
-            {
-                return (*a)[axis] < (*b)[axis];
-            };
+    static auto axisCompareVertices = [] (uint32_t axis, glm::dvec3 const* a, glm::dvec3 const* b) -> bool {
+        return (*a)[axis] < (*b)[axis];
+    };
     static auto xCompareVertices = std::bind(axisCompareVertices, 0, _1, _2);
     static auto yCompareVertices = std::bind(axisCompareVertices, 1, _1, _2);
     static auto zCompareVertices = std::bind(axisCompareVertices, 2, _1, _2);
@@ -221,8 +227,7 @@ sphere::BoundingSphere::BoundingSphere(volumes::Shape const& shape, volumes::Ind
     m_sphere.eigenValues = jacobiEigen.GetEigenvalues();
     m_sphere.eigenVectors = jacobiEigen.GetEigenvectors();
 
-    for (uint8_t i = 0; i < 3; ++i)
-    {
+    for (uint8_t i = 0; i < 3; ++i) {
         m_sphere.eigenVectorsNormalized[i] = glm::normalize(m_sphere.eigenVectors[i]);
     }   
     m_sphereShape = CalculateBoundingSphere(
@@ -288,10 +293,13 @@ geometry::Sphere sphere::BoundingSphere::RefineSphere(
     {
         for (auto vertexIndex : shape.indices[faceIndex])
         {
-            if (glm::length2(shape.vertices[vertexIndex] - sphereCenter) > std::pow(sphereRadius, 2))
+            glm::dvec3 const & vertex = shape.vertices[vertexIndex];
+            double const vertexSphereCenterDist = glm::length(vertex - sphereCenter);
+
+            if (vertexSphereCenterDist > sphereRadius)
             {
-                glm::dvec3 oppositeSphereVertex = glm::normalize(shape.vertices[vertexIndex] * -1.0) * sphereRadius;
-                sphereCenter = (oppositeSphereVertex - shape.vertices[vertexIndex]) / 2.0 + shape.vertices[vertexIndex];
+                glm::dvec3 oppositeSphereVertex = glm::normalize(vertex * -1.0) * sphereRadius;
+                sphereCenter = (oppositeSphereVertex - vertex) / 2.0 + vertex;
                 sphereRadius = glm::length(sphereCenter - oppositeSphereVertex);
             }
         }

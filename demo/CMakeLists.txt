@@ -30,6 +30,7 @@ set(DEMO_HEADERS
     Application.hpp
     Timing.hpp
     OglHeaders.hpp
+    Bunny.hpp
 )
 set(DEMO_SOURCES
     Application.cpp

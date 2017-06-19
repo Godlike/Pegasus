@@ -53,6 +53,8 @@ public:
         glm::dmat3 eigenVectors;
         glm::dmat3 eigenVectorsNormalized;
         glm::dmat3 extremalVertices;
+        glm::dmat3 boxAxes;
+        glm::dvec3 boxCenter;
         Vertices cubeVertices;
     };
 
