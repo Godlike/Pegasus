@@ -294,11 +294,12 @@ geometry::Sphere sphere::BoundingSphere::RefineSphere(
         for (auto vertexIndex : shape.indices[faceIndex])
         {
             glm::dvec3 const & vertex = shape.vertices[vertexIndex];
-            double const vertexSphereCenterDist = glm::length(vertex - sphereCenter);
+            glm::dvec3 const sphereVertexVec = vertex - sphereCenter;
+            double const sphereVertexNorm = glm::length(sphereVertexVec);
 
-            if (vertexSphereCenterDist > sphereRadius)
+            if (sphereVertexNorm > sphereRadius)
             {
-                glm::dvec3 oppositeSphereVertex = glm::normalize(vertex * -1.0) * sphereRadius;
+                glm::dvec3 oppositeSphereVertex = glm::normalize(sphereVertexVec) * -1.0 * sphereRadius + sphereCenter;
                 sphereCenter = (oppositeSphereVertex - vertex) / 2.0 + vertex;
                 sphereRadius = glm::length(sphereCenter - oppositeSphereVertex);
             }
