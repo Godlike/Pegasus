@@ -122,18 +122,6 @@ geometry::Box obb::OrientedBoundingBox::GetBox() const
     return m_boxShape;
 }
 
-volumes::Vertices
-obb::OrientedBoundingBox::CalculateBoxVertices(
-    glm::dmat3 const& extremalPoints, glm::dmat3 const& normalizedEigenVectors, glm::dvec3 const& mean) const
-{
-    glm::dvec3 const i = normalizedEigenVectors[0] * glm::dot(normalizedEigenVectors[0], extremalPoints[0] - mean) + mean;
-    glm::dvec3 const j = normalizedEigenVectors[1] * glm::dot(normalizedEigenVectors[1], extremalPoints[1] - mean) + mean;
-    glm::dvec3 const k = normalizedEigenVectors[2] * glm::dot(normalizedEigenVectors[2], extremalPoints[2] - mean) + mean;
-
-    return { i + j + k, i - j + k, -i + j + k, -i - j + k,
-             i + j - k, i - j - k, -i + j - k, -i - j - k };
-}
-
 aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(
     const volumes::Shape& shape, volumes::Indices const& indices)
     : m_boxShape({}, {}, {}, {})

@@ -64,10 +64,6 @@ private:
     Box m_box;
     Shape const& m_shape;
     Indices const& m_indices;
-
-    Vertices CalculateBoxVertices(
-        glm::dmat3 const& extremalPoints, glm::dmat3 const& normalizedEigenVectors, glm::dvec3 const& mean
-    ) const;
 };
 } // namespace obb
 
