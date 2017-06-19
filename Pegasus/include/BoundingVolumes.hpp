@@ -54,8 +54,6 @@ public:
         glm::dmat3 eigenVectorsNormalized;
         glm::dmat3 extremalVertices;
         glm::dmat3 boxAxes;
-        glm::dvec3 boxCenter;
-        Vertices cubeVertices;
     };
 
     OrientedBoundingBox(Shape const& shape, Indices const& indices);
@@ -68,7 +66,7 @@ private:
     Indices const& m_indices;
 
     Vertices CalculateBoxVertices(
-        glm::dmat3 const& extremalPoints, glm::dmat3 const& normalizedEigenVectors
+        glm::dmat3 const& extremalPoints, glm::dmat3 const& normalizedEigenVectors, glm::dvec3 const& mean
     ) const;
 };
 } // namespace obb

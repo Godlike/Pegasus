@@ -28,8 +28,8 @@
 
 #include "glm/ext.hpp"
 
-static const uint32_t BOX_COUNT    = static_cast<uint32_t>(std::pow(3, 3));
-static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t BOX_COUNT    = static_cast<uint32_t>(std::pow(0, 3));
+static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(0, 3));
 static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
 static const double   RADIUS       = 5;
 static const bool     WIRED_ONLY   = true;
@@ -157,7 +157,7 @@ void FallingDemo::addBoundingVolumes()
     Indices boxFaceIndices;
     for (size_t index = 0; index < 12; ++index) boxFaceIndices.insert(index);
 
-    //OBB
+    //AABB
     std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(10, 0, 0);});
     orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
     auto aabb = orientedBoundingBox->GetBox();
@@ -165,7 +165,7 @@ void FallingDemo::addBoundingVolumes()
     aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
     addBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]);
 
-    //AABB
+    //OBB
     std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(-10, 10, 0); });
     axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
     auto obb = axisAlignedBoundingBox->GetBox();

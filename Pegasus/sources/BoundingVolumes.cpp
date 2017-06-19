@@ -106,23 +106,15 @@ obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const& shape, volum
     m_box.eigenVectors = jacobiEigen.GetEigenvectors();
     m_box.extremalVertices = volumes::CalculateExtremalVertices(m_box.eigenVectors, m_shape, m_indices);
     
-    for (uint8_t i = 0; i < 3; ++i) 
-    {
+    for (uint8_t i = 0; i < 3; ++i) {
         m_box.eigenVectorsNormalized[i] = glm::normalize(m_box.eigenVectors[i]);
     }
-    m_box.cubeVertices = CalculateBoxVertices(m_box.extremalVertices, m_box.eigenVectorsNormalized);
 
-    m_box.boxAxes[0] = m_box.eigenVectorsNormalized[0] * glm::dot(m_box.extremalVertices[0], m_box.eigenVectorsNormalized[0]);
-    m_box.boxAxes[1] = m_box.eigenVectorsNormalized[1] * glm::dot(m_box.extremalVertices[1], m_box.eigenVectorsNormalized[1]);
-    m_box.boxAxes[2] = m_box.eigenVectorsNormalized[2] * glm::dot(m_box.extremalVertices[2], m_box.eigenVectorsNormalized[2]);
-    m_box.boxCenter = (m_box.boxAxes[0] + m_box.boxAxes[1] + m_box.boxAxes[2]) / 3.0;
-
-    m_boxShape = geometry::Box(
-        m_box.mean,
-        m_box.eigenVectorsNormalized[0] * glm::dot(m_box.extremalVertices[0], m_box.eigenVectorsNormalized[0]),
-        m_box.eigenVectorsNormalized[1] * glm::dot(m_box.extremalVertices[1], m_box.eigenVectorsNormalized[1]),
-        m_box.eigenVectorsNormalized[2] * glm::dot(m_box.extremalVertices[2], m_box.eigenVectorsNormalized[2])
-    );
+    m_box.boxAxes[0] = m_box.eigenVectorsNormalized[0] * glm::dot(m_box.extremalVertices[0] - m_box.mean, m_box.eigenVectorsNormalized[0]);
+    m_box.boxAxes[1] = m_box.eigenVectorsNormalized[1] * glm::dot(m_box.extremalVertices[1] - m_box.mean, m_box.eigenVectorsNormalized[1]);
+    m_box.boxAxes[2] = m_box.eigenVectorsNormalized[2] * glm::dot(m_box.extremalVertices[2] - m_box.mean, m_box.eigenVectorsNormalized[2]);
+    
+    m_boxShape = geometry::Box(m_box.mean, m_box.boxAxes[0], m_box.boxAxes[1], m_box.boxAxes[2]);
 }
 
 geometry::Box obb::OrientedBoundingBox::GetBox() const
@@ -132,11 +124,11 @@ geometry::Box obb::OrientedBoundingBox::GetBox() const
 
 volumes::Vertices
 obb::OrientedBoundingBox::CalculateBoxVertices(
-    glm::dmat3 const& extremalPoints, glm::dmat3 const& normalizedEigenVectors) const
+    glm::dmat3 const& extremalPoints, glm::dmat3 const& normalizedEigenVectors, glm::dvec3 const& mean) const
 {
-    glm::dvec3 const i = normalizedEigenVectors[0] * glm::length(extremalPoints[0]);
-    glm::dvec3 const j = normalizedEigenVectors[1] * glm::length(extremalPoints[1]);
-    glm::dvec3 const k = normalizedEigenVectors[2] * glm::length(extremalPoints[2]);
+    glm::dvec3 const i = normalizedEigenVectors[0] * glm::dot(normalizedEigenVectors[0], extremalPoints[0] - mean) + mean;
+    glm::dvec3 const j = normalizedEigenVectors[1] * glm::dot(normalizedEigenVectors[1], extremalPoints[1] - mean) + mean;
+    glm::dvec3 const k = normalizedEigenVectors[2] * glm::dot(normalizedEigenVectors[2], extremalPoints[2] - mean) + mean;
 
     return { i + j + k, i - j + k, -i + j + k, -i - j + k,
              i + j - k, i - j - k, -i + j - k, -i - j - k };

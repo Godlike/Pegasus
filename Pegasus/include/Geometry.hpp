@@ -165,13 +165,13 @@ void CalculateBoxVertices(
     glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k, VerticesContainerIt verticesIterator)
 {
     *verticesIterator = (i + j + k);
-    *(verticesIterator + 1) = (i - j + k);
-    *(verticesIterator + 2) = (j - i + k);
-    *(verticesIterator + 3) = (i * -1.0 - j + k);
-    *(verticesIterator + 4) = (i + j - k);
-    *(verticesIterator + 5) = (i - j - k);
-    *(verticesIterator + 6) = (j - i - k);
-    *(verticesIterator + 7) = (i * -1.0 - j - k);
+    *(verticesIterator + 1) = ( i - j + k);
+    *(verticesIterator + 2) = ( j - i + k);
+    *(verticesIterator + 3) = (-i - j + k);
+    *(verticesIterator + 4) = ( i + j - k);
+    *(verticesIterator + 5) = ( i - j - k);
+    *(verticesIterator + 6) = ( j - i - k);
+    *(verticesIterator + 7) = (-i - j - k);
 }
 
 template <typename SrcIt1, typename SrcIt2, typename DestIt>
