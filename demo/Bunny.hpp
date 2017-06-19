@@ -13538,8 +13538,8 @@ static void GenerateSolidStanfordBunny(void)
 
             glNormal3fv(&bunnyNormals[ni][0]);
             glVertex3fv(&bunnyVertices[vi][0]);
-        } // for
-    } // for
+        }
+    }
 
     glEnd();
 } // GenerateSolidStanfordBunny
@@ -13556,7 +13556,7 @@ static void GenerateWireFrameStanfordBunny(void)
         glVertex3fv(&bunnyVertices[bunnyFaceIndicies[i][1]][0]);
         glVertex3fv(&bunnyVertices[bunnyFaceIndicies[i][2]][0]);
         glVertex3fv(&bunnyVertices[bunnyFaceIndicies[i][0]][0]);
-    } // for
+    }
 
     glEnd();
 } // GenerateWireFrameStanfordBunny

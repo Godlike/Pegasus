@@ -15,6 +15,8 @@
 #include "Pegasus/include/ParticleWorld.hpp"
 #include "Pegasus/include/BoundingVolumes.hpp"
 
+#include <glm/ext.hpp>
+
 #include <cassert>
 #include <cstring>
 #include <cmath>
@@ -26,10 +28,8 @@
 #include <random>
 #include <utility>
 
-#include "glm/ext.hpp"
-
-static const uint32_t BOX_COUNT    = static_cast<uint32_t>(std::pow(0, 3));
-static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(0, 3));
+static const uint32_t BOX_COUNT    = static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
 static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
 static const double   RADIUS       = 5;
 static const bool     WIRED_ONLY   = true;
@@ -66,6 +66,9 @@ private:
     std::unique_ptr<pegasus::geometry::volumes::aabb::AxisAlignedBoundingBox> axisAlignedBoundingBox;
     std::unique_ptr<pegasus::geometry::volumes::obb::OrientedBoundingBox> orientedBoundingBox;
     std::unique_ptr<pegasus::geometry::volumes::sphere::BoundingSphere> boundingSphere;
+    glm::dvec3 aabbTranslate;
+    glm::dvec3 obbTranslate;
+    glm::dvec3 boundingSphereTranslate;
 
     void addCube(glm::dvec3 const & pos, double boxSide);
     void addBox(const glm::dvec3 & pos, const glm::dvec3 & i, const glm::dvec3 & j, const glm::dvec3 & k);
@@ -81,10 +84,13 @@ FallingDemo::FallingDemo()
     , xAxis(0)
     , yAxis(0)
     , zAxis(0)
-    , zoom(3)
+    , zoom(5)
     , yEye(0)
     , yRotationAngle(0)
     , activeObject(rigidBodies.begin())
+    , aabbTranslate(10, 0, 0)
+    , obbTranslate(0, 0, 0)
+    , boundingSphereTranslate(0, 0, 10)
 {
     sceneReset();
 }
@@ -156,25 +162,25 @@ void FallingDemo::addBoundingVolumes()
                       {1, 3, 7}, {7, 5, 1}};
     Indices boxFaceIndices;
     for (size_t index = 0; index < 12; ++index) boxFaceIndices.insert(index);
-
-    //AABB
-    std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(10, 0, 0);});
-    orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
-    auto aabb = orientedBoundingBox->GetBox();
-    glm::dmat3 aabbAxes;
-    aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
-    addBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]);
-
+ 
     //OBB
-    std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(-10, 10, 0); });
-    axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
-    auto obb = axisAlignedBoundingBox->GetBox();
+    std::for_each(vertices.begin(), vertices.end(), [&](auto & v) {v += obbTranslate; });
+    orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
+    auto obb = orientedBoundingBox->GetBox();
     glm::dmat3 obbAxes;
     obb.GetAxes(obbAxes[0], obbAxes[1], obbAxes[2]);
     addBox(obb.getCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
 
+    //AABB
+    std::for_each(vertices.begin(), vertices.end(), [&](auto & v) {v += aabbTranslate - obbTranslate; });
+    axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
+    auto aabb = axisAlignedBoundingBox->GetBox();
+    glm::dmat3 aabbAxes;
+    aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
+    addBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]); 
+
     //BS
-    std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(0, -10, 10); });
+    std::for_each(vertices.begin(), vertices.end(), [&](auto & v) {v += boundingSphereTranslate - aabbTranslate; });
     boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
     auto sphere = boundingSphere->GetSphere();
     addSphere(sphere.getCenterOfMass(), sphere.GetRadius());
@@ -294,11 +300,28 @@ void FallingDemo::Display()
     auto const& pos = activeObject->p.GetPosition();
     gluLookAt(pos.x * zoom , pos.y + 30 * zoom + yEye, pos.z + 30 * zoom , pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
 
-    glPushMatrix();
-    glRotated(yRotationAngle, 0, 1, 0);
-    glColor3f(1.0f, 0.0f, 0.0f);
-    GenerateWireFrameStanfordBunny();
-    glPopMatrix();
+    {
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glTranslated(obbTranslate.x, obbTranslate.y, obbTranslate.z);
+        GenerateWireFrameStanfordBunny();
+        glPopMatrix();
+
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glTranslated(aabbTranslate.x, aabbTranslate.y, aabbTranslate.z);
+        GenerateWireFrameStanfordBunny();
+        glPopMatrix();
+
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glTranslated(boundingSphereTranslate.x, boundingSphereTranslate.y, boundingSphereTranslate.z); 
+        GenerateWireFrameStanfordBunny();
+        glPopMatrix();
+    }
 
     //Add bodies
     for (auto & body : rigidBodies)
@@ -315,9 +338,9 @@ void FallingDemo::Display()
         auto const& s = body.s->type;
 
         int const kekdex = index + 1;
-        double red   = (double)(0xb00b1e55 % kekdex) / (double)kekdex;
-        double green = (double)(0x31337420 % kekdex) / (double)kekdex;
-        double blue  = (double)(0xdeadbeef % kekdex) / (double)kekdex;
+        double red   = static_cast<double>(0xb00b1e55 % kekdex) / static_cast<double>(kekdex);
+        double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
+        double blue  = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
 
         if (s == pegasus::geometry::SimpleShapeType::PLANE) 
         {
@@ -360,9 +383,7 @@ void FallingDemo::Display()
         {
             pegasus::geometry::Sphere * sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
             double const r = sphere->GetRadius();
-
             glTranslatef(p.x, p.y, p.z);
-            glutWireSphere(r + 0.001, 20, 20);
 
             if (&*activeObject != &body)
             {
@@ -375,7 +396,12 @@ void FallingDemo::Display()
 
             if (!WIRED_ONLY) {
                 glutSolidSphere(r, 20, 20);
+            } 
+
+            if (&*activeObject != &body && !WIRED_ONLY) {
+                glColor3f(1.0f, 0.0, 0.0);
             }
+            glutWireSphere(r + 0.001, 20, 20);
         }
         else if (s == pegasus::geometry::SimpleShapeType::BOX)
         {            
@@ -439,7 +465,9 @@ void FallingDemo::Display()
             }
 
             //Draw wired Cube
-            glColor3f(1.0f, 0.0, 0.0);
+            if (&*activeObject != &body && !WIRED_ONLY) {
+                glColor3f(1.0f, 0.0, 0.0);
+            }
             glBegin(GL_LINES);
             glVertex3dv(glm::value_ptr(boxVertices[0]));
             glVertex3dv(glm::value_ptr(boxVertices[1]));
