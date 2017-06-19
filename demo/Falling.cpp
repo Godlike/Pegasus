@@ -136,7 +136,9 @@ void FallingDemo::addBoundingVolumes()
                    [](GLfloat v[3]) -> glm::dvec3{ return glm::dvec3(v[0], v[1], v[2]); });
     Faces faces;
     std::transform(bunnyFaceIndicies, bunnyFaceIndicies+kCount, std::back_inserter(faces),
-                   [](short f[6]) -> std::array<size_t, 3> { return {f[0], f[1], f[2]}; });
+        [](short f[6]) -> std::array<size_t, 3> { 
+            return {static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])}; 
+    });
     Indices indices;
     for (size_t i = 0; i < faces.size(); ++i) indices.insert(i);
 
