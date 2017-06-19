@@ -157,24 +157,24 @@ void FallingDemo::addBoundingVolumes()
     Indices boxFaceIndices;
     for (size_t index = 0; index < 12; ++index) boxFaceIndices.insert(index);
 
-//    //OBB
-//    std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(0, 10, 0);});
-//    orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
-//    auto aabb = orientedBoundingBox->GetBox();
-//    glm::dmat3 aabbAxes;
-//    aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
-//    addBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]);
+    //OBB
+    std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(10, 0, 0);});
+    orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
+    auto aabb = orientedBoundingBox->GetBox();
+    glm::dmat3 aabbAxes;
+    aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
+    addBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]);
 
-//    //AABB
-//    std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(0, 10, 0); });
-//    axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
-//    auto obb = axisAlignedBoundingBox->GetBox();
-//    glm::dmat3 obbAxes;
-//    obb.GetAxes(obbAxes[0], obbAxes[1], obbAxes[2]);
-//    addBox(obb.getCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
+    //AABB
+    std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(-10, 10, 0); });
+    axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
+    auto obb = axisAlignedBoundingBox->GetBox();
+    glm::dmat3 obbAxes;
+    obb.GetAxes(obbAxes[0], obbAxes[1], obbAxes[2]);
+    addBox(obb.getCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
 
     //BS
-    std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(20, 0, 0); });
+    std::for_each(vertices.begin(), vertices.end(), [](auto & v) {v += glm::dvec3(0, -10, 10); });
     boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
     auto sphere = boundingSphere->GetSphere();
     addSphere(sphere.getCenterOfMass(), sphere.GetRadius());
