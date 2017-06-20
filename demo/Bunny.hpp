@@ -3,6 +3,8 @@
 
 #include "demo/OglHeaders.hpp"
 
+#include <cstdint>
+
 short bunnyFaceIndicies[16301][6] =
 {
     // surface
