@@ -6,12 +6,16 @@
 #include "demo/Application.hpp"
 #include "demo/OglHeaders.hpp"
 #include "demo/Timing.hpp"
+#include "demo/Bunny.hpp"
 #include "Pegasus/include/Particle.hpp"
 #include "Pegasus/include/Geometry.hpp"
 #include "Pegasus/include/Mechanics.hpp"
 #include "Pegasus/include/ParticleContacts.hpp"
 #include "Pegasus/include/ParticleForceGenerator.hpp"
 #include "Pegasus/include/ParticleWorld.hpp"
+#include "Pegasus/include/BoundingVolumes.hpp"
+
+#include <glm/ext.hpp>
 
 #include <cassert>
 #include <cstring>
@@ -23,28 +27,23 @@
 #include <list>
 #include <random>
 #include <utility>
-#include <Pegasus/third_party/glm/glm/glm.hpp>
 
-static const uint32_t BOX_COUNT    = std::pow(3, 3);
-static const uint32_t SPHERE_COUNT = std::pow(3, 3);
+static const uint32_t BOX_COUNT    = static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
 static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
 static const double   RADIUS       = 5;
+static const bool     WIRED_ONLY   = true;
 
 class FallingDemo : public Application {
 public:
     FallingDemo();
     virtual ~FallingDemo() {}
 
+    void InitGraphics() override;
     const char* GetTitle() override;
     void Display() override;
     void Update() override;
     void Key(unsigned char key) override;
-    static void displayText(float x, float y, int r, int g, int b, void* vptr);
-
-    void addBox(glm::dvec3 const & pos, double boxSide);
-    void addSphere(glm::dvec3 const & pos, double radius);
-
-    void sceneReset();
 
 private:
     using Particles       = std::list<pegasus::Particle>;
@@ -63,7 +62,23 @@ private:
     double zAxis;
     double zoom;
     double yEye;
+    double yRotationAngle;
     RigidBodies::iterator activeObject;
+    std::unique_ptr<pegasus::geometry::volumes::aabb::AxisAlignedBoundingBox> axisAlignedBoundingBox;
+    std::unique_ptr<pegasus::geometry::volumes::obb::OrientedBoundingBox> orientedBoundingBox;
+    std::unique_ptr<pegasus::geometry::volumes::sphere::BoundingSphere> boundingSphere;
+    glm::dvec3 aabbTranslate;
+    glm::dvec3 obbTranslate;
+    glm::dvec3 boundingSphereTranslate;
+    GLuint solidBunnyGlListIndex;
+    GLuint wiredBunnyGlListIndex;
+
+    void addCube(glm::dvec3 const & pos, double boxSide);
+    void addBox(const glm::dvec3 & pos, const glm::dvec3 & i, const glm::dvec3 & j, const glm::dvec3 & k);
+    void addSphere(glm::dvec3 const & pos, double radius);
+    void addBoundingVolumes();
+    static void displayText(double x, double y, int r, int g, int b, void* vptr);
+    void sceneReset();
 };
 
 // Method definitions
@@ -72,14 +87,18 @@ FallingDemo::FallingDemo()
     , xAxis(0)
     , yAxis(0)
     , zAxis(0)
-    , zoom(8)
+    , zoom(5)
     , yEye(0)
+    , yRotationAngle(0)
     , activeObject(rigidBodies.begin())
+    , aabbTranslate(10, 0, 0)
+    , obbTranslate(0, 0, 0)
+    , boundingSphereTranslate(0, 0, 10)
 {
     sceneReset();
 }
 
-void FallingDemo::addBox(glm::dvec3 const & pos, double boxSide)
+void FallingDemo::addCube(glm::dvec3 const & pos, double boxSide)
 {
     particles.emplace_back();
     particles.back().SetPosition(pos);
@@ -94,6 +113,17 @@ void FallingDemo::addBox(glm::dvec3 const & pos, double boxSide)
     );
 }
 
+void FallingDemo::addBox(glm::dvec3 const & pos, glm::dvec3 const & i, glm::dvec3 const & j, glm::dvec3 const & k)
+{
+    particles.emplace_back();
+    particles.back().SetPosition(pos);
+    particles.back().SetInverseMass(0);
+    rigidBodies.emplace_back(
+        particles.back(),
+        std::make_unique<pegasus::geometry::Box>(pos, i, j, k)
+    );
+}
+
 void FallingDemo::addSphere(glm::dvec3 const & pos, double radius)
 {
     particles.emplace_back();
@@ -103,6 +133,60 @@ void FallingDemo::addSphere(glm::dvec3 const & pos, double radius)
         particles.back(),
         std::make_unique<pegasus::geometry::Sphere>(pos, radius)
     );
+}
+
+void FallingDemo::addBoundingVolumes()
+{
+    using namespace pegasus::geometry::volumes;
+
+    //Bunny Data
+    Vertices vertices;
+    std::transform(bunnyVertices, bunnyVertices+kCount, std::back_inserter(vertices),
+                   [](GLfloat v[3]) -> glm::dvec3{ return glm::dvec3(v[0], v[1], v[2]); });
+    Faces faces;
+    std::transform(bunnyFaceIndicies, bunnyFaceIndicies+kCount, std::back_inserter(faces),
+        [](short f[6]) -> std::array<size_t, 3> { 
+            return {static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])}; 
+    });
+    Indices indices;
+    for (size_t i = 0; i < faces.size(); ++i) indices.insert(i);
+
+    //Box Data
+    glm::dvec3 i{5.0, 0.0, 0.0};
+    glm::dvec3 j{0.0, 5.0, 0.0};
+    glm::dvec3 k{0.0, 0.0, 5.0};
+    Vertices boxVertices = { i + j + k, i - j + k, -i + j + k, -i - j + k,
+                             i + j - k, i - j - k, -i + j - k, -i - j - k };
+    Faces boxFaces = {{0, 1, 3}, {3, 2, 0},
+                      {4, 5, 7}, {7, 6, 4},
+                      {0, 1, 5}, {5, 4, 0},
+                      {2, 3, 7}, {7, 6, 2},
+                      {0, 2, 6}, {6, 4, 0},
+                      {1, 3, 7}, {7, 5, 1}};
+    Indices boxFaceIndices;
+    for (size_t index = 0; index < 12; ++index) boxFaceIndices.insert(index);
+ 
+    //OBB
+    std::for_each(vertices.begin(), vertices.end(), [&](auto & v) {v += obbTranslate; });
+    orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
+    auto obb = orientedBoundingBox->GetBox();
+    glm::dmat3 obbAxes;
+    obb.GetAxes(obbAxes[0], obbAxes[1], obbAxes[2]);
+    addBox(obb.getCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
+
+    //AABB
+    std::for_each(vertices.begin(), vertices.end(), [&](auto & v) {v += aabbTranslate - obbTranslate; });
+    axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
+    auto aabb = axisAlignedBoundingBox->GetBox();
+    glm::dmat3 aabbAxes;
+    aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
+    addBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]); 
+
+    //BS
+    std::for_each(vertices.begin(), vertices.end(), [&](auto & v) {v += boundingSphereTranslate - aabbTranslate; });
+    boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
+    auto sphere = boundingSphere->GetSphere();
+    addSphere(sphere.getCenterOfMass(), sphere.GetRadius());
 }
 
 void FallingDemo::sceneReset()
@@ -185,10 +269,7 @@ void FallingDemo::sceneReset()
     for (auto & body : rigidBodies)
     {
         contactGenerators.push_back(
-            std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(
-                body, rigidBodies, (randDouble() + 5) / 10
-            )
-        );
+            std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, rigidBodies, (randDouble() + 5) / 10));
     }
 
     //Create plane particle and rigid body
@@ -203,12 +284,14 @@ void FallingDemo::sceneReset()
     );
 
     addSphere({  0, -position * 2, 0 }, boxSide);
-    addBox({  position * 2, position, 0 }, boxSide);
-    addBox({ -position * 2, position, 0 }, boxSide);
-    addBox({ 0, position, -position * 2 }, boxSide);
+    addCube({  position * 2, position, 0 }, boxSide);
+    addCube({ -position * 2, position, 0 }, boxSide);
+    addCube({ 0, position, -position * 2 }, boxSide);
+
+    addBoundingVolumes();
 
     activeObject = rigidBodies.end();
-    std::advance(activeObject, -4);
+    std::advance(activeObject, -1);
 }
 
 void FallingDemo::Display()
@@ -218,14 +301,36 @@ void FallingDemo::Display()
     glLoadIdentity();
 
     auto const& pos = activeObject->p.GetPosition();
-    gluLookAt(pos.x, pos.y + 30 * zoom + yEye * zoom, pos.z + 30 * zoom, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x * zoom , pos.y + 30 * zoom + yEye, pos.z + 30 * zoom , pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
 
-    displayText(0, 0, 0x7FFFFFFF, 0, 0, &activeObject->p);
+    {
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glTranslated(obbTranslate.x, obbTranslate.y, obbTranslate.z);
+        glCallList(wiredBunnyGlListIndex);
+        glPopMatrix();
+
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glTranslated(aabbTranslate.x, aabbTranslate.y, aabbTranslate.z);
+        glCallList(wiredBunnyGlListIndex);
+        glPopMatrix();
+
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+        glColor3f(1.0f, 0.0f, 0.0f);
+        glTranslated(boundingSphereTranslate.x, boundingSphereTranslate.y, boundingSphereTranslate.z); 
+        glCallList(wiredBunnyGlListIndex);
+        glPopMatrix();
+    }
 
     //Add bodies
     for (auto & body : rigidBodies)
     {
         glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
         glColor3f(1.0f, 0.0f, 0.0f);
 
         static int index = -1;
@@ -236,9 +341,9 @@ void FallingDemo::Display()
         auto const& s = body.s->type;
 
         int const kekdex = index + 1;
-        double red  = (double)(0xb00b1e55 % kekdex) / (double)kekdex;
-        double glin = (double)(0x31337420 % kekdex) / (double)kekdex;
-        double blue = (double)(0xdeadbeef % kekdex) / (double)kekdex;
+        double red   = static_cast<double>(0xb00b1e55 % kekdex) / static_cast<double>(kekdex);
+        double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
+        double blue  = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
 
         if (s == pegasus::geometry::SimpleShapeType::PLANE) 
         {
@@ -263,14 +368,13 @@ void FallingDemo::Display()
             };
 
             glBegin(GL_QUADS);
-
             if (&*activeObject != &body)
             {
-                glColor3f(red, glin, blue);
+                glColor3d(red, green, blue);
             }
             else
             {
-                glColor3f(0.18f, 0.31f, 0.31f);
+                glColor3d(0.18, 0.31, 0.31);
             }
 
             for (auto const & v : quadVertices) {
@@ -282,20 +386,25 @@ void FallingDemo::Display()
         {
             pegasus::geometry::Sphere * sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
             double const r = sphere->GetRadius();
-
             glTranslatef(p.x, p.y, p.z);
-            glutWireSphere(r + 0.01, 20, 20);
 
             if (&*activeObject != &body)
             {
-                glColor3f(red, glin, blue);
+                glColor3f(red, green, blue);
             }
             else
             {
                 glColor3f(0.18f, 0.31f, 0.31f);
             }
 
-            glutSolidSphere(r, 20, 20);
+            if (!WIRED_ONLY) {
+                glutSolidSphere(r, 20, 20);
+            } 
+
+            if (&*activeObject != &body && !WIRED_ONLY) {
+                glColor3f(1.0f, 0.0, 0.0);
+            }
+            glutWireSphere(r + 0.001, 20, 20);
         }
         else if (s == pegasus::geometry::SimpleShapeType::BOX)
         {            
@@ -304,18 +413,104 @@ void FallingDemo::Display()
             box->GetAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
 
             glTranslatef(p.x, p.y, p.z);
-            glScaled(glm::length(boxAxes[0]), glm::length(boxAxes[1]), glm::length(boxAxes[2]));
-            glutWireCube(2.01);
-
+            glm::dvec3 const & i = boxAxes[0];
+            glm::dvec3 const & j = boxAxes[1];
+            glm::dvec3 const & k = boxAxes[2];
+            std::array<glm::dvec3, 8> boxVertices = { i + j + k, i - j + k, -i + j + k, -i - j + k,
+                                                      i + j - k, i - j - k, -i + j - k, -i - j - k };
             if (&*activeObject != &body)
             {
-                glColor3f(red, glin, blue);
+                glColor3f(red, green, blue);
             }
             else
             {
                 glColor3f(0.18f, 0.31f, 0.31f);
             }
-            glutSolidCube(2);
+
+            //Draw solid Cube
+            if (!WIRED_ONLY) {
+                glBegin(GL_QUADS);
+                glVertex3dv(glm::value_ptr(boxVertices[0]));
+                glVertex3dv(glm::value_ptr(boxVertices[1]));
+                glVertex3dv(glm::value_ptr(boxVertices[3]));
+                glVertex3dv(glm::value_ptr(boxVertices[2]));
+                glEnd();
+                glBegin(GL_QUADS);
+                glVertex3dv(glm::value_ptr(boxVertices[4]));
+                glVertex3dv(glm::value_ptr(boxVertices[5]));
+                glVertex3dv(glm::value_ptr(boxVertices[7]));
+                glVertex3dv(glm::value_ptr(boxVertices[6]));
+                glEnd();
+                glBegin(GL_QUADS);
+                glVertex3dv(glm::value_ptr(boxVertices[0]));
+                glVertex3dv(glm::value_ptr(boxVertices[1]));
+                glVertex3dv(glm::value_ptr(boxVertices[5]));
+                glVertex3dv(glm::value_ptr(boxVertices[4]));
+                glEnd();
+                glBegin(GL_QUADS);
+                glVertex3dv(glm::value_ptr(boxVertices[2]));
+                glVertex3dv(glm::value_ptr(boxVertices[3]));
+                glVertex3dv(glm::value_ptr(boxVertices[7]));
+                glVertex3dv(glm::value_ptr(boxVertices[6]));
+                glEnd();
+                glBegin(GL_QUADS);
+                glVertex3dv(glm::value_ptr(boxVertices[0]));
+                glVertex3dv(glm::value_ptr(boxVertices[2]));
+                glVertex3dv(glm::value_ptr(boxVertices[6]));
+                glVertex3dv(glm::value_ptr(boxVertices[4]));
+                glEnd();
+                glBegin(GL_QUADS);
+                glVertex3dv(glm::value_ptr(boxVertices[1]));
+                glVertex3dv(glm::value_ptr(boxVertices[3]));
+                glVertex3dv(glm::value_ptr(boxVertices[7]));
+                glVertex3dv(glm::value_ptr(boxVertices[5]));
+                glEnd();
+            }
+
+            //Draw wired Cube
+            if (&*activeObject != &body && !WIRED_ONLY) {
+                glColor3f(1.0f, 0.0, 0.0);
+            }
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(boxVertices[0]));
+            glVertex3dv(glm::value_ptr(boxVertices[1]));
+            glVertex3dv(glm::value_ptr(boxVertices[1]));
+            glVertex3dv(glm::value_ptr(boxVertices[3]));
+            glVertex3dv(glm::value_ptr(boxVertices[3]));
+            glVertex3dv(glm::value_ptr(boxVertices[2]));
+            glVertex3dv(glm::value_ptr(boxVertices[2]));
+            glVertex3dv(glm::value_ptr(boxVertices[0]));
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(boxVertices[4]));
+            glVertex3dv(glm::value_ptr(boxVertices[5]));
+            glVertex3dv(glm::value_ptr(boxVertices[5]));
+            glVertex3dv(glm::value_ptr(boxVertices[7]));
+            glVertex3dv(glm::value_ptr(boxVertices[7]));
+            glVertex3dv(glm::value_ptr(boxVertices[6]));
+            glVertex3dv(glm::value_ptr(boxVertices[6]));
+            glVertex3dv(glm::value_ptr(boxVertices[4]));
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(boxVertices[0]));
+            glVertex3dv(glm::value_ptr(boxVertices[1]));
+            glVertex3dv(glm::value_ptr(boxVertices[1]));
+            glVertex3dv(glm::value_ptr(boxVertices[5]));
+            glVertex3dv(glm::value_ptr(boxVertices[5]));
+            glVertex3dv(glm::value_ptr(boxVertices[4]));
+            glVertex3dv(glm::value_ptr(boxVertices[4]));
+            glVertex3dv(glm::value_ptr(boxVertices[0]));
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(boxVertices[2]));
+            glVertex3dv(glm::value_ptr(boxVertices[3]));
+            glVertex3dv(glm::value_ptr(boxVertices[3]));
+            glVertex3dv(glm::value_ptr(boxVertices[7]));
+            glVertex3dv(glm::value_ptr(boxVertices[7]));
+            glVertex3dv(glm::value_ptr(boxVertices[6]));
+            glVertex3dv(glm::value_ptr(boxVertices[6]));
+            glVertex3dv(glm::value_ptr(boxVertices[2]));
+            glEnd();
         }
         glPopMatrix();
     }
@@ -325,14 +520,14 @@ void FallingDemo::Update()
 {
     world.StartFrame();
 
-    auto duration = static_cast<float>(TimingData::Get().lastFrameDuration * 0.001f);
-    if (duration <= 0.0f)
+    double duration = TimingData::Get().lastFrameDuration * 0.001;
+    if (duration <= 0.0)
         return;
 
-    xAxis *= pow(0.1f, duration);
-    yAxis *= pow(0.1f, duration);
-    zAxis *= pow(0.1f, duration);
-    activeObject->p.AddForce(glm::dvec3(xAxis * 10.0f, yAxis * 20.0f, zAxis * 10.0f));
+    xAxis *= pow(0.1, duration);
+    yAxis *= pow(0.1, duration);
+    zAxis *= pow(0.1, duration);
+    activeObject->p.AddForce(glm::dvec3(xAxis * 10.0, yAxis * 20.0, zAxis * 10.0));
 
     world.RunPhysics(0.01);
 
@@ -343,12 +538,31 @@ void FallingDemo::Update()
     Application::Update();
 }
 
+void FallingDemo::InitGraphics()
+{
+    glClearColor(0.9f, 0.95f, 1.0f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glShadeModel(GL_SMOOTH);
+    SetView();
+
+    solidBunnyGlListIndex = glGenLists(2);
+    wiredBunnyGlListIndex = solidBunnyGlListIndex + 1;
+
+    glNewList(solidBunnyGlListIndex, GL_COMPILE);
+    GenerateSolidStanfordBunny();
+    glEndList();
+
+    glNewList(wiredBunnyGlListIndex, GL_COMPILE);
+    GenerateWireFrameStanfordBunny();
+    glEndList();
+}
+
 const char* FallingDemo::GetTitle()
 {
     return "Pegasus Falling Demo";
 }
 
-void FallingDemo::displayText(float x, float y, int r, int g, int b, void* vptr)
+void FallingDemo::displayText(double x, double y, int r, int g, int b, void* vptr)
 {
     std::stringstream ss;
     ss << "0x";
@@ -405,6 +619,12 @@ void FallingDemo::Key(unsigned char key)
         break;
     case '2':
         yEye -= 10 * zoom;
+        break;
+    case '4':
+        yRotationAngle += 3.14 / 90 * 10;
+        break;
+    case '6':
+        yRotationAngle -= 3.14 / 90 * 10;
         break;
     case '\t':
         ++activeObject;
