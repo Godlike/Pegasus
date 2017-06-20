@@ -1,3 +1,6 @@
+#ifndef PEGASUS_BUNNY_HPP
+#define PEGASUS_BUNNY_HPP
+
 #include "demo/OglHeaders.hpp"
 
 short bunnyFaceIndicies[16301][6] =
@@ -13515,12 +13518,12 @@ GLfloat bunnyNormals [8127][3] =
     {-0.629911f,-0.66083f,0.408063f},{-0.00148687f,-0.996097f,0.0882514f},{0.0772459f,-0.995314f,-0.0581728f}
 };
 
-#define  kSizeFaceIndicies     ( sizeof( bunnyFaceIndicies    ) )
-#define  kRowSizeFaceIndicies  ( sizeof( bunnyFaceIndicies[0] ) )
+static const uint32_t kSizeFaceIndicies    = (sizeof(bunnyFaceIndicies   ));
+static const uint32_t kRowSizeFaceIndicies = (sizeof(bunnyFaceIndicies[0]));
 
 static const GLuint kCount = kSizeFaceIndicies / kRowSizeFaceIndicies;
 
-static void GenerateSolidStanfordBunny(void)
+static void GenerateSolidStanfordBunny()
 {
     GLuint i;
     GLuint j;
@@ -13544,7 +13547,7 @@ static void GenerateSolidStanfordBunny(void)
     glEnd();
 } // GenerateSolidStanfordBunny
 
-static void GenerateWireFrameStanfordBunny(void)
+static void GenerateWireFrameStanfordBunny()
 {
     GLuint i;
 
@@ -13560,3 +13563,5 @@ static void GenerateWireFrameStanfordBunny(void)
 
     glEnd();
 } // GenerateWireFrameStanfordBunny
+
+#endif // PEGASUS_BUNNY_HPP
