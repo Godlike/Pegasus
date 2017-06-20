@@ -39,6 +39,7 @@ public:
     FallingDemo();
     virtual ~FallingDemo() {}
 
+    void InitGraphics() override;
     const char* GetTitle() override;
     void Display() override;
     void Update() override;
@@ -69,6 +70,8 @@ private:
     glm::dvec3 aabbTranslate;
     glm::dvec3 obbTranslate;
     glm::dvec3 boundingSphereTranslate;
+    GLuint solidBunnyGlListIndex;
+    GLuint wiredBunnyGlListIndex;
 
     void addCube(glm::dvec3 const & pos, double boxSide);
     void addBox(const glm::dvec3 & pos, const glm::dvec3 & i, const glm::dvec3 & j, const glm::dvec3 & k);
@@ -305,21 +308,21 @@ void FallingDemo::Display()
         glRotated(yRotationAngle, 0, 1, 0);
         glColor3f(1.0f, 0.0f, 0.0f);
         glTranslated(obbTranslate.x, obbTranslate.y, obbTranslate.z);
-        GenerateWireFrameStanfordBunny();
+        glCallList(wiredBunnyGlListIndex);
         glPopMatrix();
 
         glPushMatrix();
         glRotated(yRotationAngle, 0, 1, 0);
         glColor3f(1.0f, 0.0f, 0.0f);
         glTranslated(aabbTranslate.x, aabbTranslate.y, aabbTranslate.z);
-        GenerateWireFrameStanfordBunny();
+        glCallList(wiredBunnyGlListIndex);
         glPopMatrix();
 
         glPushMatrix();
         glRotated(yRotationAngle, 0, 1, 0);
         glColor3f(1.0f, 0.0f, 0.0f);
         glTranslated(boundingSphereTranslate.x, boundingSphereTranslate.y, boundingSphereTranslate.z); 
-        GenerateWireFrameStanfordBunny();
+        glCallList(wiredBunnyGlListIndex);
         glPopMatrix();
     }
 
@@ -533,6 +536,25 @@ void FallingDemo::Update()
     }
 
     Application::Update();
+}
+
+void FallingDemo::InitGraphics()
+{
+    glClearColor(0.9f, 0.95f, 1.0f, 1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glShadeModel(GL_SMOOTH);
+    SetView();
+
+    solidBunnyGlListIndex = glGenLists(2);
+    wiredBunnyGlListIndex = solidBunnyGlListIndex + 1;
+
+    glNewList(solidBunnyGlListIndex, GL_COMPILE);
+    GenerateSolidStanfordBunny();
+    glEndList();
+
+    glNewList(wiredBunnyGlListIndex, GL_COMPILE);
+    GenerateWireFrameStanfordBunny();
+    glEndList();
 }
 
 const char* FallingDemo::GetTitle()
