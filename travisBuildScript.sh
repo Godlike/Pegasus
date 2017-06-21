@@ -8,5 +8,5 @@ CMAKE_FLAGS="-DCMAKE_CXX_COMPILER=$COMPILER"
 
 cmake $CMAKE_FLAGS ..
 
-make -j${nproc}
+make -j${nproc} $COMPILER_FLAGS
 ctest -VV

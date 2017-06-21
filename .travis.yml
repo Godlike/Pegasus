@@ -4,7 +4,7 @@ branches:
 
 env:
   global:
-    - secure: GQuc1Rr6XwqESQczpZRCW6Z2bSgH9BjD1cjf9psFVsg/uFPz8fK+1laDt7xvioeDJSu3iw/VSM5Agr3TGXJ3iPfPkpcIWGhRq484nIxAZq9QqnfqHP/+ukJNdX+LuJZOHdtoxAqSrW0Bcp8YOjk2ymPuMVLAfOn3oJfffp4bC22Gv/FwgUFTdnEzW1wbb0orIaUt1/8QXYEb9Y4tFRMf2QdJfAYojRCHECx8pttxpGZZd2ANSjcGyDTwxmj9v9I5gk1Xu0lg2BTkGIBhLgWJE+e5iwhHavEXfejNWJ4O7wxkLqbEvurs3T5zXH1/qlMvzqUAnYTX0O8CH9VJFzTxdOCbfNUMMZwDOHbll+I784C+shko3W4YJwib3SsuoVkNbCcTARRJFsRh5X8GTFqlPusQTJpvMKvk2xGjD1N72jmzCXqVOkOT8DD0OXXXSqLTkpIdDYzZ4TPSWBmCbYI537o7AgSRtca8mVbamyLRGsRf2BD9tNyGrucvVIVDOaE0g3ZMza4i9+MwJAjI7WT5/+hw0Dm3cmdBJbkUMey4M/pR3eYKKPtu6u36N4mRxeDz0BNShLb92LOBbMNcY7LkWMfzq0bd6VOfwbpIe0eb+SwcSur63MplwTeZ9wRWdjxt9thgTkPRTQsT9cB4ltRA5mSfoBZL8KC4CBpIMA6sMf8=
+    - secure: AAAAB3NzaC1yc2EAAAADAQABAAABAQCdQ+U+WLfsTN96daLxK5OfxfOGKasyHs+pPlKPDKlFJ8u6jL5ZDNO53bGsI/mJehPv8TeYvDhskiAHFG5F21qbHJjy6qcqBWHihk2Wv6ODW5tikDQJ8RGYbzQvwdOKWoKZLd4PFPMcaUX3F5nx0aFCbf9ILHm58gNH0N9vimXMlFUXoG22YLyX37aE3uAG80BHSrnPDxW3YnCanxENoAeyAPiaV3sA4VNiy/vZ7PzfOmEUeBeDRI8fD7bwpt5J0FHjSfgfrqiZTBq4wcZtGVJcNvRmxttrhhJ5FDk5GG7UsNvwvo35Kl13tBf1jE1sEKZ3xokQU6yza9a1Km60Kton
     - GH_REPO_NAME: Pegasus
     - GH_REPO_REF: github.com/Godlike/Pegasus.git
     - BUILD_DIR: build
@@ -16,8 +16,6 @@ language: cpp
 compiler: gcc
 
 matrix:
-  exclude:
-  - compiler: gcc
   include:
   - compiler: gcc
     addons:
@@ -26,31 +24,28 @@ matrix:
         - ubuntu-toolchain-r-test
         packages:
         - g++-6
-    env: COMPILER=g++-6
-  - addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - g++-6
-    env:
+    env: 
     - COMPILER=g++-6
-    - BUILD_DOCUMENTATION=true
   - compiler: clang
     addons:
       apt:
         sources:
+        - libc++-dev  
         - ubuntu-toolchain-r-test
         - llvm-toolchain-precise-3.9
         packages:
         - clang-3.9
-    env: COMPILER=clang++-3.9
+    env: 
+    - COMPILER=clang++-3.9
+    - COMPILER_FLAGS=-stdlib=libc++
 
 git:
   submodules: false
 
 before_install:
 - sudo apt-get -qq update
+- sudo apt-get install -y x11proto-input-dev libxmu-dev mesa-common-dev freeglut3-dev libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+- sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
 - git submodule update --init --recursive
 
 script:
@@ -61,7 +56,6 @@ script:
 notifications:
   email:
     recipients:
-    - nikita.krupitskas@gmail.com
-    - odintsoff@gmail.com
+    - ilia.glushchenko@gmail.com
     on_success: change
     on_failure: always
