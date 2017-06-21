@@ -4,8 +4,8 @@ requirements:
   signed_off_by:
     required: true
 
-always_pending:
-  title_regex: '^(WIP|wip)'
+always_rejected:
+  title_regex: '(WIP|wip)'
   explanation: 'This pull request is a work in progress...'
 
 group_defaults:
