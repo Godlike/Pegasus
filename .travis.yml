@@ -44,8 +44,7 @@ git:
 
 before_install:
 - sudo apt-get -qq update
-- sudo apt-get install -y x11proto-input-dev libxmu-dev mesa-common-dev freeglut3-dev libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
-- sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+- sudo apt-get install -y libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
 - git submodule update --init --recursive
 
 script:
