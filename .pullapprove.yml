@@ -1,0 +1,48 @@
+version: 2
+
+requirements:
+  signed_off_by:
+    required: true
+
+always_pending:
+  title_regex: '^(WIP|wip)'
+  explanation: 'This pull request is a work in progress...'
+
+group_defaults:
+  required: 2
+
+  reset_on_push:
+    enabled: true
+
+  reset_on_reopened:
+    enabled: true
+
+  author_approval:
+    required: true
+
+  approve_by_comment:
+    enabled: true
+    approve_regex: '^[Aa]{1}pprove'
+    reject_regex: '^[Rr]{1}eject'
+
+  reject_value: -3
+
+groups:
+  contributors:
+    users: all
+
+    github_reviews:
+      enabled: true
+
+    conditions:
+      branches:
+        - master  
+      files:
+        include:
+          - '*.md'
+          - '*.cpp'
+          - '*.c'
+          - '*.hpp'
+          - '*.h'
+
+
