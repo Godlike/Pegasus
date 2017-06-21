@@ -1,0 +1,33 @@
+version: 1.0.{build}
+
+image: Visual Studio 2017
+
+configuration:
+  - Debug
+  - Release
+platform: x64
+clone_folder: "c:\\Pegasus"
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+install:
+  - git submodule update --init --recursive
+  - mkdir build
+  - cd build
+  - cmake -G "Visual Studio 15 2017 Win64" ..
+
+build:
+  project: "build\\Pegasus.sln"
+  parallel: true
+  verbosity: minimal
+
+test_script:
+  - cd %APPVEYOR_BUILD_FOLDER%/build
+  - ctest -VV -C %CONFIGURATION%
+
+notifications:
+- provider: Email
+  to:
+    - ilia.glushchenko@gmail.com
+  on_build_success: false
+  on_build_failure: true
+  on_build_status_changed: true
