@@ -5,7 +5,7 @@ requirements:
     required: true
 
 always_rejected:
-  title_regex: '(WIP|wip)'
+  title_regex: '^(WIP|wip)'
   explanation: 'This pull request is a work in progress...'
 
 group_defaults:
