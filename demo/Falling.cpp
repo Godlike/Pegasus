@@ -25,19 +25,22 @@
 #include <random>
 #include <utility>
 
-static uint32_t const BOX_COUNT     = static_cast<uint32_t>(std::pow(3, 3));
-static uint32_t const SPHERE_COUNT  = static_cast<uint32_t>(std::pow(3, 3));
-static bool     const RANDOM_CHOICE = true;
-static uint32_t const TOTAL_COUNT   = BOX_COUNT+SPHERE_COUNT;
-static double   const RADIUS        = 5;
-static bool     const WIRED_ONLY    = true;
-static bool     const DRAW_CUBES    = true;
-static bool     const DRAW_PLANE    = true;
-static bool     const DRAW_BUNNY    = true;
+static uint32_t const BOX_COUNT = 2;//static_cast<uint32_t>(std::pow(3, 3));
+static uint32_t const SPHERE_COUNT = 0;//static_cast<uint32_t>(std::pow(3, 3));
+static bool const RANDOM_CHOICE = false;
+static uint32_t const TOTAL_COUNT = BOX_COUNT + SPHERE_COUNT;
+static double const RADIUS = 5;
+static bool const WIRED_ONLY = false;
+static bool const DRAW_CUBES = false;
+static bool const DRAW_BUNNY = false;
+static bool const DRAW_PLANE = true;
 
-class FallingDemo : public Application {
+
+class FallingDemo : public Application
+{
 public:
     FallingDemo();
+
     virtual ~FallingDemo() {}
 
     void InitGraphics() override;
@@ -47,8 +50,8 @@ public:
     void Key(unsigned char key) override;
 
 private:
-    using Particles       = std::list<pegasus::Particle>;
-    using RigidBodies     = std::list<pegasus::RigidBody>;
+    using Particles = std::list<pegasus::Particle>;
+    using RigidBodies = std::list<pegasus::RigidBody>;
     using ForceGenerators = std::list<std::unique_ptr<pegasus::ParticleForceGenerator>>;
 
     Particles m_particles;
@@ -67,8 +70,8 @@ private:
     RigidBodies::iterator activeObject;
 
     std::unique_ptr<pegasus::geometry::volumes::aabb::AxisAlignedBoundingBox> axisAlignedBoundingBox;
-    std::unique_ptr<pegasus::geometry::volumes::obb::OrientedBoundingBox>     orientedBoundingBox;
-    std::unique_ptr<pegasus::geometry::volumes::sphere::BoundingSphere>       boundingSphere;
+    std::unique_ptr<pegasus::geometry::volumes::obb::OrientedBoundingBox> orientedBoundingBox;
+    std::unique_ptr<pegasus::geometry::volumes::sphere::BoundingSphere> boundingSphere;
     glm::dvec3 aabbTranslate;
     glm::dvec3 obbTranslate;
     glm::dvec3 boundingSphereTranslate;
@@ -82,7 +85,7 @@ private:
     void AddBoundingVolumes();
     void SceneReset();
 
-    template < typename VertexIt >    
+    template < typename VertexIt >
     void DrawSolidCude(VertexIt it)
     {
         glBegin(GL_QUADS);
@@ -201,9 +204,9 @@ pegasus::Particle& FallingDemo::AddCube(glm::dvec3 const& pos, double boxSide)
         AddParticle(pos),
         std::make_unique<pegasus::geometry::Box>(
             pos,
-            glm::dvec3{ boxSide, 0, 0 },
-            glm::dvec3{ 0, boxSide, 0 },
-            glm::dvec3{ 0, 0, boxSide })
+            glm::dvec3{boxSide, 0, 0},
+            glm::dvec3{0, boxSide, 0},
+            glm::dvec3{0, 0, boxSide})
     );
 
     return m_particles.back();
@@ -235,18 +238,19 @@ void FallingDemo::AddBoundingVolumes()
 
     //Bunny Data
     Vertices vertices;
-    std::transform(bunnyVertices, bunnyVertices+kCount, std::back_inserter(vertices),
-                   [](GLfloat v[3]) -> glm::dvec3{ return glm::dvec3(v[0], v[1], v[2]); });
+    std::transform(bunnyVertices, bunnyVertices + kCount, std::back_inserter(vertices),
+                   [](GLfloat v[3]) -> glm::dvec3 { return glm::dvec3(v[0], v[1], v[2]); });
     Faces faces;
-    std::transform(bunnyFaceIndicies, bunnyFaceIndicies+kCount, std::back_inserter(faces),
-        [](short f[6]) -> std::array<size_t, 3> { 
-            return {static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])}; 
-    });
+    std::transform(bunnyFaceIndicies, bunnyFaceIndicies + kCount, std::back_inserter(faces),
+                   [](short f[6]) -> std::array<size_t, 3>
+                   {
+                       return {static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])};
+                   });
     Indices indices;
     for (size_t i = 0; i < faces.size(); ++i) indices.insert(i);
- 
+
     //OBB
-    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += obbTranslate; });
+    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) { v += obbTranslate; });
     orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
     auto obb = orientedBoundingBox->GetBox();
     glm::dmat3 obbAxes;
@@ -254,15 +258,15 @@ void FallingDemo::AddBoundingVolumes()
     AddBox(obb.getCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
 
     //AABB
-    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += aabbTranslate - obbTranslate; });
+    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) { v += aabbTranslate - obbTranslate; });
     axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
     auto aabb = axisAlignedBoundingBox->GetBox();
     glm::dmat3 aabbAxes;
     aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
-    AddBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]); 
+    AddBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]);
 
     //BS
-    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += boundingSphereTranslate - aabbTranslate; });
+    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) { v += boundingSphereTranslate - aabbTranslate; });
     boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
     auto sphere = boundingSphere->GetSphere();
     AddSphere(sphere.getCenterOfMass(), sphere.GetRadius());
@@ -276,11 +280,10 @@ void FallingDemo::SceneReset()
     m_contactGenerators.clear();
     m_particles.clear();
 
-    double const boxSide  = 15.0;
+    double const boxSide = 15.0;
     double const position = boxSide;
 
-    static auto randDouble = []() -> double
-    {
+    static auto randDouble = []() -> double {
         static std::default_random_engine generator;
         static std::uniform_real_distribution<double> distribution(-5.0, 5.0);
         return distribution(generator);
@@ -289,10 +292,10 @@ void FallingDemo::SceneReset()
     //Create Rigid Bodies
     for (uint32_t i = 0; i < TOTAL_COUNT; ++i)
     {
-        static auto curt = [](auto n) ->double {
+        static auto curt = [](auto n) -> double {
             return std::pow(n, 0.34);
         };
-        static const int edge  = curt(TOTAL_COUNT);
+        static const int edge = curt(TOTAL_COUNT);
         static const int plane = edge * edge;
         static const double offset = edge * RADIUS;
 
@@ -301,21 +304,22 @@ void FallingDemo::SceneReset()
         int row = index2d / edge;
         int col = index2d - row * edge;
 
-        glm::dvec3 const pos{ row * RADIUS * 2.3 + RADIUS - offset,
-                              planeIndex * RADIUS * 2.3 + boxSide * 3,
-                              col * RADIUS * 2.3 + RADIUS - offset };
+        glm::dvec3 const pos{row * RADIUS * 2.3 + RADIUS - offset,
+            planeIndex * RADIUS * 2.3 + boxSide * 3,
+            col * RADIUS * 2.3 + RADIUS - offset};
 
-        static uint32_t counter = 0;
-        bool const isBox = RANDOM_CHOICE ? (randDouble() > 0) : (counter++ < BOX_COUNT);
+        bool const isBox = RANDOM_CHOICE ? (randDouble() > 0) : (i < BOX_COUNT);
 
-        pegasus::Particle& particle = isBox ? AddCube(pos, RADIUS / 2.0) : AddSphere(pos, (randDouble() + 6) / 2);
+        pegasus::Particle& particle = isBox
+                                          ? AddBox(pos, {randDouble(), 0 , 0}, {0, randDouble(), 0}, {0, 0, randDouble()})
+                                          : AddSphere(pos, (randDouble() + 6) / 2);
         particle.SetMass(1.0);
         particle.SetVelocity(randDouble(), randDouble() - 5, randDouble());
         particle.SetDamping(1.0);
     }
 
     //Create forces
-    m_forces.push_back(std::make_unique<pegasus::ParticleGravity>(glm::dvec3{ 0, -9.8, 0 }));
+    m_forces.push_back(std::make_unique<pegasus::ParticleGravity>(glm::dvec3{0, -9.8, 0}));
 
     //Register forces
     for (auto& particle : m_particles)
@@ -339,17 +343,17 @@ void FallingDemo::SceneReset()
         m_rigidBodies.emplace_front(
             m_particles.front(),
             std::make_unique<pegasus::geometry::Plane>(
-               m_particles.front().GetPosition(), glm::normalize(glm::dvec3(0, 1.0, 0))
+                m_particles.front().GetPosition(), glm::normalize(glm::dvec3(0, 1.0, 0))
             )
         );
     }
 
     if (DRAW_CUBES)
     {
-        AddSphere({  0, -position * 2, 0 }, boxSide);
-        AddCube({  position * 2, position, 0 }, boxSide);
-        AddCube({ -position * 2, position, 0 }, boxSide);
-        AddCube({ 0, position, -position * 2 }, boxSide);
+        AddSphere({0, -position * 2, 0}, boxSide);
+        AddCube({position * 2, position, 0}, boxSide);
+        AddCube({-position * 2, position, 0}, boxSide);
+        AddCube({0, position, -position * 2}, boxSide);
     }
 
     if (DRAW_BUNNY)
@@ -368,9 +372,9 @@ void FallingDemo::Display()
     glLoadIdentity();
 
     auto const& pos = activeObject->p.GetPosition();
-    gluLookAt(pos.x, pos.y + 30 * zoom + yEye, pos.z + 30 * zoom , pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x, pos.y + 30 * zoom + yEye, pos.z + 30 * zoom, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
 
-    if (DRAW_BUNNY) 
+    if (DRAW_BUNNY)
     {
         glPushMatrix();
         glRotated(yRotationAngle, 0, 1, 0);
@@ -389,7 +393,7 @@ void FallingDemo::Display()
         glPushMatrix();
         glRotated(yRotationAngle, 0, 1, 0);
         glColor3f(1.0f, 0.0f, 0.0f);
-        glTranslated(boundingSphereTranslate.x, boundingSphereTranslate.y, boundingSphereTranslate.z); 
+        glTranslated(boundingSphereTranslate.x, boundingSphereTranslate.y, boundingSphereTranslate.z);
         glCallList(wiredBunnyGlListIndex);
         glPopMatrix();
     }
@@ -409,11 +413,11 @@ void FallingDemo::Display()
         auto const& s = body.s->type;
 
         int const kekdex = index + 1;
-        double red   = static_cast<double>(0xb00b1e55 % kekdex) / static_cast<double>(kekdex);
+        double red = static_cast<double>(0xb00b1e55 % kekdex) / static_cast<double>(kekdex);
         double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
-        double blue  = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
+        double blue = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
 
-        if (s == pegasus::geometry::SimpleShapeType::PLANE) 
+        if (s == pegasus::geometry::SimpleShapeType::PLANE)
         {
             glTranslatef(0, 0, 0);
             double const planeSideLength = 100;
@@ -445,14 +449,15 @@ void FallingDemo::Display()
                 glColor3d(0.18, 0.31, 0.31);
             }
 
-            for (auto const& v : quadVertices) {
+            for (auto const& v : quadVertices)
+            {
                 glVertex3f(v.x, v.y, v.z);
             }
             glEnd();
         }
         else if (s == pegasus::geometry::SimpleShapeType::SPHERE)
         {
-            pegasus::geometry::Sphere * sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
+            pegasus::geometry::Sphere* sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
             double const r = sphere->GetRadius();
             glTranslatef(p.x, p.y, p.z);
 
@@ -465,18 +470,20 @@ void FallingDemo::Display()
                 glColor3f(0.18f, 0.31f, 0.31f);
             }
 
-            if (!WIRED_ONLY) {
+            if (!WIRED_ONLY)
+            {
                 glutSolidSphere(r, 20, 20);
-            } 
+            }
 
-            if (&*activeObject != &body && !WIRED_ONLY) {
+            if (&*activeObject != &body && !WIRED_ONLY)
+            {
                 glColor3f(1.0f, 0.0, 0.0);
             }
             glutWireSphere(r + 0.001, 20, 20);
         }
         else if (s == pegasus::geometry::SimpleShapeType::BOX)
-        {            
-            pegasus::geometry::Box * box = static_cast<pegasus::geometry::Box*>(body.s.get());
+        {
+            pegasus::geometry::Box* box = static_cast<pegasus::geometry::Box*>(body.s.get());
             std::array<glm::dvec3, 3> boxAxes;
             box->GetAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
 
@@ -484,8 +491,11 @@ void FallingDemo::Display()
             glm::dvec3 const& i = boxAxes[0];
             glm::dvec3 const& j = boxAxes[1];
             glm::dvec3 const& k = boxAxes[2];
-            std::array<glm::dvec3, 8> boxVertices = { i + j + k, i - j + k, -i + j + k, -i - j + k,
-                                                      i + j - k, i - j - k, -i + j - k, -i - j - k };
+            std::array<glm::dvec3, 8> boxVertices = {
+                i + j + k, i - j + k, -i + j + k, -i - j + k,
+                i + j - k, i - j - k, -i + j - k, -i - j - k
+            };
+
             if (&*activeObject != &body)
             {
                 glColor3f(red, green, blue);
@@ -496,12 +506,14 @@ void FallingDemo::Display()
             }
 
             //Draw solid Cube
-            if (!WIRED_ONLY) {
+            if (!WIRED_ONLY)
+            {
                 DrawSolidCude(boxVertices.begin());
             }
 
             //Draw wired Cube
-            if (&*activeObject != &body && !WIRED_ONLY) {
+            if (&*activeObject != &body || !WIRED_ONLY)
+            {
                 glColor3f(1.0f, 0.0, 0.0);
             }
             DrawWiredCube(boxVertices.begin());
@@ -525,7 +537,8 @@ void FallingDemo::Update()
 
     m_world.RunPhysics(0.01);
 
-    for (auto const& body : m_rigidBodies) {
+    for (auto const& body : m_rigidBodies)
+    {
         body.s->setCenterOfMass(body.p.GetPosition());
     }
 
@@ -558,7 +571,8 @@ const char* FallingDemo::GetTitle()
 
 void FallingDemo::Key(unsigned char key)
 {
-    switch (key) {
+    switch (key)
+    {
     case 'w':
     case 'W':
         zAxis = -1.0;

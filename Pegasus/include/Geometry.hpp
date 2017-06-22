@@ -114,8 +114,7 @@ public:
 
 private:
     glm::dvec3 m_appex;
-    double m_radius
-    ;
+    double m_radius;
 };
 
 class Capsule : public SimpleShape
@@ -164,14 +163,14 @@ template <typename VerticesContainerIt>
 void CalculateBoxVertices(
     glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k, VerticesContainerIt verticesIterator)
 {
-    *verticesIterator = (i + j + k);
-    *(verticesIterator + 1) = ( i - j + k);
-    *(verticesIterator + 2) = ( j - i + k);
-    *(verticesIterator + 3) = (-i - j + k);
-    *(verticesIterator + 4) = ( i + j - k);
-    *(verticesIterator + 5) = ( i - j - k);
-    *(verticesIterator + 6) = ( j - i - k);
-    *(verticesIterator + 7) = (-i - j - k);
+    *(verticesIterator) = (i + j + k);
+    *(++verticesIterator) = (i - j + k);
+    *(++verticesIterator) = (j - i + k);
+    *(++verticesIterator) = (-i - j + k);
+    *(++verticesIterator) = (i + j - k);
+    *(++verticesIterator) = (i - j - k);
+    *(++verticesIterator) = (j - i - k);
+    *(++verticesIterator) = (-i - j - k);
 }
 
 template <typename SrcIt1, typename SrcIt2, typename DestIt>
@@ -367,8 +366,8 @@ inline void Initialize<Plane, Sphere>(SimpleShape const* a, SimpleShape const* b
     cache->planeMassCenter = plane->getCenterOfMass();
     cache->sphereMassCenter = sphere->getCenterOfMass();
     cache->sphereRadius = sphere->GetRadius();
-    cache->penetration = cache->sphereRadius - 
-        (glm::dot(cache->sphereMassCenter, cache->planeNormal) - glm::dot(cache->planeMassCenter, cache->planeNormal));
+    cache->penetration = cache->sphereRadius -
+            (glm::dot(cache->sphereMassCenter, cache->planeNormal) - glm::dot(cache->planeMassCenter, cache->planeNormal));
 }
 
 template <>
@@ -588,7 +587,7 @@ inline glm::dvec3 CalculateContactNormal<Sphere, Box>(SimpleShape const* a, Simp
     if (cache->boxContactPoint == cache->sphereMassCenter)
     {
         cache->boxContactPoint = cache->boxMassCenter + glm::normalize(cache->boxSphereVector)
-            * glm::dot(cache->boxAxes[minIndex], glm::normalize(cache->boxSphereVector));
+                * glm::dot(cache->boxAxes[minIndex], glm::normalize(cache->boxSphereVector));
         cache->sphereContactNormal = glm::normalize(cache->boxContactPoint - cache->sphereMassCenter);
         cache->sphereContactPoint = cache->sphereContactNormal * cache->sphereRadius + cache->sphereMassCenter;
     }
@@ -684,7 +683,7 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Cac
     CalculateBoxVertices(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2], cache->aBoxVertices.begin());
     std::for_each(cache->aBoxVertices.begin(), cache->aBoxVertices.end(), [cache](auto& v) { v += cache->aMassCenter; });
     std::transform(cache->aBoxAxes.begin(), cache->aBoxAxes.end(), cache->aBoxFaces.begin(),
-                   [cache](glm::dvec3 const & v) { return v + cache->aMassCenter; });
+                   [cache](glm::dvec3 const& v) { return v + cache->aMassCenter; });
 
     cache->bMassCenter = bBox->getCenterOfMass();
     bBox->GetAxes(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2]);
@@ -695,7 +694,7 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Cac
     std::transform(cache->bBoxAxes.begin(), cache->bBoxAxes.end(), cache->bBoxFaces.begin(),
                    [cache](glm::dvec3 const& v) { return v + cache->bMassCenter; });
 
-    cache->separatingAxes = { 
+    cache->separatingAxes = {
         glm::normalize(cache->aBoxAxes[0]), glm::normalize(cache->aBoxAxes[1]), glm::normalize(cache->aBoxAxes[2]),
         glm::normalize(cache->bBoxAxes[0]), glm::normalize(cache->bBoxAxes[1]), glm::normalize(cache->bBoxAxes[2])
     };
@@ -909,33 +908,33 @@ public:
             a, b, m_intersectionCaches[std::make_pair(a->type, b->type)].get());
     }
 
-    private:
-        static constexpr uint32_t s_unorderedMapInitialPrimeSize = 11;
+private:
+    static constexpr uint32_t s_unorderedMapInitialPrimeSize = 11;
 
-        std::unordered_map<ShapeTypePair,
-            std::unique_ptr<intersection::CacheBase>,
-            ShapeTypePairHash>
-            m_intersectionCaches;
+    std::unordered_map<ShapeTypePair,
+                       std::unique_ptr<intersection::CacheBase>,
+                       ShapeTypePairHash>
+    m_intersectionCaches;
 
-        std::unordered_map<ShapeTypePair,
-            void(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
-            ShapeTypePairHash>
-            m_initializeFunctors;
+    std::unordered_map<ShapeTypePair,
+                       void(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
+                       ShapeTypePairHash>
+    m_initializeFunctors;
 
-        std::unordered_map<ShapeTypePair,
-            bool(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
-            ShapeTypePairHash>
-            m_overlapFunctors;
+    std::unordered_map<ShapeTypePair,
+                       bool(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
+                       ShapeTypePairHash>
+    m_overlapFunctors;
 
-        std::unordered_map<ShapeTypePair,
-            glm::dvec3(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
-            ShapeTypePairHash>
-            m_calculateContactNormalFunctors;
+    std::unordered_map<ShapeTypePair,
+                       glm::dvec3(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
+                       ShapeTypePairHash>
+    m_calculateContactNormalFunctors;
 
-        std::unordered_map<ShapeTypePair,
-            double(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
-            ShapeTypePairHash>
-            m_calculatePenetrationFunctors;
+    std::unordered_map<ShapeTypePair,
+                       double(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
+                       ShapeTypePairHash>
+    m_calculatePenetrationFunctors;
 };
 } // namespace geometry
 } // namespace pegasus
