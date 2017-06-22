@@ -1,0 +1,60 @@
+branches:
+  except:
+    gh-pages
+
+env:
+  global:
+    - secure: AAAAB3NzaC1yc2EAAAADAQABAAABAQCdQ+U+WLfsTN96daLxK5OfxfOGKasyHs+pPlKPDKlFJ8u6jL5ZDNO53bGsI/mJehPv8TeYvDhskiAHFG5F21qbHJjy6qcqBWHihk2Wv6ODW5tikDQJ8RGYbzQvwdOKWoKZLd4PFPMcaUX3F5nx0aFCbf9ILHm58gNH0N9vimXMlFUXoG22YLyX37aE3uAG80BHSrnPDxW3YnCanxENoAeyAPiaV3sA4VNiy/vZ7PzfOmEUeBeDRI8fD7bwpt5J0FHjSfgfrqiZTBq4wcZtGVJcNvRmxttrhhJ5FDk5GG7UsNvwvo35Kl13tBf1jE1sEKZ3xokQU6yza9a1Km60Kton
+    - GH_REPO_NAME: Pegasus
+    - GH_REPO_REF: github.com/Godlike/Pegasus.git
+    - BUILD_DIR: build
+
+sudo: required
+os: linux
+dist: trusty
+language: cpp
+compiler: gcc
+
+matrix:
+  include:
+  - compiler: gcc
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-6
+    env: 
+    - COMPILER=g++-6
+  - compiler: clang
+    addons:
+      apt:
+        sources:
+        - libc++-dev  
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-precise-3.9
+        packages:
+        - clang-3.9
+    env: 
+    - COMPILER=clang++-3.9
+    - COMPILER_FLAGS=-stdlib=libc++
+
+git:
+  submodules: false
+
+before_install:
+- sudo apt-get -qq update
+- sudo apt-get install -y x11proto-input-dev libxmu-dev mesa-common-dev freeglut3-dev libx11-xcb-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+- git submodule update --init --recursive
+
+script:
+- cd $TRAVIS_BUILD_DIR
+- chmod +x travisBuildScript.sh
+- ./travisBuildScript.sh
+
+notifications:
+  email:
+    recipients:
+    - ilia.glushchenko@gmail.com
+    on_success: change
+    on_failure: always

@@ -18,11 +18,8 @@
 #include <glm/ext.hpp>
 
 #include <cassert>
-#include <cstring>
 #include <cmath>
 #include <cstdlib>
-#include <iostream>
-#include <iomanip>
 #include <sstream>
 #include <list>
 #include <random>
@@ -50,12 +47,12 @@ private:
     using RigidBodies     = std::list<pegasus::RigidBody>;
     using ForceGenerators = std::list<std::unique_ptr<pegasus::ParticleForceGenerator>>;
 
-    Particles particles;
-    RigidBodies rigidBodies;
-    ForceGenerators forces;
-    pegasus::ParticleForceRegistry forceRegistry;
-    pegasus::ParticleContactGenerators contactGenerators;
-    pegasus::ParticleWorld world;
+    Particles m_particles;
+    RigidBodies m_rigidBodies;
+    ForceGenerators m_forces;
+    pegasus::ParticleForceRegistry m_forceRegistry;
+    pegasus::ParticleContactGenerators m_contactGenerators;
+    pegasus::ParticleWorld m_world;
 
     double xAxis;
     double yAxis;
@@ -64,47 +61,47 @@ private:
     double yEye;
     double yRotationAngle;
     RigidBodies::iterator activeObject;
+
     std::unique_ptr<pegasus::geometry::volumes::aabb::AxisAlignedBoundingBox> axisAlignedBoundingBox;
-    std::unique_ptr<pegasus::geometry::volumes::obb::OrientedBoundingBox> orientedBoundingBox;
-    std::unique_ptr<pegasus::geometry::volumes::sphere::BoundingSphere> boundingSphere;
+    std::unique_ptr<pegasus::geometry::volumes::obb::OrientedBoundingBox>     orientedBoundingBox;
+    std::unique_ptr<pegasus::geometry::volumes::sphere::BoundingSphere>       boundingSphere;
     glm::dvec3 aabbTranslate;
     glm::dvec3 obbTranslate;
     glm::dvec3 boundingSphereTranslate;
     GLuint solidBunnyGlListIndex;
     GLuint wiredBunnyGlListIndex;
 
-    void addCube(glm::dvec3 const & pos, double boxSide);
-    void addBox(const glm::dvec3 & pos, const glm::dvec3 & i, const glm::dvec3 & j, const glm::dvec3 & k);
-    void addSphere(glm::dvec3 const & pos, double radius);
-    void addBoundingVolumes();
-    static void displayText(double x, double y, int r, int g, int b, void* vptr);
-    void sceneReset();
+    void AddCube(glm::dvec3 const& pos, double boxSide);
+    void AddBox(glm::dvec3 const& pos, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);
+    void AddSphere(glm::dvec3 const& pos, double radius);
+    void AddBoundingVolumes();
+    void SceneReset();
 };
 
 // Method definitions
 FallingDemo::FallingDemo()
-    : world(particles, forceRegistry, contactGenerators, TOTAL_COUNT * TOTAL_COUNT, 5000)
+    : m_world(m_particles, m_forceRegistry, m_contactGenerators, TOTAL_COUNT * TOTAL_COUNT, 5000)
     , xAxis(0)
     , yAxis(0)
     , zAxis(0)
     , zoom(5)
     , yEye(0)
     , yRotationAngle(0)
-    , activeObject(rigidBodies.begin())
+    , activeObject(m_rigidBodies.begin())
     , aabbTranslate(10, 0, 0)
     , obbTranslate(0, 0, 0)
     , boundingSphereTranslate(0, 0, 10)
 {
-    sceneReset();
+    SceneReset();
 }
 
-void FallingDemo::addCube(glm::dvec3 const & pos, double boxSide)
+void FallingDemo::AddCube(glm::dvec3 const& pos, double boxSide)
 {
-    particles.emplace_back();
-    particles.back().SetPosition(pos);
-    particles.back().SetInverseMass(0);
-    rigidBodies.emplace_back(
-        particles.back(),
+    m_particles.emplace_back();
+    m_particles.back().SetPosition(pos);
+    m_particles.back().SetInverseMass(0);
+    m_rigidBodies.emplace_back(
+        m_particles.back(),
         std::make_unique<pegasus::geometry::Box>(
             pos,
             glm::dvec3{ boxSide, 0, 0 },
@@ -113,29 +110,29 @@ void FallingDemo::addCube(glm::dvec3 const & pos, double boxSide)
     );
 }
 
-void FallingDemo::addBox(glm::dvec3 const & pos, glm::dvec3 const & i, glm::dvec3 const & j, glm::dvec3 const & k)
+void FallingDemo::AddBox(glm::dvec3 const& pos, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k)
 {
-    particles.emplace_back();
-    particles.back().SetPosition(pos);
-    particles.back().SetInverseMass(0);
-    rigidBodies.emplace_back(
-        particles.back(),
+    m_particles.emplace_back();
+    m_particles.back().SetPosition(pos);
+    m_particles.back().SetInverseMass(0);
+    m_rigidBodies.emplace_back(
+        m_particles.back(),
         std::make_unique<pegasus::geometry::Box>(pos, i, j, k)
     );
 }
 
-void FallingDemo::addSphere(glm::dvec3 const & pos, double radius)
+void FallingDemo::AddSphere(glm::dvec3 const& pos, double radius)
 {
-    particles.emplace_back();
-    particles.back().SetPosition(pos);
-    particles.back().SetInverseMass(0);
-    rigidBodies.emplace_back(
-        particles.back(),
+    m_particles.emplace_back();
+    m_particles.back().SetPosition(pos);
+    m_particles.back().SetInverseMass(0);
+    m_rigidBodies.emplace_back(
+        m_particles.back(),
         std::make_unique<pegasus::geometry::Sphere>(pos, radius)
     );
 }
 
-void FallingDemo::addBoundingVolumes()
+void FallingDemo::AddBoundingVolumes()
 {
     using namespace pegasus::geometry::volumes;
 
@@ -150,52 +147,37 @@ void FallingDemo::addBoundingVolumes()
     });
     Indices indices;
     for (size_t i = 0; i < faces.size(); ++i) indices.insert(i);
-
-    //Box Data
-    glm::dvec3 i{5.0, 0.0, 0.0};
-    glm::dvec3 j{0.0, 5.0, 0.0};
-    glm::dvec3 k{0.0, 0.0, 5.0};
-    Vertices boxVertices = { i + j + k, i - j + k, -i + j + k, -i - j + k,
-                             i + j - k, i - j - k, -i + j - k, -i - j - k };
-    Faces boxFaces = {{0, 1, 3}, {3, 2, 0},
-                      {4, 5, 7}, {7, 6, 4},
-                      {0, 1, 5}, {5, 4, 0},
-                      {2, 3, 7}, {7, 6, 2},
-                      {0, 2, 6}, {6, 4, 0},
-                      {1, 3, 7}, {7, 5, 1}};
-    Indices boxFaceIndices;
-    for (size_t index = 0; index < 12; ++index) boxFaceIndices.insert(index);
  
     //OBB
-    std::for_each(vertices.begin(), vertices.end(), [&](auto & v) {v += obbTranslate; });
+    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += obbTranslate; });
     orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
     auto obb = orientedBoundingBox->GetBox();
     glm::dmat3 obbAxes;
     obb.GetAxes(obbAxes[0], obbAxes[1], obbAxes[2]);
-    addBox(obb.getCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
+    AddBox(obb.getCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
 
     //AABB
-    std::for_each(vertices.begin(), vertices.end(), [&](auto & v) {v += aabbTranslate - obbTranslate; });
+    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += aabbTranslate - obbTranslate; });
     axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
     auto aabb = axisAlignedBoundingBox->GetBox();
     glm::dmat3 aabbAxes;
     aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
-    addBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]); 
+    AddBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]); 
 
     //BS
-    std::for_each(vertices.begin(), vertices.end(), [&](auto & v) {v += boundingSphereTranslate - aabbTranslate; });
+    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += boundingSphereTranslate - aabbTranslate; });
     boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
     auto sphere = boundingSphere->GetSphere();
-    addSphere(sphere.getCenterOfMass(), sphere.GetRadius());
+    AddSphere(sphere.getCenterOfMass(), sphere.GetRadius());
 }
 
-void FallingDemo::sceneReset()
+void FallingDemo::SceneReset()
 {
-    rigidBodies.clear();
-    forces.clear();
-    forceRegistry.Clear();
-    contactGenerators.clear();
-    particles.clear();
+    m_rigidBodies.clear();
+    m_forces.clear();
+    m_forceRegistry.Clear();
+    m_contactGenerators.clear();
+    m_particles.clear();
 
     double const boxSide  = 15.0;
     double const position = boxSide;
@@ -221,24 +203,24 @@ void FallingDemo::sceneReset()
         int row = index2d / edge;
         int col = index2d - row * edge;
 
-        particles.emplace_back();
-        particles.back().SetPosition(
+        m_particles.emplace_back();
+        m_particles.back().SetPosition(
             row * RADIUS * 2.3 + RADIUS - offset,
             planeIndex * RADIUS * 2.3 + boxSide * 3,
             col * RADIUS * 2.3 + RADIUS - offset
         );
-        particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
-        particles.back().SetDamping(1.0f);
+        m_particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
+        m_particles.back().SetDamping(1.0f);
     }
 
     //Create rigid bodies
-    for (auto & particle : particles)
+    for (auto& particle : m_particles)
     {
         bool const isBox = randDouble() > 0;
 
         if (isBox)
         {
-            rigidBodies.emplace_back(
+            m_rigidBodies.emplace_back(
                 particle,
                 std::make_unique<pegasus::geometry::Box>(
                     particle.GetPosition(),
@@ -249,7 +231,7 @@ void FallingDemo::sceneReset()
         }
         else
         {
-            rigidBodies.emplace_back(
+            m_rigidBodies.emplace_back(
                 particle,
                 std::make_unique<pegasus::geometry::Sphere>(particle.GetPosition(), double(randDouble() + 6) / 2)
             );
@@ -257,40 +239,40 @@ void FallingDemo::sceneReset()
     }
 
     //Create forces
-    forces.push_back(std::make_unique<pegasus::ParticleGravity>(glm::dvec3{ 0, -9.8, 0 }));
+    m_forces.push_back(std::make_unique<pegasus::ParticleGravity>(glm::dvec3{ 0, -9.8, 0 }));
 
     //Register forces
-    for (auto & particle : particles)
+    for (auto& particle : m_particles)
     {
-        forceRegistry.Add(particle, *forces.front());
+        m_forceRegistry.Add(particle, *m_forces.front());
     }
 
     //Create contact generators
-    for (auto & body : rigidBodies)
+    for (auto& body : m_rigidBodies)
     {
-        contactGenerators.push_back(
-            std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, rigidBodies, (randDouble() + 5) / 10));
+        m_contactGenerators.push_back(
+            std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, m_rigidBodies, (randDouble() + 5) / 10));
     }
 
     //Create plane particle and rigid body
-    particles.emplace_front();
-    particles.front().SetPosition({1, -position * 2, 0});
-    particles.front().SetInverseMass(0);
-    rigidBodies.emplace_front(
-        particles.front(),
+    m_particles.emplace_front();
+    m_particles.front().SetPosition({1, -position * 2, 0});
+    m_particles.front().SetInverseMass(0);
+    m_rigidBodies.emplace_front(
+        m_particles.front(),
         std::make_unique<pegasus::geometry::Plane>(
-           particles.front().GetPosition(), glm::normalize(glm::dvec3(0, 1.0, 0))
+           m_particles.front().GetPosition(), glm::normalize(glm::dvec3(0, 1.0, 0))
         )
     );
 
-    addSphere({  0, -position * 2, 0 }, boxSide);
-    addCube({  position * 2, position, 0 }, boxSide);
-    addCube({ -position * 2, position, 0 }, boxSide);
-    addCube({ 0, position, -position * 2 }, boxSide);
+    AddSphere({  0, -position * 2, 0 }, boxSide);
+    AddCube({  position * 2, position, 0 }, boxSide);
+    AddCube({ -position * 2, position, 0 }, boxSide);
+    AddCube({ 0, position, -position * 2 }, boxSide);
 
-    addBoundingVolumes();
+    AddBoundingVolumes();
 
-    activeObject = rigidBodies.end();
+    activeObject = m_rigidBodies.end();
     std::advance(activeObject, -1);
 }
 
@@ -327,7 +309,7 @@ void FallingDemo::Display()
     }
 
     //Add bodies
-    for (auto & body : rigidBodies)
+    for (auto& body : m_rigidBodies)
     {
         glPushMatrix();
         glRotated(yRotationAngle, 0, 1, 0);
@@ -335,7 +317,7 @@ void FallingDemo::Display()
 
         static int index = -1;
         index += 1;
-        index %= rigidBodies.size();
+        index %= m_rigidBodies.size();
 
         auto const& p = body.p.GetPosition();
         auto const& s = body.s->type;
@@ -377,7 +359,7 @@ void FallingDemo::Display()
                 glColor3d(0.18, 0.31, 0.31);
             }
 
-            for (auto const & v : quadVertices) {
+            for (auto const& v : quadVertices) {
                 glVertex3f(v.x, v.y, v.z);
             }
             glEnd();
@@ -413,9 +395,9 @@ void FallingDemo::Display()
             box->GetAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
 
             glTranslatef(p.x, p.y, p.z);
-            glm::dvec3 const & i = boxAxes[0];
-            glm::dvec3 const & j = boxAxes[1];
-            glm::dvec3 const & k = boxAxes[2];
+            glm::dvec3 const& i = boxAxes[0];
+            glm::dvec3 const& j = boxAxes[1];
+            glm::dvec3 const& k = boxAxes[2];
             std::array<glm::dvec3, 8> boxVertices = { i + j + k, i - j + k, -i + j + k, -i - j + k,
                                                       i + j - k, i - j - k, -i + j - k, -i - j - k };
             if (&*activeObject != &body)
@@ -518,7 +500,7 @@ void FallingDemo::Display()
 
 void FallingDemo::Update()
 {
-    world.StartFrame();
+    m_world.StartFrame();
 
     double duration = TimingData::Get().lastFrameDuration * 0.001;
     if (duration <= 0.0)
@@ -529,9 +511,9 @@ void FallingDemo::Update()
     zAxis *= pow(0.1, duration);
     activeObject->p.AddForce(glm::dvec3(xAxis * 10.0, yAxis * 20.0, zAxis * 10.0));
 
-    world.RunPhysics(0.01);
+    m_world.RunPhysics(0.01);
 
-    for (auto const& body : rigidBodies) {
+    for (auto const& body : m_rigidBodies) {
         body.s->setCenterOfMass(body.p.GetPosition());
     }
 
@@ -560,22 +542,6 @@ void FallingDemo::InitGraphics()
 const char* FallingDemo::GetTitle()
 {
     return "Pegasus Falling Demo";
-}
-
-void FallingDemo::displayText(double x, double y, int r, int g, int b, void* vptr)
-{
-    std::stringstream ss;
-    ss << "0x";
-    ss << std::setw(16) << std::setfill('0') << std::hex << reinterpret_cast<uintptr_t>(vptr);
-
-    std::string string (ss.str());
-
-    glColor3f( r, g, b );
-    glRasterPos2f( x, y );
-    for (auto & chr : string)
-    {
-        glutBitmapCharacter( GLUT_BITMAP_TIMES_ROMAN_24, chr );
-    }
 }
 
 void FallingDemo::Key(unsigned char key)
@@ -628,13 +594,13 @@ void FallingDemo::Key(unsigned char key)
         break;
     case '\t':
         ++activeObject;
-        if (rigidBodies.end() == activeObject)
+        if (m_rigidBodies.end() == activeObject)
         {
-            activeObject = rigidBodies.begin();
+            activeObject = m_rigidBodies.begin();
         }
         break;
     case ']':
-        sceneReset();
+        SceneReset();
         break;
     default:
         break;
