@@ -25,11 +25,15 @@
 #include <random>
 #include <utility>
 
-static const uint32_t BOX_COUNT    = static_cast<uint32_t>(std::pow(3, 3));
-static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
-static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
-static const double   RADIUS       = 5;
-static const bool     WIRED_ONLY   = true;
+static uint32_t const BOX_COUNT     = static_cast<uint32_t>(std::pow(3, 3));
+static uint32_t const SPHERE_COUNT  = static_cast<uint32_t>(std::pow(3, 3));
+static bool     const RANDOM_CHOICE = true;
+static uint32_t const TOTAL_COUNT   = BOX_COUNT+SPHERE_COUNT;
+static double   const RADIUS        = 5;
+static bool     const WIRED_ONLY    = true;
+static bool     const DRAW_CUBES    = true;
+static bool     const DRAW_PLANE    = true;
+static bool     const DRAW_BUNNY    = true;
 
 class FallingDemo : public Application {
 public:
@@ -71,11 +75,98 @@ private:
     GLuint solidBunnyGlListIndex;
     GLuint wiredBunnyGlListIndex;
 
-    void AddCube(glm::dvec3 const& pos, double boxSide);
-    void AddBox(glm::dvec3 const& pos, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);
-    void AddSphere(glm::dvec3 const& pos, double radius);
+    pegasus::Particle& AddParticle(glm::dvec3 const& pos);
+    pegasus::Particle& AddCube(glm::dvec3 const& pos, double boxSide);
+    pegasus::Particle& AddBox(glm::dvec3 const& pos, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);
+    pegasus::Particle& AddSphere(glm::dvec3 const& pos, double radius);
     void AddBoundingVolumes();
     void SceneReset();
+
+    template < typename VertexIt >    
+    void DrawSolidCude(VertexIt it)
+    {
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(*(it + 0)));
+        glVertex3dv(glm::value_ptr(*(it + 1)));
+        glVertex3dv(glm::value_ptr(*(it + 3)));
+        glVertex3dv(glm::value_ptr(*(it + 2)));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(*(it + 4)));
+        glVertex3dv(glm::value_ptr(*(it + 5)));
+        glVertex3dv(glm::value_ptr(*(it + 7)));
+        glVertex3dv(glm::value_ptr(*(it + 6)));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(*(it + 0)));
+        glVertex3dv(glm::value_ptr(*(it + 1)));
+        glVertex3dv(glm::value_ptr(*(it + 5)));
+        glVertex3dv(glm::value_ptr(*(it + 4)));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(*(it + 2)));
+        glVertex3dv(glm::value_ptr(*(it + 3)));
+        glVertex3dv(glm::value_ptr(*(it + 7)));
+        glVertex3dv(glm::value_ptr(*(it + 6)));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(*(it + 0)));
+        glVertex3dv(glm::value_ptr(*(it + 2)));
+        glVertex3dv(glm::value_ptr(*(it + 6)));
+        glVertex3dv(glm::value_ptr(*(it + 4)));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(*(it + 1)));
+        glVertex3dv(glm::value_ptr(*(it + 3)));
+        glVertex3dv(glm::value_ptr(*(it + 7)));
+        glVertex3dv(glm::value_ptr(*(it + 5)));
+        glEnd();
+    }
+
+    template < typename VertexIt >
+    void DrawWiredCube(VertexIt it)
+    {
+        glBegin(GL_LINES);
+        glVertex3dv(glm::value_ptr(*(it + 0)));
+        glVertex3dv(glm::value_ptr(*(it + 1)));
+        glVertex3dv(glm::value_ptr(*(it + 1)));
+        glVertex3dv(glm::value_ptr(*(it + 3)));
+        glVertex3dv(glm::value_ptr(*(it + 3)));
+        glVertex3dv(glm::value_ptr(*(it + 2)));
+        glVertex3dv(glm::value_ptr(*(it + 2)));
+        glVertex3dv(glm::value_ptr(*(it + 0)));
+        glEnd();
+        glBegin(GL_LINES);
+        glVertex3dv(glm::value_ptr(*(it + 4)));
+        glVertex3dv(glm::value_ptr(*(it + 5)));
+        glVertex3dv(glm::value_ptr(*(it + 5)));
+        glVertex3dv(glm::value_ptr(*(it + 7)));
+        glVertex3dv(glm::value_ptr(*(it + 7)));
+        glVertex3dv(glm::value_ptr(*(it + 6)));
+        glVertex3dv(glm::value_ptr(*(it + 6)));
+        glVertex3dv(glm::value_ptr(*(it + 4)));
+        glEnd();
+        glBegin(GL_LINES);
+        glVertex3dv(glm::value_ptr(*(it + 0)));
+        glVertex3dv(glm::value_ptr(*(it + 1)));
+        glVertex3dv(glm::value_ptr(*(it + 1)));
+        glVertex3dv(glm::value_ptr(*(it + 5)));
+        glVertex3dv(glm::value_ptr(*(it + 5)));
+        glVertex3dv(glm::value_ptr(*(it + 4)));
+        glVertex3dv(glm::value_ptr(*(it + 4)));
+        glVertex3dv(glm::value_ptr(*(it + 0)));
+        glEnd();
+        glBegin(GL_LINES);
+        glVertex3dv(glm::value_ptr(*(it + 2)));
+        glVertex3dv(glm::value_ptr(*(it + 3)));
+        glVertex3dv(glm::value_ptr(*(it + 3)));
+        glVertex3dv(glm::value_ptr(*(it + 7)));
+        glVertex3dv(glm::value_ptr(*(it + 7)));
+        glVertex3dv(glm::value_ptr(*(it + 6)));
+        glVertex3dv(glm::value_ptr(*(it + 6)));
+        glVertex3dv(glm::value_ptr(*(it + 2)));
+        glEnd();
+    }
 };
 
 // Method definitions
@@ -95,41 +186,47 @@ FallingDemo::FallingDemo()
     SceneReset();
 }
 
-void FallingDemo::AddCube(glm::dvec3 const& pos, double boxSide)
+pegasus::Particle& FallingDemo::AddParticle(glm::dvec3 const& pos)
 {
     m_particles.emplace_back();
     m_particles.back().SetPosition(pos);
     m_particles.back().SetInverseMass(0);
+
+    return m_particles.back();
+}
+
+pegasus::Particle& FallingDemo::AddCube(glm::dvec3 const& pos, double boxSide)
+{
     m_rigidBodies.emplace_back(
-        m_particles.back(),
+        AddParticle(pos),
         std::make_unique<pegasus::geometry::Box>(
             pos,
             glm::dvec3{ boxSide, 0, 0 },
             glm::dvec3{ 0, boxSide, 0 },
             glm::dvec3{ 0, 0, boxSide })
     );
+
+    return m_particles.back();
 }
 
-void FallingDemo::AddBox(glm::dvec3 const& pos, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k)
+pegasus::Particle& FallingDemo::AddBox(glm::dvec3 const& pos, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k)
 {
-    m_particles.emplace_back();
-    m_particles.back().SetPosition(pos);
-    m_particles.back().SetInverseMass(0);
     m_rigidBodies.emplace_back(
-        m_particles.back(),
+        AddParticle(pos),
         std::make_unique<pegasus::geometry::Box>(pos, i, j, k)
     );
+
+    return m_particles.back();
 }
 
-void FallingDemo::AddSphere(glm::dvec3 const& pos, double radius)
+pegasus::Particle& FallingDemo::AddSphere(glm::dvec3 const& pos, double radius)
 {
-    m_particles.emplace_back();
-    m_particles.back().SetPosition(pos);
-    m_particles.back().SetInverseMass(0);
     m_rigidBodies.emplace_back(
-        m_particles.back(),
+        AddParticle(pos),
         std::make_unique<pegasus::geometry::Sphere>(pos, radius)
     );
+
+    return m_particles.back();
 }
 
 void FallingDemo::AddBoundingVolumes()
@@ -182,16 +279,17 @@ void FallingDemo::SceneReset()
     double const boxSide  = 15.0;
     double const position = boxSide;
 
-    static auto randDouble = [](){
+    static auto randDouble = []() -> double
+    {
         static std::default_random_engine generator;
         static std::uniform_real_distribution<double> distribution(-5.0, 5.0);
         return distribution(generator);
     };
 
-    //Create particles
+    //Create Rigid Bodies
     for (uint32_t i = 0; i < TOTAL_COUNT; ++i)
     {
-        static auto curt = [](auto n) {
+        static auto curt = [](auto n) ->double {
             return std::pow(n, 0.34);
         };
         static const int edge  = curt(TOTAL_COUNT);
@@ -203,39 +301,17 @@ void FallingDemo::SceneReset()
         int row = index2d / edge;
         int col = index2d - row * edge;
 
-        m_particles.emplace_back();
-        m_particles.back().SetPosition(
-            row * RADIUS * 2.3 + RADIUS - offset,
-            planeIndex * RADIUS * 2.3 + boxSide * 3,
-            col * RADIUS * 2.3 + RADIUS - offset
-        );
-        m_particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
-        m_particles.back().SetDamping(1.0f);
-    }
+        glm::dvec3 const pos{ row * RADIUS * 2.3 + RADIUS - offset,
+                              planeIndex * RADIUS * 2.3 + boxSide * 3,
+                              col * RADIUS * 2.3 + RADIUS - offset };
 
-    //Create rigid bodies
-    for (auto& particle : m_particles)
-    {
-        bool const isBox = randDouble() > 0;
+        static uint32_t counter = 0;
+        bool const isBox = RANDOM_CHOICE ? (randDouble() > 0) : (counter++ < BOX_COUNT);
 
-        if (isBox)
-        {
-            m_rigidBodies.emplace_back(
-                particle,
-                std::make_unique<pegasus::geometry::Box>(
-                    particle.GetPosition(),
-                    glm::dvec3{ RADIUS, 0, 0 } * 0.5,
-                    glm::dvec3{ 0, RADIUS, 0 } * 0.5,
-                    glm::dvec3{ 0, 0, RADIUS } * 0.5)
-            );
-        }
-        else
-        {
-            m_rigidBodies.emplace_back(
-                particle,
-                std::make_unique<pegasus::geometry::Sphere>(particle.GetPosition(), double(randDouble() + 6) / 2)
-            );
-        }
+        pegasus::Particle& particle = isBox ? AddCube(pos, RADIUS / 2.0) : AddSphere(pos, (randDouble() + 6) / 2);
+        particle.SetMass(1.0);
+        particle.SetVelocity(randDouble(), randDouble() - 5, randDouble());
+        particle.SetDamping(1.0);
     }
 
     //Create forces
@@ -255,22 +331,31 @@ void FallingDemo::SceneReset()
     }
 
     //Create plane particle and rigid body
-    m_particles.emplace_front();
-    m_particles.front().SetPosition({1, -position * 2, 0});
-    m_particles.front().SetInverseMass(0);
-    m_rigidBodies.emplace_front(
-        m_particles.front(),
-        std::make_unique<pegasus::geometry::Plane>(
-           m_particles.front().GetPosition(), glm::normalize(glm::dvec3(0, 1.0, 0))
-        )
-    );
+    if (DRAW_PLANE)
+    {
+        m_particles.emplace_front();
+        m_particles.front().SetPosition({1, -position * 2, 0});
+        m_particles.front().SetInverseMass(0);
+        m_rigidBodies.emplace_front(
+            m_particles.front(),
+            std::make_unique<pegasus::geometry::Plane>(
+               m_particles.front().GetPosition(), glm::normalize(glm::dvec3(0, 1.0, 0))
+            )
+        );
+    }
 
-    AddSphere({  0, -position * 2, 0 }, boxSide);
-    AddCube({  position * 2, position, 0 }, boxSide);
-    AddCube({ -position * 2, position, 0 }, boxSide);
-    AddCube({ 0, position, -position * 2 }, boxSide);
+    if (DRAW_CUBES)
+    {
+        AddSphere({  0, -position * 2, 0 }, boxSide);
+        AddCube({  position * 2, position, 0 }, boxSide);
+        AddCube({ -position * 2, position, 0 }, boxSide);
+        AddCube({ 0, position, -position * 2 }, boxSide);
+    }
 
-    AddBoundingVolumes();
+    if (DRAW_BUNNY)
+    {
+        AddBoundingVolumes();
+    }
 
     activeObject = m_rigidBodies.end();
     std::advance(activeObject, -1);
@@ -283,8 +368,9 @@ void FallingDemo::Display()
     glLoadIdentity();
 
     auto const& pos = activeObject->p.GetPosition();
-    gluLookAt(pos.x * zoom , pos.y + 30 * zoom + yEye, pos.z + 30 * zoom , pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
+    gluLookAt(pos.x, pos.y + 30 * zoom + yEye, pos.z + 30 * zoom , pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
 
+    if (DRAW_BUNNY) 
     {
         glPushMatrix();
         glRotated(yRotationAngle, 0, 1, 0);
@@ -411,88 +497,14 @@ void FallingDemo::Display()
 
             //Draw solid Cube
             if (!WIRED_ONLY) {
-                glBegin(GL_QUADS);
-                glVertex3dv(glm::value_ptr(boxVertices[0]));
-                glVertex3dv(glm::value_ptr(boxVertices[1]));
-                glVertex3dv(glm::value_ptr(boxVertices[3]));
-                glVertex3dv(glm::value_ptr(boxVertices[2]));
-                glEnd();
-                glBegin(GL_QUADS);
-                glVertex3dv(glm::value_ptr(boxVertices[4]));
-                glVertex3dv(glm::value_ptr(boxVertices[5]));
-                glVertex3dv(glm::value_ptr(boxVertices[7]));
-                glVertex3dv(glm::value_ptr(boxVertices[6]));
-                glEnd();
-                glBegin(GL_QUADS);
-                glVertex3dv(glm::value_ptr(boxVertices[0]));
-                glVertex3dv(glm::value_ptr(boxVertices[1]));
-                glVertex3dv(glm::value_ptr(boxVertices[5]));
-                glVertex3dv(glm::value_ptr(boxVertices[4]));
-                glEnd();
-                glBegin(GL_QUADS);
-                glVertex3dv(glm::value_ptr(boxVertices[2]));
-                glVertex3dv(glm::value_ptr(boxVertices[3]));
-                glVertex3dv(glm::value_ptr(boxVertices[7]));
-                glVertex3dv(glm::value_ptr(boxVertices[6]));
-                glEnd();
-                glBegin(GL_QUADS);
-                glVertex3dv(glm::value_ptr(boxVertices[0]));
-                glVertex3dv(glm::value_ptr(boxVertices[2]));
-                glVertex3dv(glm::value_ptr(boxVertices[6]));
-                glVertex3dv(glm::value_ptr(boxVertices[4]));
-                glEnd();
-                glBegin(GL_QUADS);
-                glVertex3dv(glm::value_ptr(boxVertices[1]));
-                glVertex3dv(glm::value_ptr(boxVertices[3]));
-                glVertex3dv(glm::value_ptr(boxVertices[7]));
-                glVertex3dv(glm::value_ptr(boxVertices[5]));
-                glEnd();
+                DrawSolidCude(boxVertices.begin());
             }
 
             //Draw wired Cube
             if (&*activeObject != &body && !WIRED_ONLY) {
                 glColor3f(1.0f, 0.0, 0.0);
             }
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glEnd();
+            DrawWiredCube(boxVertices.begin());
         }
         glPopMatrix();
     }
