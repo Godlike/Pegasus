@@ -44,5 +44,5 @@ groups:
           - '*.c'
           - '*.hpp'
           - '*.h'
-
-
+          - '*.cmake'
+          - 'CMakeLists.txt'

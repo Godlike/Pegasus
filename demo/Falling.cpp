@@ -188,7 +188,7 @@ void FallingDemo::SceneReset()
         return distribution(generator);
     };
 
-    //Create m_particles
+    //Create particles
     for (uint32_t i = 0; i < TOTAL_COUNT; ++i)
     {
         static auto curt = [](auto n) {
@@ -238,10 +238,10 @@ void FallingDemo::SceneReset()
         }
     }
 
-    //Create m_forces
+    //Create forces
     m_forces.push_back(std::make_unique<pegasus::ParticleGravity>(glm::dvec3{ 0, -9.8, 0 }));
 
-    //Register m_forces
+    //Register forces
     for (auto& particle : m_particles)
     {
         m_forceRegistry.Add(particle, *m_forces.front());
@@ -350,7 +350,7 @@ void FallingDemo::Display()
             };
 
             glBegin(GL_QUADS);
-            if (&*activeObject !=&body)
+            if (&*activeObject != &body)
             {
                 glColor3d(red, green, blue);
             }
@@ -370,7 +370,7 @@ void FallingDemo::Display()
             double const r = sphere->GetRadius();
             glTranslatef(p.x, p.y, p.z);
 
-            if (&*activeObject !=&body)
+            if (&*activeObject != &body)
             {
                 glColor3f(red, green, blue);
             }
@@ -383,7 +383,7 @@ void FallingDemo::Display()
                 glutSolidSphere(r, 20, 20);
             } 
 
-            if (&*activeObject !=&body&& !WIRED_ONLY) {
+            if (&*activeObject != &body && !WIRED_ONLY) {
                 glColor3f(1.0f, 0.0, 0.0);
             }
             glutWireSphere(r + 0.001, 20, 20);
@@ -400,7 +400,7 @@ void FallingDemo::Display()
             glm::dvec3 const& k = boxAxes[2];
             std::array<glm::dvec3, 8> boxVertices = { i + j + k, i - j + k, -i + j + k, -i - j + k,
                                                       i + j - k, i - j - k, -i + j - k, -i - j - k };
-            if (&*activeObject !=&body)
+            if (&*activeObject != &body)
             {
                 glColor3f(red, green, blue);
             }
@@ -450,7 +450,7 @@ void FallingDemo::Display()
             }
 
             //Draw wired Cube
-            if (&*activeObject !=&body&& !WIRED_ONLY) {
+            if (&*activeObject != &body && !WIRED_ONLY) {
                 glColor3f(1.0f, 0.0, 0.0);
             }
             glBegin(GL_LINES);
