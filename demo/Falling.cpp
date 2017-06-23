@@ -25,8 +25,8 @@
 #include <random>
 #include <utility>
 
-static uint32_t const BOX_COUNT = 2;//static_cast<uint32_t>(std::pow(3, 3));
-static uint32_t const SPHERE_COUNT = 0;//static_cast<uint32_t>(std::pow(3, 3));
+static uint32_t const BOX_COUNT    = 2; //static_cast<uint32_t>(std::pow(3, 3));
+static uint32_t const SPHERE_COUNT = 0; //static_cast<uint32_t>(std::pow(3, 3));
 static bool const RANDOM_CHOICE = false;
 static uint32_t const TOTAL_COUNT = BOX_COUNT + SPHERE_COUNT;
 static double const RADIUS = 5;
@@ -34,7 +34,6 @@ static bool const WIRED_ONLY = false;
 static bool const DRAW_CUBES = false;
 static bool const DRAW_BUNNY = false;
 static bool const DRAW_PLANE = true;
-
 
 class FallingDemo : public Application
 {
@@ -310,12 +309,26 @@ void FallingDemo::SceneReset()
 
         bool const isBox = RANDOM_CHOICE ? (randDouble() > 0) : (i < BOX_COUNT);
 
-        pegasus::Particle& particle = isBox
-                                          ? AddBox(pos, {randDouble(), 0 , 0}, {0, randDouble(), 0}, {0, 0, randDouble()})
-                                          : AddSphere(pos, (randDouble() + 6) / 2);
-        particle.SetMass(1.0);
-        particle.SetVelocity(randDouble(), randDouble() - 5, randDouble());
-        particle.SetDamping(1.0);
+
+        //pegasus::Particle& particle = isBox
+        //                                  ? AddBox(pos, {randDouble(), 0 , 0}, {0, randDouble(), 0}, {0, 0, randDouble()})
+        //                                  : AddSphere(pos, (randDouble() + 6) / 2);
+
+        pegasus::Particle* particle = nullptr;
+        if (i == 0)
+        {
+            particle = &AddBox(pos, {10, 0, 0}, {0, 1, 0}, {0, 0, 1});
+        }
+        else
+        {
+            particle = &AddBox(pos, {0, 1, 0}, {0, 0, 1}, {10, 0, 0});
+        }
+
+        //particle->SetMass(1.0);
+        //particle->SetVelocity(randDouble(), randDouble() - 5, randDouble());
+        //particle->SetDamping(1.0);
+
+        particle->SetMass(1.0);
     }
 
     //Create forces
@@ -330,15 +343,19 @@ void FallingDemo::SceneReset()
     //Create contact generators
     for (auto& body : m_rigidBodies)
     {
+        //m_contactGenerators.push_back(
+        //    std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, m_rigidBodies, (randDouble() + 5) / 10));
+
         m_contactGenerators.push_back(
-            std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, m_rigidBodies, (randDouble() + 5) / 10));
+            std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, m_rigidBodies, 0.1));
     }
 
     //Create plane particle and rigid body
     if (DRAW_PLANE)
     {
         m_particles.emplace_front();
-        m_particles.front().SetPosition({1, -position * 2, 0});
+        //m_particles.front().SetPosition({1, -position * 2, 0});
+        m_particles.front().SetPosition({1, 0, 0});
         m_particles.front().SetInverseMass(0);
         m_rigidBodies.emplace_front(
             m_particles.front(),

@@ -678,8 +678,8 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Cac
 
     cache->aMassCenter = aBox->getCenterOfMass();
     aBox->GetAxes(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2]);
-    cache->aBoxAxes = {cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2],
-        cache->aBoxAxes[0] * -1.0, cache->aBoxAxes[1] * -1.0, cache->aBoxAxes[2] * -1.0};
+    cache->aBoxAxes = { cache->aBoxAxes[0],  cache->aBoxAxes[1],  cache->aBoxAxes[2],
+                       -cache->aBoxAxes[0], -cache->aBoxAxes[1], -cache->aBoxAxes[2] };
     CalculateBoxVertices(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2], cache->aBoxVertices.begin());
     std::for_each(cache->aBoxVertices.begin(), cache->aBoxVertices.end(), [cache](auto& v) { v += cache->aMassCenter; });
     std::transform(cache->aBoxAxes.begin(), cache->aBoxAxes.end(), cache->aBoxFaces.begin(),
@@ -687,8 +687,8 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Cac
 
     cache->bMassCenter = bBox->getCenterOfMass();
     bBox->GetAxes(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2]);
-    cache->bBoxAxes = {cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2],
-        cache->bBoxAxes[0] * -1.0, cache->bBoxAxes[1] * -1.0, cache->bBoxAxes[2] * -1.0};
+    cache->bBoxAxes = { cache->bBoxAxes[0],  cache->bBoxAxes[1],  cache->bBoxAxes[2],
+                       -cache->bBoxAxes[0], -cache->bBoxAxes[1], -cache->bBoxAxes[2] };
     CalculateBoxVertices(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2], cache->bBoxVertices.begin());
     std::for_each(cache->bBoxVertices.begin(), cache->bBoxVertices.end(), [cache](auto& v) { v += cache->bMassCenter; });
     std::transform(cache->bBoxAxes.begin(), cache->bBoxAxes.end(), cache->bBoxFaces.begin(),
