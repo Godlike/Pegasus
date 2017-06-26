@@ -738,16 +738,40 @@ template <>
 inline glm::dvec3 CalculateContactNormal<Box, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
-
-    std::array<double, 6> distances;
-    for (uint32_t i = 0; i < distances.size(); ++i)
+    
+    for (glm::dvec3 & face : cache->aBoxFaces)
     {
-        distances[i] = glm::length(cache->aMassCenter - cache->bBoxFaces[i]);
+        face -= cache->bMassCenter;
     }
 
-    auto const minIt = std::min_element(distances.begin(), distances.end());
-    auto const minIndex = std::distance(distances.begin(), minIt);
-    cache->contactNormal = glm::normalize(cache->bBoxAxes[minIndex]);
+    double minPenetration = std::numeric_limits<double>::max();
+    uint8_t minPenetrationIndex = 0;
+    for (uint8_t i = 0; i < 6; ++i)
+    {
+        ProjectAllVertices(glm::normalize(cache->bBoxAxes[i]), 
+            cache->aBoxFaces.begin(), cache->aBoxFaces.end(), cache->aBoxFaceDistances.begin());
+
+        double const axisNorm = glm::length(cache->bBoxAxes[i]);
+        double maxPenetration = std::numeric_limits<double>::max();
+        
+        for (double faceProjection : cache->aBoxFaceDistances)
+        {
+            double const penetration = axisNorm - faceProjection;
+            
+            if (penetration > maxPenetration)
+            {
+                maxPenetration = penetration;
+            }
+        }
+
+         if (maxPenetration > 0)
+         {
+             minPenetration = maxPenetration;
+             minPenetrationIndex = i;
+         }
+    }
+
+    cache->contactNormal = glm::normalize(cache->bBoxAxes[minPenetrationIndex]);
 
     return cache->contactNormal;
 }

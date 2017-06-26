@@ -177,7 +177,7 @@ FallingDemo::FallingDemo()
     , xAxis(0)
     , yAxis(0)
     , zAxis(0)
-    , zoom(5)
+    , zoom(1)
     , yEye(0)
     , yRotationAngle(0)
     , activeObject(m_rigidBodies.begin())
@@ -317,11 +317,11 @@ void FallingDemo::SceneReset()
         pegasus::Particle* particle = nullptr;
         if (i == 0)
         {
-            particle = &AddBox(pos, {10, 0, 0}, {0, 1, 0}, {0, 0, 1});
+            particle = &AddBox(pos, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 10 });
         }
         else
         {
-            particle = &AddBox(pos, {0, 1, 0}, {0, 0, 1}, {10, 0, 0});
+            particle = &AddBox(pos + glm::dvec3{ 9.5, 0, 0 }, { 10, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 });
         }
 
         //particle->SetMass(1.0);
