@@ -36,6 +36,21 @@ private:
     void Calculate();
 };
 
+//! @brief Plane representation as an equation: dot(normal, x) + p = 0
+struct Plane
+{
+    const glm::dvec3 normal;
+    const double p;
+
+    //! @brief Construct plane representation in Hessian normal form
+    Plane(glm::dvec3 const& _normal, double _p);
+
+    //! @brief Construct plane representation in Hessian normal form
+    //! from some normal and some point on the plane
+    Plane(glm::dvec3 const& pointOnPlane, glm::dvec3 const& planeNormal);
+};
+
+double planePointDistance(Plane const& plane, glm::dvec3 const& point);
 } // namespace math
 } // namespace pegasus 
 

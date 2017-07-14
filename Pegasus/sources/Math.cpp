@@ -93,3 +93,18 @@ void pegasus::math::JacobiEigenvalue::Calculate()
     m_eigenvalues = { D[0][0], D[1][1], D[2][2] };
     m_eigenvectors = S;
 }
+
+pegasus::math::Plane::Plane(glm::dvec3 const& _normal, double _p)
+    : normal(glm::normalize(_normal)), p(-_p / glm::length(_normal))
+{}
+
+pegasus::math::Plane::Plane(glm::dvec3 const& pointOnPlane,
+                            glm::dvec3 const& planeNormal)
+    : Plane(planeNormal, glm::dot(pointOnPlane, planeNormal))
+{}
+
+double pegasus::math::planePointDistance(pegasus::math::Plane const& plane,
+                                         glm::dvec3 const& point)
+{
+    return glm::dot(plane.normal, point) + plane.p;
+}
