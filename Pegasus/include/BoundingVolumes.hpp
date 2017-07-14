@@ -25,10 +25,10 @@ using Faces    = std::vector<Face>;
 
 struct Shape
 {
-    Shape(volumes::Vertices const& vertices, volumes::Faces const& indices);
+    Shape(volumes::Vertices const& vertices, volumes::Faces const& faces);
 
     Vertices const& vertices;
-    Faces const& indices;
+    Faces const& faces;
 };
 
 glm::dvec3 CalculateMeanVertex(
