@@ -8,6 +8,8 @@
 #ifndef PEGASUS_MATH_HPP
 #define PEGASUS_MATH_HPP
 
+#include <initializer_list>
+
 #include <glm/glm.hpp>
 
 namespace pegasus
@@ -37,10 +39,11 @@ private:
 };
 
 //! @brief Plane representation as an equation: dot(normal, x) + p = 0
-struct Plane
+class Plane
 {
-    const glm::dvec3 normal;
-    const double p;
+public:
+    glm::dvec3 const normal;
+    double const p;
 
     //! @brief Construct plane representation in Hessian normal form
     Plane(glm::dvec3 const& _normal, double _p);
@@ -48,9 +51,12 @@ struct Plane
     //! @brief Construct plane representation in Hessian normal form
     //! from some normal and some point on the plane
     Plane(glm::dvec3 const& pointOnPlane, glm::dvec3 const& planeNormal);
+
+    double distanceToPoint(glm::dvec3 const& point) const;
 };
 
-double planePointDistance(Plane const& plane, glm::dvec3 const& point);
+glm::dvec3 calculateCentroid(std::initializer_list<glm::dvec3> vectors);
+
 } // namespace math
 } // namespace pegasus 
 

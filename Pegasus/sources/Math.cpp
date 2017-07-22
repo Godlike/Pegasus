@@ -103,8 +103,18 @@ pegasus::math::Plane::Plane(glm::dvec3 const& pointOnPlane,
     : Plane(planeNormal, glm::dot(pointOnPlane, planeNormal))
 {}
 
-double pegasus::math::planePointDistance(pegasus::math::Plane const& plane,
-                                         glm::dvec3 const& point)
+double pegasus::math::Plane::distanceToPoint(glm::dvec3 const& point) const
 {
-    return glm::dot(plane.normal, point) + plane.p;
+    return glm::dot(normal, point) + p;
+}
+
+glm::dvec3 pegasus::math::calculateCentroid(std::initializer_list<glm::dvec3> vectors)
+{
+    glm::dvec3 result(0, 0, 0);
+    for (glm::dvec3 vector : vectors)
+    {
+        result += vector;
+    }
+    result /= vectors.size();
+    return result;
 }
