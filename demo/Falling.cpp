@@ -138,7 +138,9 @@ void FallingDemo::AddBoundingVolumes()
 
     //Bunny Data
     Vertices vertices;
-    std::transform(bunnyVertices, bunnyVertices+kCount, std::back_inserter(vertices),
+    std::size_t verticeCount = sizeof(bunnyVertices) / sizeof(bunnyVertices[0]);
+    std::transform(bunnyVertices, bunnyVertices + sizeof(bunnyVertices) / (3 * sizeof(float)),
+                   std::back_inserter(vertices),
                    [](GLfloat v[3]) -> glm::dvec3{ return glm::dvec3(v[0], v[1], v[2]); });
     Faces faces;
     std::transform(bunnyFaceIndicies, bunnyFaceIndicies+kCount, std::back_inserter(faces),
@@ -334,7 +336,7 @@ void FallingDemo::Display()
 
             glm::dvec3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
             glm::dvec3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetNormal();
-            glm::dvec3 const posNormalProjection = planeNormal * (p0 * planeNormal);
+            glm::dvec3 const posNormalProjection = planeNormal * (glm::dot(p0, planeNormal));
             glm::dvec3 p1 = p0 + (posNormalProjection - p0) * 2.0;
 
             if (p1.x < p0.x) { std::swap(p0.x, p1.x); }
