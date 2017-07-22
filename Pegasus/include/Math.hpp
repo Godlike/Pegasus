@@ -8,6 +8,8 @@
 #ifndef PEGASUS_MATH_HPP
 #define PEGASUS_MATH_HPP
 
+#include <initializer_list>
+
 #include <glm/glm.hpp>
 
 namespace pegasus
@@ -35,6 +37,25 @@ private:
     static glm::dmat3 MakeGivensRotationMatrix(double theta, uint8_t i, uint8_t j);
     void Calculate();
 };
+
+//! @brief Plane representation as an equation: dot(normal, x) + p = 0
+class Plane
+{
+public:
+    glm::dvec3 const normal;
+    double const p;
+
+    //! @brief Construct plane representation in Hessian normal form
+    Plane(glm::dvec3 const& _normal, double _p);
+
+    //! @brief Construct plane representation in Hessian normal form
+    //! from some normal and some point on the plane
+    Plane(glm::dvec3 const& pointOnPlane, glm::dvec3 const& planeNormal);
+
+    double distanceToPoint(glm::dvec3 const& point) const;
+};
+
+glm::dvec3 calculateCentroid(std::initializer_list<glm::dvec3> vectors);
 
 } // namespace math
 } // namespace pegasus 

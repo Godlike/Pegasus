@@ -74,6 +74,7 @@ private:
     void AddCube(glm::dvec3 const& pos, double boxSide);
     void AddBox(glm::dvec3 const& pos, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);
     void AddSphere(glm::dvec3 const& pos, double radius);
+    void AddPlane(glm::dvec3 const& pos, glm::dvec3 const& normal);
     void AddBoundingVolumes();
     void SceneReset();
 };
@@ -132,13 +133,26 @@ void FallingDemo::AddSphere(glm::dvec3 const& pos, double radius)
     );
 }
 
+void FallingDemo::AddPlane(glm::dvec3 const& pos, glm::dvec3 const& normal)
+{
+    m_particles.emplace_back();
+    m_particles.back().SetPosition(pos);
+    m_particles.back().SetInverseMass(0);
+    m_rigidBodies.emplace_back(
+        m_particles.back(),
+        std::make_unique<pegasus::geometry::Plane>(pos, normal)
+    );
+}
+
 void FallingDemo::AddBoundingVolumes()
 {
     using namespace pegasus::geometry::volumes;
 
     //Bunny Data
     Vertices vertices;
-    std::transform(bunnyVertices, bunnyVertices+kCount, std::back_inserter(vertices),
+    std::size_t verticeCount = sizeof(bunnyVertices) / sizeof(bunnyVertices[0]);
+    std::transform(bunnyVertices, bunnyVertices + sizeof(bunnyVertices) / (3 * sizeof(float)),
+                   std::back_inserter(vertices),
                    [](GLfloat v[3]) -> glm::dvec3{ return glm::dvec3(v[0], v[1], v[2]); });
     Faces faces;
     std::transform(bunnyFaceIndicies, bunnyFaceIndicies+kCount, std::back_inserter(faces),
@@ -169,6 +183,29 @@ void FallingDemo::AddBoundingVolumes()
     boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
     auto sphere = boundingSphere->GetSphere();
     AddSphere(sphere.getCenterOfMass(), sphere.GetRadius());
+
+    Shape bunnyShape {vertices, faces};
+
+    hierarchy::BoundingVolumeHierarchy<obb::OrientedBoundingBox> bvh(bunnyShape, indices);
+    glm::dvec3 min(0, 0, 0), max(0, 0, 0);
+    bvh.MaximumDistanceVectorApprox(min, max);
+    AddSphere(min, 0.1);
+    AddSphere(max, 0.1);
+    pegasus::math::Plane minPlane(min, max - min);
+    pegasus::math::Plane maxPlane(max, max - min);
+    glm::dvec3 median = bvh.getMedianCut(minPlane);
+    AddSphere(median, 0.1);
+    pegasus::math::Plane medianPlane(median, max - min);
+
+    glm::dvec3 minProj = glm::dot(min, minPlane.normal) * minPlane.normal;
+    glm::dvec3 maxProj = glm::dot(max, maxPlane.normal) * maxPlane.normal;
+    glm::dvec3 medianProj = glm::dot(median, medianPlane.normal) * medianPlane.normal;
+
+    AddPlane(minProj, minPlane.normal);
+    AddPlane(maxProj, maxPlane.normal);
+    AddPlane(medianProj, medianPlane.normal);
+//    AddPlane(min, minPlane.normal);
+//    AddPlane(max, maxPlane.normal);
 }
 
 void FallingDemo::SceneReset()
@@ -334,7 +371,7 @@ void FallingDemo::Display()
 
             glm::dvec3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
             glm::dvec3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetNormal();
-            glm::dvec3 const posNormalProjection = planeNormal * (p0 * planeNormal);
+            glm::dvec3 const posNormalProjection = planeNormal * (glm::dot(p0, planeNormal));
             glm::dvec3 p1 = p0 + (posNormalProjection - p0) * 2.0;
 
             if (p1.x < p0.x) { std::swap(p0.x, p1.x); }

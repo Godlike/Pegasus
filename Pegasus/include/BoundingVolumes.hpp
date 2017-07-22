@@ -7,10 +7,16 @@
 #define PEGASUS_BOUNDING_VOLUMES_HPP
 
 #include "Pegasus/include/Geometry.hpp"
+#include "Pegasus/include/Math.hpp"
 
 #include <vector>
 #include <set>
 #include <array>
+#include <algorithm>
+#include <random>
+#include <unordered_map>
+#include <iostream>
+#include <Pegasus/third_party/glm/glm/ext.hpp>
 
 namespace pegasus
 {
@@ -25,10 +31,10 @@ using Faces    = std::vector<Face>;
 
 struct Shape
 {
-    Shape(volumes::Vertices const& vertices, volumes::Faces const& indices);
+    Shape(volumes::Vertices const& vertices, volumes::Faces const& faces);
 
     Vertices const& vertices;
-    Faces const& indices;
+    Faces const& faces;
 };
 
 glm::dvec3 CalculateMeanVertex(
@@ -133,6 +139,123 @@ private:
     );
 };
 } // namespace sphere
+
+namespace hierarchy
+{
+template <typename BoundingVolume>
+class BoundingVolumeHierarchy
+{
+public:
+    BoundingVolumeHierarchy(Shape const& shape, Indices const& indices)
+        : m_shape(shape)
+        , m_indices(indices)
+    {
+    }
+
+public:
+    Shape const& m_shape;
+    Indices const& m_indices;
+
+    void MaximumDistanceVectorApprox(glm::dvec3& min, glm::dvec3& max)
+    {
+        std::size_t minx = 0, maxx = 0, miny = 0, maxy = 0, minz = 0, maxz = 0;
+        for (std::size_t faceIndex : m_indices)
+        {
+            for (std::size_t vertIndex : m_shape.faces[faceIndex])
+            {
+                if (m_shape.vertices[vertIndex][0] < m_shape.vertices[minx][0]) minx = vertIndex;
+                if (m_shape.vertices[vertIndex][0] > m_shape.vertices[maxx][0]) maxx = vertIndex;
+                if (m_shape.vertices[vertIndex][1] < m_shape.vertices[miny][1]) miny = vertIndex;
+                if (m_shape.vertices[vertIndex][1] > m_shape.vertices[maxy][1]) maxy = vertIndex;
+                if (m_shape.vertices[vertIndex][2] < m_shape.vertices[minz][2]) minz = vertIndex;
+                if (m_shape.vertices[vertIndex][2] > m_shape.vertices[maxz][2]) maxz = vertIndex;
+            }
+        }
+
+        min = m_shape.vertices[minz];
+        max = m_shape.vertices[maxz];
+
+        double dist2x = glm::distance2(m_shape.vertices[minx], m_shape.vertices[maxx]);
+        double dist2y = glm::distance2(m_shape.vertices[miny], m_shape.vertices[maxy]);
+        double dist2z = glm::distance2(m_shape.vertices[minz], m_shape.vertices[maxz]);
+
+        if (dist2y > dist2x && dist2y > dist2z)
+        {
+            min = m_shape.vertices[miny];
+            max = m_shape.vertices[maxy];
+        }
+        if (dist2z > dist2y && dist2z > dist2x)
+        {
+            min = m_shape.vertices[minz];
+            max = m_shape.vertices[maxz];
+        }
+    }
+
+    glm::dvec3 getMedianCut(pegasus::math::Plane const& minPlane)
+    {
+        std::vector<std::size_t> indicesArr(m_indices.begin(), m_indices.end());
+        std::unordered_map<std::size_t, double> distances;
+
+        for (std::size_t index : indicesArr)
+        {
+            Face const& currFace = m_shape.faces[index];
+            glm::dvec3 centroid = pegasus::math::calculateCentroid(
+                { m_shape.vertices[currFace[0]],
+                  m_shape.vertices[currFace[1]],
+                  m_shape.vertices[currFace[2]] });
+            distances[index] = minPlane.distanceToPoint(centroid);
+        }
+
+        std::size_t middleIndex = indicesArr.size() / 2;
+        std::size_t left = 0, right = indicesArr.size();
+        std::random_device(rd);
+        std::mt19937 rng(rd());
+        while (true)
+        {
+            if (right - left <= 1)
+            {
+                break;
+            }
+
+            std::uniform_int_distribution<std::size_t> distr(left, right);
+            std::size_t pivot = distr(rng);
+            std::size_t pivotValue = indicesArr[pivot];
+
+            // partition the vector
+            std::iter_swap(indicesArr.begin() + pivot, indicesArr.begin() + right - 1);
+            std::size_t pivotIndex = left;
+            for (std::size_t i = left + 1; i < right - 1; ++i)
+            {
+                if (distances[indicesArr[i]] < distances[pivotValue])
+                {
+                    std::iter_swap(indicesArr.begin() + i, indicesArr.begin() + pivotIndex);
+                    ++pivotIndex;
+                }
+            }
+            std::iter_swap(indicesArr.begin() + right - 1, indicesArr.begin() + pivotIndex);
+
+            if (middleIndex == pivotIndex)
+            {
+                break;
+            }
+            if (middleIndex < pivotIndex)
+            {
+                right = pivotIndex;
+            }
+            else
+            {
+                left = pivotIndex + 1;
+            }
+        }
+
+        Face const& midFace = m_shape.faces[indicesArr[middleIndex]];
+        return pegasus::math::calculateCentroid(
+            { m_shape.vertices[midFace[0]],
+              m_shape.vertices[midFace[1]],
+              m_shape.vertices[midFace[2]] });
+    }
+};
+} // namespace hierarchy
 } // namespace volumes
 } // namespace geometry
 } // namespace pegasus
