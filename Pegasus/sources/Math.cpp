@@ -7,7 +7,7 @@
 */
 #include "Pegasus/include/Math.hpp"
 
-#include <glm/gtc/constants.inl>
+#include <glm/ext.hpp>
 #include <array>
 
 pegasus::math::JacobiEigenvalue::JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold, uint32_t maxIterations)
@@ -92,4 +92,20 @@ void pegasus::math::JacobiEigenvalue::Calculate()
 
     m_eigenvalues = { D[0][0], D[1][1], D[2][2] };
     m_eigenvectors = S;
+}
+
+glm::dvec3 pegasus::math::CalculateCentroid(std::initializer_list<glm::dvec3> vectors)
+{
+    glm::dvec3 result(0, 0, 0);
+    for (glm::dvec3 vector : vectors)
+    {
+        result += vector;
+    }
+    result /= vectors.size();
+    return result;
+}
+
+glm::dvec3 pegasus::math::GetScalarProjection(glm::dvec3 const& toProject, glm::dvec3 const& projectOnto)
+{
+    return glm::dot(toProject, projectOnto) / glm::pow(glm::length(projectOnto), 2) * projectOnto;
 }

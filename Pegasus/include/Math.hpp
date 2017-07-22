@@ -8,7 +8,9 @@
 #ifndef PEGASUS_MATH_HPP
 #define PEGASUS_MATH_HPP
 
-#include <glm/glm.hpp>
+#include <initializer_list>
+
+#include <glm/ext.hpp>
 
 namespace pegasus
 {
@@ -35,6 +37,10 @@ private:
     static glm::dmat3 MakeGivensRotationMatrix(double theta, uint8_t i, uint8_t j);
     void Calculate();
 };
+
+glm::dvec3 CalculateCentroid(std::initializer_list<glm::dvec3> vectors);
+
+glm::dvec3 GetScalarProjection(glm::dvec3 const& toProject, glm::dvec3 const& projectOnto);
 
 } // namespace math
 } // namespace pegasus 
