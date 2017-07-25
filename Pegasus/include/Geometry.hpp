@@ -157,9 +157,6 @@ private:
 namespace intersection
 {
 // Utility functions
-bool IsSameSidePoint(
-    glm::dvec3 const& p1, glm::dvec3 const& p2, glm::dvec3 const& a, glm::dvec3 const& b);
-
 template <typename VerticesContainerIt>
 void CalculateBoxVertices(
     glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k, VerticesContainerIt verticesIterator)

@@ -7,8 +7,13 @@
 */
 #include "Pegasus/include/Math.hpp"
 
-#include <glm/gtc/constants.inl>
-#include <array>
+double pegasus::math::LineSegmentPointDistance(
+        glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
+    )
+{
+    return   glm::length(glm::cross(lineEnd - lineStart, lineStart - point))
+           / glm::length(lineEnd - lineStart);
+}
 
 pegasus::math::JacobiEigenvalue::JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold, uint32_t maxIterations)
     : m_symmetricMatrix{symmetricMatrix}
@@ -92,4 +97,82 @@ void pegasus::math::JacobiEigenvalue::Calculate()
 
     m_eigenvalues = { D[0][0], D[1][1], D[2][2] };
     m_eigenvectors = S;
+}
+
+pegasus::math::HyperPlane::HyperPlane(glm::dvec3 const & normal, glm::dvec3 const & point, glm::dvec3 const* below)
+    : m_normal(normal), m_point(point), m_distance(glm::dot(m_normal, m_point)), m_below(below)
+{
+    if (m_below != nullptr)
+    {
+        glm::dvec3 const outward = point - *m_below;
+        if (glm::dot(outward, m_normal) < 0.0) {
+			SetNormal(m_normal * -1.0);
+        }
+    }
+}
+
+pegasus::math::HyperPlane::HyperPlane(glm::dvec3 const & a, glm::dvec3 const & b, glm::dvec3 const & c, glm::dvec3 const* below)
+    : HyperPlane(glm::normalize(glm::cross(a - c, b - c)), c, below)
+{
+}
+
+pegasus::math::HyperPlane::HyperPlane(glm::dmat3 const & vertices, glm::dvec3 const* below)
+    : HyperPlane(vertices[0], vertices[1], vertices[2], below)
+{
+}
+
+glm::dvec3 const& pegasus::math::HyperPlane::GetPoint() const
+{
+    return m_point;
+}
+
+glm::dvec3 const& pegasus::math::HyperPlane::GetNormal() const
+{
+    return m_normal;
+}
+
+double pegasus::math::HyperPlane::GetDistance() const
+{
+    return m_distance;
+}
+
+void pegasus::math::HyperPlane::SetNormal(glm::dvec3 const & normal) {
+    m_normal = normal;
+    m_distance = glm::dot(m_normal, m_point);
+}
+
+void pegasus::math::HyperPlane::SetPoint(glm::dvec3 const & point) {
+    m_point = point;
+    m_distance = glm::dot(m_normal, m_point);
+}
+
+double pegasus::math::HyperPlane::Distance(glm::dvec3 const & point) const {
+    return glm::abs(SignedDistance(point));
+}
+
+double pegasus::math::HyperPlane::SignedDistance(glm::dvec3 const & point) const {
+    return glm::dot(m_normal, point) - m_distance;
+}
+
+bool pegasus::math::HyperPlane::Intersection(glm::dvec3 const & lineStart, glm::dvec3 const & lineEnd,
+                                             glm::dvec3 & resultPoint) const
+{
+    if (  (glm::dot(lineStart, m_normal) - m_distance)
+        * (glm::dot(lineEnd,   m_normal) - m_distance) >= 0)
+    {
+        return false;
+    }
+
+    glm::dvec3 const line = lineEnd - lineStart;
+    glm::dvec3 const lineNormal = glm::normalize(line);
+    double const linePlaneProjection = glm::dot(m_normal, lineNormal);
+
+    if (linePlaneProjection != 0.0)
+    {
+        double const t = (glm::dot(m_normal, m_point - lineStart)) / linePlaneProjection;
+        resultPoint = lineStart + lineNormal * t;
+        return true;
+    }
+
+    return false;
 }
