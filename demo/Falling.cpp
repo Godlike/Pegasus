@@ -169,7 +169,7 @@ void FallingDemo::AddBoundingVolumes()
 
     //CV
     cv = new pegasus::math::QuickhullConvexHull(vertices);
-	cv->CalculateInitialGuess();
+	cv->Calculate();
 
     //OBB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += obbTranslate; });
@@ -675,10 +675,6 @@ void FallingDemo::Key(unsigned char key)
         break;
     case ']':
         SceneReset();
-        break;
-    case 'j':
-    case 'J':
-        cv->Refine();
         break;
     default:
         break;

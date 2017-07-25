@@ -79,6 +79,16 @@ public:
     class Face
     {
     public:
+		template< typename HalfEdgeType >
+		class EdgeIterator;
+		template< typename FaceType >
+		class FaceIterator;
+
+		using edge_iterator = EdgeIterator<HalfEdge>;
+		using const_edge_iterator = EdgeIterator<HalfEdge const>;
+		using face_iterator = FaceIterator<Face>;
+		using const_face_iterator = FaceIterator<Face const>;
+
         template < typename HalfEdgeType >
         class EdgeIterator : public std::iterator<std::bidirectional_iterator_tag, HalfEdgeType>
         {
@@ -217,36 +227,15 @@ public:
 			HalfEdge* m_current;
 		};
 
-        using edge_iterator = EdgeIterator<HalfEdge>;
-        using const_edge_iterator = EdgeIterator<HalfEdge const>;
-		using face_iterator = FaceIterator<Face>;
-		using const_face_iterator = FaceIterator<Face const>;
+	    Face(HalfEdge* halfEdge = nullptr);
 
+	    edge_iterator GetHalfEdgeIterator();
 
-        Face(HalfEdge* halfEdge = nullptr)
-            : m_halfEdge(halfEdge)
-        {
-        }
+	    const_edge_iterator GetHalfEdgeIterator() const;
 
-        edge_iterator GetHalfEdgeIterator()
-        {
-            return edge_iterator{ m_halfEdge };
-        }
+	    face_iterator GetAdjacentFaceIterator();
 
-        const_edge_iterator GetHalfEdgeIterator() const
-        {
-            return const_edge_iterator{ m_halfEdge };
-        }
-
-		face_iterator GetAdjacentFaceIterator()
-        {
-			return face_iterator{ m_halfEdge };
-        }
-
-		const_face_iterator GetAdjacentFaceIterator() const
-        {
-			return const_face_iterator{ m_halfEdge };
-        }
+	    const_face_iterator GetAdjacentFaceIterator() const;
 
     private:
         HalfEdge* m_halfEdge;
@@ -258,27 +247,12 @@ public:
 		uint64_t b;
 		uint64_t c;
 
-		bool operator==(FaceVertices const& other) const
-		{
-			std::array<uint64_t, 3> pointers = { a, b, c };
-			std::sort(pointers.begin(), pointers.end());
-			std::array<uint64_t, 3> otherPointers = { other.a, other.b, other.c };
-			std::sort(otherPointers.begin(), otherPointers.end());
-
-			return pointers[0] == otherPointers[0]
-				&& pointers[1] == otherPointers[1]
-				&& pointers[2] == otherPointers[2];
-		}
+		bool operator==(FaceVertices const& other) const;
 	};
 
 	struct FaceVerticesHash
 	{
-		size_t operator()(FaceVertices const& face) const
-		{
-			return std::hash<uint64_t>{}(face.a)
-				^ std::hash<uint64_t>{}(face.b)
-				^ std::hash<uint64_t>{}(face.c);
-		}
+		size_t operator()(FaceVertices const& face) const;
 	};
 
     struct HalfEdge
@@ -291,109 +265,17 @@ public:
     };
     using HalfEdges = std::list<HalfEdge>;
 
-    void MakeFace(uint64_t a, uint64_t b, uint64_t c)
-    {
-        FaceVertices const faceVerticesKey{a, b, c};
-        if (m_faceVerticesIteratorMap.find(faceVerticesKey) == m_faceVerticesIteratorMap.end())
-        {
-			//Allocate half edges
-            std::array<HalfEdges::iterator, 3> newHalfEdges = {
-                m_halfEdgeList.emplace(m_halfEdgeList.end()),
-                m_halfEdgeList.emplace(m_halfEdgeList.end()),
-                m_halfEdgeList.emplace(m_halfEdgeList.end())
-            };
+	void MakeFace(uint64_t a, uint64_t b, uint64_t c);
 
-			//Allocate face
-            auto backFaceIterator = m_facesList.emplace(m_facesList.end(), &*newHalfEdges.back());
-            m_faceIteratorMap[&*backFaceIterator] = backFaceIterator;
-            m_faceVerticesIteratorMap[faceVerticesKey] = backFaceIterator;
+	face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c);
 
-			//Init half edges
-            IntializeHalfEdge(newHalfEdges[0], &*newHalfEdges[1], &*newHalfEdges[2], &*backFaceIterator, a, b);
-            IntializeHalfEdge(newHalfEdges[1], &*newHalfEdges[2], &*newHalfEdges[0], &*backFaceIterator, b, c);
-            IntializeHalfEdge(newHalfEdges[2], &*newHalfEdges[0], &*newHalfEdges[1], &*backFaceIterator, c, a);
-        }
-    }
+	const_face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c) const;
 
-    face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c)
-    {
-        FaceVertices faceVerticesKey{ a, b, c };
-        auto faceIterator = m_faceVerticesIteratorMap.find(faceVerticesKey);
-		if (faceIterator == m_faceVerticesIteratorMap.end()) {
-			return m_facesList.end();
-		}
+	const_face_iterator GetFaceEnd() const;
 
-        return faceIterator->second;
-    }
+	void RemoveFace(uint64_t a, uint64_t b, uint64_t c);
 
-    const_face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c) const
-    {
-        FaceVertices const faceVerticesKey{ a, b, c };
-        auto faceIterator = m_faceVerticesIteratorMap.find(faceVerticesKey);
-
-    	if (faceIterator == m_faceVerticesIteratorMap.end()) {
-			return m_facesList.end();
-		}
-
-        return faceIterator->second;
-    }
-
-	const_face_iterator GetFaceEnd() const
-    {
-		return m_facesList.end();
-    }
-
-    void RemoveFace(uint64_t a, uint64_t b, uint64_t c)
-    {
-		RemoveFace(GetFace(a, b, c));
-    }
-
-	void RemoveFace(face_iterator faceIterator)
-    {
-		auto heIterator = faceIterator->GetHalfEdgeIterator();
-		std::array<HalfEdges::iterator, 3> markedHalfEdgeIterators;
-		markedHalfEdgeIterators[0] = m_halfEdgePointerIteratorMap[&*heIterator++];
-		markedHalfEdgeIterators[1] = m_halfEdgePointerIteratorMap[&*heIterator++];
-		markedHalfEdgeIterators[2] = m_halfEdgePointerIteratorMap[&*heIterator];
-		std::array<HalfEdge*, 3> twinMarkedHalfEdgeIterators = {
-			markedHalfEdgeIterators[0]->twin,
-			markedHalfEdgeIterators[1]->twin,
-			markedHalfEdgeIterators[2]->twin,
-		};
-
-		for (auto markedHalfEdgeIterator : markedHalfEdgeIterators)
-		{
-			m_halfEdgePointerIteratorMap.erase(&*markedHalfEdgeIterator);
-		}
-
-		auto removeTwin = [this](uint64_t vertexFrom, uint64_t vertexTo, HalfEdge* twin)
-		{
-			HalfEdgeVertices halfEdgeVerticesKey{ vertexFrom, vertexTo };
-			m_halfEdgeVerticesIteratorMap.erase(halfEdgeVerticesKey);
-
-			if (twin != nullptr)
-			{
-				m_halfEdgeVerticesIteratorMap[halfEdgeVerticesKey] = m_halfEdgePointerIteratorMap[twin];
-				twin->twin = nullptr;
-			}
-		};
-
-		uint64_t const a = markedHalfEdgeIterators[2]->vertexIndex;
-		uint64_t const b = markedHalfEdgeIterators[0]->vertexIndex;
-		uint64_t const c = markedHalfEdgeIterators[1]->vertexIndex;
-		removeTwin(a, b, twinMarkedHalfEdgeIterators[0]);
-		removeTwin(b, c, twinMarkedHalfEdgeIterators[1]);
-		removeTwin(c, a, twinMarkedHalfEdgeIterators[2]);
-
-		for (auto markedHalfEdgeIterator : markedHalfEdgeIterators)
-		{
-			m_halfEdgeList.erase(markedHalfEdgeIterator);
-		}
-
-		m_faceIteratorMap.erase(&*faceIterator);
-		m_facesList.erase(m_faceVerticesIteratorMap.find({ a, b, c })->second);
-		m_faceVerticesIteratorMap.erase({ a, b, c });
-    }
+	void RemoveFace(face_iterator faceIterator);
 
 private:
     struct HalfEdgeVertices
@@ -401,24 +283,12 @@ private:
 		uint64_t vertexIndexFrom;
 		uint64_t vertexIndexTo;
 
-		bool operator==(HalfEdgeVertices const& other) const
-		{
-			std::array<uint64_t, 2> indices = { vertexIndexFrom, vertexIndexTo };
-			std::sort(indices.begin(), indices.end());
-			std::array<uint64_t, 2> otherIndices = { other.vertexIndexFrom, other.vertexIndexTo };
-			std::sort(otherIndices.begin(), otherIndices.end());
-
-			return indices[0] == otherIndices[0] && indices[1] == otherIndices[1];
-		}
+	    bool operator==(HalfEdgeVertices const& other) const;
     };
 
     struct HalfEdgeVerticesHash
     {
-        size_t operator()(HalfEdgeVertices const& edge) const
-        {
-			return std::hash<uint64_t>{}(edge.vertexIndexFrom)
-				^ std::hash<uint64_t>{}(edge.vertexIndexTo);
-        }
+	    size_t operator()(HalfEdgeVertices const& edge) const;
     };
 
     HalfEdges m_halfEdgeList;
@@ -437,30 +307,13 @@ private:
         FaceVertices, Faces::iterator, FaceVerticesHash
     > m_faceVerticesIteratorMap;
 
-    void IntializeHalfEdge (
-            HalfEdges::iterator he,
-            HalfEdge* next, HalfEdge* prev,
-            Face* face,
-            uint64_t vertexIndexFrom,
-			uint64_t vertexIndexTo
-        )
-    {
-		m_halfEdgePointerIteratorMap[&*he] = he;
-
-		auto twinIterator = m_halfEdgeVerticesIteratorMap.find({ vertexIndexFrom, vertexIndexTo });
-		HalfEdge* twin = nullptr;
-        if (twinIterator == m_halfEdgeVerticesIteratorMap.end())
-		{
-			m_halfEdgeVerticesIteratorMap[{vertexIndexFrom, vertexIndexTo}] = he;
-        }
-    	else
-		{
-            twin = &*(twinIterator->second);
-			twinIterator->second->twin = &*he;
-        }
-
-		*he = { next, prev, twin, face, vertexIndexTo };
-    }
+	void IntializeHalfEdge(
+		HalfEdges::iterator he,
+		HalfEdge* next, HalfEdge* prev,
+		Face* face,
+		uint64_t vertexIndexFrom,
+		uint64_t vertexIndexTo
+	);
 };
 
 template < typename Iterator >
@@ -684,15 +537,31 @@ public:
 	{
 	}
 
+	void Calculate()
+	{
+		CalculateInitialGuess();
+		Refine();
+	}
+
 	Faces const& GetFaces() const
 	{
 		return m_faces;
 	}
 
-	std::list<Vertices::iterator> const& GetVertices()
+	std::list<Vertices::iterator> const& GetVertices() const
 	{
 		return m_convexHullVertices;
 	}
+
+private:
+	Faces m_faces;
+	Vertices& m_vertices;
+	std::list<Vertices::iterator> m_convexHullVertices;
+	glm::dvec3 m_mean;
+	HalfEdgeDataStructure m_heds;
+	std::unordered_map<
+		HalfEdgeDataStructure::Face*, Faces::iterator
+	> m_hedsFaceIteratorMap;
 
 	void CalculateInitialGuess()
 	{
@@ -729,8 +598,8 @@ public:
 		auto triangleBasePoint = *std::max_element(
 			extremalPoints.begin(), extremalPoints.end(),
 			[&mostDistantPair](Vertices::iterator v1, Vertices::iterator v2) {
-				return LineSegmentPointDistance(*mostDistantPair.first, *mostDistantPair.second, *v1)
-					< LineSegmentPointDistance(*mostDistantPair.first, *mostDistantPair.second, *v2);
+			return LineSegmentPointDistance(*mostDistantPair.first, *mostDistantPair.second, *v1)
+				< LineSegmentPointDistance(*mostDistantPair.first, *mostDistantPair.second, *v2);
 		});
 
 		//Calculate tetrahedron apex point
@@ -738,7 +607,7 @@ public:
 		auto tetrahedronApexPoint = std::max_element(
 			m_vertices.begin(), m_vertices.end(),
 			[&baseFacePlane](glm::dvec3& a, glm::dvec3& b) {
-				return baseFacePlane.Distance(a) < baseFacePlane.Distance(b);
+			return baseFacePlane.Distance(a) < baseFacePlane.Distance(b);
 		});
 
 		//Initialize base hull tetrahedron
@@ -770,7 +639,7 @@ public:
 			faceStack.push_back(faceIt);
 		}
 
-		while(!faceStack.empty())
+		while (!faceStack.empty())
 		{
 			Faces::iterator faceIt = faceStack.front();
 			faceStack.pop_front();
@@ -781,7 +650,7 @@ public:
 				std::list<Vertices::iterator> markedVertexIterators;
 				std::list<std::pair<size_t, size_t>> horizonRidges;
 				std::list<Faces::iterator> visibleFaces(1, faceIt);
-				std::unordered_set<Face*> visibleFacesSet{&*faceIt};
+				std::unordered_set<Face*> visibleFacesSet{ &*faceIt };
 				std::unordered_set<Face*> visitedFaces;
 
 				auto extremalVertex = faceIt->GetExtremalVertex();
@@ -842,7 +711,7 @@ public:
 				for (Faces::iterator visibleFaceIt : visibleFaces)
 				{
 					faceStack.erase(std::remove_if(faceStack.begin(), faceStack.end(),
-						[&visibleFaceIt](Faces::iterator& it){ return &*it == &*visibleFaceIt; }), faceStack.end());
+						[&visibleFaceIt](Faces::iterator& it) { return &*it == &*visibleFaceIt; }), faceStack.end());
 					RemoveFace(visibleFaceIt);
 				}
 
@@ -856,16 +725,6 @@ public:
 			}
 		}
 	}
-
-private:
-	Faces		m_faces;
-	Vertices&	m_vertices;
-	std::list<Vertices::iterator> m_convexHullVertices;
-	glm::dvec3	m_mean;
-	HalfEdgeDataStructure m_heds;
-	std::unordered_map<
-			HalfEdgeDataStructure::Face*, Faces::iterator
-		> m_hedsFaceIteratorMap;
 
 	Faces::iterator MakeFace(size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3,
 		std::list<Vertices::iterator>& markedVertices)
