@@ -162,8 +162,8 @@ void FallingDemo::AddBoundingVolumes()
     std::transform(bunnyVertices, bunnyVertices+bunnyVerticesSize, std::back_inserter(vertices),
                    [](GLfloat v[3]) -> glm::dvec3{ return glm::dvec3(v[0], v[1], v[2]); });
     std::transform(bunnyFaceIndicies, bunnyFaceIndicies+bunnyFaceIndiciesSize, std::back_inserter(faces),
-        [](short f[6]) -> std::array<size_t, 3> { 
-            return {static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])}; 
+        [](short f[6]) -> std::array<size_t, 3> {
+            return {static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])};
     });
     for (size_t i = 0; i < faces.size(); ++i) indices.insert(i);
 
@@ -302,12 +302,12 @@ void FallingDemo::Display()
     gluLookAt(pos.x * zoom , pos.y + 30 * zoom + yEye, pos.z + 30 * zoom , pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
     glPointSize(5);
 
-    if (DRAW_CONVEX) 
+    if (DRAW_CONVEX)
     {
         uint32_t index = 0;
         auto const& cvVertices = cv->GetVertices();
         auto const& cvFaces = cv->GetFaces();
-        
+
         //Draw vertices
         for (auto vertex : cvVertices)
         {
@@ -328,7 +328,7 @@ void FallingDemo::Display()
             double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
             double blue  = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
 
-            glm::dvec3 const faceCenter = 
+            glm::dvec3 const faceCenter =
                 (vertices[face->m_indices[0]] + vertices[face->m_indices[1]] + vertices[face->m_indices[2]]) * (1.0 / 3.0);
 
             double const faceDistance = glm::dot(faceCenter, face->m_hyperPlane.GetNormal());
@@ -400,14 +400,14 @@ void FallingDemo::Display()
         double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
         double blue  = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
 
-        if (s == pegasus::geometry::SimpleShapeType::PLANE) 
+        if (s == pegasus::geometry::SimpleShapeType::PLANE)
         {
             glTranslatef(p.x, p.y, p.z);
             double const planeSideLength = 100;
 
             glm::dvec3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
             glm::dvec3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetNormal();
-            glm::dvec3 const posNormalProjection = planeNormal * (p0 * planeNormal);
+			glm::dvec3 const posNormalProjection = planeNormal * (glm::dot(p0, planeNormal));
             glm::dvec3 p1 = p0 + (posNormalProjection - p0) * 2.0;
 
             if (p1.x < p0.x) { std::swap(p0.x, p1.x); }
@@ -451,7 +451,7 @@ void FallingDemo::Display()
 
             if (!WIRED_ONLY) {
                 glutSolidSphere(r, 20, 20);
-            } 
+            }
 
             if (&*activeObject != &body && !WIRED_ONLY) {
                 glColor3f(1.0f, 0.0, 0.0);
@@ -459,7 +459,7 @@ void FallingDemo::Display()
             glutWireSphere(r + 0.001, 20, 20);
         }
         else if (s == pegasus::geometry::SimpleShapeType::BOX)
-        {            
+        {
             pegasus::geometry::Box * box = static_cast<pegasus::geometry::Box*>(body.s.get());
             std::array<glm::dvec3, 3> boxAxes;
             box->GetAxes(boxAxes[0], boxAxes[1], boxAxes[2]);

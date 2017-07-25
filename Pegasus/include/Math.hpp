@@ -237,7 +237,7 @@ public:
         {
             return const_edge_iterator{ m_halfEdge };
         }
-		
+
 		face_iterator GetAdjacentFaceIterator()
         {
 			return face_iterator{ m_halfEdge };
@@ -251,7 +251,7 @@ public:
     private:
         HalfEdge* m_halfEdge;
     };
-    
+
 	struct FaceVertices
 	{
 		uint64_t a;
@@ -330,7 +330,7 @@ public:
     {
         FaceVertices const faceVerticesKey{ a, b, c };
         auto faceIterator = m_faceVerticesIteratorMap.find(faceVerticesKey);
-		
+
     	if (faceIterator == m_faceVerticesIteratorMap.end()) {
 			return m_facesList.end();
 		}
@@ -361,12 +361,12 @@ public:
 			markedHalfEdgeIterators[2]->twin,
 		};
 
-		for (auto markedHalfEdgeIterator : markedHalfEdgeIterators) 
+		for (auto markedHalfEdgeIterator : markedHalfEdgeIterators)
 		{
 			m_halfEdgePointerIteratorMap.erase(&*markedHalfEdgeIterator);
 		}
 
-		static auto removeTwin = [this](uint64_t vertexFrom, uint64_t vertexTo, HalfEdge* twin)
+		auto removeTwin = [this](uint64_t vertexFrom, uint64_t vertexTo, HalfEdge* twin)
 		{
 			HalfEdgeVertices halfEdgeVerticesKey{ vertexFrom, vertexTo };
 			m_halfEdgeVerticesIteratorMap.erase(halfEdgeVerticesKey);
@@ -385,7 +385,7 @@ public:
 		removeTwin(b, c, twinMarkedHalfEdgeIterators[1]);
 		removeTwin(c, a, twinMarkedHalfEdgeIterators[2]);
 
-		for (auto markedHalfEdgeIterator : markedHalfEdgeIterators) 
+		for (auto markedHalfEdgeIterator : markedHalfEdgeIterators)
 		{
 			m_halfEdgeList.erase(markedHalfEdgeIterator);
 		}
@@ -441,7 +441,7 @@ private:
             HalfEdges::iterator he,
             HalfEdge* next, HalfEdge* prev,
             Face* face,
-            uint64_t vertexIndexFrom, 
+            uint64_t vertexIndexFrom,
 			uint64_t vertexIndexTo
         )
     {
@@ -613,11 +613,10 @@ public:
 			std::sort(m_indices.begin(), m_indices.end());
 		}
 
-
-		Face(Vertices& vertices, 
+		Face(Vertices& vertices,
 			std::list<Vertices::iterator>& markedVertexIterators,
-			HalfEdgeDataStructure::face_iterator hedsFaceIter, 
-			HyperPlane const& hyperPlane, 
+			HalfEdgeDataStructure::face_iterator hedsFaceIter,
+			HyperPlane const& hyperPlane,
 			std::array<size_t, 3> const& indices)
 			: Face(hedsFaceIter, hyperPlane, indices)
 		{
@@ -630,7 +629,7 @@ public:
 				return m_hyperPlane.SignedDistance(*vertexIt) > 0;
 			};
 
-			std::copy_if(markedVertexIterators.begin(), markedVertexIterators.end(), 
+			std::copy_if(markedVertexIterators.begin(), markedVertexIterators.end(),
 				std::back_inserter(m_vertices), findAboveVertices
 			);
 			markedVertexIterators.erase(
@@ -679,7 +678,7 @@ public:
 			return m_indices;
 		}
 	};
-	
+
 	QuickhullConvexHull(Vertices& vertices)
 		: m_vertices(vertices)
 	{
@@ -690,7 +689,7 @@ public:
 		return m_faces;
 	}
 
-	std::list<Vertices::iterator>& GetVertices() 
+	std::list<Vertices::iterator> const& GetVertices()
 	{
 		return m_convexHullVertices;
 	}
@@ -737,7 +736,7 @@ public:
 		//Calculate tetrahedron apex point
 		HyperPlane baseFacePlane(*mostDistantPair.first, *mostDistantPair.second, *triangleBasePoint);
 		auto tetrahedronApexPoint = std::max_element(
-			m_vertices.begin(), m_vertices.end(), 
+			m_vertices.begin(), m_vertices.end(),
 			[&baseFacePlane](glm::dvec3& a, glm::dvec3& b) {
 				return baseFacePlane.Distance(a) < baseFacePlane.Distance(b);
 		});
@@ -818,9 +817,9 @@ public:
 								std::vector<Vertices::iterator>& faceVertices = adjFace->GetVertices();
 								markedVertexIterators.insert(markedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
 								std::vector<Vertices::iterator>().swap(faceVertices);
-							} 
+							}
 							//If face is not visible then find a ridge and save it
-							else 
+							else
 							{
 								std::vector<size_t> ridgeIndices;
 								ridgeIndices.reserve(2);
@@ -842,7 +841,8 @@ public:
 				//Remove visible faces
 				for (Faces::iterator visibleFaceIt : visibleFaces)
 				{
-					faceStack.erase(std::remove_if(faceStack.begin(), faceStack.end(), [&visibleFaceIt](Faces::iterator& it) { return &*it == &*visibleFaceIt; }), faceStack.end());
+					faceStack.erase(std::remove_if(faceStack.begin(), faceStack.end(),
+						[&visibleFaceIt](Faces::iterator& it){ return &*it == &*visibleFaceIt; }), faceStack.end());
 					RemoveFace(visibleFaceIt);
 				}
 
@@ -852,7 +852,7 @@ public:
 					faceStack.push_back(
 						MakeFace(ridge.first, ridge.second, extremalVertexIndex, markedVertexIterators)
 					);
-				}			
+				}
 			}
 		}
 	}
@@ -867,7 +867,7 @@ private:
 			HalfEdgeDataStructure::Face*, Faces::iterator
 		> m_hedsFaceIteratorMap;
 
-	Faces::iterator MakeFace(size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3, 
+	Faces::iterator MakeFace(size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3,
 		std::list<Vertices::iterator>& markedVertices)
 	{
 		m_heds.MakeFace(vertexIndex1, vertexIndex2, vertexIndex3);
