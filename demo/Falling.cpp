@@ -74,7 +74,7 @@ private:
     GLuint solidBunnyGlListIndex;
     GLuint wiredBunnyGlListIndex;
     GLuint pointsBunnyGlListIndex;
-    pegasus::math::QuickhullConvexHull* cv;
+    pegasus::math::QuickhullConvexHull<std::vector<glm::dvec3>>* cv;
     pegasus::geometry::volumes::Vertices vertices;
     pegasus::geometry::volumes::Faces    faces;
     pegasus::geometry::volumes::Indices  indices;
@@ -168,8 +168,8 @@ void FallingDemo::AddBoundingVolumes()
     for (size_t i = 0; i < faces.size(); ++i) indices.insert(i);
 
     //CV
-    cv = new pegasus::math::QuickhullConvexHull(vertices);
-	cv->Calculate();
+    cv = new pegasus::math::QuickhullConvexHull<std::vector<glm::dvec3>>(vertices);
+    cv->Calculate();
 
     //OBB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += obbTranslate; });
@@ -314,8 +314,8 @@ void FallingDemo::Display()
             glPushMatrix();
             glRotated(yRotationAngle, 0, 1, 0);
             glBegin(GL_POINTS);
-			glColor3f(1, 0, 0);
-			glVertex3dv(glm::value_ptr(*vertex));
+            glColor3f(1, 0, 0);
+            glVertex3dv(glm::value_ptr(*vertex));
             glEnd();
             glPopMatrix();
         }
@@ -328,11 +328,13 @@ void FallingDemo::Display()
             double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
             double blue  = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
 
-            glm::dvec3 const faceCenter =
-                (vertices[face->m_indices[0]] + vertices[face->m_indices[1]] + vertices[face->m_indices[2]]) * (1.0 / 3.0);
+            auto faceIndices = face->GetIndices();
 
-            double const faceDistance = glm::dot(faceCenter, face->m_hyperPlane.GetNormal());
-            double const faceD = face->m_hyperPlane.GetDistance();
+            glm::dvec3 const faceCenter =
+                (vertices[faceIndices[0]] + vertices[faceIndices[1]] + vertices[faceIndices[2]]) * (1.0 / 3.0);
+
+            double const faceDistance = glm::dot(faceCenter, face->GetHyperPlane().GetNormal());
+            double const faceD = face->GetHyperPlane().GetDistance();
 
             assert(glm::abs(glm::abs(faceDistance) - glm::abs(faceD)) < 1e-10);
 
@@ -340,17 +342,17 @@ void FallingDemo::Display()
 
             glRotated(yRotationAngle, 0, 1, 0);
             glBegin(GL_TRIANGLES);
-			glColor3f(red, green, blue);
-            glVertex3dv(glm::value_ptr(vertices[face->m_indices[0]]));
-            glVertex3dv(glm::value_ptr(vertices[face->m_indices[1]]));
-            glVertex3dv(glm::value_ptr(vertices[face->m_indices[2]]));
+            glColor3f(red, green, blue);
+            glVertex3dv(glm::value_ptr(vertices[faceIndices[0]]));
+            glVertex3dv(glm::value_ptr(vertices[faceIndices[1]]));
+            glVertex3dv(glm::value_ptr(vertices[faceIndices[2]]));
             glEnd();
 
             glBegin(GL_LINES);
             glColor3f(0, 0, 1);
             glVertex3dv(glm::value_ptr(glm::dvec3{ 0, 0, 0 } + faceCenter));
             glColor3f(0, 1, 0);
-            glVertex3dv(glm::value_ptr(face->m_hyperPlane.GetNormal() * 0.1 + faceCenter));
+            glVertex3dv(glm::value_ptr(face->GetHyperPlane().GetNormal() * 0.1 + faceCenter));
             glEnd();
 
             glPopMatrix();
@@ -407,7 +409,7 @@ void FallingDemo::Display()
 
             glm::dvec3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->getCenterOfMass();
             glm::dvec3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetNormal();
-			glm::dvec3 const posNormalProjection = planeNormal * (glm::dot(p0, planeNormal));
+            glm::dvec3 const posNormalProjection = planeNormal * (glm::dot(p0, planeNormal));
             glm::dvec3 p1 = p0 + (posNormalProjection - p0) * 2.0;
 
             if (p1.x < p0.x) { std::swap(p0.x, p1.x); }
