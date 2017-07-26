@@ -1,9 +1,7 @@
 /*
-* Copyright (c) Icosagon 2003. All Rights Reserved.
-*
-* This software is distributed under licence. Use of this software
-* implies agreement with all terms and conditions of the accompanying
-* software licence.
+* Copyright (C) 2017 by Godlike
+* This code is licensed under the MIT license (MIT)
+* (http://opensource.org/licenses/MIT)
 */
 #include "Pegasus/include/Math.hpp"
 
@@ -382,7 +380,9 @@ void HalfEdgeDataStructure::IntializeHalfEdge(
     *he = { next, prev, twin, face, vertexIndexTo };
 }
 
-double pegasus::math::LineSegmentPointDistance(glm::dvec3 const & lineStart, glm::dvec3 const & lineEnd, glm::dvec3 const & point)
+double pegasus::math::LineSegmentPointDistance(
+	glm::dvec3 const & lineStart, glm::dvec3 const & lineEnd, glm::dvec3 const & point
+)
 {
     return 0.0;
 }
