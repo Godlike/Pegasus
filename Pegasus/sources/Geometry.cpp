@@ -175,6 +175,6 @@ void pegasus::geometry::Box::GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c
 
 size_t pegasus::geometry::ShapeTypePairHash::operator()(ShapeTypePair const& p) const
 {
-    return   std::hash<uint32_t>()(static_cast<uint32_t>(p.first)) 
+    return   std::hash<uint32_t>()(static_cast<uint32_t>(p.first))
            ^ std::hash<uint32_t>()(static_cast<uint32_t>(p.second));
 }

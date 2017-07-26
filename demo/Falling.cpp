@@ -168,8 +168,8 @@ void FallingDemo::AddBoundingVolumes()
 
     //CV
     cv = new pegasus::math::QuickhullConvexHull<std::vector<glm::dvec3>>(vertices);
-	cv->Calculate();
-    
+    cv->Calculate();
+
     //OBB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += obbTranslate; });
     orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
@@ -177,7 +177,7 @@ void FallingDemo::AddBoundingVolumes()
     glm::dmat3 obbAxes;
     obb.GetAxes(obbAxes[0], obbAxes[1], obbAxes[2]);
     AddBox(obb.getCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
-	
+
     //AABB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += aabbTranslate - obbTranslate; });
     axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
@@ -185,13 +185,13 @@ void FallingDemo::AddBoundingVolumes()
     glm::dmat3 aabbAxes;
     aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
     AddBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]);
-	
+
     //BS
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += boundingSphereTranslate - aabbTranslate; });
     boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
     auto sphere = boundingSphere->GetSphere();
     AddSphere(sphere.getCenterOfMass(), sphere.GetRadius());
-	std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v -= boundingSphereTranslate; });
+    std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v -= boundingSphereTranslate; });
 }
 
 void FallingDemo::SceneReset()
@@ -310,11 +310,11 @@ void FallingDemo::Display()
         for (auto vertex : cvVertices)
         {
             glPushMatrix();
-				glRotated(yRotationAngle, 0, 1, 0);
-				glBegin(GL_POINTS);
-				glColor3f(1, 0, 0);
-				glVertex3dv(glm::value_ptr(*vertex));
-				glEnd();
+                glRotated(yRotationAngle, 0, 1, 0);
+                glBegin(GL_POINTS);
+                glColor3f(1, 0, 0);
+                glVertex3dv(glm::value_ptr(*vertex));
+                glEnd();
             glPopMatrix();
         }
 
@@ -332,20 +332,20 @@ void FallingDemo::Display()
                 (vertices[faceIndices[0]] + vertices[faceIndices[1]] + vertices[faceIndices[2]]) * (1.0 / 3.0);
 
             glPushMatrix();
-				glRotated(yRotationAngle, 0, 1, 0);
-				glBegin(GL_TRIANGLES);
-				glColor3f(red, green, blue);
-				glVertex3dv(glm::value_ptr(vertices[faceIndices[0]]));
-				glVertex3dv(glm::value_ptr(vertices[faceIndices[1]]));
-				glVertex3dv(glm::value_ptr(vertices[faceIndices[2]]));
-				glEnd();
+                glRotated(yRotationAngle, 0, 1, 0);
+                glBegin(GL_TRIANGLES);
+                glColor3f(red, green, blue);
+                glVertex3dv(glm::value_ptr(vertices[faceIndices[0]]));
+                glVertex3dv(glm::value_ptr(vertices[faceIndices[1]]));
+                glVertex3dv(glm::value_ptr(vertices[faceIndices[2]]));
+                glEnd();
 
-				glBegin(GL_LINES);
-				glColor3f(0, 0, 1);
-				glVertex3dv(glm::value_ptr(glm::dvec3{ 0, 0, 0 } + faceCenter));
-				glColor3f(0, 1, 0);
-				glVertex3dv(glm::value_ptr(face->GetHyperPlane().GetNormal() * 0.1 + faceCenter));
-				glEnd();
+                glBegin(GL_LINES);
+                glColor3f(0, 0, 1);
+                glVertex3dv(glm::value_ptr(glm::dvec3{ 0, 0, 0 } + faceCenter));
+                glColor3f(0, 1, 0);
+                glVertex3dv(glm::value_ptr(face->GetHyperPlane().GetNormal() * 0.1 + faceCenter));
+                glEnd();
             glPopMatrix();
         }
     }
@@ -460,9 +460,9 @@ void FallingDemo::Display()
             glm::dvec3 const& i = boxAxes[0];
             glm::dvec3 const& j = boxAxes[1];
             glm::dvec3 const& k = boxAxes[2];
-            std::array<glm::dvec3, 8> boxVertices = { 
-            	i + j + k, i - j + k, -i + j + k, -i - j + k,
-                i + j - k, i - j - k, -i + j - k, -i - j - k 
+            std::array<glm::dvec3, 8> boxVertices = {
+                i + j + k, i - j + k, -i + j + k, -i - j + k,
+                i + j - k, i - j - k, -i + j - k, -i - j - k
             };
             if (&*activeObject != &body)
             {

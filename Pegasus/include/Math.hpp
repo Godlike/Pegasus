@@ -33,7 +33,7 @@ class HyperPlane
 public:
     HyperPlane() = default;
 
-	/**
+    /**
      * \brief Constructs a plane in Hessian Normal Form.
      * \param normal normal plane vector
      * \param point point on the plane
@@ -44,7 +44,7 @@ public:
         glm::dvec3 const* below = nullptr
     );
 
-	/**
+    /**
      * \brief Constructs a plane in Hessian Normal Form.
      * \param a point on a plane
      * \param b point on a plane
@@ -57,47 +57,47 @@ public:
         glm::dvec3 const* below = nullptr
     );
 
-	/**
-	 * \brief Constructs a plane in Hessian Normal Form.
+    /**
+     * \brief Constructs a plane in Hessian Normal Form.
      * \param vertices points on a plane
      * \param below point below plane
      */
     HyperPlane(
-		glm::dmat3 const& vertices, 
-		glm::dvec3 const* below
-	);
+        glm::dmat3 const& vertices,
+        glm::dvec3 const* below
+    );
 
-	/**
+    /**
      * \brief Plane point getter.
      * \return point on a plane
      */
     glm::dvec3 const& GetPoint() const;
 
-	/**
+    /**
      * \brief Plane normal getter.
      * \return plane normal
      */
     glm::dvec3 const& GetNormal() const;
 
-	/**
+    /**
      * \brief Distance from a plane to the origin getter.
      * \return distance from a plane to the origin
      */
     double GetDistance() const;
 
-	/**
+    /**
      * \brief Plane normal setter.
      * \param normal plane normal vector
      */
     void SetNormal(glm::dvec3 const& normal);
 
-	/**
+    /**
      * \brief Point on a plane setter.
      * \param point point on a plane
      */
     void SetPoint(glm::dvec3 const& point);
 
-	/**
+    /**
      * \brief Calculates absolute distance from the plane to a point.
      * \param point point of interest
      * \return distance
@@ -105,13 +105,13 @@ public:
     double Distance(glm::dvec3 const& point) const;
 
    /**
-	* \brief Calculates signed distance from the plane to a point.
-	* \param point point of interest
-	* \return distance
-	*/
+    * \brief Calculates signed distance from the plane to a point.
+    * \param point point of interest
+    * \return distance
+    */
     double SignedDistance(glm::dvec3 const& point) const;
 
-	/**
+    /**
      * \brief Calculater wether a line segment and the plane are intersecting.
      * \param lineStart start of the line segment
      * \param lineEnd end of the lilne segment
@@ -119,8 +119,8 @@ public:
      * \return intersection state
      */
     bool Intersection(
-		glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 & resultPoint
-	) const;
+        glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 & resultPoint
+    ) const;
 
 private:
     glm::dvec3 m_normal;
@@ -370,7 +370,7 @@ public:
         Face* face;
         uint64_t vertexIndex;
     };
-    
+
     /**
      * \brief Inserts face into current data structure.
      * \param a new face vertex index
@@ -383,7 +383,7 @@ public:
      * \brief Face iterator getter.
      * \param a face vertex index
      * \param b face vertex index
-     * \param c face vertex index 
+     * \param c face vertex index
      * \return face iterator
      */
     face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c);
@@ -521,7 +521,7 @@ glm::dmat3 CalculateCovarianceMatrix(Iterator begin, Iterator end, glm::dvec3 co
 /**
  * \brief Finds farthest above point for a given hyperplane.
  * \tparam Iterator forward iterator
- * \param begin start of the range 
+ * \param begin start of the range
  * \param end end of the range
  * \param hyperPlane hyperplane
  * \return farthest vertex iterator
@@ -626,13 +626,13 @@ class JacobiEigenvalue
 public:
     /**
      * \brief Constructs and calculates eigenvalues and eigenvectors of a given symmetric matrix.
-     * \param symmetricMatrix 
-     * \param coverageThreshold 
-     * \param maxIterations 
+     * \param symmetricMatrix
+     * \param coverageThreshold
+     * \param maxIterations
      */
     explicit JacobiEigenvalue(
-        glm::dmat3 const& symmetricMatrix, 
-        double coverageThreshold = 1.0e-4, 
+        glm::dmat3 const& symmetricMatrix,
+        double coverageThreshold = 1.0e-4,
         uint32_t maxIterations = 100
     );
 
@@ -662,7 +662,7 @@ private:
      * \param j max element columnt index
      */
     static void FindMaxNormOffDiagonal(glm::dmat3 const& mat, uint8_t& i, uint8_t& j);
-    
+
     /**
      * \brief Calculates rotation angle for a given matrix and it's element.
      * \param mat matrix to rotate
@@ -671,11 +671,11 @@ private:
      * \return angle in radians
      */
     double CalculateRotationAngle(glm::dmat3 const& mat, uint8_t i, uint8_t j) const;
-    
+
     /**
      * \brief Makes Givens rotation matrix from the angle and indices.
      * \param theta rotation angle in radians
-     * \param i row index 
+     * \param i row index
      * \param j column index
      * \return Givens rotation matrix
      */
@@ -710,8 +710,8 @@ public:
          * \param hyperPlane HyperPlane
          * \param indices face indices
          */
-        Face(HalfEdgeDataStructure::face_iterator hedsFaceIterator, 
-            HyperPlane const& hyperPlane, 
+        Face(HalfEdgeDataStructure::face_iterator hedsFaceIterator,
+            HyperPlane const& hyperPlane,
             std::array<size_t, 3> const& indices
         )
             : m_extremalVertexIndex()
@@ -1020,7 +1020,7 @@ private:
                                 auto faceIndices = (*visibleFaceIt)->GetIndices();
                                 std::set_intersection(adjFaceIndices.begin(), adjFaceIndices.end(),
                                     faceIndices.begin(), faceIndices.end(), std::back_inserter(ridgeIndices));
-                                
+
                                 horizonRidges.emplace_back(ridgeIndices[0], ridgeIndices[1]);
                             }
                         }
@@ -1053,11 +1053,11 @@ private:
      * \param vertexIndex1 index of a face
      * \param vertexIndex2 index of a face
      * \param vertexIndex3 index of a face
-     * \param vertices modifiable vertex buffer 
+     * \param vertices modifiable vertex buffer
      * \return iterator to a new face
      */
     typename Faces::iterator MakeFace(
-        size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3, 
+        size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3,
         std::list<typename Vertices::iterator>& vertices
     )
     {

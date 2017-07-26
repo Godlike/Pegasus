@@ -190,25 +190,25 @@ HalfEdgeDataStructure::Face::Face(HalfEdge* halfEdge)
 {
 }
 
-HalfEdgeDataStructure::Face::edge_iterator 
+HalfEdgeDataStructure::Face::edge_iterator
 HalfEdgeDataStructure::Face::GetHalfEdgeIterator()
 {
     return edge_iterator{m_halfEdge};
 }
 
-HalfEdgeDataStructure::Face::const_edge_iterator 
+HalfEdgeDataStructure::Face::const_edge_iterator
 HalfEdgeDataStructure::Face::GetHalfEdgeIterator() const
 {
     return const_edge_iterator{m_halfEdge};
 }
 
-HalfEdgeDataStructure::Face::face_iterator 
+HalfEdgeDataStructure::Face::face_iterator
 HalfEdgeDataStructure::Face::GetAdjacentFaceIterator()
 {
     return face_iterator{m_halfEdge};
 }
 
-HalfEdgeDataStructure::Face::const_face_iterator 
+HalfEdgeDataStructure::Face::const_face_iterator
 HalfEdgeDataStructure::Face::GetAdjacentFaceIterator() const
 {
     return const_face_iterator{m_halfEdge};
@@ -257,7 +257,7 @@ void HalfEdgeDataStructure::MakeFace(uint64_t a, uint64_t b, uint64_t c)
     }
 }
 
-HalfEdgeDataStructure::face_iterator 
+HalfEdgeDataStructure::face_iterator
 HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c)
 {
     FaceVertices faceVerticesKey{a, b, c};
@@ -270,7 +270,7 @@ HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c)
     return faceIterator->second;
 }
 
-HalfEdgeDataStructure::const_face_iterator 
+HalfEdgeDataStructure::const_face_iterator
 HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c) const
 {
     FaceVertices const faceVerticesKey{a, b, c};
@@ -284,7 +284,7 @@ HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c) const
     return faceIterator->second;
 }
 
-HalfEdgeDataStructure::const_face_iterator 
+HalfEdgeDataStructure::const_face_iterator
 HalfEdgeDataStructure::GetFaceEnd() const
 {
     return m_facesList.end();
@@ -359,7 +359,7 @@ size_t HalfEdgeDataStructure::HalfEdgeVerticesHash::operator()(HalfEdgeVertices 
 }
 
 void HalfEdgeDataStructure::IntializeHalfEdge(
-    HalfEdges::iterator he, HalfEdge* next, HalfEdge* prev, Face* face, 
+    HalfEdges::iterator he, HalfEdge* next, HalfEdge* prev, Face* face,
     uint64_t vertexIndexFrom, uint64_t vertexIndexTo
 )
 {
@@ -381,7 +381,7 @@ void HalfEdgeDataStructure::IntializeHalfEdge(
 }
 
 double pegasus::math::LineSegmentPointDistance(
-	glm::dvec3 const & lineStart, glm::dvec3 const & lineEnd, glm::dvec3 const & point
+    glm::dvec3 const & lineStart, glm::dvec3 const & lineEnd, glm::dvec3 const & point
 )
 {
     return 0.0;

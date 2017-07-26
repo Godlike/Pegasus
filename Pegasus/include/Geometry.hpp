@@ -364,7 +364,7 @@ inline void Initialize<Plane, Sphere>(SimpleShape const* a, SimpleShape const* b
     cache->planeMassCenter = plane->getCenterOfMass();
     cache->sphereMassCenter = sphere->getCenterOfMass();
     cache->sphereRadius = sphere->GetRadius();
-    cache->penetration = cache->sphereRadius - 
+    cache->penetration = cache->sphereRadius -
         (glm::dot(cache->sphereMassCenter, cache->planeNormal) - glm::dot(cache->planeMassCenter, cache->planeNormal));
 }
 
@@ -692,7 +692,7 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Cac
     std::transform(cache->bBoxAxes.begin(), cache->bBoxAxes.end(), cache->bBoxFaces.begin(),
                    [cache](glm::dvec3 const& v) { return v + cache->bMassCenter; });
 
-    cache->separatingAxes = { 
+    cache->separatingAxes = {
         glm::normalize(cache->aBoxAxes[0]), glm::normalize(cache->aBoxAxes[1]), glm::normalize(cache->aBoxAxes[2]),
         glm::normalize(cache->bBoxAxes[0]), glm::normalize(cache->bBoxAxes[1]), glm::normalize(cache->bBoxAxes[2])
     };
