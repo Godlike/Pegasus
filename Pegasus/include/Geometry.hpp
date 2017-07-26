@@ -55,7 +55,7 @@ class SimpleShape : public Shape
 {
 public:
     SimpleShapeType type;
-public:
+
     SimpleShape(glm::dvec3 const& centerOfMass, SimpleShapeType type);
 };
 
