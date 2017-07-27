@@ -25,7 +25,7 @@ namespace pegasus
 namespace math
 {
 /**
- * @brief HyperPlane calculation algorithm.
+ * @brief HyperPlane calculation algorithm
  */
 class HyperPlane
 {
@@ -33,10 +33,13 @@ public:
     HyperPlane() = default;
 
     /**
-     * @brief Constructs a plane in Hessian Normal Form.
-     * @param normal normal plane vector
-     * @param point point on the plane
-     * @param below point below the plane
+     * @brief Constructs a plane in Hessian Normal Form
+     * 
+     * Allows for the normal direction correction 
+     * using below the hyperplane point if one is specified.
+     * @param[in] normal normal plane vector
+     * @param[in] point point on the plane
+     * @param[in] below point below the plane, allows for the normal direction correction
      */
     HyperPlane(glm::dvec3 const& normal,
         glm::dvec3 const& point,
@@ -44,11 +47,15 @@ public:
     );
 
     /**
-     * @brief Constructs a plane in Hessian Normal Form.
-     * @param a point on a plane
-     * @param b point on a plane
-     * @param c point on a plane
-     * @param below point below plane
+     * @brief Constructs a plane in Hessian Normal Form
+     * 
+     * Constructs a hyperplane from the given vertices 
+     * and allows for the normal direction correction 
+     * using below the hyperplane point if one is specified.
+     * @param[in] a point on the plane
+     * @param[in] b point on the plane
+     * @param[in] c point on the plane
+     * @param[in] below point below the plane, allows for the normal direction correction
      */
     HyperPlane(glm::dvec3 const& a,
         glm::dvec3 const& b,
@@ -57,65 +64,54 @@ public:
     );
 
     /**
-     * @brief Constructs a plane in Hessian Normal Form.
-     * @param vertices points on a plane
-     * @param below point below plane
+     * @brief Constructs a plane in Hessian Normal Form
+     * 
+     * Constructs a hyperplane from the given vertices 
+     * and allows for the normal direction correction 
+     * using below the hyperplane point if one is specified.
+     * @param[in] vertices points on the plane
+     * @param[in] below point below the plane
      */
     HyperPlane(
         glm::dmat3 const& vertices,
-        glm::dvec3 const* below
+        glm::dvec3 const* below = nullptr
     );
 
-    /**
-     * @brief Plane point getter.
-     * @return point on a plane
-     */
+    /** brief Returns point on the plane */
     glm::dvec3 const& GetPoint() const;
 
-    /**
-     * @brief Plane normal getter.
-     * @return plane normal
-     */
+    /** Returns plane normal vector */
     glm::dvec3 const& GetNormal() const;
 
-    /**
-     * @brief Distance from a plane to the origin getter.
-     * @return distance from a plane to the origin
-     */
+    /** Returns a distance from the plane to the origin */
     double GetDistance() const;
 
-    /**
-     * @brief Plane normal setter.
-     * @param normal plane normal vector
-     */
+    /** Sets the plane normal vector */
     void SetNormal(glm::dvec3 const& normal);
 
-    /**
-     * @brief Point on a plane setter.
-     * @param point point on a plane
-     */
+    /** Sets a point on the plane */
     void SetPoint(glm::dvec3 const& point);
 
     /**
-     * @brief Calculates absolute distance from the plane to a point.
-     * @param point point of interest
-     * @return distance
+     * @brief Calculates absolute distance from the plane to a point
+     * @param[in] point a point of interest
+     * @return absolute distance from a point to the plane
      */
     double Distance(glm::dvec3 const& point) const;
 
     /**
-     * @brief Calculates signed distance from the plane to a point.
-     * @param point point of interest
-     * @return distance
+     * @brief Calculates signed distance from the plane to a point
+     * @param[in] point a point of interest
+     * @return signed distance from a point to the plane
      */
     double SignedDistance(glm::dvec3 const& point) const;
 
     /**
-     * @brief Calculater wether a line segment and the plane are intersecting.
-     * @param lineStart start of the line segment
-     * @param lineEnd end of the lilne segment
-     * @param resultPoint intersetion point
-     * @return intersection state
+     * @brief Calculates whether a line segment and the plane are intersecting
+     * @param[in] lineStart start of the line segment
+     * @param[in] lineEnd end of the lilne segment
+     * @param[out] resultPoint intersetion point
+     * @return @c true if there is intersection point, @c false otherwise
      */
     bool Intersection(
         glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3& resultPoint
@@ -125,11 +121,10 @@ private:
     glm::dvec3 m_normal;
     glm::dvec3 m_point;
     double m_distance;
-    glm::dvec3 const* m_below;
 };
 
 /**
- * @brief Data structure dedicated to store the mesh with most of the information contained in half-edges.
+ * @brief Data structure dedicated to store the mesh with most of the information contained in half-edges
  */
 class HalfEdgeDataStructure
 {
@@ -143,88 +138,140 @@ public:
     using const_face_iterator = Faces::const_iterator;
 
     /**
-     * @brief HEDS Face data container.
+     * @brief HEDS Face data container
      */
     class Face
     {
     public:
         template <typename HalfEdgeType>
-        class EdgeIterator;
+        class HalfEdgeCirculator;
         template <typename FaceType>
-        class FaceIterator;
+        class AdjacentFaceCirculator;
 
-        using edge_iterator = EdgeIterator<HalfEdge>;
-        using const_edge_iterator = EdgeIterator<HalfEdge const>;
-        using face_iterator = FaceIterator<Face>;
-        using const_face_iterator = FaceIterator<Face const>;
+        using edge_iterator = HalfEdgeCirculator<HalfEdge>;
+        using const_edge_iterator = HalfEdgeCirculator<HalfEdge const>;
+        using face_iterator = AdjacentFaceCirculator<Face>;
+        using const_face_iterator = AdjacentFaceCirculator<Face const>;
 
         /**
-         * @brief Face half-edges iterator
+         * @brief Face half-edges circular iterator
+         * 
+         * Iterator of a circular data structure, 
+         * does not have an end state. If the data structure is in
+         * valid state always dereferencable.
+         * Under the hood iterates along the inner half-edges
+         * of the face.
          * @tparam HalfEdgeType half-edge type
          */
         template <typename HalfEdgeType>
-        class EdgeIterator : public std::iterator<std::bidirectional_iterator_tag, HalfEdgeType>
+        class HalfEdgeCirculator : public std::iterator<std::bidirectional_iterator_tag, HalfEdgeType>
         {
         public:
-            explicit EdgeIterator(HalfEdgeType* halfEdge)
-                : m_current(halfEdge)
+            /**
+             * @brief Constructs a circular iterator from a given half-edge
+             * @param halfEdge 
+             */
+            explicit HalfEdgeCirculator(HalfEdgeType& halfEdge)
+                : m_current(&halfEdge)
             {
             }
 
+            /**
+             * @brief Returns a reference to the current half-edge
+             * @return reference to the current half-edge
+             */
             HalfEdgeType& operator*() const
             {
                 return *m_current;
             }
 
+            /**
+             * @brief Returns a pointer to the current half-edge
+             * @return pointer to the current half-edge
+             */
             HalfEdgeType* operator->() const
             {
                 return m_current;
             }
 
-            EdgeIterator& operator++()
+            /**
+             * @brief Increments an iterator and returns its reference
+             * @return reference to the incremented iterator
+             */
+            HalfEdgeCirculator& operator++()
             {
                 m_current = m_current->next;
                 return *this;
             }
 
-            EdgeIterator operator++(int)
+            /**
+             * @brief Increments an iterator and returns the iterator before the increment
+             * @return iterator before the increment
+             */
+            HalfEdgeCirculator operator++(int)
             {
-                EdgeIterator result(*this);
+                HalfEdgeCirculator result(*this);
                 operator++();
                 return result;
             }
 
-            EdgeIterator& operator--()
+            /**
+             * @brief Decrements an iterator and returns its reference
+             * @return reference to the decremented iterator
+             */
+            HalfEdgeCirculator& operator--()
             {
                 m_current = m_current->prev;
                 return *this;
             }
 
-            EdgeIterator operator--(int)
+            /**
+             * @brief Decrements an iterator and returns the iterator before the decrement
+             * @return iterator before the decrement
+             */
+            HalfEdgeCirculator operator--(int)
             {
-                EdgeIterator result(*this);
+                HalfEdgeCirculator result(*this);
                 operator--();
                 return result;
             }
 
-            bool operator==(EdgeIterator const& other) const
+            /**
+             * @brief Performs a memberwise comparison of the iterators and returns true if they are equal
+             * @param[in] other right hand side iterator reference
+             * @return true if iterators are equal
+             */
+            bool operator==(HalfEdgeCirculator const& other) const
             {
                 return m_current == other.m_current;
             }
 
-            bool operator!=(EdgeIterator const& other) const
+            /**
+             * @brief Performs a memberwise comparison of the iterators and returns true if they are not equal
+             * @param[in] other right hand side iterator reference
+             * @return false if iterators are equal
+             */
+            bool operator!=(HalfEdgeCirculator const& other) const
             {
                 return !operator==(other);
             }
 
-            friend void swap(EdgeIterator& lhs, EdgeIterator& rhs) noexcept
+            /**
+            * @brief Swaps two iterators content
+            * @param[in] lhs left hand side iterator
+            * @param[in] rhs right hand side iterator
+            */
+            friend void swap(HalfEdgeCirculator& lhs, HalfEdgeCirculator& rhs) noexcept
             {
                 std::swap(lhs.m_current, rhs.m_current);
             }
 
-            operator EdgeIterator<HalfEdgeType const>() const
+            /**
+            * @brief Constructs const iterator from the current iterator and returns it
+            */
+            operator HalfEdgeCirculator<HalfEdgeType const>() const
             {
-                return EdgeIterator(*this);
+                return HalfEdgeCirculator(*this);
             }
 
         private:
@@ -233,71 +280,124 @@ public:
 
         /**
          * @brief Adjacent faces iterator
+         * 
+         * Iterator of a circular data structure, 
+         * does not have an end state. If the data structure is in
+         * valid state always dereferencable.
+         * Under the hood iterates along the inner half-edges
+         * of the face and accesses its adjacent faces 
+         * using twin half-edge pointers and corresponding faces.
          * @tparam FaceType face type
          */
         template <typename FaceType>
-        class FaceIterator : public std::iterator<std::bidirectional_iterator_tag, FaceType>
+        class AdjacentFaceCirculator : public std::iterator<std::bidirectional_iterator_tag, FaceType>
         {
         public:
-            explicit FaceIterator(HalfEdge* halfEdge)
-                : m_current(halfEdge)
+            /**
+             * @brief Constructs an adjacent face iterator to from the given half-edge
+             * @param[in] halfEdge a half-edge from the face for which an adjacent iterator is to be constructed
+             */
+            explicit AdjacentFaceCirculator(HalfEdge& halfEdge)
+                : m_current(&halfEdge)
             {
             }
 
+            /**
+             * @brief Returns a referent to the current adjacent face
+             * @return a reference to the current adjacent face
+             */
             FaceType& operator*() const
             {
                 return *m_current->twin->face;
             }
 
+            /**
+             * @brief Returns a pointer to the current adjacent face
+             * @return a pointer to the current adjacent face
+             */
             FaceType* operator->() const
             {
                 return m_current->twin->face;
             }
 
-            FaceIterator& operator++()
+            /**
+             * @brief Increments an iterator to the next adjacent face
+             * @return incremented iterator reference
+             */
+            AdjacentFaceCirculator& operator++()
             {
                 m_current = m_current->next;
                 return *this;
             }
 
-            FaceIterator operator++(int)
+            /**
+             * @brief Increments an iterator to the next adjacent face
+             * @return iterator before increment
+             */
+            AdjacentFaceCirculator operator++(int)
             {
-                FaceIterator result(*this);
+                AdjacentFaceCirculator result(*this);
                 operator++();
                 return result;
             }
 
-            FaceIterator& operator--()
+            /**
+             * @brief Decrements an interator to the previous adjacent face
+             * @return decremented iterator
+             */
+            AdjacentFaceCirculator& operator--()
             {
                 m_current = m_current->prev;
                 return *this;
             }
 
-            FaceIterator operator--(int)
+            /**
+             * @brief Decrements an interator to the previous adjacent face
+             * @return iterator before decrement
+             */
+            AdjacentFaceCirculator operator--(int)
             {
-                FaceIterator result(*this);
+                AdjacentFaceCirculator result(*this);
                 operator++();
                 return result;
             }
 
-            bool operator==(FaceIterator const& other) const
+            /**
+             * @brief Performs a memberwise comparison and returns true if iterators are equal
+             * @param[in] other reference to the right hand side iterator
+             * @return result of the comparation
+             */
+            bool operator==(AdjacentFaceCirculator const& other) const
             {
                 return m_current == other.m_current;
             }
 
-            bool operator!=(FaceIterator const& other) const
+            /**
+             * @brief Performs a memberwise comparison and returns true if iterators are different
+             * @param[in] other reference to the right hand side iterator
+             * @return result of the comparation
+             */
+            bool operator!=(AdjacentFaceCirculator const& other) const
             {
                 return !operator==(other);
             }
 
-            friend void swap(FaceIterator& lhs, FaceIterator& rhs) noexcept
+            /**
+             * @brief Swaps two iterators content
+             * @param[in] lhs left hand side iterator
+             * @param[in] rhs right hand side iterator
+             */
+            friend void swap(AdjacentFaceCirculator& lhs, AdjacentFaceCirculator& rhs) noexcept
             {
                 std::swap(lhs.m_current, lhs.m_current);
             }
 
-            operator FaceIterator<FaceType const>() const
+            /**
+             * @brief Constructs const iterator from the current iterator and returns it
+             */
+            operator AdjacentFaceCirculator<FaceType const>() const
             {
-                return FaceIterator(*this);
+                return AdjacentFaceCirculator<FaceType const>(*this);
             }
 
         private:
@@ -306,30 +406,30 @@ public:
 
         /**
          * @brief Constructs a face from a given half-edge
-         * @param halfEdge face hald-edge pointer
+         * @param[in] halfEdge face hald-edge
          */
-        explicit Face(HalfEdge* halfEdge = nullptr);
+        explicit Face(HalfEdge& halfEdge);
 
         /**
-         * @brief Faces half-edge iterator getter
-         * @return half-edge iterator
+         * @brief Returns half-edge iterator 
+         * @return half-edge iterator of current face
          */
         edge_iterator GetHalfEdgeIterator();
 
         /**
-        * @brief Faces half-edge const iterator getter
+        * @brief Returns half-edge const iterator
         * @return half-edge const iterator
         */
         const_edge_iterator GetHalfEdgeIterator() const;
 
         /**
-         * @brief Faces adjacent face iteratir getter
+         * @brief Returns iterator of adjacent faces
          * @return adjacent face iterator
          */
         face_iterator GetAdjacentFaceIterator();
 
         /**
-        * @brief Faces adjacent face const iteratir getter
+        * @brief Returns iterator to const adjacent faces
         * @return adjacent face const iterator
         */
         const_face_iterator GetAdjacentFaceIterator() const;
@@ -339,10 +439,21 @@ public:
     };
 
     /**
-     * @brief Face key for associative containers.
+     * @brief Object that can be used as a key for associative containers
      */
     struct FaceVertices
     {
+        /* Hasher struct for the key object */
+        struct Hasher
+        {
+            /**
+             * @brief Calculates a hash sum over the given FaceVertices object
+             * @param face key for the hash calculation
+             * @return hash sum value
+             */
+            size_t operator()(FaceVertices const& face) const;
+        };
+
         uint64_t a;
         uint64_t b;
         uint64_t c;
@@ -351,15 +462,7 @@ public:
     };
 
     /**
-     * @brief FaceVertices hasher.
-     */
-    struct FaceVerticesHash
-    {
-        size_t operator()(FaceVertices const& face) const;
-    };
-
-    /**
-     * @brief Data structure that containes a half of the edge.
+     * @brief Data structure that describes one side of the edge
      */
     struct HalfEdge
     {
@@ -371,69 +474,72 @@ public:
     };
 
     /**
-     * @brief Inserts face into current data structure.
-     * @param a new face vertex index
-     * @param b new face vertex index
-     * @param c new face vertex index
+     * @brief Inserts face into the current data structure
+     * @param[in] a vertex index
+     * @param[in] b vertex index
+     * @param[in] c vertex index
      */
     void MakeFace(uint64_t a, uint64_t b, uint64_t c);
 
     /**
-     * @brief Face iterator getter.
-     * @param a face vertex index
-     * @param b face vertex index
-     * @param c face vertex index
+     * @brief Returns a face iterator
+     * @param[in] a vertex index
+     * @param[in] b vertex index
+     * @param[in] c vertex index
      * @return face iterator
      */
     face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c);
 
     /**
-    * @brief Face const iterator getter.
-    * @param a face vertex index
-    * @param b face vertex index
-    * @param c face vertex index
+    * @brief Returns a const face iterator
+    * @param[in] a vertex index
+    * @param[in] b vertex index
+    * @param[in] c vertex index
     * @return face const iterator
     */
     const_face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c) const;
 
     /**
-     * @brief Faces end iterator getter.
+     * @brief Returns end face iterator
      * @return end face const iterator
      */
     const_face_iterator GetFaceEnd() const;
 
     /**
-     * @brief Removes face from a current data structure.
-     * @param a face vertex index
-     * @param b face vertex index
-     * @param c face vertex index
+     * @brief Removes face from the current data structure
+     * @param[in] a vertex index
+     * @param[in] b vertex index
+     * @param[in] c vertex index
      */
     void RemoveFace(uint64_t a, uint64_t b, uint64_t c);
 
     /**
-     * @brief Removes face from a current data structure.
-     * @param faceIterator face to be removed iterator
+     * @brief Removes a face from the current data structure
+     * @param[in] faceIterator iterator pointing to the element to be removed
      */
     void RemoveFace(face_iterator faceIterator);
 
 private:
     /**
-     * @brief HalfEdge key for an associative containers.
+     * @brief Object that can be used as a key for associative containers
      */
     struct HalfEdgeVertices
     {
+        /* Hasher struct for the key object */
+        struct Hasher
+        {
+            /**
+            * @brief Calculates a hash sum over the given HalfEdgeVertices object
+            * @param edge key for the hash calculation
+            * @return hash sum value
+            */
+            size_t operator()(HalfEdgeVertices const& edge) const;
+        };
+
         uint64_t vertexIndexFrom;
         uint64_t vertexIndexTo;
 
         bool operator==(HalfEdgeVertices const& other) const;
-    };
-
-    /**
-     * @brief HalfEdgeVertices hasher.
-     */
-    struct HalfEdgeVerticesHash
-    {
-        size_t operator()(HalfEdgeVertices const& edge) const;
     };
 
     HalfEdges m_halfEdgeList;
@@ -441,7 +547,7 @@ private:
         HalfEdge const*, HalfEdges::iterator
     > m_halfEdgePointerIteratorMap;
     std::unordered_map<
-        HalfEdgeVertices, HalfEdges::iterator, HalfEdgeVerticesHash
+        HalfEdgeVertices, HalfEdges::iterator, HalfEdgeVertices::Hasher
     > m_halfEdgeVerticesIteratorMap;
 
     Faces m_facesList;
@@ -449,17 +555,17 @@ private:
         Face const*, Faces::iterator
     > m_faceIteratorMap;
     std::unordered_map<
-        FaceVertices, Faces::iterator, FaceVerticesHash
+        FaceVertices, Faces::iterator, FaceVertices::Hasher
     > m_faceVerticesIteratorMap;
 
     /**
-     * @brief HalfEdge initializer.
-     * @param he half-edge
-     * @param next next half-edge
-     * @param prev previous half-edge
-     * @param face half-edge face
-     * @param vertexIndexFrom start edge vertex index
-     * @param vertexIndexTo end edge vertex index
+     * @brief Initializes given half-edge
+     * @param[in] he half-edge iterator
+     * @param[in] next next half-edge pointer
+     * @param[in] prev previous half-edge pointer
+     * @param[in] face half-edge face pointer
+     * @param[in] vertexIndexFrom start edge vertex index
+     * @param[in] vertexIndexTo end edge vertex index
      */
     void IntializeHalfEdge(
         HalfEdges::iterator he,
@@ -471,10 +577,10 @@ private:
 };
 
 /**
- * @brief Calculates mean value for a given range.
+ * @brief Calculates mean value for a given range
  * @tparam Iterator forward iterator
- * @param begin start of the range
- * @param end end of the range
+ * @param[in] begin start of the range
+ * @param[in] end end of the range
  * @return mean value
  */
 template <typename Iterator>
@@ -493,11 +599,11 @@ decltype(auto) CalculateExpectedValue(Iterator begin, Iterator end)
 }
 
 /**
- * @brief Calculates covariance matrix for a given range of values.
+ * @brief Calculates covariance matrix for a given range of values
  * @tparam Iterator forward iterator
- * @param begin start of the range
- * @param end end of the range
- * @param mean expected value
+ * @param[in] begin start of the range
+ * @param[in] end end of the range
+ * @param[in] mean expected value
  * @return covariance matrix
  */
 template <typename Iterator>
@@ -522,11 +628,11 @@ glm::dmat3 CalculateCovarianceMatrix(Iterator begin, Iterator end, glm::dvec3 co
 }
 
 /**
- * @brief Finds farthest above point for a given hyperplane.
+ * @brief Finds farthest point above given hyperplane
  * @tparam Iterator forward iterator
- * @param begin start of the range
- * @param end end of the range
- * @param hyperPlane hyperplane
+ * @param[in] begin start of the range
+ * @param[in] end end of the range
+ * @param[in] hyperPlane hyperplane
  * @return farthest vertex iterator
  */
 template <typename Iterator>
@@ -542,11 +648,11 @@ Iterator FindExtremalVertex(Iterator begin, Iterator end, HyperPlane const& hype
 }
 
 /**
- * @brief Finds farthest above point for a given hyperplane.
+ * @brief Finds farthest point above given hyperplane and returns its index
  * @tparam Iterator forwars iterator
- * @param begin start of the range
- * @param end end of the range
- * @param hyperPlane hyperplane
+ * @param[in] begin start of the range
+ * @param[in] end end of the range
+ * @param[in] hyperPlane hyperplane
  * @return farthest vertex index
  */
 template <typename Iterator>
@@ -572,13 +678,13 @@ size_t FindExtremalVertexIndex(Iterator begin, Iterator end, HyperPlane const& h
 }
 
 /**
- * @brief Finds extremal vertices from a given range on a given basis.
+ * @brief Finds extremal vertices for a given range on given @p basis and writes them to @p minimaVertices and @p maximaVertices
  * @tparam Iterator forward iterator
- * @param begin start of the range
- * @param end end of the range
- * @param basis basis vectors
- * @param minimaVertices vertices with a minima projections on a basis
- * @param maximaVertices vertices with a maxima projections on a basis
+ * @param[in] begin start of the range
+ * @param[in] end end of the range
+ * @param[in] basis basis vectors
+ * @param[out] minimaVertices vertices with a minima projections on a basis
+ * @param[out] maximaVertices vertices with a maxima projections on a basis
  */
 template <typename Iterator>
 void FindExtremalVertices(
@@ -612,27 +718,27 @@ void FindExtremalVertices(
 }
 
 /**
- * @brief Calculates distance from a point to a line segment.
- * @param lineStart start of the line segment
- * @param lineEnd end of the line segment
- * @param point point of interest
- * @return distance
+ * @brief Calculates distance between a point and line segment
+ * @param[in] lineStart start of the line segment
+ * @param[in] lineEnd end of the line segment
+ * @param[in] point point of interest
+ * @return distance between a point and line segment
  */
 double LineSegmentPointDistance(
     glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
 );
 
 /**
- * @brief Jacobi eigenvalue calculation algorithm.
+ * @brief Jacobi eigenvalue calculation algorithm
  */
 class JacobiEigenvalue
 {
 public:
     /**
-     * @brief Constructs and calculates eigenvalues and eigenvectors of a given symmetric matrix.
-     * @param symmetricMatrix
-     * @param coverageThreshold
-     * @param maxIterations
+     * @brief Constructs and calculates eigenvalues and eigenvectors of a given symmetric matrix
+     * @param[in] symmetricMatrix
+     * @param[in] coverageThreshold
+     * @param[in] maxIterations
      */
     explicit JacobiEigenvalue(
         glm::dmat3 const& symmetricMatrix,
@@ -641,13 +747,13 @@ public:
     );
 
     /**
-     * @brief Eigenvectors getter.
+     * @brief Returns eigenvectors
      * @return eigenvectos matrix
      */
     glm::dmat3 const& GetEigenvectors() const;
 
     /**
-     * @brief Eigenvalue getter.
+     * @brief Returns eigenvalues
      * @return eigenvalue vector
      */
     glm::dvec3 const& GetEigenvalues() const;
@@ -660,59 +766,60 @@ private:
     glm::dvec3 m_eigenvalues;
 
     /**
-     * @brief Finds maximal off diagonal matrix element.
-     * @param mat matrix to search
-     * @param i max element row index
-     * @param j max element columnt index
+     * @brief Finds maximal absolute value off diagonal matrix element and sets its indices
+     * @param[in] mat matrix to search
+     * @param[out] i max element row index
+     * @param[out] j max element columnt index
      */
     static void FindMaxNormOffDiagonal(glm::dmat3 const& mat, uint8_t& i, uint8_t& j);
 
     /**
-     * @brief Calculates rotation angle for a given matrix and it's element.
-     * @param mat matrix to rotate
-     * @param i element row index
-     * @param j element column index
+     * @brief Calculates rotation angle for a given matrix and its element
+     * @param[in] mat matrix to rotate
+     * @param[in] i element row index
+     * @param[in] j element column index
      * @return angle in radians
      */
     double CalculateRotationAngle(glm::dmat3 const& mat, uint8_t i, uint8_t j) const;
 
     /**
-     * @brief Makes Givens rotation matrix from the angle and indices.
-     * @param theta rotation angle in radians
-     * @param i row index
-     * @param j column index
+     * @brief Makes Givens rotation matrix from the angle and indices
+     * @param[in] theta rotation angle in radians
+     * @param[in] i row index
+     * @param[in] j column index
      * @return Givens rotation matrix
      */
     static glm::dmat3 MakeGivensRotationMatrix(double theta, uint8_t i, uint8_t j);
 
     /**
-     * @brief Calculates eigenvalues and eigenvectors.
+     * @brief Calculates eigenvalues and eigenvectors
      */
     void Calculate();
 };
 
 /**
- * @brief Quickhull convex hull calculation algorithm.
- * @tparam Vertices STL compatible random access glm::dvec3 container
+ * @brief Quickhull convex hull calculation algorithm
+ * @tparam VerticesType STL compatible random access glm::dvec3 container
  */
-template <typename Vertices>
+template <typename VerticesType>
 class QuickhullConvexHull
 {
 public:
     class Face;
     using Faces = std::list<Face>;
+    using Vertices = VerticesType;
 
     /**
-     * @brief Convex hull face container.
+     * @brief Convex hull face container
      */
     class Face
     {
     public:
         /**
-         * @brief Constructs a face without initializing above vertices.
-         * @param hedsFaceIterator HEDS face iterator
-         * @param hyperPlane HyperPlane
-         * @param indices face indices
+         * @brief Constructs a face without initializing above vertices
+         * @param[in] hedsFaceIterator HEDS face iterator
+         * @param[in] hyperPlane hyperplane that given face lies on
+         * @param[in] indices face indices
          */
         Face(HalfEdgeDataStructure::face_iterator hedsFaceIterator,
             HyperPlane const& hyperPlane,
@@ -727,12 +834,12 @@ public:
         }
 
         /**
-         * @brief Constructs face and initializes it's abobe vertices.
-         * @param vertexBuffer common vertex buffer
-         * @param partitionMarkedVertices vertices marked for partitioning
-         * @param hedsFaceIterator HEDS face iterator
-         * @param hyperPlane HypePlane
-         * @param indices face indices
+         * @brief Constructs face and initializes vertices above it
+         * @param[in] vertexBuffer common vertex buffer
+         * @param[in] partitionMarkedVertices vertices marked for partitioning
+         * @param[in] hedsFaceIterator HEDS face iterator
+         * @param[in] hyperPlane hyperplane that given face lies on
+         * @param[in] indices face indices
          */
         Face(Vertices& vertexBuffer,
             std::list<typename Vertices::iterator>& partitionMarkedVertices,
@@ -746,11 +853,15 @@ public:
         }
 
         /**
-         * @brief Partitions vertices that are above the face.
-         * @param vertexBuffer common vertex buffer
-         * @param partitionMarkedVertices vertices marked for partitioning
+         * @brief Partitions vertices that are above the face
+         * 
+         * Uses vertexBuffer as a reference point for the index calculation without changing it,
+         * removes vertices from partitionMarkedVertices list that are above the current face's hyperplane
+         * effectively moving them to the current face.
+         * @param[in] vertexBuffer common vertex buffer
+         * @param[in, out] partitionMarkedVertices vertices marked for partitioning
          */
-        void SetVertices(Vertices& vertexBuffer, std::list<typename Vertices::iterator>& partitionMarkedVertices)
+        void SetVertices(Vertices const& vertexBuffer, std::list<typename Vertices::iterator>& partitionMarkedVertices)
         {
             auto findAboveVertices = [this](typename Vertices::iterator& vertexIt)
             {
@@ -773,12 +884,14 @@ public:
                     return m_hyperPlane.SignedDistance(*a) < m_hyperPlane.SignedDistance(*b);
                 });
 
-                m_extremalVertexIndex = std::distance(vertexBuffer.begin(), m_extremalVertex);
+                m_extremalVertexIndex = std::distance<typename Vertices::const_iterator>(
+                    vertexBuffer.cbegin(), m_extremalVertex
+                );
             }
         }
 
         /**
-         * @brief Face owned vertices getter.
+         * @brief Returns vertices that are above current face's hyperplane
          * @return face vertices container
          */
         std::vector<typename Vertices::iterator>& GetVertices()
@@ -787,7 +900,7 @@ public:
         }
 
         /**
-         * @brief Extremal face vertex getter.
+         * @brief Returns farthest vertex above face's hyperplane
          * @return extremal vertex iterator
          */
         typename Vertices::iterator GetExtremalVertex() const
@@ -796,7 +909,7 @@ public:
         }
 
         /**
-         * @brief Extremal faces vertex index getter.
+         * @brief Returns farthest vertex index above face's hyperplane
          * @return extremal vertex index
          */
         size_t GetExtremalVertexIndex() const
@@ -805,7 +918,7 @@ public:
         }
 
         /**
-         * @brief Face HEDS iterator getter.
+         * @brief Returns a HEDS face iterator for the current face
          * @return HEDS face iterator
          */
         HalfEdgeDataStructure::face_iterator GetHedsFaceIterator() const
@@ -814,8 +927,8 @@ public:
         }
 
         /**
-         * @brief HyperPlane getter.
-         * @return hyperplane
+         * @brief Returns current face's hyperplane
+         * @return current face's hyperplane 
          */
         HyperPlane const& GetHyperPlane() const
         {
@@ -823,7 +936,7 @@ public:
         }
 
         /**
-         * @brief Face indices getter.
+         * @brief Returns indices that form current face
          * @return face indices array
          */
         std::array<size_t, 3> const& GetIndices() const
@@ -841,7 +954,7 @@ public:
     };
 
     /**
-     * @brief Constructs a quickhull convex hull calculation algorithm object.
+     * @brief Constructs a quickhull convex hull calculation algorithm object
      * @param vertices vertex buffer object
      */
     explicit QuickhullConvexHull(Vertices& vertices)
@@ -850,7 +963,7 @@ public:
     }
 
     /**
-     * @brief Calculates a convex hull from a given vertex buffer.
+     * @brief Calculates a convex hull from a given vertex buffer
      */
     void Calculate()
     {
@@ -859,8 +972,8 @@ public:
     }
 
     /**
-     * @brief Returns convex hull faces.
-     * @return convex hull faces.
+     * @brief Returns convex hull faces
+     * @return convex hull faces
      */
     Faces const& GetFaces() const
     {
@@ -868,8 +981,8 @@ public:
     }
 
     /**
-     * @brief Returns convex hull vertices.
-     * @return convex hull vertices.
+     * @brief Returns convex hull vertices
+     * @return convex hull vertices
      */
     std::list<typename Vertices::iterator> const& GetVertices() const
     {
@@ -887,11 +1000,11 @@ private:
     > m_hedsFaceIteratorMap;
 
     /**
-     * @brief Calculates initial guess tetrahedron and performs initalization.
+     * @brief Calculates initial guess tetrahedron and performs initalization
      */
     void CalculateInitialGuess()
     {
-        //Calculate covariance matrix and it's eigenvectors
+        //Calculate covariance matrix and its eigenvectors
         m_mean = CalculateExpectedValue(m_vertices.begin(), m_vertices.end());
         JacobiEigenvalue const eigenvalue(CalculateCovarianceMatrix(m_vertices.begin(), m_vertices.end(), m_mean));
         glm::dmat3 eigenvectorsNormalized = eigenvalue.GetEigenvectors();
@@ -903,7 +1016,7 @@ private:
 
         //Calculate extremal vertices
         std::array<typename Vertices::iterator, 3> maximaVertices, minimaVertices;
-        FindExtremalVertices(m_vertices.begin(), m_vertices.end(), eigenvectorsNormalized, maximaVertices, minimaVertices);
+        FindExtremalVertices(m_vertices.begin(), m_vertices.end(), eigenvectorsNormalized, minimaVertices, maximaVertices);
         std::set<typename Vertices::iterator> extremalPoints(maximaVertices.begin(), maximaVertices.end());
         extremalPoints.insert(minimaVertices.begin(), minimaVertices.end());
 
@@ -964,7 +1077,7 @@ private:
     }
 
     /**
-     * @brief Refines initial guess tetrahedron by calculating final convex hull.
+     * @brief Refines initial guess tetrahedron by calculating final convex hull
      */
     void Refine()
     {
@@ -1066,22 +1179,24 @@ private:
     }
 
     /**
-     * @brief Inserts a new face into current convex hull.
-     * @param vertexIndex1 index of a face
-     * @param vertexIndex2 index of a face
-     * @param vertexIndex3 index of a face
-     * @param vertices modifiable vertex buffer
+     * @brief Inserts a new face into current convex hull
+     * 
+     * Removes vertices from partitionMarkedVertices list that are above the current face's hyperplane
+     * @param[in] vertexIndex1 index of a face
+     * @param[in] vertexIndex2 index of a face
+     * @param[in] vertexIndex3 index of a face
+     * @param[in, out] partitionMarkedVertices modifiable vertex buffer
      * @return iterator to a new face
      */
     typename Faces::iterator MakeFace(
         size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3,
-        std::list<typename Vertices::iterator>& vertices
+        std::list<typename Vertices::iterator>& partitionMarkedVertices
     )
     {
         m_heds.MakeFace(vertexIndex1, vertexIndex2, vertexIndex3);
         m_faces.push_front(Face{
             m_vertices,
-            vertices,
+            partitionMarkedVertices,
             m_heds.GetFace(vertexIndex1, vertexIndex2, vertexIndex3),
             HyperPlane{m_vertices[vertexIndex1], m_vertices[vertexIndex2], m_vertices[vertexIndex3], &m_mean},
             std::array<size_t, 3>{vertexIndex1, vertexIndex2, vertexIndex3}
@@ -1092,7 +1207,7 @@ private:
     }
 
     /**
-     * @brief Removes face from a current convex hull.
+     * @brief Removes face from a current convex hull and corresponding HEDS object
      * @param faceIterator face to be removed iterator
      */
     void RemoveFace(typename Faces::iterator faceIterator)

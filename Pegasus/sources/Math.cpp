@@ -12,11 +12,10 @@ HyperPlane::HyperPlane(glm::dvec3 const& normal, glm::dvec3 const& point, glm::d
     : m_normal(normal)
     , m_point(point)
     , m_distance(glm::dot(m_normal, m_point))
-    , m_below(below)
 {
-    if (m_below != nullptr)
+    if (below != nullptr)
     {
-        glm::dvec3 const outward = point - *m_below;
+        glm::dvec3 const outward = point - *below;
         if (glm::dot(outward, m_normal) < 0.0)
         {
             SetNormal(m_normal * -1.0);
@@ -189,29 +188,29 @@ void JacobiEigenvalue::Calculate()
     m_eigenvectors = S;
 }
 
-HalfEdgeDataStructure::Face::Face(HalfEdge* halfEdge)
-    : m_halfEdge(halfEdge)
+HalfEdgeDataStructure::Face::Face(HalfEdge& halfEdge)
+    : m_halfEdge(&halfEdge)
 {
 }
 
 HalfEdgeDataStructure::Face::edge_iterator HalfEdgeDataStructure::Face::GetHalfEdgeIterator()
 {
-    return edge_iterator{m_halfEdge};
+    return edge_iterator{*m_halfEdge};
 }
 
 HalfEdgeDataStructure::Face::const_edge_iterator HalfEdgeDataStructure::Face::GetHalfEdgeIterator() const
 {
-    return const_edge_iterator{m_halfEdge};
+    return const_edge_iterator{*m_halfEdge};
 }
 
 HalfEdgeDataStructure::Face::face_iterator HalfEdgeDataStructure::Face::GetAdjacentFaceIterator()
 {
-    return face_iterator{m_halfEdge};
+    return face_iterator{*m_halfEdge};
 }
 
 HalfEdgeDataStructure::Face::const_face_iterator HalfEdgeDataStructure::Face::GetAdjacentFaceIterator() const
 {
-    return const_face_iterator{m_halfEdge};
+    return const_face_iterator{*m_halfEdge};
 }
 
 bool HalfEdgeDataStructure::FaceVertices::operator==(FaceVertices const& other) const
@@ -226,7 +225,7 @@ bool HalfEdgeDataStructure::FaceVertices::operator==(FaceVertices const& other) 
         && pointers[2] == otherPointers[2];
 }
 
-size_t HalfEdgeDataStructure::FaceVerticesHash::operator()(FaceVertices const& face) const
+size_t HalfEdgeDataStructure::FaceVertices::Hasher::operator()(FaceVertices const& face) const
 {
     return std::hash<uint64_t>{}(face.a)
         ^ std::hash<uint64_t>{}(face.b)
@@ -246,7 +245,7 @@ void HalfEdgeDataStructure::MakeFace(uint64_t a, uint64_t b, uint64_t c)
         };
 
         //Allocate face
-        auto backFaceIterator = m_facesList.emplace(m_facesList.end(), &*newHalfEdges.back());
+        auto backFaceIterator = m_facesList.emplace(m_facesList.end(), *newHalfEdges.back());
         m_faceIteratorMap[&*backFaceIterator] = backFaceIterator;
         m_faceVerticesIteratorMap[faceVerticesKey] = backFaceIterator;
 
@@ -349,7 +348,7 @@ bool HalfEdgeDataStructure::HalfEdgeVertices::operator==(HalfEdgeVertices const&
     return indices[0] == otherIndices[0] && indices[1] == otherIndices[1];
 }
 
-size_t HalfEdgeDataStructure::HalfEdgeVerticesHash::operator()(HalfEdgeVertices const& edge) const
+size_t HalfEdgeDataStructure::HalfEdgeVertices::Hasher::operator()(HalfEdgeVertices const& edge) const
 {
     return std::hash<uint64_t>{}(edge.vertexIndexFrom)
         ^ std::hash<uint64_t>{}(edge.vertexIndexTo);

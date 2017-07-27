@@ -79,7 +79,11 @@ private:
     GLuint solidBunnyGlListIndex;
     GLuint wiredBunnyGlListIndex;
     GLuint pointsBunnyGlListIndex;
-    pegasus::math::QuickhullConvexHull<std::vector<glm::dvec3>>* cv;
+    using ConvexHull = pegasus::math::QuickhullConvexHull<std::vector<glm::dvec3>>;
+    std::unique_ptr<ConvexHull> cv;
+    ConvexHull::Faces cvFaces;
+    std::list<ConvexHull::Vertices::iterator> cvVertices;
+
     pegasus::geometry::volumes::Vertices vertices;
     pegasus::geometry::volumes::Faces faces;
     pegasus::geometry::volumes::Indices indices;
@@ -183,8 +187,10 @@ void FallingDemo::AddBoundingVolumes()
         indices.insert(i);
 
     //CV
-    cv = new pegasus::math::QuickhullConvexHull<std::vector<glm::dvec3>>(vertices);
+    cv = std::make_unique<ConvexHull>(vertices);
     cv->Calculate();
+    cvVertices = cv->GetVertices();
+    cvFaces = cv->GetFaces();
 
     //OBB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
@@ -334,8 +340,6 @@ void FallingDemo::Display()
     if (DRAW_CONVEX)
     {
         uint32_t index = 0;
-        auto const& cvVertices = cv->GetVertices();
-        auto const& cvFaces = cv->GetFaces();
 
         //Draw vertices
         for (auto vertex : cvVertices)
