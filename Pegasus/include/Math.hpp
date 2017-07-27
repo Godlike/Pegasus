@@ -24,7 +24,6 @@ namespace pegasus
 {
 namespace math
 {
-
 /**
  * @brief HyperPlane calculation algorithm.
  */
@@ -104,11 +103,11 @@ public:
      */
     double Distance(glm::dvec3 const& point) const;
 
-   /**
-    * @brief Calculates signed distance from the plane to a point.
-    * @param point point of interest
-    * @return distance
-    */
+    /**
+     * @brief Calculates signed distance from the plane to a point.
+     * @param point point of interest
+     * @return distance
+     */
     double SignedDistance(glm::dvec3 const& point) const;
 
     /**
@@ -119,7 +118,7 @@ public:
      * @return intersection state
      */
     bool Intersection(
-        glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 & resultPoint
+        glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3& resultPoint
     ) const;
 
 private:
@@ -149,9 +148,9 @@ public:
     class Face
     {
     public:
-        template< typename HalfEdgeType >
+        template <typename HalfEdgeType>
         class EdgeIterator;
-        template< typename FaceType >
+        template <typename FaceType>
         class FaceIterator;
 
         using edge_iterator = EdgeIterator<HalfEdge>;
@@ -163,7 +162,7 @@ public:
          * @brief Face half-edges iterator
          * @tparam HalfEdgeType half-edge type
          */
-        template < typename HalfEdgeType >
+        template <typename HalfEdgeType>
         class EdgeIterator : public std::iterator<std::bidirectional_iterator_tag, HalfEdgeType>
         {
         public:
@@ -236,8 +235,8 @@ public:
          * @brief Adjacent faces iterator
          * @tparam FaceType face type
          */
-        template < typename FaceType >
-        class FaceIterator : public std::iterator<std::bidirectional_iterator_tag, FaceType >
+        template <typename FaceType>
+        class FaceIterator : public std::iterator<std::bidirectional_iterator_tag, FaceType>
         {
         public:
             explicit FaceIterator(HalfEdge* halfEdge)
@@ -478,13 +477,14 @@ private:
  * @param end end of the range
  * @return mean value
  */
-template < typename Iterator >
+template <typename Iterator>
 decltype(auto) CalculateExpectedValue(Iterator begin, Iterator end)
 {
     auto E = *(begin++);
     uint32_t size = 1;
 
-    for (; begin != end; ++begin) {
+    for (; begin != end; ++begin)
+    {
         E += *begin;
         ++size;
     }
@@ -500,15 +500,18 @@ decltype(auto) CalculateExpectedValue(Iterator begin, Iterator end)
  * @param mean expected value
  * @return covariance matrix
  */
-template < typename Iterator >
+template <typename Iterator>
 glm::dmat3 CalculateCovarianceMatrix(Iterator begin, Iterator end, glm::dvec3 const& mean)
 {
     glm::dmat3 covariance(0.0);
     uint32_t size = 0;
 
-    for (; begin != end; ++begin) {
-        for (uint8_t i = 0; i < 3; ++i) {
-            for (uint8_t j = 0; j < 3; ++j) {
+    for (; begin != end; ++begin)
+    {
+        for (uint8_t i = 0; i < 3; ++i)
+        {
+            for (uint8_t j = 0; j < 3; ++j)
+            {
                 covariance[i][j] += ((*begin)[i] - mean[i]) * ((*begin)[j] - mean[j]);
             }
         }
@@ -526,11 +529,12 @@ glm::dmat3 CalculateCovarianceMatrix(Iterator begin, Iterator end, glm::dvec3 co
  * @param hyperPlane hyperplane
  * @return farthest vertex iterator
  */
-template < typename Iterator >
+template <typename Iterator>
 Iterator FindExtremalVertex(Iterator begin, Iterator end, HyperPlane const& hyperPlane)
 {
     Iterator extremalVertexIt = std::max_element(
-        begin, end, [&hyperPlane](glm::dvec3 const& a, glm::dvec3 const& b) {
+        begin, end, [&hyperPlane](glm::dvec3 const& a, glm::dvec3 const& b)
+    {
         return hyperPlane.SignedDistance(a) < hyperPlane.SignedDistance(b);
     });
 
@@ -545,7 +549,7 @@ Iterator FindExtremalVertex(Iterator begin, Iterator end, HyperPlane const& hype
  * @param hyperPlane hyperplane
  * @return farthest vertex index
  */
-template < typename Iterator >
+template <typename Iterator>
 size_t FindExtremalVertexIndex(Iterator begin, Iterator end, HyperPlane const& hyperPlane)
 {
     size_t index = 0;
@@ -576,14 +580,14 @@ size_t FindExtremalVertexIndex(Iterator begin, Iterator end, HyperPlane const& h
  * @param minimaVertices vertices with a minima projections on a basis
  * @param maximaVertices vertices with a maxima projections on a basis
  */
-template < typename Iterator >
+template <typename Iterator>
 void FindExtremalVertices(
     Iterator begin, Iterator end, glm::dmat3 const& basis,
     std::array<Iterator, 3>& minimaVertices, std::array<Iterator, 3>& maximaVertices
 )
 {
-    glm::dvec3 maximaProjections{ std::numeric_limits<double>::min() };
-    glm::dvec3 minimaProjections{ std::numeric_limits<double>::max() };
+    glm::dvec3 maximaProjections{std::numeric_limits<double>::min()};
+    glm::dvec3 minimaProjections{std::numeric_limits<double>::max()};
 
     for (; begin != end; ++begin)
     {
@@ -691,7 +695,7 @@ private:
  * @brief Quickhull convex hull calculation algorithm.
  * @tparam Vertices STL compatible random access glm::dvec3 container
  */
-template < typename Vertices >
+template <typename Vertices>
 class QuickhullConvexHull
 {
 public:
@@ -748,7 +752,8 @@ public:
          */
         void SetVertices(Vertices& vertexBuffer, std::list<typename Vertices::iterator>& partitionMarkedVertices)
         {
-            auto findAboveVertices = [this](typename Vertices::iterator& vertexIt) {
+            auto findAboveVertices = [this](typename Vertices::iterator& vertexIt)
+            {
                 return m_hyperPlane.SignedDistance(*vertexIt) > 0;
             };
 
@@ -763,8 +768,9 @@ public:
             if (!m_vertices.empty())
             {
                 m_extremalVertex = *std::max_element(m_vertices.begin(), m_vertices.end(),
-                    [this](typename Vertices::iterator& a, typename Vertices::iterator& b) {
-                        return m_hyperPlane.SignedDistance(*a) < m_hyperPlane.SignedDistance(*b);
+                    [this](typename Vertices::iterator& a, typename Vertices::iterator& b)
+                {
+                    return m_hyperPlane.SignedDistance(*a) < m_hyperPlane.SignedDistance(*b);
                 });
 
                 m_extremalVertexIndex = std::distance(vertexBuffer.begin(), m_extremalVertex);
@@ -838,7 +844,7 @@ public:
      * @brief Constructs a quickhull convex hull calculation algorithm object.
      * @param vertices vertex buffer object
      */
-    QuickhullConvexHull(Vertices& vertices)
+    explicit QuickhullConvexHull(Vertices& vertices)
         : m_vertices(vertices)
     {
     }
@@ -904,10 +910,13 @@ private:
         //Calculate base line points
         auto mostDistantPair = std::make_pair(*maximaVertices.begin(), *minimaVertices.begin());
         double maxDistanceSq = 0.0;
-        for (auto a : extremalPoints) {
-            for (auto b : extremalPoints) {
+        for (auto a : extremalPoints)
+        {
+            for (auto b : extremalPoints)
+            {
                 double const distSq = glm::length2(*a - *b);
-                if (distSq > maxDistanceSq) {
+                if (distSq > maxDistanceSq)
+                {
                     maxDistanceSq = distSq;
                     mostDistantPair = std::make_pair(a, b);
                 }
@@ -917,7 +926,8 @@ private:
         //Calculate triangle base point
         auto triangleBasePoint = *std::max_element(
             extremalPoints.begin(), extremalPoints.end(),
-            [&mostDistantPair](typename Vertices::iterator v1, typename Vertices::iterator v2) {
+            [&mostDistantPair](typename Vertices::iterator v1, typename Vertices::iterator v2)
+        {
             return LineSegmentPointDistance(*mostDistantPair.first, *mostDistantPair.second, *v1)
                 < LineSegmentPointDistance(*mostDistantPair.first, *mostDistantPair.second, *v2);
         });
@@ -926,7 +936,8 @@ private:
         HyperPlane baseFacePlane(*mostDistantPair.first, *mostDistantPair.second, *triangleBasePoint);
         auto tetrahedronApexPoint = std::max_element(
             m_vertices.begin(), m_vertices.end(),
-            [&baseFacePlane](glm::dvec3& a, glm::dvec3& b) {
+            [&baseFacePlane](glm::dvec3& a, glm::dvec3& b)
+        {
             return baseFacePlane.Distance(a) < baseFacePlane.Distance(b);
         });
 
@@ -942,7 +953,8 @@ private:
         };
 
         std::list<typename Vertices::iterator> markedVertexIterators;
-        for (auto vertexIt = m_vertices.begin(); vertexIt != m_vertices.end(); ++vertexIt) {
+        for (auto vertexIt = m_vertices.begin(); vertexIt != m_vertices.end(); ++vertexIt)
+        {
             markedVertexIterators.push_back(vertexIt);
         }
         MakeFace(indices[0], indices[1], indices[2], markedVertexIterators);
@@ -973,7 +985,7 @@ private:
                 std::list<typename Vertices::iterator> markedVertexIterators;
                 std::list<std::pair<size_t, size_t>> horizonRidges;
                 std::list<typename Faces::iterator> visibleFaces(1, faceIt);
-                std::unordered_set<Face*> visibleFacesSet{ &*faceIt };
+                std::unordered_set<Face*> visibleFacesSet{&*faceIt};
                 std::unordered_set<Face*> visitedFaces;
 
                 auto extremalVertex = faceIt->GetExtremalVertex();
@@ -993,7 +1005,8 @@ private:
                     visitedFaces.insert(&(**visibleFaceIt));
 
                     //For all adjacent faces
-                    do {
+                    do
+                    {
                         typename Faces::iterator adjFace = m_hedsFaceIteratorMap[&*adjHedsFaceIt];
 
                         //If face is unvisited
@@ -1024,7 +1037,8 @@ private:
                                 horizonRidges.emplace_back(ridgeIndices[0], ridgeIndices[1]);
                             }
                         }
-                    } while (++adjHedsFaceIt != adjHedsFaceBegin);
+                    }
+                    while (++adjHedsFaceIt != adjHedsFaceBegin);
                 }
 
                 m_convexHullVertices.push_back(extremalVertex);
@@ -1033,7 +1047,10 @@ private:
                 for (typename Faces::iterator visibleFaceIt : visibleFaces)
                 {
                     faceStack.erase(std::remove_if(faceStack.begin(), faceStack.end(),
-                        [&visibleFaceIt](typename Faces::iterator& it) { return &*it == &*visibleFaceIt; }), faceStack.end());
+                        [&visibleFaceIt](typename Faces::iterator& it)
+                    {
+                        return &*it == &*visibleFaceIt;
+                    }), faceStack.end());
                     RemoveFace(visibleFaceIt);
                 }
 
@@ -1066,8 +1083,8 @@ private:
             m_vertices,
             vertices,
             m_heds.GetFace(vertexIndex1, vertexIndex2, vertexIndex3),
-            HyperPlane{ m_vertices[vertexIndex1], m_vertices[vertexIndex2], m_vertices[vertexIndex3], &m_mean },
-            std::array<size_t, 3>{ vertexIndex1, vertexIndex2, vertexIndex3 }
+            HyperPlane{m_vertices[vertexIndex1], m_vertices[vertexIndex2], m_vertices[vertexIndex3], &m_mean},
+            std::array<size_t, 3>{vertexIndex1, vertexIndex2, vertexIndex3}
         });
         m_hedsFaceIteratorMap[&*m_faces.front().GetHedsFaceIterator()] = m_faces.begin();
 
@@ -1085,7 +1102,6 @@ private:
         m_faces.erase(faceIterator);
     }
 };
-
 } // namespace math
 } // namespace pegasus
 

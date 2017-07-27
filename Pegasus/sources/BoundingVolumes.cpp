@@ -266,7 +266,7 @@ geometry::Sphere sphere::BoundingSphere::RefineSphere(
 )
 {
     double sphereRadius = sphere.GetRadius();
-    glm::dvec3 sphereCenter = sphere.getCenterOfMass();
+    glm::dvec3 sphereCenter = sphere.GetCenterOfMass();
 
     //Find point outside of the sphere and resize sphere
     for (auto faceIndex : indices)

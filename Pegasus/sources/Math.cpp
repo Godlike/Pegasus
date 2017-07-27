@@ -8,26 +8,30 @@
 using namespace pegasus;
 using namespace math;
 
-HyperPlane::HyperPlane(glm::dvec3 const & normal, glm::dvec3 const & point, glm::dvec3 const* below)
-    : m_normal(normal), m_point(point), m_distance(glm::dot(m_normal, m_point)), m_below(below)
+HyperPlane::HyperPlane(glm::dvec3 const& normal, glm::dvec3 const& point, glm::dvec3 const* below)
+    : m_normal(normal)
+    , m_point(point)
+    , m_distance(glm::dot(m_normal, m_point))
+    , m_below(below)
 {
     if (m_below != nullptr)
     {
         glm::dvec3 const outward = point - *m_below;
-        if (glm::dot(outward, m_normal) < 0.0) {
+        if (glm::dot(outward, m_normal) < 0.0)
+        {
             SetNormal(m_normal * -1.0);
         }
     }
 }
 
 HyperPlane::HyperPlane(
-    glm::dvec3 const & a, glm::dvec3 const & b, glm::dvec3 const & c, glm::dvec3 const* below
+    glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c, glm::dvec3 const* below
 )
     : HyperPlane(glm::normalize(glm::cross(a - c, b - c)), c, below)
 {
 }
 
-HyperPlane::HyperPlane(glm::dmat3 const & vertices, glm::dvec3 const* below)
+HyperPlane::HyperPlane(glm::dmat3 const& vertices, glm::dvec3 const* below)
     : HyperPlane(vertices[0], vertices[1], vertices[2], below)
 {
 }
@@ -47,30 +51,30 @@ double HyperPlane::GetDistance() const
     return m_distance;
 }
 
-void HyperPlane::SetNormal(glm::dvec3 const & normal)
+void HyperPlane::SetNormal(glm::dvec3 const& normal)
 {
     m_normal = normal;
     m_distance = glm::dot(m_normal, m_point);
 }
 
-void HyperPlane::SetPoint(glm::dvec3 const & point)
+void HyperPlane::SetPoint(glm::dvec3 const& point)
 {
     m_point = point;
     m_distance = glm::dot(m_normal, m_point);
 }
 
-double HyperPlane::Distance(glm::dvec3 const & point) const
+double HyperPlane::Distance(glm::dvec3 const& point) const
 {
     return glm::abs(SignedDistance(point));
 }
 
-double HyperPlane::SignedDistance(glm::dvec3 const & point) const
+double HyperPlane::SignedDistance(glm::dvec3 const& point) const
 {
     return glm::dot(m_normal, point) - m_distance;
 }
 
 bool HyperPlane::Intersection(
-    glm::dvec3 const & lineStart, glm::dvec3 const & lineEnd, glm::dvec3 & resultPoint
+    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3& resultPoint
 ) const
 {
     if ((glm::dot(lineStart, m_normal) - m_distance)
@@ -94,11 +98,11 @@ bool HyperPlane::Intersection(
 }
 
 double LineSegmentPointDistance(
-        glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
-    )
+    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
+)
 {
-    return   glm::length(glm::cross(lineEnd - lineStart, lineStart - point))
-           / glm::length(lineEnd - lineStart);
+    return glm::length(glm::cross(lineEnd - lineStart, lineStart - point))
+        / glm::length(lineEnd - lineStart);
 }
 
 JacobiEigenvalue::JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold, uint32_t maxIterations)
@@ -181,7 +185,7 @@ void JacobiEigenvalue::Calculate()
         iterate = (++iterations < m_maxIterations) && (glm::abs(D[i][j]) > m_coverageThreshold);
     }
 
-    m_eigenvalues = { D[0][0], D[1][1], D[2][2] };
+    m_eigenvalues = {D[0][0], D[1][1], D[2][2]};
     m_eigenvectors = S;
 }
 
@@ -190,26 +194,22 @@ HalfEdgeDataStructure::Face::Face(HalfEdge* halfEdge)
 {
 }
 
-HalfEdgeDataStructure::Face::edge_iterator
-HalfEdgeDataStructure::Face::GetHalfEdgeIterator()
+HalfEdgeDataStructure::Face::edge_iterator HalfEdgeDataStructure::Face::GetHalfEdgeIterator()
 {
     return edge_iterator{m_halfEdge};
 }
 
-HalfEdgeDataStructure::Face::const_edge_iterator
-HalfEdgeDataStructure::Face::GetHalfEdgeIterator() const
+HalfEdgeDataStructure::Face::const_edge_iterator HalfEdgeDataStructure::Face::GetHalfEdgeIterator() const
 {
     return const_edge_iterator{m_halfEdge};
 }
 
-HalfEdgeDataStructure::Face::face_iterator
-HalfEdgeDataStructure::Face::GetAdjacentFaceIterator()
+HalfEdgeDataStructure::Face::face_iterator HalfEdgeDataStructure::Face::GetAdjacentFaceIterator()
 {
     return face_iterator{m_halfEdge};
 }
 
-HalfEdgeDataStructure::Face::const_face_iterator
-HalfEdgeDataStructure::Face::GetAdjacentFaceIterator() const
+HalfEdgeDataStructure::Face::const_face_iterator HalfEdgeDataStructure::Face::GetAdjacentFaceIterator() const
 {
     return const_face_iterator{m_halfEdge};
 }
@@ -257,8 +257,7 @@ void HalfEdgeDataStructure::MakeFace(uint64_t a, uint64_t b, uint64_t c)
     }
 }
 
-HalfEdgeDataStructure::face_iterator
-HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c)
+HalfEdgeDataStructure::face_iterator HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c)
 {
     FaceVertices faceVerticesKey{a, b, c};
     auto faceIterator = m_faceVerticesIteratorMap.find(faceVerticesKey);
@@ -270,8 +269,7 @@ HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c)
     return faceIterator->second;
 }
 
-HalfEdgeDataStructure::const_face_iterator
-HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c) const
+HalfEdgeDataStructure::const_face_iterator HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c) const
 {
     FaceVertices const faceVerticesKey{a, b, c};
     auto faceIterator = m_faceVerticesIteratorMap.find(faceVerticesKey);
@@ -284,8 +282,7 @@ HalfEdgeDataStructure::GetFace(uint64_t a, uint64_t b, uint64_t c) const
     return faceIterator->second;
 }
 
-HalfEdgeDataStructure::const_face_iterator
-HalfEdgeDataStructure::GetFaceEnd() const
+HalfEdgeDataStructure::const_face_iterator HalfEdgeDataStructure::GetFaceEnd() const
 {
     return m_facesList.end();
 }
@@ -365,7 +362,7 @@ void HalfEdgeDataStructure::IntializeHalfEdge(
 {
     m_halfEdgePointerIteratorMap[&*he] = he;
 
-    auto twinIterator = m_halfEdgeVerticesIteratorMap.find({ vertexIndexFrom, vertexIndexTo });
+    auto twinIterator = m_halfEdgeVerticesIteratorMap.find({vertexIndexFrom, vertexIndexTo});
     HalfEdge* twin = nullptr;
     if (twinIterator == m_halfEdgeVerticesIteratorMap.end())
     {
@@ -377,11 +374,11 @@ void HalfEdgeDataStructure::IntializeHalfEdge(
         twinIterator->second->twin = &*he;
     }
 
-    *he = { next, prev, twin, face, vertexIndexTo };
+    *he = {next, prev, twin, face, vertexIndexTo};
 }
 
 double pegasus::math::LineSegmentPointDistance(
-    glm::dvec3 const & lineStart, glm::dvec3 const & lineEnd, glm::dvec3 const & point
+    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
 )
 {
     return 0.0;
