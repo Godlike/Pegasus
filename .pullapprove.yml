@@ -1,16 +1,10 @@
 version: 2
 
-requirements:
-  signed_off_by:
-    required: true
-
 always_rejected:
   title_regex: '^(WIP|wip)'
   explanation: 'This pull request is a work in progress...'
 
 group_defaults:
-  required: 2
-
   reset_on_push:
     enabled: true
 
@@ -18,31 +12,33 @@ group_defaults:
     enabled: true
 
   author_approval:
-    required: true
+    ignored: true
+
+  github_reviews:
+    enabled: true
+
+  conditions:
+    branches:
+      - master
 
   approve_by_comment:
     enabled: true
     approve_regex: '^[Aa]{1}pprove'
     reject_regex: '^[Rr]{1}eject'
 
-  reject_value: -3
-
 groups:
-  contributors:
-    users: all
+  regular:
+    required: 2
 
-    github_reviews:
-      enabled: true
+    teams:
+      - coders
 
-    conditions:
-      branches:
-        - master  
-      files:
-        include:
-          - '*.md'
-          - '*.cpp'
-          - '*.c'
-          - '*.hpp'
-          - '*.h'
-          - '*.cmake'
-          - 'CMakeLists.txt'
+    reject_value: -1
+
+  security:
+    required: 1
+
+    teams:
+      - gods
+
+    reject_value: -100
