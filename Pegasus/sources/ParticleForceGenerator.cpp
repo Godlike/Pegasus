@@ -60,12 +60,12 @@ void pegasus::ParticleForceRegistry::UpdateForces()
     }
 }
 
-pegasus::ParticleGravity::ParticleGravity(glm::dvec3 const& g)
+pegasus::ParticleStaticField::ParticleStaticField(glm::dvec3 const& g)
     : m_gravity(g)
 {
 }
 
-void pegasus::ParticleGravity::UpdateForce(Particle& p)
+void pegasus::ParticleStaticField::UpdateForce(Particle& p)
 {
     if (!p.HasFiniteMass())
     {

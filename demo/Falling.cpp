@@ -211,6 +211,7 @@ void FallingDemo::SceneReset()
         );
         m_particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
         m_particles.back().SetDamping(1.0f);
+        m_particles.back().SetMass(1e6);
     }
 
     //Create rigid bodies
@@ -238,14 +239,25 @@ void FallingDemo::SceneReset()
         }
     }
 
-    //Create forces
-    m_forces.push_back(std::make_unique<pegasus::ParticleGravity>(glm::dvec3{ 0, -9.8, 0 }));
-
-    //Register forces
     for (auto& particle : m_particles)
     {
-        m_forceRegistry.Add(particle, *m_forces.front());
+        m_forces.push_back(std::make_unique<pegasus::ParticleGravity>(particle));
+
+        for(auto& p : m_particles)
+        {
+            if (&p != &particle)
+                m_forceRegistry.Add(p, *m_forces.back());
+        }
     }
+
+    //Create forces
+    //m_forces.push_back(std::make_unique<pegasus::ParticleStaticField>(glm::dvec3{ 0, -9.8, 0 }));
+    
+    //Register forces
+    //for (auto& particle : m_particles)
+    //{
+    //    m_forceRegistry.Add(particle, *m_forces.front());
+    //}
 
     //Create contact generators
     for (auto& body : m_rigidBodies)
@@ -255,7 +267,7 @@ void FallingDemo::SceneReset()
     }
 
     //Create plane particle and rigid body
-    m_particles.emplace_front();
+    /*m_particles.emplace_front();
     m_particles.front().SetPosition({1, -position * 2, 0});
     m_particles.front().SetInverseMass(0);
     m_rigidBodies.emplace_front(
@@ -269,8 +281,7 @@ void FallingDemo::SceneReset()
     AddCube({  position * 2, position, 0 }, boxSide);
     AddCube({ -position * 2, position, 0 }, boxSide);
     AddCube({ 0, position, -position * 2 }, boxSide);
-
-    AddBoundingVolumes();
+    AddBoundingVolumes();*/
 
     activeObject = m_rigidBodies.end();
     std::advance(activeObject, -1);

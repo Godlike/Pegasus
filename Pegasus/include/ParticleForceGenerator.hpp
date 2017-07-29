@@ -10,6 +10,8 @@
 
 #include "Pegasus/include/Particle.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
 #include <glm/glm.hpp>
 
 #include <map>
@@ -40,14 +42,39 @@ private:
     std::map<Particle*, std::set<ParticleForceGenerator*>> mRegistrations;
 };
 
-class ParticleGravity : public ParticleForceGenerator
+class ParticleStaticField : public ParticleForceGenerator
 {
 public:
-    explicit ParticleGravity(glm::dvec3 const& g);
+    explicit ParticleStaticField(glm::dvec3 const& g);
     void UpdateForce(Particle& p) override;
 
 private:
     glm::dvec3 const m_gravity;
+};
+
+class ParticleGravity : public ParticleForceGenerator
+{
+public:
+    explicit ParticleGravity(Particle const& particle, double G = 6.674e-11)
+        : m_particle(particle)
+        , m_G(G)
+    {
+    }
+
+    void UpdateForce(Particle& p) override
+    {
+        glm::dvec3 gravityDirection = m_particle.GetPosition() - p.GetPosition();
+
+        double const gravityMagnitude = 
+            m_G * (m_particle.GetMass() * p.GetMass()) 
+            / glm::length2(gravityDirection);
+
+        p.AddForce(glm::normalize(gravityDirection) * gravityMagnitude);
+    }
+
+private:
+    Particle const& m_particle;
+    double const m_G;
 };
 
 class ParticleDrag : public ParticleForceGenerator
