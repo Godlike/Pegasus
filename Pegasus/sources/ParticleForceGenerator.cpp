@@ -75,6 +75,23 @@ void pegasus::ParticleStaticField::UpdateForce(Particle& p)
     p.AddForce(m_gravity * p.GetMass());
 }
 
+pegasus::ParticleGravity::ParticleGravity(const pegasus::Particle &particle, double G)
+    : m_particle(particle)
+    , m_G(G)
+{
+}
+
+void pegasus::ParticleGravity::UpdateForce(pegasus::Particle &p)
+{
+    glm::dvec3 gravityDirection = p.GetPosition() - m_particle.GetPosition();
+
+    double const gravityMagnitude =
+            m_G * (m_particle.GetMass() * p.GetMass())
+            / glm::length2(gravityDirection);
+
+    p.AddForce(-glm::normalize(gravityDirection) * gravityMagnitude);
+}
+
 pegasus::ParticleDrag::ParticleDrag(double k1, double k2)
     : m_k1(k1)
     , m_k2(k2)

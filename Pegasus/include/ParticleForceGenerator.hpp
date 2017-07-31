@@ -55,22 +55,9 @@ private:
 class ParticleGravity : public ParticleForceGenerator
 {
 public:
-    explicit ParticleGravity(Particle const& particle, double G = 6.674e-11)
-        : m_particle(particle)
-        , m_G(G)
-    {
-    }
+    explicit ParticleGravity(Particle const& particle, double G = 6.674e-11);
 
-    void UpdateForce(Particle& p) override
-    {
-        glm::dvec3 gravityDirection = m_particle.GetPosition() - p.GetPosition();
-
-        double const gravityMagnitude = 
-            m_G * (m_particle.GetMass() * p.GetMass()) 
-            / glm::length2(gravityDirection);
-
-        p.AddForce(glm::normalize(gravityDirection) * gravityMagnitude);
-    }
+    void UpdateForce(Particle& p) override;
 
 private:
     Particle const& m_particle;

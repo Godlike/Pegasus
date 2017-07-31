@@ -22,7 +22,7 @@ void Application::SetView()
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(45.0, static_cast<double>(m_width) / static_cast<double>(m_height), 1.0, 500.0);
+    gluPerspective(70.0, static_cast<double>(m_width) / static_cast<double>(m_height), 1.0, 50000.0);
     glMatrixMode(GL_MODELVIEW);
 }
 

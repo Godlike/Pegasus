@@ -32,7 +32,7 @@ void pegasus::Particle::Integrate(double duration)
 
     m_position += m_velocity * duration;
 
-    glm::dvec3 const resultingAcc = m_acceleration + m_forceAccumulator, m_inverseMass;  
+    glm::dvec3 const resultingAcc = m_acceleration + m_forceAccumulator * m_inverseMass;
     m_velocity += resultingAcc * duration;
     m_velocity *= std::pow(m_damping, duration);
 

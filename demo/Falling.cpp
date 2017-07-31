@@ -22,13 +22,14 @@
 #include <cstdlib>
 #include <sstream>
 #include <list>
+#include <deque>
 #include <random>
 #include <utility>
 
-static const uint32_t BOX_COUNT    = static_cast<uint32_t>(std::pow(3, 3));
-static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t BOX_COUNT    = 1;//static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t SPHERE_COUNT = 0;//static_cast<uint32_t>(std::pow(3, 3));
 static const uint32_t TOTAL_COUNT  = BOX_COUNT+SPHERE_COUNT;
-static const double   RADIUS       = 5;
+static const double   RADIUS       = 5e-2;
 static const bool     WIRED_ONLY   = true;
 
 class FallingDemo : public Application {
@@ -62,6 +63,7 @@ private:
     double yRotationAngle;
     RigidBodies::iterator activeObject;
 
+
     std::unique_ptr<pegasus::geometry::volumes::aabb::AxisAlignedBoundingBox> axisAlignedBoundingBox;
     std::unique_ptr<pegasus::geometry::volumes::obb::OrientedBoundingBox>     orientedBoundingBox;
     std::unique_ptr<pegasus::geometry::volumes::sphere::BoundingSphere>       boundingSphere;
@@ -70,6 +72,7 @@ private:
     glm::dvec3 boundingSphereTranslate;
     GLuint solidBunnyGlListIndex;
     GLuint wiredBunnyGlListIndex;
+    std::deque<glm::dvec3> m_trajectories;
 
     void AddCube(glm::dvec3 const& pos, double boxSide);
     void AddBox(glm::dvec3 const& pos, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);
@@ -84,7 +87,7 @@ FallingDemo::FallingDemo()
     , xAxis(0)
     , yAxis(0)
     , zAxis(0)
-    , zoom(5)
+    , zoom(0.5)
     , yEye(0)
     , yRotationAngle(0)
     , activeObject(m_rigidBodies.begin())
@@ -142,12 +145,12 @@ void FallingDemo::AddBoundingVolumes()
                    [](GLfloat v[3]) -> glm::dvec3{ return glm::dvec3(v[0], v[1], v[2]); });
     Faces faces;
     std::transform(bunnyFaceIndicies, bunnyFaceIndicies+kCount, std::back_inserter(faces),
-        [](short f[6]) -> std::array<size_t, 3> { 
-            return {static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])}; 
+        [](short f[6]) -> std::array<size_t, 3> {
+            return {static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])};
     });
     Indices indices;
     for (size_t i = 0; i < faces.size(); ++i) indices.insert(i);
- 
+
     //OBB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += obbTranslate; });
     orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
@@ -162,7 +165,7 @@ void FallingDemo::AddBoundingVolumes()
     auto aabb = axisAlignedBoundingBox->GetBox();
     glm::dmat3 aabbAxes;
     aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
-    AddBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]); 
+    AddBox(aabb.getCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]);
 
     //BS
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v) {v += boundingSphereTranslate - aabbTranslate; });
@@ -173,6 +176,7 @@ void FallingDemo::AddBoundingVolumes()
 
 void FallingDemo::SceneReset()
 {
+    m_trajectories.clear();
     m_rigidBodies.clear();
     m_forces.clear();
     m_forceRegistry.Clear();
@@ -188,6 +192,9 @@ void FallingDemo::SceneReset()
         return distribution(generator);
     };
 
+    m_particles.emplace_back();
+    m_particles.back().SetMass(1e10);
+
     //Create particles
     for (uint32_t i = 0; i < TOTAL_COUNT; ++i)
     {
@@ -202,22 +209,23 @@ void FallingDemo::SceneReset()
         int index2d = i - planeIndex * plane;
         int row = index2d / edge;
         int col = index2d - row * edge;
+        double localOffset = 3.0;
 
         m_particles.emplace_back();
         m_particles.back().SetPosition(
-            row * RADIUS * 2.3 + RADIUS - offset,
-            planeIndex * RADIUS * 2.3 + boxSide * 3,
-            col * RADIUS * 2.3 + RADIUS - offset
+            row * RADIUS * localOffset + RADIUS - offset,
+            planeIndex * RADIUS * localOffset + boxSide * 3,
+            col * RADIUS * localOffset + RADIUS - offset
         );
-        m_particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
-        m_particles.back().SetDamping(1.0f);
-        m_particles.back().SetMass(1e6);
+        m_particles.back().SetVelocity(glm::dvec3{randDouble(), randDouble(), randDouble()} * 7e-2);
+        m_particles.back().SetDamping(0.9999f);
+        m_particles.back().SetMass(6e-14);
     }
 
     //Create rigid bodies
     for (auto& particle : m_particles)
     {
-        bool const isBox = randDouble() > 0;
+        bool const isBox = false;//randDouble() > 0;
 
         if (isBox)
         {
@@ -236,6 +244,7 @@ void FallingDemo::SceneReset()
                 particle,
                 std::make_unique<pegasus::geometry::Sphere>(particle.GetPosition(), double(randDouble() + 6) / 2)
             );
+            particle.SetMass(particle.GetMass() * glm::pow2(static_cast<pegasus::geometry::Sphere*>(m_rigidBodies.back().s.get())->GetRadius()));
         }
     }
 
@@ -252,7 +261,7 @@ void FallingDemo::SceneReset()
 
     //Create forces
     //m_forces.push_back(std::make_unique<pegasus::ParticleStaticField>(glm::dvec3{ 0, -9.8, 0 }));
-    
+
     //Register forces
     //for (auto& particle : m_particles)
     //{
@@ -294,8 +303,35 @@ void FallingDemo::Display()
     glLoadIdentity();
 
     auto const& pos = activeObject->p.GetPosition();
-    gluLookAt(pos.x * zoom , pos.y + 30 * zoom + yEye, pos.z + 30 * zoom , pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
 
+    glm::dvec3 from{ pos.x, (pos.y + 30 + yEye), (pos.z + 30) };
+    glm::dvec3 to{ pos.x, pos.y, pos.z };
+    glm::dvec3 viewVec = from - to;
+    viewVec *= zoom;
+    from = viewVec + to;
+
+    gluLookAt(from.x, from.y, from.z, to.x, to.y, to.z, 0.0, 1.0, 0.0);
+
+    //Draw trajectories
+    if (m_trajectories.size() > m_particles.size() * 1e10)
+    {
+        for (size_t i = 0; i < m_particles.size(); ++i)
+        {
+            m_trajectories.pop_front();
+        }
+    }
+    glPushMatrix();
+    glRotated(yRotationAngle, 0, 1, 0);
+    glColor3f(1.0, 0.0, 0.0);
+    for (glm::dvec3 & trajectory : m_trajectories)
+    {
+        glBegin(GL_POINTS);
+        glVertex3dv(glm::value_ptr(trajectory));
+        glEnd();
+    }
+    glPopMatrix();
+
+    if (false)
     {
         glPushMatrix();
         glRotated(yRotationAngle, 0, 1, 0);
@@ -314,7 +350,7 @@ void FallingDemo::Display()
         glPushMatrix();
         glRotated(yRotationAngle, 0, 1, 0);
         glColor3f(1.0f, 0.0f, 0.0f);
-        glTranslated(boundingSphereTranslate.x, boundingSphereTranslate.y, boundingSphereTranslate.z); 
+        glTranslated(boundingSphereTranslate.x, boundingSphereTranslate.y, boundingSphereTranslate.z);
         glCallList(wiredBunnyGlListIndex);
         glPopMatrix();
     }
@@ -338,7 +374,7 @@ void FallingDemo::Display()
         double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
         double blue  = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
 
-        if (s == pegasus::geometry::SimpleShapeType::PLANE) 
+        if (s == pegasus::geometry::SimpleShapeType::PLANE)
         {
             glTranslatef(0, 0, 0);
             double const planeSideLength = 100;
@@ -392,7 +428,7 @@ void FallingDemo::Display()
 
             if (!WIRED_ONLY) {
                 glutSolidSphere(r, 20, 20);
-            } 
+            }
 
             if (&*activeObject != &body && !WIRED_ONLY) {
                 glColor3f(1.0f, 0.0, 0.0);
@@ -400,7 +436,7 @@ void FallingDemo::Display()
             glutWireSphere(r + 0.001, 20, 20);
         }
         else if (s == pegasus::geometry::SimpleShapeType::BOX)
-        {            
+        {
             pegasus::geometry::Box * box = static_cast<pegasus::geometry::Box*>(body.s.get());
             std::array<glm::dvec3, 3> boxAxes;
             box->GetAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
@@ -522,7 +558,11 @@ void FallingDemo::Update()
     zAxis *= pow(0.1, duration);
     activeObject->p.AddForce(glm::dvec3(xAxis * 10.0, yAxis * 20.0, zAxis * 10.0));
 
-    m_world.RunPhysics(0.01);
+    m_world.RunPhysics(0.1);
+
+    for (auto & particle : m_particles) {
+        m_trajectories.emplace_back(particle.GetPosition());
+    }
 
     for (auto const& body : m_rigidBodies) {
         body.s->setCenterOfMass(body.p.GetPosition());
