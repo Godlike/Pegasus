@@ -110,12 +110,12 @@ void pegasus::ParticleContact::ResolveInterpenetration() const
 
     glm::dvec3 const movePerIMass = m_contactNormal * (m_penetration / totalInverseMass);
     m_pParticleA->SetPosition(m_pParticleA->GetPosition() + movePerIMass * m_pParticleA->GetInverseMass());
-    m_pParticleA->AddForce((movePerIMass * m_pParticleA->GetInverseMass()) * -1.0);
+    m_pParticleA->AddForce(movePerIMass * -1.0);
 
     if (m_pParticleB)
     {
         m_pParticleB->SetPosition(m_pParticleB->GetPosition() - movePerIMass * m_pParticleB->GetInverseMass());
-        m_pParticleB->AddForce((movePerIMass * m_pParticleB->GetInverseMass()) * -1.0);
+        m_pParticleB->AddForce(movePerIMass * -1.0);
     }
 }
 

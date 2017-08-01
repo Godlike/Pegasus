@@ -34,8 +34,8 @@ public:
 
     /**
      * @brief Constructs a plane in Hessian Normal Form
-     * 
-     * Allows for the normal direction correction 
+     *
+     * Allows for the normal direction correction
      * using below the hyperplane point if one is specified.
      * @param[in] normal normal plane vector
      * @param[in] point point on the plane
@@ -48,9 +48,9 @@ public:
 
     /**
      * @brief Constructs a plane in Hessian Normal Form
-     * 
-     * Constructs a hyperplane from the given vertices 
-     * and allows for the normal direction correction 
+     *
+     * Constructs a hyperplane from the given vertices
+     * and allows for the normal direction correction
      * using below the hyperplane point if one is specified.
      * @param[in] a point on the plane
      * @param[in] b point on the plane
@@ -65,9 +65,9 @@ public:
 
     /**
      * @brief Constructs a plane in Hessian Normal Form
-     * 
-     * Constructs a hyperplane from the given vertices 
-     * and allows for the normal direction correction 
+     *
+     * Constructs a hyperplane from the given vertices
+     * and allows for the normal direction correction
      * using below the hyperplane point if one is specified.
      * @param[in] vertices points on the plane
      * @param[in] below point below the plane
@@ -155,12 +155,11 @@ public:
 
         /**
          * @brief Face half-edges circular iterator
-         * 
-         * Iterator of a circular data structure, 
+         *
+         * Iterator of a circular data structure,
          * does not have an end state. If the data structure is in
          * valid state always dereferencable.
-         * Under the hood iterates along the inner half-edges
-         * of the face.
+         * Under the hood iterates along the inner half-edges of the face.
          * @tparam HalfEdgeType half-edge type
          */
         template <typename HalfEdgeType>
@@ -169,7 +168,7 @@ public:
         public:
             /**
              * @brief Constructs a circular iterator from a given half-edge
-             * @param halfEdge 
+             * @param halfEdge
              */
             explicit HalfEdgeCirculator(HalfEdgeType& halfEdge)
                 : m_current(&halfEdge)
@@ -280,13 +279,12 @@ public:
 
         /**
          * @brief Adjacent faces iterator
-         * 
-         * Iterator of a circular data structure, 
+         *
+         * Iterator of a circular data structure,
          * does not have an end state. If the data structure is in
          * valid state always dereferencable.
-         * Under the hood iterates along the inner half-edges
-         * of the face and accesses its adjacent faces 
-         * using twin half-edge pointers and corresponding faces.
+         * Under the hood iterates along the inner half-edges of the face.
+         * Access to adjacent faces is performed via twin half-edge.
          * @tparam FaceType face type
          */
         template <typename FaceType>
@@ -294,8 +292,8 @@ public:
         {
         public:
             /**
-             * @brief Constructs an adjacent face iterator to from the given half-edge
-             * @param[in] halfEdge a half-edge from the face for which an adjacent iterator is to be constructed
+             * @brief Constructs an adjacent face iterator from the given half-edge
+             * @param[in] halfEdge a half-edge object
              */
             explicit AdjacentFaceCirculator(HalfEdge& halfEdge)
                 : m_current(&halfEdge)
@@ -303,7 +301,7 @@ public:
             }
 
             /**
-             * @brief Returns a referent to the current adjacent face
+             * @brief Returns a reference to the current adjacent face
              * @return a reference to the current adjacent face
              */
             FaceType& operator*() const
@@ -411,7 +409,7 @@ public:
         explicit Face(HalfEdge& halfEdge);
 
         /**
-         * @brief Returns half-edge iterator 
+         * @brief Returns half-edge iterator
          * @return half-edge iterator of current face
          */
         edge_iterator GetHalfEdgeIterator();
@@ -854,7 +852,7 @@ public:
 
         /**
          * @brief Partitions vertices that are above the face
-         * 
+         *
          * Uses vertexBuffer as a reference point for the index calculation without changing it,
          * removes vertices from partitionMarkedVertices list that are above the current face's hyperplane
          * effectively moving them to the current face.
@@ -928,7 +926,7 @@ public:
 
         /**
          * @brief Returns current face's hyperplane
-         * @return current face's hyperplane 
+         * @return current face's hyperplane
          */
         HyperPlane const& GetHyperPlane() const
         {
@@ -1180,7 +1178,7 @@ private:
 
     /**
      * @brief Inserts a new face into current convex hull
-     * 
+     *
      * Removes vertices from partitionMarkedVertices list that are above the current face's hyperplane
      * @param[in] vertexIndex1 index of a face
      * @param[in] vertexIndex2 index of a face
