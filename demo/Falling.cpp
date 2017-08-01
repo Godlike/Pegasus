@@ -174,6 +174,11 @@ void FallingDemo::AddBoundingVolumes()
     AddSphere(sphere.getCenterOfMass(), sphere.GetRadius());
 }
 
+static double circOrbitSpeed(double mass, double radius)
+{
+    return glm::sqrt(6.674e-11 * mass / radius);
+}
+
 void FallingDemo::SceneReset()
 {
     m_trajectories.clear();
@@ -192,61 +197,52 @@ void FallingDemo::SceneReset()
         return distribution(generator);
     };
 
+    double const massScaler = 1e-2;
+    double const radiusScaler = 2 * massScaler;
+
+    double const sunMass = 1.989e30 * massScaler;
+    double const sunRadius = 695700 * radiusScaler;
+
+    double const earthMass = 5.972e24 * massScaler;
+    double const earthRadius = 6371 * radiusScaler;
+
+    double const moonMass = 7.3476e22 * massScaler;
+    double const moonRadius = 1737 * radiusScaler;
+
+    double const ESDistance = 1.496e8 * massScaler;
+    double const MEDistance = 384400 * massScaler;
+
+    //Sun
     m_particles.emplace_back();
-    m_particles.back().SetMass(1e10);
+    m_particles.back().SetPosition(glm::dvec3{0, 0, 0});
+    m_particles.back().SetMass(sunMass);
+    m_rigidBodies.emplace_back(
+        m_particles.back(),
+        std::make_unique<pegasus::geometry::Sphere>(m_particles.back().GetPosition(), sunRadius)
+    );
 
-    //Create particles
-    for (uint32_t i = 0; i < TOTAL_COUNT; ++i)
-    {
-        static auto curt = [](auto n) {
-            return std::pow(n, 0.34);
-        };
-        static const int edge  = curt(TOTAL_COUNT);
-        static const int plane = edge * edge;
-        static const double offset = edge * RADIUS;
+    //Earth
+    m_particles.emplace_back();
+    pegasus::Particle const& earth = m_particles.back();
+    m_particles.back().SetPosition(glm::normalize(glm::dvec3{0, 1, 0}) * ESDistance);
+    m_particles.back().SetVelocity(glm::normalize(glm::dvec3{1, 0, 0}) * circOrbitSpeed(sunMass, glm::length(m_particles.back().GetPosition())));
+    m_particles.back().SetMass(earthMass);
+    m_rigidBodies.emplace_back(
+        m_particles.back(),
+        std::make_unique<pegasus::geometry::Sphere>(m_particles.back().GetPosition(), earthRadius)
+    );
 
-        int planeIndex = i / plane;
-        int index2d = i - planeIndex * plane;
-        int row = index2d / edge;
-        int col = index2d - row * edge;
-        double localOffset = 3.0;
-
-        m_particles.emplace_back();
-        m_particles.back().SetPosition(
-            row * RADIUS * localOffset + RADIUS - offset,
-            planeIndex * RADIUS * localOffset + boxSide * 3,
-            col * RADIUS * localOffset + RADIUS - offset
-        );
-        m_particles.back().SetVelocity(glm::dvec3{randDouble(), randDouble(), randDouble()} * 7e-2);
-        m_particles.back().SetDamping(0.9999f);
-        m_particles.back().SetMass(6e-14);
-    }
-
-    //Create rigid bodies
-    for (auto& particle : m_particles)
-    {
-        bool const isBox = false;//randDouble() > 0;
-
-        if (isBox)
-        {
-            m_rigidBodies.emplace_back(
-                particle,
-                std::make_unique<pegasus::geometry::Box>(
-                    particle.GetPosition(),
-                    glm::dvec3{ RADIUS, 0, 0 } * 0.5,
-                    glm::dvec3{ 0, RADIUS, 0 } * 0.5,
-                    glm::dvec3{ 0, 0, RADIUS } * 0.5)
-            );
-        }
-        else
-        {
-            m_rigidBodies.emplace_back(
-                particle,
-                std::make_unique<pegasus::geometry::Sphere>(particle.GetPosition(), double(randDouble() + 6) / 2)
-            );
-            particle.SetMass(particle.GetMass() * glm::pow2(static_cast<pegasus::geometry::Sphere*>(m_rigidBodies.back().s.get())->GetRadius()));
-        }
-    }
+    //Moon
+    m_particles.emplace_back();
+    m_particles.back().SetPosition(glm::normalize(glm::dvec3{0, 1, 0}) * (ESDistance + MEDistance));
+    glm::dvec3 moonVelocity = glm::normalize(glm::dvec3{1, 0, 0}) * circOrbitSpeed(sunMass, glm::length(earth.GetPosition()));
+    moonVelocity += glm::normalize(glm::dvec3{1, 0, 1}) * circOrbitSpeed(earthMass, glm::length(m_particles.back().GetPosition() - earth.GetPosition()));
+    m_particles.back().SetVelocity(moonVelocity);
+    m_particles.back().SetMass(moonMass);
+    m_rigidBodies.emplace_back(
+        m_particles.back(),
+        std::make_unique<pegasus::geometry::Sphere>(m_particles.back().GetPosition(), moonRadius)
+    );
 
     for (auto& particle : m_particles)
     {
@@ -259,38 +255,12 @@ void FallingDemo::SceneReset()
         }
     }
 
-    //Create forces
-    //m_forces.push_back(std::make_unique<pegasus::ParticleStaticField>(glm::dvec3{ 0, -9.8, 0 }));
-
-    //Register forces
-    //for (auto& particle : m_particles)
-    //{
-    //    m_forceRegistry.Add(particle, *m_forces.front());
-    //}
-
     //Create contact generators
     for (auto& body : m_rigidBodies)
     {
         m_contactGenerators.push_back(
             std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, m_rigidBodies, (randDouble() + 5) / 10));
     }
-
-    //Create plane particle and rigid body
-    /*m_particles.emplace_front();
-    m_particles.front().SetPosition({1, -position * 2, 0});
-    m_particles.front().SetInverseMass(0);
-    m_rigidBodies.emplace_front(
-        m_particles.front(),
-        std::make_unique<pegasus::geometry::Plane>(
-           m_particles.front().GetPosition(), glm::normalize(glm::dvec3(0, 1.0, 0))
-        )
-    );
-
-    AddSphere({  0, -position * 2, 0 }, boxSide);
-    AddCube({  position * 2, position, 0 }, boxSide);
-    AddCube({ -position * 2, position, 0 }, boxSide);
-    AddCube({ 0, position, -position * 2 }, boxSide);
-    AddBoundingVolumes();*/
 
     activeObject = m_rigidBodies.end();
     std::advance(activeObject, -1);
@@ -415,6 +385,13 @@ void FallingDemo::Display()
         {
             pegasus::geometry::Sphere * sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
             double const r = sphere->GetRadius();
+
+            glColor3d(red, green, blue);
+            glBegin(GL_LINES);
+                glVertex3dv(glm::value_ptr(glm::dvec3{p.x, p.y, p.z}));
+                glVertex3dv(glm::value_ptr(glm::dvec3()));
+            glEnd();
+
             glTranslatef(p.x, p.y, p.z);
 
             if (&*activeObject != &body)
@@ -547,8 +524,6 @@ void FallingDemo::Display()
 
 void FallingDemo::Update()
 {
-    m_world.StartFrame();
-
     double duration = TimingData::Get().lastFrameDuration * 0.001;
     if (duration <= 0.0)
         return;
@@ -556,9 +531,9 @@ void FallingDemo::Update()
     xAxis *= pow(0.1, duration);
     yAxis *= pow(0.1, duration);
     zAxis *= pow(0.1, duration);
-    activeObject->p.AddForce(glm::dvec3(xAxis * 10.0, yAxis * 20.0, zAxis * 10.0));
+    activeObject->p.AddForce(glm::dvec3{xAxis * 10.0, yAxis * 20.0, zAxis * 10.0} * 1e-13);
 
-    m_world.RunPhysics(0.1);
+    m_world.RunPhysics(duration * 1e-2);
 
     for (auto & particle : m_particles) {
         m_trajectories.emplace_back(particle.GetPosition());
@@ -626,10 +601,10 @@ void FallingDemo::Key(unsigned char key)
         activeObject->p.SetVelocity(0, 0, 0);
         break;
     case '+':
-        zoom -= 0.1;
+        zoom -= 5;
         break;
     case '-':
-        zoom += 0.1;
+        zoom += 5;
         break;
     case '8':
         yEye += 10 * zoom;

@@ -30,13 +30,17 @@ void pegasus::Particle::Integrate(double duration)
         return;
     }
 
+//    glm::dvec3 deltaAcceleration = (m_forceAccumulator * m_inverseMass);
+//    glm::dvec3 deltaVelocity = (m_acceleration + deltaAcceleration) * glm::pow(duration, 2) * 0.5 + m_acceleration * duration;
+//    m_position += (m_velocity + deltaVelocity) * glm::pow(duration, 2) * 0.5 + m_velocity * duration;
+//    m_velocity += deltaVelocity;
+//    m_acceleration = deltaAcceleration;
+
     m_position += m_velocity * duration;
 
     glm::dvec3 const resultingAcc = m_acceleration + m_forceAccumulator * m_inverseMass;
     m_velocity += resultingAcc * duration;
     m_velocity *= std::pow(m_damping, duration);
-
-    ClearForceAccumulator();
 }
 
 glm::dvec3 pegasus::Particle::GetPosition() const

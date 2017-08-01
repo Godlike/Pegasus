@@ -51,9 +51,9 @@ void pegasus::ParticleForceRegistry::Clear() { mRegistrations.clear(); }
 
 void pegasus::ParticleForceRegistry::UpdateForces()
 {
-    for (auto& entry : mRegistrations)
+    for (std::pair<Particle*, std::set<ParticleForceGenerator*>> const& entry : mRegistrations)
     {
-        for (auto& force : entry.second)
+        for (ParticleForceGenerator* force : entry.second)
         {
             force->UpdateForce(*entry.first);
         }

@@ -30,7 +30,6 @@ public:
                   uint32_t maxContacts,
                   uint32_t iterations = 0);
 
-    void StartFrame() const;
     void RunPhysics(double duration);
 
 private:

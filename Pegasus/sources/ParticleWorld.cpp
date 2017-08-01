@@ -23,14 +23,6 @@ pegasus::ParticleWorld::ParticleWorld(
     m_contacts.reserve(m_maxContacts);
 }
 
-void pegasus::ParticleWorld::StartFrame() const
-{
-    for (auto& p : m_particles)
-    {
-        p.ClearForceAccumulator();
-    }
-}
-
 void pegasus::ParticleWorld::RunPhysics(double duration)
 {
     auto usedContacts = GenerateContacts();
@@ -44,7 +36,6 @@ void pegasus::ParticleWorld::RunPhysics(double duration)
         m_contactResolver.ResolveContacts(m_contacts, duration);
     }
 
-    m_forceRegistry.UpdateForces();
     Integrate(duration);
 }
 
@@ -68,8 +59,22 @@ uint32_t pegasus::ParticleWorld::GenerateContacts()
 
 void pegasus::ParticleWorld::Integrate(double duration) const
 {
-    for (auto& p : m_particles)
+    double const integrationStep = 1e-4;
+    double currentDuration = 0.0;
+    double localDuration = integrationStep;
+
+    do
     {
-        p.Integrate(duration);
-    }
+        localDuration = ((currentDuration + integrationStep) <= duration) ? integrationStep : duration - currentDuration;
+        currentDuration += localDuration;
+
+        m_forceRegistry.UpdateForces();
+
+        for (auto& p : m_particles)
+        {
+            p.Integrate(localDuration);
+            p.ClearForceAccumulator();
+        }
+
+    } while (currentDuration < duration);
 }
