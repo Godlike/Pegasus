@@ -69,7 +69,12 @@
 
 #include <cstdint>
 
-short bunnyFaceIndicies[16301][6] =
+static const GLuint bunnyFaceIndiciesSize = 16301;
+static const GLuint bunnyVerticesSize = 8146;
+static const GLuint bunnyNormalsSize = 8127;
+
+
+short bunnyFaceIndicies[bunnyFaceIndiciesSize][6] =
 {
     // surface
     {1538,2410,1101 ,0,1,2}, {713,6196,101 ,3,4,5}, {696,704,101 ,6,7,5},
@@ -8151,7 +8156,7 @@ short bunnyFaceIndicies[16301][6] =
     {5658,5642,5659 ,49,526,3053}
 };
 
-GLfloat bunnyVertices [8146][3] =
+GLfloat bunnyVertices [bunnyVerticesSize][3] =
 {
     {-0.128951f,0.113893f,0.0385904f},{-0.183541f,0.121141f,0.0176007f},{-0.3356f,0.267483f,0.245606f},
     {0.0990868f,0.131443f,0.150773f},{-0.0330697f,0.108447f,0.0577602f},{-0.0525675f,0.103219f,0.0581332f},
@@ -10871,7 +10876,7 @@ GLfloat bunnyVertices [8146][3] =
     {-0.0967461f,0.291045f,-0.0472396f}
 };
 
-GLfloat bunnyNormals [8127][3] =
+GLfloat bunnyNormals [bunnyNormalsSize][3] =
 {
     {-0.832532f,-0.483226f,0.270894f},{-0.606785f,-0.758191f,0.23866f},{-0.859166f,-0.504979f,0.0826439f},
     {-0.240595f,0.95358f,-0.181105f},{-0.265911f,0.923509f,-0.276446f},{-0.24535f,0.952364f,-0.181124f},
@@ -13586,24 +13591,18 @@ GLfloat bunnyNormals [8127][3] =
 
 static const uint32_t kSizeFaceIndicies    = (sizeof(bunnyFaceIndicies   ));
 static const uint32_t kRowSizeFaceIndicies = (sizeof(bunnyFaceIndicies[0]));
-
 static const GLuint kCount = kSizeFaceIndicies / kRowSizeFaceIndicies;
 
 static void GenerateSolidStanfordBunny()
 {
-    GLuint i;
-    GLuint j;
-    GLint vi;
-    GLint ni;
-
     glBegin(GL_TRIANGLES);
 
-    for (i = 0; i < kCount; i++)
+    for (GLuint i = 0; i < kCount; i++)
     {
-        for (j = 0; j < 3; j++)
+        for (GLuint j = 0; j < 3; j++)
         {
-            vi = bunnyFaceIndicies[i][j];
-            ni = bunnyFaceIndicies[i][j + 3]; //Normal index
+            GLint const vi = bunnyFaceIndicies[i][j];
+            GLint const ni = bunnyFaceIndicies[i][j + 3]; //Normal index
 
             glNormal3fv(&bunnyNormals[ni][0]);
             glVertex3fv(&bunnyVertices[vi][0]);
@@ -13615,11 +13614,9 @@ static void GenerateSolidStanfordBunny()
 
 static void GenerateWireFrameStanfordBunny()
 {
-    GLuint i;
-
     glBegin(GL_LINES);
 
-    for (i = 0; i < kCount; i++)
+    for (GLuint i = 0; i < kCount; i++)
     {
         glVertex3fv(&bunnyVertices[bunnyFaceIndicies[i][0]][0]);
         glVertex3fv(&bunnyVertices[bunnyFaceIndicies[i][1]][0]);
@@ -13629,5 +13626,21 @@ static void GenerateWireFrameStanfordBunny()
 
     glEnd();
 } // GenerateWireFrameStanfordBunny
+
+static void GeneratePointStanfordBunny()
+{
+    GLfloat oldPointSize;
+    glGetFloatv(GL_POINT_SIZE, &oldPointSize);
+    glPointSize(3);
+    glBegin(GL_POINTS);
+
+    for (GLuint i = 0; i < bunnyVerticesSize; ++i)
+    {
+        glVertex3fv(&bunnyVertices[i][0]);
+    }
+
+    glEnd();
+    glPointSize(oldPointSize);
+} // GeneratePointStanfordBunny
 
 #endif // PEGASUS_BUNNY_HPP

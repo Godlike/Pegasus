@@ -10,12 +10,12 @@ pegasus::geometry::Shape::Shape(glm::dvec3 const& centerOfMass)
 {
 }
 
-void pegasus::geometry::Shape::setCenterOfMass(glm::dvec3 const& centerOfMass)
+void pegasus::geometry::Shape::SetCenterOfMass(glm::dvec3 const& centerOfMass)
 {
     m_centerOfMass = centerOfMass;
 }
 
-glm::dvec3 const& pegasus::geometry::Shape::getCenterOfMass() const
+glm::dvec3 const& pegasus::geometry::Shape::GetCenterOfMass() const
 {
     return m_centerOfMass;
 }
@@ -42,7 +42,9 @@ glm::dvec3 const& pegasus::geometry::Plane::GetNormal() const
     return m_normal;
 }
 
-pegasus::geometry::Triangle::Triangle(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c)
+pegasus::geometry::Triangle::Triangle(
+    glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c
+)
     : SimpleShape(centerOfMass, SimpleShapeType::TRIANGLE)
     , m_aVertex(a)
     , m_bVertex(b)
@@ -119,7 +121,9 @@ double pegasus::geometry::Cone::GetRadius() const
     return m_radius;
 }
 
-pegasus::geometry::Capsule::Capsule(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r)
+pegasus::geometry::Capsule::Capsule(
+    glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r
+)
     : SimpleShape(centerOfMass, SimpleShapeType::CAPSULE)
     , m_halfHeight(halfHeight)
     , m_radius(r)
@@ -146,12 +150,16 @@ double pegasus::geometry::Capsule::GetRadius() const
     return m_radius;
 }
 
-pegasus::geometry::Cylinder::Cylinder(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r)
+pegasus::geometry::Cylinder::Cylinder(
+    glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r
+)
     : Capsule(centerOfMass, halfHeight, r)
 {
 }
 
-pegasus::geometry::Box::Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c)
+pegasus::geometry::Box::Box(
+    glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c
+)
     : SimpleShape(centerOfMass, SimpleShapeType::BOX)
     , m_aAxis(a)
     , m_bAxis(b)
@@ -175,15 +183,6 @@ void pegasus::geometry::Box::GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c
 
 size_t pegasus::geometry::ShapeTypePairHash::operator()(ShapeTypePair const& p) const
 {
-    return std::hash<uint32_t>()(static_cast<uint32_t>(p.first)) ^ std::hash<uint32_t>()(static_cast<uint32_t>(p.second));
-}
-
-bool pegasus::geometry::intersection::IsSameSidePoint(
-    glm::dvec3 const& p1, glm::dvec3 const& p2, glm::dvec3 const& a, glm::dvec3 const& b
-)
-{
-    glm::dvec3 const ab = b - a;
-    glm::dvec3 const cp1 = glm::cross(ab, p1 - a);
-    glm::dvec3 const cp2 = glm::cross(ab, p2 - a);
-    return glm::dot(cp1, cp2) >= 0;
+    return std::hash<uint32_t>()(static_cast<uint32_t>(p.first))
+        ^ std::hash<uint32_t>()(static_cast<uint32_t>(p.second));
 }
