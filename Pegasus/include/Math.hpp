@@ -94,26 +94,37 @@ public:
 
     /**
      * @brief Calculates absolute distance from the plane to a point
-     * @param[in] point a point of interest
-     * @return absolute distance from a point to the plane
+     * @param[in] point the point of interest
+     * @return absolute distance from the point to the plane
      */
     double Distance(glm::dvec3 const& point) const;
 
     /**
      * @brief Calculates signed distance from the plane to a point
-     * @param[in] point a point of interest
-     * @return signed distance from a point to the plane
+     * @param[in] point the point of interest
+     * @return signed distance from the plane to the point
      */
     double SignedDistance(glm::dvec3 const& point) const;
 
     /**
+     * @brief Calculates whether a ray and the plane are intersecting
+     * @param[in] rayNormal ray direction vector
+     * @param[in] rayPoint point on the ray
+     * @param[out] resultPoint intersection point
+     * @return @c true if there is an intersection point, @c false otherwise
+     */
+    bool RayIntersection(
+        glm::dvec3 const& rayNormal, glm::dvec3 const& rayPoint, glm::dvec3& resultPoint
+    ) const;
+
+    /**
      * @brief Calculates whether a line segment and the plane are intersecting
      * @param[in] lineStart start of the line segment
-     * @param[in] lineEnd end of the lilne segment
-     * @param[out] resultPoint intersetion point
+     * @param[in] lineEnd end of the line segment
+     * @param[out] resultPoint intersection point
      * @return @c true if there is intersection point, @c false otherwise
      */
-    bool Intersection(
+    bool LineSegmentIntersection(
         glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3& resultPoint
     ) const;
 
