@@ -165,18 +165,29 @@ private:
 namespace intersection
 {
 // Utility functions
+
+/**
+ * @brief Calculates box vertices in the model coordinate space from a given orthogonal basis
+ * @tparam Random access iterator
+ * @param[in] i box axis vector
+ * @param[in] j box axis vector
+ * @param[in] k box axis vector
+ * @param[out] verticesIterator iterator to the container that is able to store 8 vertices
+ */
 template <typename VerticesContainerIt>
 void CalculateBoxVertices(
-    glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k, VerticesContainerIt verticesIterator)
+        glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k,
+        VerticesContainerIt verticesBeginIterator
+    )
 {
-    *verticesIterator = (i + j + k);
-    *(verticesIterator + 1) = (i - j + k);
-    *(verticesIterator + 2) = (j - i + k);
-    *(verticesIterator + 3) = (-i - j + k);
-    *(verticesIterator + 4) = (i + j - k);
-    *(verticesIterator + 5) = (i - j - k);
-    *(verticesIterator + 6) = (j - i - k);
-    *(verticesIterator + 7) = (-i - j - k);
+    *(verticesBeginIterator + 0) = ( i + j + k);
+    *(verticesBeginIterator + 1) = ( i - j + k);
+    *(verticesBeginIterator + 2) = ( j - i + k);
+    *(verticesBeginIterator + 3) = (-i - j + k);
+    *(verticesBeginIterator + 4) = ( i + j - k);
+    *(verticesBeginIterator + 5) = ( i - j - k);
+    *(verticesBeginIterator + 6) = ( j - i - k);
+    *(verticesBeginIterator + 7) = (-i - j - k);
 }
 
 template <typename SrcIt1, typename SrcIt2, typename DestIt>
@@ -373,7 +384,7 @@ inline void Initialize<Plane, Sphere>(SimpleShape const* a, SimpleShape const* b
     cache->sphereMassCenter = sphere->GetCenterOfMass();
     cache->sphereRadius = sphere->GetRadius();
     cache->penetration = cache->sphereRadius -
-        (glm::dot(cache->sphereMassCenter, cache->planeNormal) 
+        (glm::dot(cache->sphereMassCenter, cache->planeNormal)
             - glm::dot(cache->planeMassCenter, cache->planeNormal));
 }
 
