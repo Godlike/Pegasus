@@ -41,6 +41,7 @@ private:
 
 enum class SimpleShapeType : uint32_t
 {
+    RAY,
     PLANE,
     TRIANGLE,
     SPHERE,
@@ -57,6 +58,19 @@ public:
     SimpleShapeType type;
 
     SimpleShape(glm::dvec3 const& centerOfMass, SimpleShapeType type);
+};
+
+class Ray : public SimpleShape
+{
+public:
+    Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
+
+    void SetNormal(glm::dvec3 const& normal);
+
+    glm::dvec3 const& GetNormal() const;
+
+private:
+    glm::dvec3 m_normal;
 };
 
 class Plane : public SimpleShape

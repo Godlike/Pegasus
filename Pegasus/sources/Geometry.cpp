@@ -26,6 +26,22 @@ pegasus::geometry::SimpleShape::SimpleShape(glm::dvec3 const& centerOfMass, Simp
 {
 }
 
+pegasus::geometry::Ray::Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal)
+    : SimpleShape(centerOfMass, SimpleShapeType::RAY)
+    , m_normal(normal)
+{
+}
+
+void pegasus::geometry::Ray::SetNormal(glm::dvec3 const& normal)
+{
+    m_normal = normal;
+}
+
+glm::dvec3 const& pegasus::geometry::Ray::GetNormal() const
+{
+    return m_normal;
+}
+
 pegasus::geometry::Plane::Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal)
     : SimpleShape(centerOfMass, SimpleShapeType::PLANE)
     , m_normal(normal)
