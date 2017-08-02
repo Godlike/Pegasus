@@ -168,11 +168,14 @@ namespace intersection
 
 /**
  * @brief Calculates box vertices in the model coordinate space from a given orthogonal basis
+ *
+ * Writes output vertices to the container starting with @p verticesBeginIterator. There must
+ * be at least 7 more elements following given iterator.
  * @tparam Random access iterator
  * @param[in] i box axis vector
  * @param[in] j box axis vector
  * @param[in] k box axis vector
- * @param[out] verticesIterator iterator to the container that is able to store 8 vertices
+ * @param[in] verticesBeginIterator iterator to the container that is able to store 8 vertices
  */
 template <typename VerticesContainerIt>
 void CalculateBoxVertices(
