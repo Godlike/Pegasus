@@ -187,7 +187,7 @@ namespace intersection
  *
  * Writes output vertices to the container starting with @p verticesBeginIterator. There must
  * be at least 7 more elements following given iterator.
- * @tparam Random access iterator
+ * @tparam VerticesContainerIt Random access iterator
  * @param[in] i box axis vector
  * @param[in] j box axis vector
  * @param[in] k box axis vector
