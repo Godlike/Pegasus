@@ -26,6 +26,11 @@ pegasus::geometry::SimpleShape::SimpleShape(glm::dvec3 const& centerOfMass, Simp
 {
 }
 
+pegasus::geometry::Ray::Ray()
+    : SimpleShape(SimpleShapeType::RAY)
+{
+}
+
 pegasus::geometry::Ray::Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal)
     : SimpleShape(centerOfMass, SimpleShapeType::RAY)
     , m_normal(normal)
@@ -42,6 +47,11 @@ glm::dvec3 const& pegasus::geometry::Ray::GetNormal() const
     return m_normal;
 }
 
+pegasus::geometry::Plane::Plane()
+    : SimpleShape(SimpleShapeType::PLANE)
+{
+}
+
 pegasus::geometry::Plane::Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal)
     : SimpleShape(centerOfMass, SimpleShapeType::PLANE)
     , m_normal(normal)
@@ -56,6 +66,11 @@ void pegasus::geometry::Plane::SetNormal(glm::dvec3 const& normal)
 glm::dvec3 const& pegasus::geometry::Plane::GetNormal() const
 {
     return m_normal;
+}
+
+pegasus::geometry::Triangle::Triangle()
+    : SimpleShape(SimpleShapeType::TRIANGLE)
+{
 }
 
 pegasus::geometry::Triangle::Triangle(
@@ -94,6 +109,12 @@ void pegasus::geometry::Triangle::CalculateNormal()
     m_normal = glm::cross(m_bVertex - m_aVertex, m_cVertex - m_aVertex);
 }
 
+pegasus::geometry::Sphere::Sphere()
+    : SimpleShape(SimpleShapeType::SPHERE)
+    , m_radius()
+{
+}
+
 pegasus::geometry::Sphere::Sphere(glm::dvec3 const& centerOfMass, double r)
     : SimpleShape(centerOfMass, SimpleShapeType::SPHERE)
     , m_radius(r)
@@ -108,6 +129,12 @@ void pegasus::geometry::Sphere::SetRadius(double r)
 double pegasus::geometry::Sphere::GetRadius() const
 {
     return m_radius;
+}
+
+pegasus::geometry::Cone::Cone()
+    : SimpleShape(SimpleShapeType::CONE)
+    , m_radius()
+{
 }
 
 pegasus::geometry::Cone::Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r)
@@ -135,6 +162,12 @@ void pegasus::geometry::Cone::SetRadius(double r)
 double pegasus::geometry::Cone::GetRadius() const
 {
     return m_radius;
+}
+
+pegasus::geometry::Capsule::Capsule()
+    : SimpleShape(SimpleShapeType::CAPSULE)
+    , m_radius()
+{
 }
 
 pegasus::geometry::Capsule::Capsule(
@@ -166,10 +199,21 @@ double pegasus::geometry::Capsule::GetRadius() const
     return m_radius;
 }
 
+pegasus::geometry::Cylinder::Cylinder()
+{
+    type = SimpleShapeType::CYLINDER;
+}
+
 pegasus::geometry::Cylinder::Cylinder(
     glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r
 )
     : Capsule(centerOfMass, halfHeight, r)
+{
+    type = SimpleShapeType::CAPSULE;
+}
+
+pegasus::geometry::Box::Box()
+    : SimpleShape(SimpleShapeType::BOX)
 {
 }
 

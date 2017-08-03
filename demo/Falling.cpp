@@ -25,13 +25,13 @@
 #include <list>
 #include <random>
 
-static const uint32_t BOX_COUNT = static_cast<uint32_t>(std::pow(3, 3));
-static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t BOX_COUNT = 0; // static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t SPHERE_COUNT = 0; // static_cast<uint32_t>(std::pow(3, 3));
 static const uint32_t TOTAL_COUNT = BOX_COUNT + SPHERE_COUNT;
 static const double RADIUS = 5;
 static const bool WIRED_ONLY = true;
 static const bool DRAW_CONVEX = true;
-static const bool DRAW_BUNNIES = true;
+static const bool DRAW_BUNNIES = false;
 
 class FallingDemo : public Application
 {
@@ -84,6 +84,15 @@ private:
     ConvexHull::Faces cvFaces;
     std::list<ConvexHull::Vertices::iterator> cvVertices;
 
+    std::array<bool, 4> m_overlap;
+    std::array<glm::dvec3, 4> m_contactNormal;
+    std::array<double, 4> m_penetration;
+    std::array<pegasus::geometry::Ray, 4> m_rays;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Plane> m_rayPlaneCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Sphere> m_raySphereCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayObbCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayAabbCache;
+
     pegasus::geometry::volumes::Vertices vertices;
     pegasus::geometry::volumes::Faces faces;
     pegasus::geometry::volumes::Indices indices;
@@ -99,6 +108,8 @@ private:
     void AddBoundingVolumes();
 
     void SceneReset();
+
+    void DrawWiredBox(std::array<glm::dvec3, 8> const& boxVertices) const;
 };
 
 // Method definitions
@@ -107,7 +118,7 @@ FallingDemo::FallingDemo()
     , xAxis(0)
     , yAxis(0)
     , zAxis(0)
-    , zoom(4)
+    , zoom(0.5)
     , yEye(0)
     , yRotationAngle(0)
     , activeObject(m_rigidBodies.begin())
@@ -186,12 +197,6 @@ void FallingDemo::AddBoundingVolumes()
     for (size_t i = 0; i < faces.size(); ++i)
         indices.insert(i);
 
-    //CV
-    cv = std::make_unique<ConvexHull>(vertices);
-    cv->Calculate();
-    cvVertices = cv->GetVertices();
-    cvFaces = cv->GetFaces();
-
     //OBB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
     {
@@ -202,6 +207,12 @@ void FallingDemo::AddBoundingVolumes()
     glm::dmat3 obbAxes;
     obb.GetAxes(obbAxes[0], obbAxes[1], obbAxes[2]);
     AddBox(obb.GetCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
+
+    //CV
+    cv = std::make_unique<ConvexHull>(vertices);
+    cv->Calculate();
+    cvVertices = cv->GetVertices();
+    cvFaces = cv->GetFaces();
 
     //AABB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
@@ -226,6 +237,29 @@ void FallingDemo::AddBoundingVolumes()
     {
         v -= boundingSphereTranslate;
     });
+
+    m_rays = {
+        pegasus::geometry::Ray{ sphere.GetCenterOfMass() + glm::dvec3{1, 0, 0}, glm::normalize(glm::dvec3{ -1, 0.5, 0}) },
+        pegasus::geometry::Ray{ aabb.GetCenterOfMass() + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0 }) },
+        pegasus::geometry::Ray{ obb.GetCenterOfMass() + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0 }) },
+    };
+
+    using namespace pegasus::geometry::intersection;
+    
+    Initialize<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
+    m_overlap[0] = Overlap<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
+    m_contactNormal[0] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
+    m_penetration[0] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
+
+    Initialize<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
+    m_overlap[1] = Overlap<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
+    m_contactNormal[1] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
+    m_penetration[1] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
+
+    Initialize<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
+    m_overlap[2] = Overlap<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
+    m_contactNormal[2] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
+    m_penetration[2] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
 }
 
 void FallingDemo::SceneReset()
@@ -326,16 +360,137 @@ void FallingDemo::SceneReset()
     std::advance(activeObject, -3);
 }
 
+void FallingDemo::DrawWiredBox(std::array<glm::dvec3, 8> const& boxVertices) const
+{
+    glBegin(GL_LINES);
+    glVertex3dv(glm::value_ptr(boxVertices[0]));
+    glVertex3dv(glm::value_ptr(boxVertices[1]));
+    glVertex3dv(glm::value_ptr(boxVertices[1]));
+    glVertex3dv(glm::value_ptr(boxVertices[3]));
+    glVertex3dv(glm::value_ptr(boxVertices[3]));
+    glVertex3dv(glm::value_ptr(boxVertices[2]));
+    glVertex3dv(glm::value_ptr(boxVertices[2]));
+    glVertex3dv(glm::value_ptr(boxVertices[0]));
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3dv(glm::value_ptr(boxVertices[4]));
+    glVertex3dv(glm::value_ptr(boxVertices[5]));
+    glVertex3dv(glm::value_ptr(boxVertices[5]));
+    glVertex3dv(glm::value_ptr(boxVertices[7]));
+    glVertex3dv(glm::value_ptr(boxVertices[7]));
+    glVertex3dv(glm::value_ptr(boxVertices[6]));
+    glVertex3dv(glm::value_ptr(boxVertices[6]));
+    glVertex3dv(glm::value_ptr(boxVertices[4]));
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3dv(glm::value_ptr(boxVertices[0]));
+    glVertex3dv(glm::value_ptr(boxVertices[1]));
+    glVertex3dv(glm::value_ptr(boxVertices[1]));
+    glVertex3dv(glm::value_ptr(boxVertices[5]));
+    glVertex3dv(glm::value_ptr(boxVertices[5]));
+    glVertex3dv(glm::value_ptr(boxVertices[4]));
+    glVertex3dv(glm::value_ptr(boxVertices[4]));
+    glVertex3dv(glm::value_ptr(boxVertices[0]));
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3dv(glm::value_ptr(boxVertices[2]));
+    glVertex3dv(glm::value_ptr(boxVertices[3]));
+    glVertex3dv(glm::value_ptr(boxVertices[3]));
+    glVertex3dv(glm::value_ptr(boxVertices[7]));
+    glVertex3dv(glm::value_ptr(boxVertices[7]));
+    glVertex3dv(glm::value_ptr(boxVertices[6]));
+    glVertex3dv(glm::value_ptr(boxVertices[6]));
+    glVertex3dv(glm::value_ptr(boxVertices[2]));
+    glEnd();
+}
+
 void FallingDemo::Display()
 {
-    // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(255 / 255.0, 127 / 255.0, 80 / 255.0, 1.0);
     glLoadIdentity();
 
     auto const& pos = activeObject->p.GetPosition();
-    gluLookAt(pos.x * zoom, pos.y + 30 * zoom + yEye, pos.z + 30 * zoom, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
+
+    glm::dvec3 from{ pos.x, (pos.y + 30 + yEye), (pos.z + 30) };
+    glm::dvec3 to{ pos.x, pos.y, pos.z };
+    glm::dvec3 viewVec = from - to;
+    viewVec *= zoom;
+    from = viewVec + to;
+
+    gluLookAt(from.x, from.y, from.z, to.x, to.y, to.z, 0.0, 1.0, 0.0);
     glPointSize(5);
+
+    //Draw rays
+    for (uint32_t i = 0; i < 3; ++i)
+    {
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+
+        //Original ray
+        {
+            if (m_overlap[i]) {
+                glColor3f(1.0, 0.0, 0.0);
+            }
+            else {
+                glColor3d(0.0, 1.0, 0.0);
+            }
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(m_rays[i].GetCenterOfMass()));
+            glm::dvec3 rayEnd = m_rays[i].GetCenterOfMass();
+            rayEnd += m_rays[i].GetNormal() * 2.5;
+            glVertex3dv(glm::value_ptr(rayEnd));
+            glEnd();
+        }
+
+        glPopMatrix();
+    }
+
+    {
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+
+        //Sphere intersection points
+        {
+            glColor3d(1.0, 0.0, 0.0);
+            glBegin(GL_POINTS);
+            glVertex3dv(glm::value_ptr(m_raySphereCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_raySphereCache.outPoint));
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(m_raySphereCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_raySphereCache.inPoint + m_raySphereCache.sphereContactNormal));
+            glEnd();
+        }
+
+        //Aabb intersection points
+        {
+            glColor3d(1.0, 0.0, 0.0);
+            glBegin(GL_POINTS);
+            glVertex3dv(glm::value_ptr(m_rayAabbCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_rayAabbCache.outPoint));
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(m_rayAabbCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_rayAabbCache.inPoint + m_rayAabbCache.boxContactNormal));
+            glEnd();
+        }
+
+        //Obb intersection points
+        {
+            glColor3d(1.0, 0.0, 0.0);
+            glBegin(GL_POINTS);
+            glVertex3dv(glm::value_ptr(m_rayObbCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_rayObbCache.outPoint));
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(m_rayObbCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_rayObbCache.inPoint + m_rayObbCache.boxContactNormal));
+            glEnd();
+        }
+
+        glPopMatrix();
+    }
 
     if (DRAW_CONVEX)
     {
@@ -563,46 +718,7 @@ void FallingDemo::Display()
             {
                 glColor3f(1.0f, 0.0, 0.0);
             }
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glEnd();
+            DrawWiredBox(boxVertices);
         }
         glPopMatrix();
     }
