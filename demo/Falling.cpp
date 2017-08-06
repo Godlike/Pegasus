@@ -169,6 +169,26 @@ void FallingDemo::AddBoundingVolumes()
     boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
     auto sphere = boundingSphere->GetSphere();
     AddSphere(sphere.getCenterOfMass(), sphere.GetRadius());
+
+    Shape bunnyShape {vertices, faces};
+
+    hierarchy::BoundingVolumeHierarchy<obb::OrientedBoundingBox> bvhObb(bunnyShape, indices);
+    auto obbLowerChild = bvhObb.getLowerChild()->getVolume().GetBox();
+    auto obbUpperChild = bvhObb.getUpperChild()->getVolume().GetBox();
+    glm::dmat3 obbLowerAxes, obbUpperAxes;
+    obbLowerChild.GetAxes(obbLowerAxes[0], obbLowerAxes[1], obbLowerAxes[2]);
+    obbUpperChild.GetAxes(obbUpperAxes[0], obbUpperAxes[1], obbUpperAxes[2]);
+    AddBox(obbLowerChild.getCenterOfMass(), obbLowerAxes[0], obbLowerAxes[1], obbLowerAxes[2]);
+    AddBox(obbUpperChild.getCenterOfMass(), obbUpperAxes[0], obbUpperAxes[1], obbUpperAxes[2]);
+
+//    hierarchy::BoundingVolumeHierarchy<aabb::AxisAlignedBoundingBox> bvhAabb(bunnyShape, indices);
+//    auto aabbLowerChild = bvhAabb.lowerChild->m_volume.GetBox();
+//    auto aabbUpperChild = bvhAabb.upperChild->m_volume.GetBox();
+//    glm::dmat3 aabbLowerAxes, aabbUpperAxes;
+//    aabbLowerChild.GetAxes(aabbLowerAxes[0], aabbLowerAxes[1], aabbLowerAxes[2]);
+//    aabbUpperChild.GetAxes(aabbUpperAxes[0], aabbUpperAxes[1], aabbUpperAxes[2]);
+//    AddBox(aabbLowerChild.getCenterOfMass(), aabbLowerAxes[0], aabbLowerAxes[1], aabbLowerAxes[2]);
+//    AddBox(aabbUpperChild.getCenterOfMass(), aabbUpperAxes[0], aabbUpperAxes[1], aabbUpperAxes[2]);
 }
 
 void FallingDemo::SceneReset()
