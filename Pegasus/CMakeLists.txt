@@ -28,8 +28,9 @@ elseif(WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-#GLM
-add_subdirectory(${GLM_SOURCE_DIR})
+if (NOT GLM_FOUND)
+    add_subdirectory(${GLM_ROOT_DIR})
+endif()
 
 #Target
 include_directories(
@@ -62,4 +63,18 @@ add_library(${PEGASUS_LIB}
     ${PEGASUS_HEADERS}
     ${PEGASUS_SOURCES}
 )
+
 target_link_libraries(${PEGASUS_LIB})
+
+install( TARGETS ${PEGASUS_LIB}
+    COMPONENT godlike_libraries
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib/static
+)
+
+install( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+    DESTINATION include/godlike/pegasus
+    COMPONENT godlike_headers
+    FILES_MATCHING PATTERN "*.hpp"
+    PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+)

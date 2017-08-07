@@ -11,7 +11,10 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${PEGASUS_ROOT}/Pegasus/cmake")
 
 include(GlmConfig)
-    
+
+#GLM
+find_package(GLM)
+
 set(PEGASUS_INCLUDE_DIR
     ${PEGASUS_ROOT}
     ${GLM_INCLUDE_DIR}
