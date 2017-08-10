@@ -727,6 +727,81 @@ void FindExtremalVertices(
 }
 
 /**
+* @brief Calculates box vertices in the model coordinate space from a given orthogonal basis
+*
+* Writes output vertices to the container starting with @p verticesBeginIterator. There must
+* be at least 7 more elements following given iterator.
+* @tparam VerticesContainerIt Random access iterator
+* @param[in] i box axis vector
+* @param[in] j box axis vector
+* @param[in] k box axis vector
+* @param[out] verticesBeginIterator iterator to the container that is able to store 8 vertices
+*/
+template <typename VerticesContainerIt>
+void CalculateBoxVertices(
+    glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k,
+    VerticesContainerIt verticesBeginIterator
+)
+{
+    *(verticesBeginIterator + 0) = (i + j + k);
+    *(verticesBeginIterator + 1) = (i - j + k);
+    *(verticesBeginIterator + 2) = (j - i + k);
+    *(verticesBeginIterator + 3) = (-i - j + k);
+    *(verticesBeginIterator + 4) = (i + j - k);
+    *(verticesBeginIterator + 5) = (i - j - k);
+    *(verticesBeginIterator + 6) = (j - i - k);
+    *(verticesBeginIterator + 7) = (-i - j - k);
+}
+
+/**
+* @brief Effectively calculate all cross product vectors from two input ranges and writes all valid results to the output container
+* @tparam SrcIt1 Forward iterator from the container of GLM vectors of size 3
+* @tparam SrcIt2 Forward iterator from the container of GLM vectors of size 3
+* @tparam DestIt Forward iterator from the container of GLM vectors of size 3
+* @param[in] srcBegin1 iterator pointing to the start of the first input range
+* @param[in] srcEnd1 iterator pointing to the end of the first input range
+* @param[in] srcBegin2 iterator pointing to the start of the second input range
+* @param[in] srcEnd2 iterator pointing to the end of the second input range
+* @param[out] destBegin iterator pointing to the output container
+*/
+template <typename SrcIt1, typename SrcIt2, typename DestIt>
+void CalculateCrossProductForeach(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2, SrcIt2 srcEnd2,
+    std::back_insert_iterator<DestIt> destBegin)
+{
+    for (auto it1 = srcBegin1; it1 != srcEnd1; ++it1)
+    {
+        for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2)
+        {
+            auto const axis = glm::normalize(glm::cross(*it1, *it2));
+            if (glm::length2(axis) != 0.0)
+            {
+                destBegin++ = axis;
+            }
+        }
+    }
+}
+
+/**
+* @brief Calculates a dot product for every element in the input range and writes it to the output container
+* @tparam VectorType GLM vector type
+* @tparam InIterator forward iterator from the container of VectorType objects
+* @tparam OutIterator forward iterator from the container of double or float
+* @param[in] axis vector along which to calculate dot products
+* @param[in] srcBegin iterator pointing to the start of the input range
+* @param[in] srcEnd iterator pointing to the end of the input range
+* @param[out] destBegin iterator pointing to the output container
+*/
+template <typename VectorType, typename InIterator, typename OutIterator>
+void CalculateDotProductForeach(
+    VectorType const& axis, InIterator srcBegin, InIterator srcEnd, OutIterator destBegin)
+{
+    while (srcBegin != srcEnd)
+    {
+        *destBegin++ = glm::dot(axis, (*srcBegin++));
+    }
+}
+
+/**
  * @brief Calculates distance between a point and line segment
  * @param[in] lineStart start of the line segment
  * @param[in] lineEnd end of the line segment

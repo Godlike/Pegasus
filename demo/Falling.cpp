@@ -25,8 +25,8 @@
 #include <list>
 #include <random>
 
-static const uint32_t BOX_COUNT = 0; // static_cast<uint32_t>(std::pow(3, 3));
-static const uint32_t SPHERE_COUNT = 0; // static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t BOX_COUNT = static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
 static const uint32_t TOTAL_COUNT = BOX_COUNT + SPHERE_COUNT;
 static const double RADIUS = 5;
 static const bool WIRED_ONLY = true;
@@ -88,10 +88,10 @@ private:
     std::array<glm::dvec3, 4> m_contactNormal;
     std::array<double, 4> m_penetration;
     std::array<pegasus::geometry::Ray, 4> m_rays;
-    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Plane> m_rayPlaneCache;
-    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Sphere> m_raySphereCache;
-    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayObbCache;
-    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayAabbCache;
+    pegasus::geometry::intersection::IntersectionCache<pegasus::geometry::Ray, pegasus::geometry::Plane> m_rayPlaneCache;
+    pegasus::geometry::intersection::IntersectionCache<pegasus::geometry::Ray, pegasus::geometry::Sphere> m_raySphereCache;
+    pegasus::geometry::intersection::IntersectionCache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayObbCache;
+    pegasus::geometry::intersection::IntersectionCache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayAabbCache;
 
     pegasus::geometry::volumes::Vertices vertices;
     pegasus::geometry::volumes::Faces faces;
@@ -239,7 +239,7 @@ void FallingDemo::AddBoundingVolumes()
     });
 
     m_rays = {
-        pegasus::geometry::Ray{ sphere.GetCenterOfMass() + glm::dvec3{1, 0, 0}, glm::normalize(glm::dvec3{ -1, 0.5, 0}) },
+        pegasus::geometry::Ray{ sphere.GetCenterOfMass() + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0}) },
         pegasus::geometry::Ray{ aabb.GetCenterOfMass() + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0 }) },
         pegasus::geometry::Ray{ obb.GetCenterOfMass() + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0 }) },
     };
@@ -247,17 +247,17 @@ void FallingDemo::AddBoundingVolumes()
     using namespace pegasus::geometry::intersection;
     
     Initialize<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
-    m_overlap[0] = Overlap<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
+    m_overlap[0] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
     m_contactNormal[0] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
     m_penetration[0] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
 
     Initialize<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
-    m_overlap[1] = Overlap<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
+    m_overlap[1] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
     m_contactNormal[1] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
     m_penetration[1] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
 
     Initialize<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
-    m_overlap[2] = Overlap<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
+    m_overlap[2] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
     m_contactNormal[2] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
     m_penetration[2] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
 }
@@ -583,7 +583,7 @@ void FallingDemo::Display()
         double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
         double blue = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
 
-        if (s == pegasus::geometry::SimpleShapeType::PLANE)
+        if (s == pegasus::geometry::SimpleShape::Type::PLANE)
         {
             double const planeSideLength = 100;
 
@@ -623,7 +623,7 @@ void FallingDemo::Display()
             }
             glEnd();
         }
-        else if (s == pegasus::geometry::SimpleShapeType::SPHERE)
+        else if (s == pegasus::geometry::SimpleShape::Type::SPHERE)
         {
             pegasus::geometry::Sphere* sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
             double const r = sphere->GetRadius();
@@ -649,7 +649,7 @@ void FallingDemo::Display()
             }
             glutWireSphere(r + 0.001, 20, 20);
         }
-        else if (s == pegasus::geometry::SimpleShapeType::BOX)
+        else if (s == pegasus::geometry::SimpleShape::Type::BOX)
         {
             pegasus::geometry::Box* box = static_cast<pegasus::geometry::Box*>(body.s.get());
             std::array<glm::dvec3, 3> boxAxes;

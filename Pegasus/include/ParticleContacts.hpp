@@ -83,10 +83,10 @@ public:
                 break;
             }
 
-            static geometry::IntersectionQuery intersection;
+            static geometry::SimpleShapeIntersectionDetector intersection;
             intersection.Initialize(m_rigidBody.s.get(), body.s.get());
 
-            if (intersection.Overlap(m_rigidBody.s.get(), body.s.get()) && ++used)
+            if (intersection.CalculateIntersection(m_rigidBody.s.get(), body.s.get()) && ++used)
             {
                 glm::dvec3 const contactNormal = intersection.CalculateContactNormal(m_rigidBody.s.get(), body.s.get());
                 double const penetration = intersection.CalculatePenetration(m_rigidBody.s.get(), body.s.get());
