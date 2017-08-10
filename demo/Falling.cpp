@@ -31,7 +31,7 @@ static const uint32_t TOTAL_COUNT = BOX_COUNT + SPHERE_COUNT;
 static const double RADIUS = 5;
 static const bool WIRED_ONLY = true;
 static const bool DRAW_CONVEX = true;
-static const bool DRAW_BUNNIES = false;
+static const bool DRAW_BUNNIES = true;
 
 class FallingDemo : public Application
 {
@@ -449,10 +449,10 @@ void FallingDemo::Display()
     {
         glPushMatrix();
         glRotated(yRotationAngle, 0, 1, 0);
+        glColor3d(0.0, 1.0, 0.0);
 
         //Sphere intersection points
         {
-            glColor3d(1.0, 0.0, 0.0);
             glBegin(GL_POINTS);
             glVertex3dv(glm::value_ptr(m_raySphereCache.inPoint));
             glVertex3dv(glm::value_ptr(m_raySphereCache.outPoint));
@@ -465,7 +465,6 @@ void FallingDemo::Display()
 
         //Aabb intersection points
         {
-            glColor3d(1.0, 0.0, 0.0);
             glBegin(GL_POINTS);
             glVertex3dv(glm::value_ptr(m_rayAabbCache.inPoint));
             glVertex3dv(glm::value_ptr(m_rayAabbCache.outPoint));
@@ -478,7 +477,6 @@ void FallingDemo::Display()
 
         //Obb intersection points
         {
-            glColor3d(1.0, 0.0, 0.0);
             glBegin(GL_POINTS);
             glVertex3dv(glm::value_ptr(m_rayObbCache.inPoint));
             glVertex3dv(glm::value_ptr(m_rayObbCache.outPoint));
