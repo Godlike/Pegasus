@@ -10,15 +10,14 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/glm.hpp>
 
+#include <algorithm>
 #include <iterator>
-#include <vector>
 #include <array>
+#include <vector>
 #include <list>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <algorithm>
-#include <utility>
 
 namespace pegasus
 {
@@ -452,20 +451,20 @@ public:
      */
     struct FaceVertices
     {
+        uint64_t a;
+        uint64_t b;
+        uint64_t c;
+
         /* Hasher struct for the key object */
         struct Hasher
         {
             /**
-             * @brief Calculates a hash sum over the given FaceVertices object
-             * @param face key for the hash calculation
-             * @return hash sum value
-             */
+            * @brief Calculates a hash sum over the given FaceVertices object
+            * @param face key for the hash calculation
+            * @return hash sum value
+            */
             size_t operator()(FaceVertices const& face) const;
         };
-
-        uint64_t a;
-        uint64_t b;
-        uint64_t c;
 
         bool operator==(FaceVertices const& other) const;
     };
@@ -534,6 +533,9 @@ private:
      */
     struct HalfEdgeVertices
     {
+        uint64_t vertexIndexFrom;
+        uint64_t vertexIndexTo;
+
         /* Hasher struct for the key object */
         struct Hasher
         {
@@ -544,9 +546,6 @@ private:
             */
             size_t operator()(HalfEdgeVertices const& edge) const;
         };
-
-        uint64_t vertexIndexFrom;
-        uint64_t vertexIndexTo;
 
         bool operator==(HalfEdgeVertices const& other) const;
     };

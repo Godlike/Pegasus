@@ -13,14 +13,12 @@
 #include <glm/glm.hpp>
 
 #include <algorithm>
-#include <functional>
 #include <utility>
 #include <limits>
-#include <cstdint>
-#include <array>
 #include <memory>
-#include <unordered_map>
+#include <array>
 #include <vector>
+#include <unordered_map>
 
 #include "Pegasus/include/Math.hpp"
 
@@ -34,16 +32,11 @@ namespace geometry
 class Shape
 {
 public:
+    glm::dvec3 centerOfMass;
+
     Shape() = default;
 
     explicit Shape(glm::dvec3 const& centerOfMass);
-
-    void SetCenterOfMass(glm::dvec3 const& centerOfMass);
-
-    glm::dvec3 const& GetCenterOfMass() const;
-
-private:
-    glm::dvec3 m_centerOfMass;
 };
 
 /**
@@ -52,7 +45,7 @@ private:
 class SimpleShape : public Shape
 {
 public:
-    enum class Type : uint32_t
+    enum class Type : uint8_t
     {
         RAY,
         PLANE,
@@ -81,54 +74,38 @@ public:
 class Ray : public SimpleShape
 {
 public:
+    glm::dvec3 direction;
+
     Ray();
 
-    Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
-
-    void SetNormal(glm::dvec3 const& normal);
-
-    glm::dvec3 const& GetNormal() const;
-
-private:
-    glm::dvec3 m_normal;
+    Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);   
 };
 
 /** Plane data storage class */
 class Plane : public SimpleShape
 {
 public:
+    glm::dvec3 normal;
+
     Plane();
 
     Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
-
-    void SetNormal(glm::dvec3 const& normal);
-
-    glm::dvec3 const& GetNormal() const;
-
-private:
-    glm::dvec3 m_normal;
 };
 
 /** Triangle data storage class */
 class Triangle : public SimpleShape
 {
 public:
+    glm::dvec3 aVertex;
+    glm::dvec3 bVertex;
+    glm::dvec3 cVertex;
+    glm::dvec3 normal;
+
     Triangle();
 
     Triangle(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
 
-    void SetAxes(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
-
-    void GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c) const;
-
-    glm::dvec3 const& GetNormal() const;
-
-private:
-    glm::dvec3 m_aVertex;
-    glm::dvec3 m_bVertex;
-    glm::dvec3 m_cVertex;
-    glm::dvec3 m_normal;
-
+    /** Calculates normal from member vertices and writes it to the normal member field */
     void CalculateNormal();
 };
 
@@ -136,63 +113,43 @@ private:
 class Sphere : public SimpleShape
 {
 public:
+    double radius;
+
     Sphere();
 
-    Sphere(glm::dvec3 const& centerOfMass, double r);
-
-    void SetRadius(double r);
-
-    double GetRadius() const;
-
-private:
-    double m_radius;
+    Sphere(glm::dvec3 const& centerOfMass, double r);    
 };
 
 /** Cone data storage class */
 class Cone : public SimpleShape
 {
 public:
+    glm::dvec3 apex;
+    double radius;
+
     Cone();
 
     Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r);
-
-    void SetAppex(glm::dvec3 const& a);
-
-    glm::dvec3 const& GetAppex() const;
-
-    void SetRadius(double r);
-
-    double GetRadius() const;
-
-private:
-    glm::dvec3 m_appex;
-    double m_radius;
 };
 
 /** Capsule data storage class */
 class Capsule : public SimpleShape
 {
 public:
+    glm::dvec3 halfHeight;
+    double radius;
+
     Capsule();
 
-    Capsule(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
-
-    void SetHalfHeight(glm::dvec3 const& halfHeight);
-
-    glm::dvec3 const& GetHalfHeight() const;
-
-    void SetRadius(double r);
-
-    double GetRadius() const;
-
-private:
-    glm::dvec3 m_halfHeight;
-    double m_radius;
+    Capsule(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);   
 };
 
-class Cylinder : public Capsule
+class Cylinder : public SimpleShape
 {
 public:
+    glm::dvec3 halfHeight;
+    double radius;
+
     Cylinder();
 
     Cylinder(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
@@ -202,18 +159,13 @@ public:
 class Box : public SimpleShape
 {
 public:
+    glm::dvec3 iAxis;
+    glm::dvec3 jAxis;
+    glm::dvec3 kAxis;
+
     Box();
 
-    Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
-
-    void SetAxes(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
-
-    void GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c) const;
-
-private:
-    glm::dvec3 m_aAxis;
-    glm::dvec3 m_bAxis;
-    glm::dvec3 m_cAxis;
+    Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);    
 };
 
 namespace intersection
@@ -466,10 +418,10 @@ inline void Initialize<Ray, Ray>(SimpleShape const* a, SimpleShape const* b, Int
     auto aRay = static_cast<Ray const*>(a);
     auto bRay = static_cast<Ray const*>(b);
 
-    cache->aRayPoint = aRay->GetCenterOfMass();
-    cache->aRayNormal = aRay->GetNormal();
-    cache->bRayPoint = bRay->GetCenterOfMass();
-    cache->bRayPoint = bRay->GetNormal();
+    cache->aRayPoint = aRay->centerOfMass;
+    cache->aRayNormal = aRay->direction;
+    cache->bRayPoint = bRay->centerOfMass;
+    cache->bRayNormal = bRay->direction;
 }
 
 /** Ray, Ray CalculateIntersection specialization */
@@ -527,10 +479,10 @@ inline void Initialize<Ray, Plane>(SimpleShape const* a, SimpleShape const* b, I
     auto ray = static_cast<Ray const*>(a);
     auto plane = static_cast<Plane const*>(b);
 
-    cache->rayNormal = ray->GetNormal();
-    cache->rayOrigin = ray->GetCenterOfMass();
-    cache->planePoint = plane->GetCenterOfMass();
-    cache->planeNormal = plane->GetNormal();
+    cache->rayNormal = ray->direction;
+    cache->rayOrigin = ray->centerOfMass;
+    cache->planePoint = plane->centerOfMass;
+    cache->planeNormal = plane->normal;
     cache->hp = math::HyperPlane{cache->planeNormal, cache->planePoint};
 }
 
@@ -567,10 +519,10 @@ inline void Initialize<Ray, Sphere>(SimpleShape const* a, SimpleShape const* b, 
     auto ray = static_cast<Ray const*>(a);
     auto sphere = static_cast<Sphere const*>(b);
 
-    cache->rayOrigin = ray->GetCenterOfMass();
-    cache->rayNormal = ray->GetNormal();
-    cache->sphereRadius = sphere->GetRadius();
-    cache->sphereCenter = sphere->GetCenterOfMass();
+    cache->rayOrigin = ray->centerOfMass;
+    cache->rayNormal = ray->direction;
+    cache->sphereRadius = sphere->radius;
+    cache->sphereCenter = sphere->centerOfMass;
 
     glm::dvec3 const L = cache->sphereCenter - cache->rayOrigin;
     double const tc = glm::dot(L, cache->rayNormal);
@@ -626,8 +578,8 @@ inline void Initialize<Ray, Box>(SimpleShape const* a, SimpleShape const* b, Int
     auto ray = static_cast<Ray const*>(a);
     auto box = static_cast<Box const*>(b);
 
-    box->GetAxes(cache->boxAxesWorldSpace[0], cache->boxAxesWorldSpace[1], cache->boxAxesWorldSpace[2]);
-    cache->boxMassCenter = box->GetCenterOfMass();
+    cache->boxAxesWorldSpace = { box->iAxis, box->jAxis, box->kAxis };
+    cache->boxMassCenter = box->centerOfMass;
     cache->boxModelMatrix = glm::dmat3{
         glm::normalize(cache->boxAxesWorldSpace[0]),
         glm::normalize(cache->boxAxesWorldSpace[1]),
@@ -639,8 +591,8 @@ inline void Initialize<Ray, Box>(SimpleShape const* a, SimpleShape const* b, Int
         cache->boxModelMatrixInverse * cache->boxAxesWorldSpace[1],
         cache->boxModelMatrixInverse * cache->boxAxesWorldSpace[2]
     };
-    cache->rayNormalBoxSpace = cache->boxModelMatrixInverse * ray->GetNormal();
-    cache->rayOriginBoxSpace = cache->boxModelMatrixInverse * (ray->GetCenterOfMass() - cache->boxMassCenter);
+    cache->rayNormalBoxSpace = cache->boxModelMatrixInverse * ray->direction;
+    cache->rayOriginBoxSpace = cache->boxModelMatrixInverse * (ray->centerOfMass - cache->boxMassCenter);
 
     auto const findMaxAbs = [](double a, double b) { return std::abs(a) < std::abs(b); };
 
@@ -782,8 +734,8 @@ inline void Initialize<Plane, Plane>(SimpleShape const* a, SimpleShape const* b,
     auto bPlane = static_cast<Plane const*>(b);
     auto cache = static_cast<IntersectionCache<Plane, Plane>*>(cacheBase);
 
-    cache->aNormal = aPlane->GetNormal();
-    cache->bNormal = bPlane->GetNormal();
+    cache->aNormal = aPlane->normal;
+    cache->bNormal = bPlane->normal;
     cache->crossProduct = glm::cross(cache->aNormal, cache->bNormal);
 }
 
@@ -818,10 +770,10 @@ inline void Initialize<Plane, Sphere>(SimpleShape const* a, SimpleShape const* b
     auto sphere = static_cast<Sphere const*>(b);
     auto cache = static_cast<IntersectionCache<Plane, Sphere>*>(cacheBase);
 
-    cache->planeNormal = plane->GetNormal();
-    cache->planeMassCenter = plane->GetCenterOfMass();
-    cache->sphereMassCenter = sphere->GetCenterOfMass();
-    cache->sphereRadius = sphere->GetRadius();
+    cache->planeNormal = plane->normal;
+    cache->planeMassCenter = plane->centerOfMass;
+    cache->sphereMassCenter = sphere->centerOfMass;
+    cache->sphereRadius = sphere->radius;
     cache->penetration = cache->sphereRadius -
         (glm::dot(cache->sphereMassCenter, cache->planeNormal)
             - glm::dot(cache->planeMassCenter, cache->planeNormal));
@@ -859,11 +811,11 @@ inline void Initialize<Plane, Box>(SimpleShape const* a, SimpleShape const* b, I
     auto box = static_cast<Box const*>(b);
     auto cache = static_cast<IntersectionCache<Plane, Box>*>(cacheBase);
 
-    cache->planeNormal = plane->GetNormal();
-    cache->planeDistance = glm::dot(plane->GetCenterOfMass(), cache->planeNormal);
+    cache->planeNormal = plane->normal;
+    cache->planeDistance = glm::dot(plane->centerOfMass, cache->planeNormal);
 
-    box->GetAxes(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2]);
-    cache->boxMassCenter = box->GetCenterOfMass();
+    cache->boxAxes = { box->iAxis, box->jAxis, box->kAxis };
+    cache->boxMassCenter = box->centerOfMass;
     math::CalculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices.begin());
     cache->boxFaces = {
         cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2],
@@ -986,10 +938,10 @@ inline void Initialize<Sphere, Sphere>(SimpleShape const* a, SimpleShape const* 
     auto bSphere = static_cast<Sphere const*>(b);
     auto cache = static_cast<IntersectionCache<Sphere, Sphere>*>(cacheBase);
 
-    cache->aRadius = aSphere->GetRadius();
-    cache->aMassCenter = aSphere->GetCenterOfMass();
-    cache->bRadius = bSphere->GetRadius();
-    cache->bMassCenter = bSphere->GetCenterOfMass();
+    cache->aRadius = aSphere->radius;
+    cache->aMassCenter = aSphere->centerOfMass;
+    cache->bRadius = bSphere->radius;
+    cache->bMassCenter = bSphere->centerOfMass;
     cache->baVector = cache->aMassCenter - cache->bMassCenter;
     cache->radiusSum = cache->aRadius + cache->bRadius;
 }
@@ -1026,11 +978,11 @@ inline void Initialize<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, 
     auto box = static_cast<Box const*>(b);
     auto cache = static_cast<IntersectionCache<Sphere, Box>*>(cacheBase);
 
-    cache->sphereMassCenter = sphere->GetCenterOfMass();
-    cache->sphereRadius = sphere->GetRadius();
+    cache->sphereMassCenter = sphere->centerOfMass;
+    cache->sphereRadius = sphere->radius;
 
-    cache->boxMassCenter = box->GetCenterOfMass();
-    box->GetAxes(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2]);
+    cache->boxMassCenter = box->centerOfMass;
+    cache->boxAxes = { box->iAxis, box->jAxis, box->kAxis };
     math::CalculateBoxVertices(cache->boxAxes[0], cache->boxAxes[1], cache->boxAxes[2], cache->boxVertices.begin());
     std::for_each(cache->boxVertices.begin(), cache->boxVertices.end(), [cache](auto& n)
     {
@@ -1150,7 +1102,7 @@ inline glm::dvec3 CalculateContactNormal<Box, Ray>(SimpleShape const* a, SimpleS
     auto cache = static_cast<IntersectionCache<Box, Ray>*>(cacheBase);
     auto ray = static_cast<Ray const*>(b);
     CalculateContactNormal<Ray, Box>(b, a, &cache->rbCache);
-    return ray->GetNormal();
+    return ray->direction;
 }
 
 /** Box, Ray CalculatePenetration specialization */
@@ -1182,7 +1134,7 @@ template <>
 inline glm::dvec3 CalculateContactNormal<Box, Plane>(SimpleShape const* a, SimpleShape const* b, IntersectionCacheBase* cacheBase)
 {
     auto plane = static_cast<Plane const*>(b);
-    return plane->GetNormal();
+    return plane->normal;
 }
 
 /** Box, Plane CalculatePenetration specialization */
@@ -1235,11 +1187,9 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Int
     auto bBox = static_cast<Box const*>(b);
     auto cache = static_cast<IntersectionCache<Box, Box>*>(cacheBase);
 
-    cache->aMassCenter = aBox->GetCenterOfMass();
-    aBox->GetAxes(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2]);
+    cache->aMassCenter = aBox->centerOfMass;
     cache->aBoxAxes = {
-        cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2],
-        -cache->aBoxAxes[0], -cache->aBoxAxes[1], -cache->aBoxAxes[2]
+        aBox->iAxis, aBox->jAxis, aBox->kAxis, -aBox->iAxis, -aBox->jAxis, -aBox->kAxis
     };
     math::CalculateBoxVertices(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2], cache->aBoxVertices.begin());
     std::for_each(cache->aBoxVertices.begin(), cache->aBoxVertices.end(), [cache](auto& v)
@@ -1252,11 +1202,9 @@ inline void Initialize<Box, Box>(SimpleShape const* a, SimpleShape const* b, Int
         return v + cache->aMassCenter;
     });
 
-    cache->bMassCenter = bBox->GetCenterOfMass();
-    bBox->GetAxes(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2]);
+    cache->bMassCenter = bBox->centerOfMass;
     cache->bBoxAxes = {
-        cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2],
-        -cache->bBoxAxes[0], -cache->bBoxAxes[1], -cache->bBoxAxes[2]
+        bBox->iAxis, bBox->jAxis, bBox->kAxis, -bBox->iAxis, -bBox->jAxis, -bBox->kAxis
     };
     math::CalculateBoxVertices(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2], cache->bBoxVertices.begin());
     std::for_each(cache->bBoxVertices.begin(), cache->bBoxVertices.end(), [cache](auto& v)
