@@ -177,6 +177,13 @@ void FallingDemo::AddPlane(glm::dvec3 const& normal, glm::dvec3 const& point)
 
 void FallingDemo::AddBoundingVolumes()
 {
+    pegasus::geometry::Box gjkTestBox{ glm::dvec3{10, -10, 10}, glm::dvec3{ 1, 0, 0 }, glm::dvec3{ 0, 1, 0 }, glm::dvec3{ 0, 0, 1 } };
+    glm::dvec3 pointBox = pegasus::geometry::GjkSupport(gjkTestBox, glm::normalize(glm::dvec3{ 1, 0, 1 }));
+
+    pegasus::geometry::Sphere gjkTestSphere{ glm::dvec3{ 10, -10, 10 }, 1 };
+    glm::dvec3 pointSphere = pegasus::geometry::GjkSupport(gjkTestSphere, glm::normalize(glm::dvec3{ 1, 0, 1 }));
+    double const length = glm::length(pointSphere - gjkTestSphere.centerOfMass);
+
     using namespace pegasus::geometry::volumes;
 
     //Bunny Data

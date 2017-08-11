@@ -1300,6 +1300,7 @@ private:
         m_faces.erase(faceIterator);
     }
 };
+
 } // namespace math
 } // namespace pegasus
 

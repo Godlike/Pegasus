@@ -5,45 +5,48 @@
 */
 #include "Pegasus/include/Geometry.hpp"
 
-pegasus::geometry::Shape::Shape(glm::dvec3 const& centerOfMass)
+using namespace pegasus;
+using namespace geometry;
+
+Shape::Shape(glm::dvec3 const& centerOfMass)
     : centerOfMass(centerOfMass)
 {
 }
 
-pegasus::geometry::SimpleShape::SimpleShape(glm::dvec3 const& centerOfMass, SimpleShape::Type type)
+SimpleShape::SimpleShape(glm::dvec3 const& centerOfMass, SimpleShape::Type type)
     : Shape(centerOfMass)
     , type(type)
 {
 }
 
-pegasus::geometry::Ray::Ray()
+Ray::Ray()
     : SimpleShape(SimpleShape::Type::RAY)
 {
 }
 
-pegasus::geometry::Ray::Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal)
+Ray::Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal)
     : SimpleShape(centerOfMass, SimpleShape::Type::RAY)
     , direction(normal)
 {
 }
 
-pegasus::geometry::Plane::Plane()
+Plane::Plane()
     : SimpleShape(SimpleShape::Type::PLANE)
 {
 }
 
-pegasus::geometry::Plane::Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal)
+Plane::Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal)
     : SimpleShape(centerOfMass, SimpleShape::Type::PLANE)
     , normal(normal)
 {
 }
 
-pegasus::geometry::Triangle::Triangle()
+Triangle::Triangle()
     : SimpleShape(SimpleShape::Type::TRIANGLE)
 {
 }
 
-pegasus::geometry::Triangle::Triangle(
+Triangle::Triangle(
     glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c
 )
     : SimpleShape(centerOfMass, SimpleShape::Type::TRIANGLE)
@@ -54,43 +57,43 @@ pegasus::geometry::Triangle::Triangle(
     CalculateNormal();
 }
 
-void pegasus::geometry::Triangle::CalculateNormal()
+void Triangle::CalculateNormal()
 {
     normal = glm::cross(bVertex - aVertex, cVertex - aVertex);
 }
 
-pegasus::geometry::Sphere::Sphere()
+Sphere::Sphere()
     : SimpleShape(SimpleShape::Type::SPHERE)
     , radius()
 {
 }
 
-pegasus::geometry::Sphere::Sphere(glm::dvec3 const& centerOfMass, double r)
+Sphere::Sphere(glm::dvec3 const& centerOfMass, double r)
     : SimpleShape(centerOfMass, SimpleShape::Type::SPHERE)
     , radius(r)
 {
 }
 
-pegasus::geometry::Cone::Cone()
+Cone::Cone()
     : SimpleShape(SimpleShape::Type::CONE)
     , radius()
 {
 }
 
-pegasus::geometry::Cone::Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r)
+Cone::Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r)
     : SimpleShape(centerOfMass, SimpleShape::Type::CONE)
     , appex(a)
     , radius(r)
 {
 }
 
-pegasus::geometry::Capsule::Capsule()
+Capsule::Capsule()
     : SimpleShape(SimpleShape::Type::CAPSULE)
     , radius()
 {
 }
 
-pegasus::geometry::Capsule::Capsule(
+Capsule::Capsule(
     glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r
 )
     : SimpleShape(centerOfMass, SimpleShape::Type::CAPSULE)
@@ -99,13 +102,13 @@ pegasus::geometry::Capsule::Capsule(
 {
 }
 
-pegasus::geometry::Cylinder::Cylinder()
+Cylinder::Cylinder()
     : SimpleShape(SimpleShape::Type::CYLINDER)
     , radius()
 {
 }
 
-pegasus::geometry::Cylinder::Cylinder(
+Cylinder::Cylinder(
     glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r
 )
     : SimpleShape(centerOfMass, SimpleShape::Type::CYLINDER)
@@ -114,12 +117,12 @@ pegasus::geometry::Cylinder::Cylinder(
 {
 }
 
-pegasus::geometry::Box::Box()
+Box::Box()
     : SimpleShape(SimpleShape::Type::BOX)
 {
 }
 
-pegasus::geometry::Box::Box(
+Box::Box(
     glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c
 )
     : SimpleShape(centerOfMass, SimpleShape::Type::BOX)
@@ -129,7 +132,53 @@ pegasus::geometry::Box::Box(
 {
 }
 
-pegasus::geometry::SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetector()
+bool intersection::CalculateRaySphereIntersection(
+    glm::dvec3 raySphere, double sphereRadius, glm::dvec3 rayDirection
+)
+{
+    double const tCenter = glm::dot(raySphere, rayDirection);
+    double const distanceSquare = glm::dot(raySphere, raySphere) - tCenter * tCenter;
+
+    return sphereRadius * sphereRadius - distanceSquare >= 0.0;
+}
+
+intersection::RaySphereIntersectionFactors 
+intersection::CalculateRaySphereIntersectionFactors(
+    glm::dvec3 raySphere, double sphereRadius, glm::dvec3 rayDirection
+)
+{
+    double const tCenter = glm::dot(raySphere, rayDirection);
+    double const distanceSquare = glm::dot(raySphere, raySphere) - tCenter * tCenter;
+    double const tDelta = glm::sqrt(sphereRadius * sphereRadius - distanceSquare);
+
+    return {tCenter - tDelta, tCenter + tDelta};
+}
+
+intersection::RayBoxIntersectionFactors 
+intersection::CalculateRayAabbIntersectionFactors(
+    glm::dvec3 boxMinPoint, glm::dvec3 boxMaxPoint, glm::dvec3 rayDirection, glm::dvec3 rayOrigin
+)
+{
+    double const t1 = (boxMinPoint.x - rayOrigin.x) / rayDirection.x;
+    double const t2 = (boxMaxPoint.x - rayOrigin.x) / rayDirection.x;
+    double const t3 = (boxMinPoint.y - rayOrigin.y) / rayDirection.y;
+    double const t4 = (boxMaxPoint.y - rayOrigin.y) / rayDirection.y;
+    double const t5 = (boxMinPoint.z - rayOrigin.z) / rayDirection.z;
+    double const t6 = (boxMaxPoint.z - rayOrigin.z) / rayDirection.z;
+
+    double const tmin = glm::max(glm::max(glm::min(t1, t2), glm::min(t3, t4)), glm::min(t5, t6));
+    double const tmax = glm::min(glm::min(glm::max(t1, t2), glm::max(t3, t4)), glm::max(t5, t6));
+
+    return {tmin, tmax};
+}
+
+bool intersection::CalculateRayAabbIntersection(double tMin, double tMax)
+{
+    // tMax < 0, AABB is behind ray; tMin > tMax, no intesection
+    return tMax > 0 && tMin < tMax;
+}
+
+SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetector()
     : m_intersectionCaches(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
     , m_initializeFunctors(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
     , m_calculateIntersectionFunctors(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
@@ -232,32 +281,61 @@ pegasus::geometry::SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetec
         = intersection::CalculatePenetration<Box, Box>;
 }
 
-void pegasus::geometry::SimpleShapeIntersectionDetector::Initialize(SimpleShape const* a, SimpleShape const* b)
+void SimpleShapeIntersectionDetector::Initialize(SimpleShape const* a, SimpleShape const* b)
 {
     m_initializeFunctors[std::make_pair(a->type, b->type)](
         a, b, m_intersectionCaches[std::make_pair(a->type, b->type)].get());
 }
 
-bool pegasus::geometry::SimpleShapeIntersectionDetector::CalculateIntersection(SimpleShape const* a, SimpleShape const* b)
+bool SimpleShapeIntersectionDetector::CalculateIntersection(SimpleShape const* a, SimpleShape const* b)
 {
     return m_calculateIntersectionFunctors[std::make_pair(a->type, b->type)](
         a, b, m_intersectionCaches[std::make_pair(a->type, b->type)].get());
 }
 
-glm::dvec3 pegasus::geometry::SimpleShapeIntersectionDetector::CalculateContactNormal(SimpleShape const* a, SimpleShape const* b)
+glm::dvec3 SimpleShapeIntersectionDetector::CalculateContactNormal(SimpleShape const* a, SimpleShape const* b)
 {
     return m_calculateContactNormalFunctors[std::make_pair(a->type, b->type)](
         a, b, m_intersectionCaches[std::make_pair(a->type, b->type)].get());
 }
 
-double pegasus::geometry::SimpleShapeIntersectionDetector::CalculatePenetration(SimpleShape const* a, SimpleShape const* b)
+double SimpleShapeIntersectionDetector::CalculatePenetration(SimpleShape const* a, SimpleShape const* b)
 {
     return m_calculatePenetrationFunctors[std::make_pair(a->type, b->type)](
         a, b, m_intersectionCaches[std::make_pair(a->type, b->type)].get());
 }
 
-size_t pegasus::geometry::SimpleShapeIntersectionDetector::ShapeTypePairHasher::operator()(ShapeTypePair const& p) const
+size_t SimpleShapeIntersectionDetector::ShapeTypePairHasher::operator()(ShapeTypePair const& p) const
 {
-    return std::hash<uint32_t>()(static_cast<uint32_t>(p.first))
-        ^ std::hash<uint32_t>()(static_cast<uint32_t>(p.second));
+    return std::hash<uint32_t>{}(static_cast<uint32_t>(p.first))
+        ^ std::hash<uint32_t>{}(static_cast<uint32_t>(p.second));
+}
+
+glm::dvec3 geometry::GjkSupport(Sphere const& sphere, glm::dvec3 direction)
+{
+    using namespace intersection;
+
+    IntersectionCache<Ray, Sphere> cache;
+    Ray const ray{ sphere.centerOfMass - direction * (sphere.radius + 1), direction };
+
+    RaySphereIntersectionFactors intersectionFactors = CalculateRaySphereIntersectionFactors(
+        sphere.centerOfMass - ray.centerOfMass, sphere.radius, direction
+    );
+    
+    return ray.centerOfMass + direction * intersectionFactors.tMax;
+}
+
+glm::dvec3 geometry::GjkSupport(Box const& box, glm::dvec3 direction)
+{
+    using namespace intersection;
+
+    IntersectionCache<Ray, Box> cache;
+    Ray const ray{box.centerOfMass - direction, direction};
+
+    Initialize<Ray, Box>(&ray, &box, &cache);
+    RayBoxIntersectionFactors intersectionFactors = CalculateRayAabbIntersectionFactors(
+        cache.boxMinPoint, cache.boxMaxPoint, cache.rayDirectionBoxSpace, cache.rayOriginBoxSpace
+    );
+
+    return ray.centerOfMass + direction * intersectionFactors.tMax;
 }
