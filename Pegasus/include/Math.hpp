@@ -1046,6 +1046,38 @@ public:
     }
 
     /**
+     * @brief Adds vertex to the current convex hull if it's outside of it
+     * @param vertex point outside of the convex hull
+     */
+    void AddVertex(typename Vertices::iterator vertex)
+    {
+        //Create stack of convex hull faces
+        std::list<typename Faces::iterator> faceStack;
+        for (auto faceIt = m_faces.begin(); faceIt != m_faces.end(); ++faceIt)
+        {
+            faceStack.push_back(faceIt);
+        }
+
+        //Find initial visible face
+        typename Faces::iterator visibleFaceIterator = faceStack.end();
+        for (typename Faces::iterator face : faceStack)
+        {
+            if (face->GetHyperPlane().SignedDistance(*vertex) > 0)
+            {
+                visibleFaceIterator = face;
+                break;
+            }
+        }
+
+        //If the point is outside of the convex hull, add it
+        if (visibleFaceIterator != faceStack.end())
+        {
+            size_t const vertexIndex = std::distance(m_vertices.begin(), vertex);
+            AddVertex(faceStack, vertex, vertexIndex, visibleFaceIterator);
+        }
+    }
+
+    /**
      * @brief Calculates a convex hull from a given vertex buffer
      */
     void Calculate()
@@ -1082,9 +1114,136 @@ private:
         HalfEdgeDataStructure::Face*, typename Faces::iterator
     > m_hedsFaceIteratorMap;
 
+    void AddVertex(
+        std::list<typename Faces::iterator>& faceStack, 
+        typename Vertices::iterator extremalVertex, 
+        size_t extremalVertexIndex, 
+        typename Faces::iterator visibleFaceIterator
+    )
+    {
+        std::list<typename Vertices::iterator> markedVertexIterators;
+        std::list<std::pair<size_t, size_t>> horizonRidges;
+        std::list<typename Faces::iterator> visibleFaces;
+        std::unordered_set<Face*> visibleFacesSet;
+        std::unordered_set<Face*> visitedFaces;
+
+        //Initialize containers with first visible face
+        {
+            visibleFaces.push_back(visibleFaceIterator);
+            visibleFacesSet.insert(&*visibleFaceIterator);
+            std::vector<typename Vertices::iterator>& faceVertices = visibleFaceIterator->GetVertices();
+            markedVertexIterators.insert(markedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
+            std::vector<typename Vertices::iterator>().swap(faceVertices);
+        }
+
+        //Find all visible faces and horizon ridges
+        for (auto visibleFaceIt = visibleFaces.begin(); visibleFaceIt != visibleFaces.end(); ++visibleFaceIt)
+        {
+            auto adjHedsFaceIt = (*visibleFaceIt)->GetHedsFaceIterator()->GetAdjacentFaceIterator();
+            auto adjHedsFaceBegin = adjHedsFaceIt;
+            visitedFaces.insert(&(**visibleFaceIt));
+
+            //For all adjacent faces
+            do
+            {
+                typename Faces::iterator adjFace = m_hedsFaceIteratorMap[&*adjHedsFaceIt];
+
+                //If face is unvisited
+                if (visitedFaces.find(&*adjFace) == visitedFaces.end()
+                    && visibleFacesSet.find(&*adjFace) == visibleFacesSet.end())
+                {
+                    //If face is visible add it to the visible faces set
+                    if (adjFace->GetHyperPlane().SignedDistance(*extremalVertex) > 0)
+                    {
+                        visibleFaces.push_back(adjFace);
+                        visibleFacesSet.insert(&*adjFace);
+
+                        std::vector<typename Vertices::iterator>& faceVertices = adjFace->GetVertices();
+                        markedVertexIterators.insert(markedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
+                        std::vector<typename Vertices::iterator>().swap(faceVertices);
+                    }
+                    //If face is not visible then find a ridge and save it
+                    else
+                    {
+                        std::vector<size_t> ridgeIndices;
+                        ridgeIndices.reserve(2);
+
+                        auto adjFaceIndices = adjFace->GetIndices();
+                        auto faceIndices = (*visibleFaceIt)->GetIndices();
+                        std::set_intersection(adjFaceIndices.begin(), adjFaceIndices.end(),
+                            faceIndices.begin(), faceIndices.end(), std::back_inserter(ridgeIndices));
+
+                        horizonRidges.emplace_back(ridgeIndices[0], ridgeIndices[1]);
+                    }
+                }
+            } while (++adjHedsFaceIt != adjHedsFaceBegin);
+        }
+
+        //Add vertex to the convex hull set
+        m_convexHullVertices.push_back(extremalVertex);
+
+        //Remove visible faces
+        for (typename Faces::iterator visibleFaceIt : visibleFaces)
+        {
+            faceStack.erase(std::remove_if(faceStack.begin(), faceStack.end(),
+                [&visibleFaceIt](typename Faces::iterator& it)
+            {
+                return &*it == &*visibleFaceIt;
+            }), faceStack.end());
+            RemoveFace(visibleFaceIt);
+        }
+
+        //Make new faces from horizon ridges and the convex hull point
+        for (auto& ridge : horizonRidges)
+        {
+            faceStack.push_back(
+                MakeFace(ridge.first, ridge.second, extremalVertexIndex, markedVertexIterators)
+            );
+        }
+    }
+
     /**
-     * @brief Calculates initial guess tetrahedron and performs initalization
+     * @brief Inserts a new face into current convex hull
+     *
+     * Removes vertices from partitionMarkedVertices list that are above the current face's hyperplane
+     * @param[in] vertexIndex1 index of a face
+     * @param[in] vertexIndex2 index of a face
+     * @param[in] vertexIndex3 index of a face
+     * @param[in, out] partitionMarkedVertices modifiable vertex buffer
+     * @return iterator to a new face
      */
+    typename Faces::iterator MakeFace(
+        size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3,
+        std::list<typename Vertices::iterator>& partitionMarkedVertices
+    )
+    {
+        m_heds.MakeFace(vertexIndex1, vertexIndex2, vertexIndex3);
+        m_faces.push_front(Face{
+            m_vertices,
+            partitionMarkedVertices,
+            m_heds.GetFace(vertexIndex1, vertexIndex2, vertexIndex3),
+            HyperPlane{m_vertices[vertexIndex1], m_vertices[vertexIndex2], m_vertices[vertexIndex3], &m_mean},
+            std::array<size_t, 3>{vertexIndex1, vertexIndex2, vertexIndex3}
+        });
+        m_hedsFaceIteratorMap[&*m_faces.front().GetHedsFaceIterator()] = m_faces.begin();
+
+        return m_faces.begin();
+    }
+
+    /**
+     * @brief Removes face from a current convex hull and corresponding HEDS object
+     * @param faceIterator face to be removed iterator
+     */
+    void RemoveFace(typename Faces::iterator faceIterator)
+    {
+        m_hedsFaceIteratorMap.erase(&*faceIterator->GetHedsFaceIterator());
+        m_heds.RemoveFace(faceIterator->GetHedsFaceIterator());
+        m_faces.erase(faceIterator);
+    }
+
+    /**
+    * @brief Calculates initial guess tetrahedron and performs initalization
+    */
     void CalculateInitialGuess()
     {
         //Calculate covariance matrix and its eigenvectors
@@ -1160,10 +1319,11 @@ private:
     }
 
     /**
-     * @brief Refines initial guess tetrahedron by calculating final convex hull
-     */
+    * @brief Refines initial guess tetrahedron by calculating final convex hull
+    */
     void Refine()
     {
+        //Create stack of convex hull faces
         std::list<typename Faces::iterator> faceStack;
         for (auto faceIt = m_faces.begin(); faceIt != m_faces.end(); ++faceIt)
         {
@@ -1178,126 +1338,11 @@ private:
             //If face does not has vertices above it, remove it
             if (!faceIt->GetVertices().empty())
             {
-                std::list<typename Vertices::iterator> markedVertexIterators;
-                std::list<std::pair<size_t, size_t>> horizonRidges;
-                std::list<typename Faces::iterator> visibleFaces(1, faceIt);
-                std::unordered_set<Face*> visibleFacesSet{&*faceIt};
-                std::unordered_set<Face*> visitedFaces;
-
-                auto extremalVertex = faceIt->GetExtremalVertex();
-                auto extremalVertexIndex = faceIt->GetExtremalVertexIndex();
-
-                {
-                    std::vector<typename Vertices::iterator>& faceVertices = faceIt->GetVertices();
-                    markedVertexIterators.insert(markedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
-                    std::vector<typename Vertices::iterator>().swap(faceVertices);
-                }
-
-                //For each visible face
-                for (auto visibleFaceIt = visibleFaces.begin(); visibleFaceIt != visibleFaces.end(); ++visibleFaceIt)
-                {
-                    auto adjHedsFaceIt = (*visibleFaceIt)->GetHedsFaceIterator()->GetAdjacentFaceIterator();
-                    auto adjHedsFaceBegin = adjHedsFaceIt;
-                    visitedFaces.insert(&(**visibleFaceIt));
-
-                    //For all adjacent faces
-                    do
-                    {
-                        typename Faces::iterator adjFace = m_hedsFaceIteratorMap[&*adjHedsFaceIt];
-
-                        //If face is unvisited
-                        if (visitedFaces.find(&*adjFace) == visitedFaces.end()
-                            && visibleFacesSet.find(&*adjFace) == visibleFacesSet.end())
-                        {
-                            //If face is visible add it to the visible faces set
-                            if (adjFace->GetHyperPlane().SignedDistance(*extremalVertex) > 0)
-                            {
-                                visibleFaces.push_back(adjFace);
-                                visibleFacesSet.insert(&*adjFace);
-
-                                std::vector<typename Vertices::iterator>& faceVertices = adjFace->GetVertices();
-                                markedVertexIterators.insert(markedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
-                                std::vector<typename Vertices::iterator>().swap(faceVertices);
-                            }
-                            //If face is not visible then find a ridge and save it
-                            else
-                            {
-                                std::vector<size_t> ridgeIndices;
-                                ridgeIndices.reserve(2);
-
-                                auto adjFaceIndices = adjFace->GetIndices();
-                                auto faceIndices = (*visibleFaceIt)->GetIndices();
-                                std::set_intersection(adjFaceIndices.begin(), adjFaceIndices.end(),
-                                    faceIndices.begin(), faceIndices.end(), std::back_inserter(ridgeIndices));
-
-                                horizonRidges.emplace_back(ridgeIndices[0], ridgeIndices[1]);
-                            }
-                        }
-                    }
-                    while (++adjHedsFaceIt != adjHedsFaceBegin);
-                }
-
-                m_convexHullVertices.push_back(extremalVertex);
-
-                //Remove visible faces
-                for (typename Faces::iterator visibleFaceIt : visibleFaces)
-                {
-                    faceStack.erase(std::remove_if(faceStack.begin(), faceStack.end(),
-                        [&visibleFaceIt](typename Faces::iterator& it)
-                    {
-                        return &*it == &*visibleFaceIt;
-                    }), faceStack.end());
-                    RemoveFace(visibleFaceIt);
-                }
-
-                //Make new faces from horizon ridges and an extremal point
-                for (auto& ridge : horizonRidges)
-                {
-                    faceStack.push_back(
-                        MakeFace(ridge.first, ridge.second, extremalVertexIndex, markedVertexIterators)
-                    );
-                }
+                AddVertex(
+                    faceStack, faceIt->GetExtremalVertex(), faceIt->GetExtremalVertexIndex(), faceIt
+                );
             }
         }
-    }
-
-    /**
-     * @brief Inserts a new face into current convex hull
-     *
-     * Removes vertices from partitionMarkedVertices list that are above the current face's hyperplane
-     * @param[in] vertexIndex1 index of a face
-     * @param[in] vertexIndex2 index of a face
-     * @param[in] vertexIndex3 index of a face
-     * @param[in, out] partitionMarkedVertices modifiable vertex buffer
-     * @return iterator to a new face
-     */
-    typename Faces::iterator MakeFace(
-        size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3,
-        std::list<typename Vertices::iterator>& partitionMarkedVertices
-    )
-    {
-        m_heds.MakeFace(vertexIndex1, vertexIndex2, vertexIndex3);
-        m_faces.push_front(Face{
-            m_vertices,
-            partitionMarkedVertices,
-            m_heds.GetFace(vertexIndex1, vertexIndex2, vertexIndex3),
-            HyperPlane{m_vertices[vertexIndex1], m_vertices[vertexIndex2], m_vertices[vertexIndex3], &m_mean},
-            std::array<size_t, 3>{vertexIndex1, vertexIndex2, vertexIndex3}
-        });
-        m_hedsFaceIteratorMap[&*m_faces.front().GetHedsFaceIterator()] = m_faces.begin();
-
-        return m_faces.begin();
-    }
-
-    /**
-     * @brief Removes face from a current convex hull and corresponding HEDS object
-     * @param faceIterator face to be removed iterator
-     */
-    void RemoveFace(typename Faces::iterator faceIterator)
-    {
-        m_hedsFaceIteratorMap.erase(&*faceIterator->GetHedsFaceIterator());
-        m_heds.RemoveFace(faceIterator->GetHedsFaceIterator());
-        m_faces.erase(faceIterator);
     }
 };
 
