@@ -1382,15 +1382,97 @@ private:
 namespace gjk
 {
 
+/**
+ * @brief Calculates farthest vertex on the surface of the sphere in the given direction
+ * @param sphere shape object
+ * @param direction normalized search vector
+ * @return point on the surface
+ */
 glm::dvec3 Support(Sphere const& sphere, glm::dvec3 direction);
 
+/**
+ * @brief Calculates farthest vertex on the surface of the box in the given direction
+ * @param box shape object
+ * @param direction normalized search vector
+ * @return point on the surface
+ */
 glm::dvec3 Support(Box const& box, glm::dvec3 direction);
 
+/**
+ * @brief Calculates farthest vertex on the surface of the Configuration Space Object in the given direction
+ * 
+ * Configuration Space Object or Minkowski Difference or Minkowski Configuration Object is 
+ * a cartesian product of two sets of points, where each element of one of sets is multiplied by -1.
+ * @param box1 shape object
+ * @param box2 shape object
+ * @param direction vector of the search
+ * @return farthes point on the surface of CSO
+ */
 glm::dvec3 Support(Box const& box1, Box const& box2, glm::dvec3 direction);
 
+/**
+ * @brief Calculates whether a point is inside a tetrahedron
+ * @param vertices tetrahedron vertices
+ * @param vertex point of interest
+ * @return @c true if there is intersection, @c false otherwise
+ */
 bool TetrahedronPointIntersection(std::array<glm::dvec3, 4> const& vertices, glm::dvec3 const& vertex);
 
-bool CalculateIntersection(Box const& box1, Box const& box2);
+/**
+ * @brief Stores simplex size and current direction of the search
+ */
+struct NearestSimplexData
+{
+    uint8_t simplexSize;
+    glm::dvec3 direction;
+};
+
+/**
+ * @brief Calculates nearest simplex to the origin
+ * 
+ * Presumes that simplex vertices are stored such that the latest added vertex has index @p simplexSize - 1
+ * @param simplex an array of vertices of a simplex
+ * @param simplexSize size of a simplex
+ * @return new size of a simplex and a next directory of the search
+ */
+NearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize);
+
+/**
+ * @brief Calculate whether two shapes are intersecting using GJK algorithm
+ * @tparam ShapeA any shape type for which gjk::Support is overloaded
+ * @tparam ShapeB any shape type for which gjk::Support is overloaded
+ * @param aShape reference to the shape object
+ * @param bShape reference to the shape object
+ * @return @c true if there is intersection, @c false otherwise
+ */
+template < typename ShapeA, typename ShapeB >
+bool CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
+{
+    std::array<glm::dvec3, 4> simplex{
+        Support(aShape, bShape, glm::dvec3{ 1, 1, 1 })
+    };
+    uint8_t simplexSize = 1;
+    glm::dvec3 direction = -simplex[0];
+
+    while (true)
+    {
+        simplex[simplexSize] = Support(aShape, bShape, direction);
+
+        if (glm::dot(simplex[simplexSize], direction) < 0.0)
+        {
+            return false;
+        }
+
+        if (4 == ++simplexSize && TetrahedronPointIntersection(simplex, glm::dvec3{ 0, 0, 0 }))
+        {
+            return true;
+        }
+
+        NearestSimplexData const data = NearestSimplex(simplex, simplexSize);
+        direction = data.direction;
+        simplexSize = data.simplexSize;
+    }
+}
 
 } // namespace gjk
 } // namespace geometry

@@ -355,13 +355,7 @@ bool gjk::TetrahedronPointIntersection(std::array<glm::dvec3, 4> const& vertices
         && math::HyperPlane{ vertices[0], vertices[1], vertices[3], &vertices[2] }.SignedDistance(vertex) <= 0.0;
 }
 
-struct GjkNearestSimplexData
-{
-    uint8_t simplexSize;
-    glm::dvec3 direction;
-};
-
-GjkNearestSimplexData NearestSimplexLineSegment(std::array<glm::dvec3, 4>& simplex)
+gjk::NearestSimplexData NearestSimplexLineSegment(std::array<glm::dvec3, 4>& simplex)
 {
     glm::dvec3 const AB = simplex[0] - simplex[1];
     glm::dvec3 const inverseA = -simplex[1];
@@ -375,7 +369,7 @@ GjkNearestSimplexData NearestSimplexLineSegment(std::array<glm::dvec3, 4>& simpl
     return { 1, inverseA };
 }
 
-GjkNearestSimplexData NearestSimplexTriangle(std::array<glm::dvec3, 4>& simplex)
+gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dvec3, 4>& simplex)
 {
     glm::dvec3 const AB = simplex[1] - simplex[2];
     glm::dvec3 const AC = simplex[0] - simplex[2];
@@ -419,7 +413,7 @@ GjkNearestSimplexData NearestSimplexTriangle(std::array<glm::dvec3, 4>& simplex)
     return { 3, ABC };
 }
 
-GjkNearestSimplexData NearestSimplexTetrahedron(std::array<glm::dvec3, 4>& simplex)
+gjk::NearestSimplexData NearestSimplexTetrahedron(std::array<glm::dvec3, 4>& simplex)
 {
     std::array<std::array<uint8_t, 3>, 3> const simplexes{
         std::array<uint8_t, 3>{ 0, 1, 3 }, 
@@ -445,7 +439,7 @@ GjkNearestSimplexData NearestSimplexTetrahedron(std::array<glm::dvec3, 4>& simpl
     return NearestSimplexTriangle(simplex);
 }
 
-GjkNearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize)
+gjk::NearestSimplexData gjk::NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize)
 {
     if (2 == simplexSize)
     {
@@ -457,34 +451,4 @@ GjkNearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t
     }
 
     return NearestSimplexTetrahedron(simplex);
-}
-
-bool gjk::CalculateIntersection(Box const& box1, Box const& box2)
-{
-    std::array<glm::dvec3, 4> simplex{
-        Support(box1, box2, {1, 1, 1})
-    };
-    uint8_t simplexSize = 1;
-    glm::dvec3 direction = -simplex[0];
-
-    while(true)
-    {
-        simplex[simplexSize] = Support(box1, box2, direction);
-        
-        if (glm::dot(simplex[simplexSize], direction) < 0.0)
-        {
-            return false;
-        }
-
-        if (4 == ++simplexSize && TetrahedronPointIntersection(simplex, glm::dvec3{ 0, 0, 0 }))
-        {
-            return true;
-        }
-
-        GjkNearestSimplexData data = NearestSimplex(simplex, simplexSize);
-        direction = data.direction;
-        simplexSize = data.simplexSize;
-    }
-
-    return true;
 }
