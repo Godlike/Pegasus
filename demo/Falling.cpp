@@ -84,10 +84,10 @@ private:
     std::array<glm::dvec3, 4> m_contactNormal;
     std::array<double, 4> m_penetration;
     std::array<pegasus::geometry::Ray, 4> m_rays;
-    pegasus::geometry::intersection::IntersectionCache<pegasus::geometry::Ray, pegasus::geometry::Plane> m_rayPlaneCache;
-    pegasus::geometry::intersection::IntersectionCache<pegasus::geometry::Ray, pegasus::geometry::Sphere> m_raySphereCache;
-    pegasus::geometry::intersection::IntersectionCache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayObbCache;
-    pegasus::geometry::intersection::IntersectionCache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayAabbCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Plane> m_rayPlaneCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Sphere> m_raySphereCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayObbCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayAabbCache;
 
     pegasus::geometry::volumes::Vertices vertices;
     pegasus::geometry::volumes::Faces faces;
@@ -178,11 +178,15 @@ void FallingDemo::AddPlane(glm::dvec3 const& normal, glm::dvec3 const& point)
 void FallingDemo::AddBoundingVolumes()
 {
     pegasus::geometry::Box gjkTestBox{ glm::dvec3{10, -10, 10}, glm::dvec3{ 1, 0, 0 }, glm::dvec3{ 0, 1, 0 }, glm::dvec3{ 0, 0, 1 } };
-    glm::dvec3 pointBox = pegasus::geometry::GjkSupport(gjkTestBox, glm::normalize(glm::dvec3{ 1, 0, 1 }));
+    glm::dvec3 pointBox = pegasus::geometry::gjk::Support(gjkTestBox, glm::normalize(glm::dvec3{ 1, 0, 1 }));
 
     pegasus::geometry::Sphere gjkTestSphere{ glm::dvec3{ 10, -10, 10 }, 1 };
-    glm::dvec3 pointSphere = pegasus::geometry::GjkSupport(gjkTestSphere, glm::normalize(glm::dvec3{ 1, 0, 1 }));
+    glm::dvec3 pointSphere = pegasus::geometry::gjk::Support(gjkTestSphere, glm::normalize(glm::dvec3{ 1, 0, 1 }));
     double const length = glm::length(pointSphere - gjkTestSphere.centerOfMass);
+
+    pegasus::geometry::Box box1{ {0,0,0}, {1,0,0}, {0,1,0}, {0,0,1} };
+    pegasus::geometry::Box box2{ {10,0,0}, {1,0,0}, {0,1,0}, {0,0,1} };
+    bool intersection = pegasus::geometry::gjk::CalculateIntersection(box1, box2);
 
     using namespace pegasus::geometry::volumes;
 

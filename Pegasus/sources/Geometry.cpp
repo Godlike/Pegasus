@@ -186,23 +186,23 @@ SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetector()
     , m_calculatePenetrationFunctors(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
 {
     m_intersectionCaches[std::make_pair(SimpleShape::Type::PLANE, SimpleShape::Type::PLANE)]
-        = std::make_unique<intersection::IntersectionCache<Plane, Plane>>();
+        = std::make_unique<intersection::Cache<Plane, Plane>>();
     m_intersectionCaches[std::make_pair(SimpleShape::Type::PLANE, SimpleShape::Type::SPHERE)]
-        = std::make_unique<intersection::IntersectionCache<Plane, Sphere>>();
+        = std::make_unique<intersection::Cache<Plane, Sphere>>();
     m_intersectionCaches[std::make_pair(SimpleShape::Type::PLANE, SimpleShape::Type::BOX)]
-        = std::make_unique<intersection::IntersectionCache<Plane, Box>>();
+        = std::make_unique<intersection::Cache<Plane, Box>>();
     m_intersectionCaches[std::make_pair(SimpleShape::Type::SPHERE, SimpleShape::Type::PLANE)]
-        = std::make_unique<intersection::IntersectionCache<Sphere, Plane>>();
+        = std::make_unique<intersection::Cache<Sphere, Plane>>();
     m_intersectionCaches[std::make_pair(SimpleShape::Type::SPHERE, SimpleShape::Type::SPHERE)]
-        = std::make_unique<intersection::IntersectionCache<Sphere, Sphere>>();
+        = std::make_unique<intersection::Cache<Sphere, Sphere>>();
     m_intersectionCaches[std::make_pair(SimpleShape::Type::SPHERE, SimpleShape::Type::BOX)]
-        = std::make_unique<intersection::IntersectionCache<Sphere, Box>>();
+        = std::make_unique<intersection::Cache<Sphere, Box>>();
     m_intersectionCaches[std::make_pair(SimpleShape::Type::BOX, SimpleShape::Type::PLANE)]
-        = std::make_unique<intersection::IntersectionCache<Box, Plane>>();
+        = std::make_unique<intersection::Cache<Box, Plane>>();
     m_intersectionCaches[std::make_pair(SimpleShape::Type::BOX, SimpleShape::Type::SPHERE)]
-        = std::make_unique<intersection::IntersectionCache<Box, Sphere>>();
+        = std::make_unique<intersection::Cache<Box, Sphere>>();
     m_intersectionCaches[std::make_pair(SimpleShape::Type::BOX, SimpleShape::Type::BOX)]
-        = std::make_unique<intersection::IntersectionCache<Box, Box>>();
+        = std::make_unique<intersection::Cache<Box, Box>>();
 
     m_initializeFunctors[std::make_pair(SimpleShape::Type::PLANE, SimpleShape::Type::PLANE)]
         = intersection::Initialize<Plane, Plane>;
@@ -311,11 +311,12 @@ size_t SimpleShapeIntersectionDetector::ShapeTypePairHasher::operator()(ShapeTyp
         ^ std::hash<uint32_t>{}(static_cast<uint32_t>(p.second));
 }
 
-glm::dvec3 geometry::GjkSupport(Sphere const& sphere, glm::dvec3 direction)
+glm::dvec3 gjk::Support(Sphere const& sphere, glm::dvec3 direction)
 {
     using namespace intersection;
 
-    IntersectionCache<Ray, Sphere> cache;
+    Cache<Ray, Sphere> cache;
+    direction = glm::normalize(direction);
     Ray const ray{ sphere.centerOfMass - direction * (sphere.radius + 1), direction };
 
     RaySphereIntersectionFactors intersectionFactors = CalculateRaySphereIntersectionFactors(
@@ -325,11 +326,12 @@ glm::dvec3 geometry::GjkSupport(Sphere const& sphere, glm::dvec3 direction)
     return ray.centerOfMass + direction * intersectionFactors.tMax;
 }
 
-glm::dvec3 geometry::GjkSupport(Box const& box, glm::dvec3 direction)
+glm::dvec3 gjk::Support(Box const& box, glm::dvec3 direction)
 {
     using namespace intersection;
 
-    IntersectionCache<Ray, Box> cache;
+    Cache<Ray, Box> cache;
+    direction = glm::normalize(direction);
     Ray const ray{box.centerOfMass - direction, direction};
 
     Initialize<Ray, Box>(&ray, &box, &cache);
@@ -338,4 +340,151 @@ glm::dvec3 geometry::GjkSupport(Box const& box, glm::dvec3 direction)
     );
 
     return ray.centerOfMass + direction * intersectionFactors.tMax;
+}
+
+glm::dvec3 gjk::Support(Box const& box1, Box const& box2, glm::dvec3 direction)
+{
+    return Support(box1, direction) - Support(box2, -direction);
+}
+
+bool gjk::TetrahedronPointIntersection(std::array<glm::dvec3, 4> const& vertices, glm::dvec3 const& vertex)
+{
+    return math::HyperPlane{ vertices[0], vertices[1], vertices[2], &vertices[3] }.SignedDistance(vertex) <= 0.0
+        && math::HyperPlane{ vertices[1], vertices[2], vertices[3], &vertices[0] }.SignedDistance(vertex) <= 0.0
+        && math::HyperPlane{ vertices[0], vertices[2], vertices[3], &vertices[1] }.SignedDistance(vertex) <= 0.0
+        && math::HyperPlane{ vertices[0], vertices[1], vertices[3], &vertices[2] }.SignedDistance(vertex) <= 0.0;
+}
+
+struct GjkNearestSimplexData
+{
+    uint8_t simplexSize;
+    glm::dvec3 direction;
+};
+
+GjkNearestSimplexData NearestSimplexLineSegment(std::array<glm::dvec3, 4>& simplex)
+{
+    glm::dvec3 const AB = simplex[0] - simplex[1];
+    glm::dvec3 const inverseA = -simplex[1];
+
+    if (glm::dot(AB, inverseA))
+    {
+        return { 2, glm::cross(glm::cross(AB, inverseA), AB) };
+    }
+
+    simplex[0] = simplex[1];
+    return { 1, inverseA };
+}
+
+GjkNearestSimplexData NearestSimplexTriangle(std::array<glm::dvec3, 4>& simplex)
+{
+    glm::dvec3 const AB = simplex[1] - simplex[2];
+    glm::dvec3 const AC = simplex[0] - simplex[2];
+    glm::dvec3 const ABC = glm::cross(AB, AC);
+
+    if (glm::dot(glm::cross(ABC, AC), -simplex[2]) > 0)
+    {
+        if (glm::dot(AC, -simplex[2]) > 0)
+        {
+            simplex = { simplex[0], simplex[2] };
+            return { 2, glm::cross(glm::cross(AC, -simplex[1]), AC) };
+        }
+
+        if (glm::dot(AB, -simplex[2]) > 0)
+        {
+            simplex = { simplex[1], simplex[2] };
+            return { 2, glm::cross(glm::cross(AB, -simplex[1]), AB) };
+        }
+
+        simplex = { simplex[2] };
+        return { 1, -simplex[0] };
+    }
+    
+    if (glm::dot(glm::cross(AB, ABC), -simplex[2]) > 0)
+    {
+        if (glm::dot(AB, -simplex[2]) > 0)
+        {
+            simplex = { simplex[1], simplex[2] };
+            return { 2, glm::cross(glm::cross(AB, -simplex[1]), AB) };
+        }
+
+        simplex = { simplex[2] };
+        return { 1, -simplex[0] };
+    }
+
+    if (glm::dot(ABC, -simplex[2]) > 0)
+    {
+        return { 3, ABC };
+    }
+
+    return { 3, ABC };
+}
+
+GjkNearestSimplexData NearestSimplexTetrahedron(std::array<glm::dvec3, 4>& simplex)
+{
+    std::array<std::array<uint8_t, 3>, 3> const simplexes{
+        std::array<uint8_t, 3>{ 0, 1, 3 }, 
+        std::array<uint8_t, 3>{ 1, 2, 3 }, 
+        std::array<uint8_t, 3>{ 0, 2, 3 } 
+    };
+
+    std::array<double, 3> const planeOriginDistances{
+        math::HyperPlane{ simplex[0], simplex[1], simplex[3], &simplex[2] }.Distance(glm::dvec3{ 0, 0, 0 }),
+        math::HyperPlane{ simplex[1], simplex[2], simplex[3], &simplex[0] }.Distance(glm::dvec3{ 0, 0, 0 }),
+        math::HyperPlane{ simplex[0], simplex[2], simplex[3], &simplex[1] }.Distance(glm::dvec3{ 0, 0, 0 })
+    };
+
+    size_t const closestPlaneIndex = std::distance(planeOriginDistances.begin(), 
+        std::min_element(planeOriginDistances.begin(), planeOriginDistances.end()));
+
+    simplex = { 
+        simplex[simplexes[closestPlaneIndex][0]], 
+        simplex[simplexes[closestPlaneIndex][1]], 
+        simplex[simplexes[closestPlaneIndex][2]] 
+    };
+
+    return NearestSimplexTriangle(simplex);
+}
+
+GjkNearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize)
+{
+    if (2 == simplexSize)
+    {
+        return NearestSimplexLineSegment(simplex);
+    }
+    if (3 == simplexSize)
+    {
+        return NearestSimplexTriangle(simplex);
+    }
+
+    return NearestSimplexTetrahedron(simplex);
+}
+
+bool gjk::CalculateIntersection(Box const& box1, Box const& box2)
+{
+    std::array<glm::dvec3, 4> simplex{
+        Support(box1, box2, {1, 1, 1})
+    };
+    uint8_t simplexSize = 1;
+    glm::dvec3 direction = -simplex[0];
+
+    while(true)
+    {
+        simplex[simplexSize] = Support(box1, box2, direction);
+        
+        if (glm::dot(simplex[simplexSize], direction) < 0.0)
+        {
+            return false;
+        }
+
+        if (4 == ++simplexSize && TetrahedronPointIntersection(simplex, glm::dvec3{ 0, 0, 0 }))
+        {
+            return true;
+        }
+
+        GjkNearestSimplexData data = NearestSimplex(simplex, simplexSize);
+        direction = data.direction;
+        simplexSize = data.simplexSize;
+    }
+
+    return true;
 }
