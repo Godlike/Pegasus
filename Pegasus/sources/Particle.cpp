@@ -5,7 +5,7 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "Pegasus/include/Particle.hpp"
+#include "pegasus/Particle.hpp"
 
 #include <limits>
 #include <cmath>

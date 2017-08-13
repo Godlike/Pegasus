@@ -36,16 +36,17 @@ endif()
 include_directories(
     ${PEGASUS_INCLUDE_DIR}
 )
+
 set(PEGASUS_HEADERS
-    include/Particle.hpp
-    include/ParticleForceGenerator.hpp
-    include/ParticleContacts.hpp
-    include/ParticleLinks.hpp
-    include/ParticleWorld.hpp
-    include/Geometry.hpp
-    include/Mechanics.hpp
-    include/Math.hpp
-    include/BoundingVolumes.hpp
+    include/pegasus/Particle.hpp
+    include/pegasus/ParticleForceGenerator.hpp
+    include/pegasus/ParticleContacts.hpp
+    include/pegasus/ParticleLinks.hpp
+    include/pegasus/ParticleWorld.hpp
+    include/pegasus/Geometry.hpp
+    include/pegasus/Mechanics.hpp
+    include/pegasus/Math.hpp
+    include/pegasus/BoundingVolumes.hpp
 )
 set(PEGASUS_SOURCES
     sources/Particle.cpp
@@ -68,13 +69,25 @@ target_link_libraries(${PEGASUS_LIB})
 
 install( TARGETS ${PEGASUS_LIB}
     COMPONENT godlike_libraries
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib/static
+    LIBRARY DESTINATION ${PEGASUS_INSTALL_LIBRARY_DIR}
+    ARCHIVE DESTINATION ${PEGASUS_INSTALL_LIBRARY_DIR}
 )
 
 install( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-    DESTINATION include/godlike/pegasus
+    DESTINATION ${PEGASUS_INSTALL_INCLUDE_DIR}
     COMPONENT godlike_headers
     FILES_MATCHING PATTERN "*.hpp"
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/PegasusPhysicsConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfig.cmake
+
+    @ONLY
+)
+
+install( FILES ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfig.cmake
+    DESTINATION ${PEGASUS_INSTALL_LIBRARY_DIR}
+    COMPONENT godlike_libraries
 )

@@ -3,8 +3,8 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "Pegasus/include/BoundingVolumes.hpp"
-#include "Pegasus/include/Math.hpp"
+#include "pegasus/BoundingVolumes.hpp"
+#include "pegasus/Math.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
@@ -105,7 +105,7 @@ obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const& shape, volum
     pegasus::math::JacobiEigenvalue jacobiEigen(m_box.covariance);
     m_box.eigenVectors = jacobiEigen.GetEigenvectors();
     m_box.extremalVertices = volumes::CalculateExtremalVertices(m_box.eigenVectors, m_shape, m_indices);
-    
+
     for (uint8_t i = 0; i < 3; ++i) {
         m_box.eigenVectorsNormalized[i] = glm::normalize(m_box.eigenVectors[i]);
     }
@@ -113,7 +113,7 @@ obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const& shape, volum
     m_box.boxAxes[0] = m_box.eigenVectorsNormalized[0] * glm::dot(m_box.extremalVertices[0] - m_box.mean, m_box.eigenVectorsNormalized[0]);
     m_box.boxAxes[1] = m_box.eigenVectorsNormalized[1] * glm::dot(m_box.extremalVertices[1] - m_box.mean, m_box.eigenVectorsNormalized[1]);
     m_box.boxAxes[2] = m_box.eigenVectorsNormalized[2] * glm::dot(m_box.extremalVertices[2] - m_box.mean, m_box.eigenVectorsNormalized[2]);
-    
+
     m_boxShape = geometry::Box(m_box.mean, m_box.boxAxes[0], m_box.boxAxes[1], m_box.boxAxes[2]);
 }
 
@@ -209,7 +209,7 @@ sphere::BoundingSphere::BoundingSphere(volumes::Shape const& shape, volumes::Ind
 
     for (uint8_t i = 0; i < 3; ++i) {
         m_sphere.eigenVectorsNormalized[i] = glm::normalize(m_sphere.eigenVectors[i]);
-    }   
+    }
     m_sphereShape = CalculateBoundingSphere(
         m_sphere.eigenVectorsNormalized, m_sphere.eigenValues, m_shape, m_indices);
     m_sphereShape = RefineSphere(m_sphereShape, shape, indices);

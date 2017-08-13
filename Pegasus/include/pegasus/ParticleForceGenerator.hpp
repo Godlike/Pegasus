@@ -8,7 +8,7 @@
 #ifndef PEGASUS_PARTICLE_FORCE_GENERATOR_HPP
 #define PEGASUS_PARTICLE_FORCE_GENERATOR_HPP
 
-#include "Pegasus/include/Particle.hpp"
+#include "pegasus/Particle.hpp"
 
 #include <glm/glm.hpp>
 

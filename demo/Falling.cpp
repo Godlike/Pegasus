@@ -7,14 +7,14 @@
 #include "demo/OglHeaders.hpp"
 #include "demo/Timing.hpp"
 #include "demo/Bunny.hpp"
-#include "Pegasus/include/Particle.hpp"
-#include "Pegasus/include/Geometry.hpp"
-#include "Pegasus/include/Mechanics.hpp"
-#include "Pegasus/include/ParticleContacts.hpp"
-#include "Pegasus/include/ParticleForceGenerator.hpp"
-#include "Pegasus/include/ParticleWorld.hpp"
-#include "Pegasus/include/BoundingVolumes.hpp"
-#include "Pegasus/include/Math.hpp"
+#include "pegasus/Particle.hpp"
+#include "pegasus/Geometry.hpp"
+#include "pegasus/Mechanics.hpp"
+#include "pegasus/ParticleContacts.hpp"
+#include "pegasus/ParticleForceGenerator.hpp"
+#include "pegasus/ParticleWorld.hpp"
+#include "pegasus/BoundingVolumes.hpp"
+#include "pegasus/Math.hpp"
 
 #include <glm/ext.hpp>
 

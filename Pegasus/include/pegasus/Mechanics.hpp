@@ -6,15 +6,15 @@
 #ifndef PEGASUS_MECHANICS_HPP
 #define PEGASUS_MECHANICS_HPP
 
-#include "Pegasus/include/Geometry.hpp"
-#include "Pegasus/include/Particle.hpp"
+#include "pegasus/Geometry.hpp"
+#include "pegasus/Particle.hpp"
 
 #include <memory>
 
-namespace pegasus 
+namespace pegasus
 {
 
-class RigidBody 
+class RigidBody
 {
 public:
     Particle & p;

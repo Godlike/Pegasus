@@ -8,9 +8,9 @@
 #ifndef PEGASUS_PARTICLE_WORLD_HPP
 #define PEGASUS_PARTICLE_WORLD_HPP
 
-#include "Pegasus/include/Particle.hpp"
-#include "Pegasus/include/ParticleContacts.hpp"
-#include "Pegasus/include/ParticleForceGenerator.hpp"
+#include "pegasus/Particle.hpp"
+#include "pegasus/ParticleContacts.hpp"
+#include "pegasus/ParticleForceGenerator.hpp"
 
 #include <vector>
 #include <list>
