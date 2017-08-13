@@ -452,3 +452,17 @@ gjk::NearestSimplexData gjk::NearestSimplex(std::array<glm::dvec3, 4>& simplex, 
 
     return NearestSimplexTetrahedron(simplex);
 }
+
+epa::ContactManifold epa::CalculateContactManifold(Box const& box1, Box const& box2, Polytope polytope)
+{
+    using ConvexHull = math::QuickhullConvexHull<std::array<glm::dvec3, 4>>;
+    using Vertices = std::list<ConvexHull::Vertices::iterator>;
+
+    ConvexHull convexHull(polytope.vertices);
+    convexHull.Calculate();
+    
+    ConvexHull::Faces faces = convexHull.GetFaces();
+    Vertices vertices = convexHull.GetVertices();
+
+    return {};
+}

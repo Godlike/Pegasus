@@ -1384,16 +1384,16 @@ namespace gjk
 
 /**
  * @brief Calculates farthest vertex on the surface of the sphere in the given direction
- * @param sphere shape object
- * @param direction normalized search vector
+ * @param[in] sphere shape object
+ * @param[in] direction normalized search vector
  * @return point on the surface
  */
 glm::dvec3 Support(Sphere const& sphere, glm::dvec3 direction);
 
 /**
  * @brief Calculates farthest vertex on the surface of the box in the given direction
- * @param box shape object
- * @param direction normalized search vector
+ * @param[in] box shape object
+ * @param[in] direction normalized search vector
  * @return point on the surface
  */
 glm::dvec3 Support(Box const& box, glm::dvec3 direction);
@@ -1403,17 +1403,17 @@ glm::dvec3 Support(Box const& box, glm::dvec3 direction);
  * 
  * Configuration Space Object or Minkowski Difference or Minkowski Configuration Object is 
  * a cartesian product of two sets of points, where each element of one of sets is multiplied by -1.
- * @param box1 shape object
- * @param box2 shape object
- * @param direction vector of the search
+ * @param[in] box1 shape object
+ * @param[in] box2 shape object
+ * @param[in] direction vector of the search
  * @return farthes point on the surface of CSO
  */
 glm::dvec3 Support(Box const& box1, Box const& box2, glm::dvec3 direction);
 
 /**
  * @brief Calculates whether a point is inside a tetrahedron
- * @param vertices tetrahedron vertices
- * @param vertex point of interest
+ * @param[in, out] vertices tetrahedron vertices
+ * @param[in] vertex point of interest
  * @return @c true if there is intersection, @c false otherwise
  */
 bool TetrahedronPointIntersection(std::array<glm::dvec3, 4> const& vertices, glm::dvec3 const& vertex);
@@ -1431,50 +1431,108 @@ struct NearestSimplexData
  * @brief Calculates nearest simplex to the origin
  * 
  * Presumes that simplex vertices are stored such that the latest added vertex has index @p simplexSize - 1
- * @param simplex an array of vertices of a simplex
- * @param simplexSize size of a simplex
+ * @param[in, out] simplex an array of vertices of a simplex
+ * @param[in] simplexSize size of a simplex
  * @return new size of a simplex and a next directory of the search
  */
 NearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize);
 
 /**
- * @brief Calculate whether two shapes are intersecting using GJK algorithm
+ * @brief Simplex data container
+ */
+struct Simplex
+{
+    std::array<glm::dvec3, 4> vertices;
+    uint8_t size;
+};
+
+/**
+ * @brief Attempts to calculate a tetrahedron from the CSO vertices such that it contains the origin
  * @tparam ShapeA any shape type for which gjk::Support is overloaded
  * @tparam ShapeB any shape type for which gjk::Support is overloaded
- * @param aShape reference to the shape object
- * @param bShape reference to the shape object
+ * @param[in, out] simplex initial simplex
+ * @param[in] aShape reference to the shape object
+ * @param[in] bShape reference to the shape object
+ * @param[in] direction initial search direction
+ * @return @c true if there is intersection, @c false otherwise
+ */
+template < typename ShapeA, typename ShapeB >
+bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
+{
+    while (true)
+    {
+        simplex.vertices[simplex.size] = Support(aShape, bShape, direction);
+
+        if (glm::dot(simplex.vertices[simplex.size], direction) < 0.0)
+        {
+            return false;
+        }
+
+        if (4 == ++simplex.size
+            && TetrahedronPointIntersection(simplex.vertices, glm::dvec3{ 0, 0, 0 }))
+        {
+            return true;
+        }
+
+        NearestSimplexData const data = NearestSimplex(simplex.vertices, simplex.size);
+        direction = data.direction;
+        simplex.size = data.simplexSize;
+    }
+}
+
+/**
+ * @brief Calculates whether two shapes are intersecting using GJK algorithm
+ * @tparam ShapeA any shape type for which gjk::Support is overloaded
+ * @tparam ShapeB any shape type for which gjk::Support is overloaded
+ * @param[in] aShape reference to the shape object
+ * @param[in] bShape reference to the shape object
  * @return @c true if there is intersection, @c false otherwise
  */
 template < typename ShapeA, typename ShapeB >
 bool CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
 {
-    std::array<glm::dvec3, 4> simplex{
-        Support(aShape, bShape, glm::dvec3{ 1, 1, 1 })
-    };
-    uint8_t simplexSize = 1;
-    glm::dvec3 direction = -simplex[0];
+    Simplex simplex{ { Support(aShape, bShape, glm::dvec3{ 1, 1, 1 }) }, 1 };
+    
+    return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
+}
 
-    while (true)
-    {
-        simplex[simplexSize] = Support(aShape, bShape, direction);
-
-        if (glm::dot(simplex[simplexSize], direction) < 0.0)
-        {
-            return false;
-        }
-
-        if (4 == ++simplexSize && TetrahedronPointIntersection(simplex, glm::dvec3{ 0, 0, 0 }))
-        {
-            return true;
-        }
-
-        NearestSimplexData const data = NearestSimplex(simplex, simplexSize);
-        direction = data.direction;
-        simplexSize = data.simplexSize;
-    }
+/**
+* @brief Calculates whether two shapes are intersecting using GJK algorithm
+* @tparam ShapeA any shape type for which gjk::Support is overloaded
+* @tparam ShapeB any shape type for which gjk::Support is overloaded
+* @param[out] simplex tetrahedron from CSO points containing the origin if one exists
+* @param[in] aShape reference to the shape object
+* @param[in] bShape reference to the shape object
+* @return @c true if there is intersection, @c false otherwise
+*/
+template < typename ShapeA, typename ShapeB >
+bool CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
+{
+    simplex = { { Support(aShape, bShape, glm::dvec3{ 1, 1, 1 }) }, 1 };
+    
+    return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
 }
 
 } // namespace gjk
+
+namespace epa
+{
+
+using Polytope = gjk::Simplex;
+
+struct ContactManifold
+{
+    glm::dvec3 aContactPointModelSpace;
+    glm::dvec3 bContactPointModelSpace;
+    glm::dvec3 aContactPointWorldSpace;
+    glm::dvec3 bContactPointWorldSpace;
+    glm::dvec3 contactNormal;
+    double penetration;
+};
+
+ContactManifold CalculateContactManifold(Box const& box1, Box const& box2, Polytope polytope);
+
+} // namespace epa
 } // namespace geometry
 } // namespace pegasus
 
