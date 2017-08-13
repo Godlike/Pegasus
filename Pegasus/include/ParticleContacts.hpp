@@ -84,8 +84,7 @@ public:
             }
 
             static geometry::SimpleShapeIntersectionDetector intersection;
-            intersection.Initialize(m_rigidBody.s.get(), body.s.get());
-
+            
             if (intersection.CalculateIntersection(m_rigidBody.s.get(), body.s.get()) && ++used)
             {
                 glm::dvec3 const contactNormal = intersection.CalculateContactNormal(m_rigidBody.s.get(), body.s.get());

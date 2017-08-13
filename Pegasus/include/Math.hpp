@@ -742,14 +742,14 @@ void CalculateBoxVertices(
     VerticesContainerIt verticesBeginIterator
 )
 {
-    *(verticesBeginIterator + 0) = (i + j + k);
-    *(verticesBeginIterator + 1) = (i - j + k);
-    *(verticesBeginIterator + 2) = (j - i + k);
-    *(verticesBeginIterator + 3) = (-i - j + k);
-    *(verticesBeginIterator + 4) = (i + j - k);
-    *(verticesBeginIterator + 5) = (i - j - k);
-    *(verticesBeginIterator + 6) = (j - i - k);
-    *(verticesBeginIterator + 7) = (-i - j - k);
+    verticesBeginIterator[0] = (i + j + k);
+    verticesBeginIterator[1] = (i - j + k);
+    verticesBeginIterator[2] = (j - i + k);
+    verticesBeginIterator[3] = (-i - j + k);
+    verticesBeginIterator[4] = (i + j - k);
+    verticesBeginIterator[5] = (i - j - k);
+    verticesBeginIterator[6] = (j - i - k);
+    verticesBeginIterator[7] = (-i - j - k);
 }
 
 /**
@@ -781,7 +781,7 @@ void CalculateCrossProductForeach(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBe
 }
 
 /**
-* @brief Calculates a dot product for every element in the input range and writes it to the output container
+* @brief Calculates a dot product for every element in the input range with given vector and writes it to the output container
 * @tparam VectorType GLM vector type
 * @tparam InIterator forward iterator from the container of VectorType objects
 * @tparam OutIterator forward iterator from the container of double or float
@@ -1300,6 +1300,7 @@ private:
         m_faces.erase(faceIterator);
     }
 };
+
 } // namespace math
 } // namespace pegasus
 
