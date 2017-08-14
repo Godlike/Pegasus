@@ -62,7 +62,7 @@ void Application::Mouse(int button, int state, int x, int y) {}
 void Application::MouseDrag(int x, int y) {}
 
 // The following methods aren't intended to be overloaded
-void Application::RenderText(float x, float y, const char* text, void* font) const
+void Application::RenderText(float x, float y, float r, float g, float b, const char* text, void* font) const
 {
     glDisable(GL_DEPTH_TEST);
 
@@ -84,7 +84,8 @@ void Application::RenderText(float x, float y, const char* text, void* font) con
 
     // Loop through characters displaying them.
     size_t len = strlen(text);
-
+    
+    glColor3f(r, g, b);
     glRasterPos2f(x, y);
     for (const char* letter = text; letter < text + len; letter++) {
 

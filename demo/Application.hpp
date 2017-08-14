@@ -21,7 +21,7 @@ public:
     virtual void Resize(int width, int height);
     virtual void Mouse(int button, int state, int x, int y);
     virtual void MouseDrag(int x, int y);
-    void RenderText(float x, float y, const char* text, void* font = nullptr) const;
+    void RenderText(float x, float y, float r, float g, float b, const char* text, void* font = nullptr) const;
 
 protected:
     int m_height;
