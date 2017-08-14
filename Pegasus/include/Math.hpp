@@ -10,15 +10,14 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/glm.hpp>
 
+#include <algorithm>
 #include <iterator>
-#include <vector>
 #include <array>
+#include <vector>
 #include <list>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <algorithm>
-#include <utility>
 
 namespace pegasus
 {
@@ -37,7 +36,7 @@ public:
      *
      * Allows for the normal direction correction
      * using below the hyperplane point if one is specified.
-     * @param[in] normal normal plane vector
+     * @param[in] normal plane's normal vector of unit length
      * @param[in] point point on the plane
      * @param[in] below point below the plane, allows for the normal direction correction
      */
@@ -94,26 +93,37 @@ public:
 
     /**
      * @brief Calculates absolute distance from the plane to a point
-     * @param[in] point a point of interest
-     * @return absolute distance from a point to the plane
+     * @param[in] point the point of interest
+     * @return absolute distance from the point to the plane
      */
     double Distance(glm::dvec3 const& point) const;
 
     /**
      * @brief Calculates signed distance from the plane to a point
-     * @param[in] point a point of interest
-     * @return signed distance from a point to the plane
+     * @param[in] point the point of interest
+     * @return signed distance from the plane to the point
      */
     double SignedDistance(glm::dvec3 const& point) const;
 
     /**
+     * @brief Calculates whether a ray and the plane are intersecting
+     * @param[in] rayNormal ray direction vector
+     * @param[in] rayPoint point on the ray
+     * @param[out] resultPoint intersection point
+     * @return @c true if there is an intersection point, @c false otherwise
+     */
+    bool RayIntersection(
+        glm::dvec3 const& rayNormal, glm::dvec3 const& rayPoint, glm::dvec3& resultPoint
+    ) const;
+
+    /**
      * @brief Calculates whether a line segment and the plane are intersecting
      * @param[in] lineStart start of the line segment
-     * @param[in] lineEnd end of the lilne segment
-     * @param[out] resultPoint intersetion point
+     * @param[in] lineEnd end of the line segment
+     * @param[out] resultPoint intersection point
      * @return @c true if there is intersection point, @c false otherwise
      */
-    bool Intersection(
+    bool LineSegmentIntersection(
         glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3& resultPoint
     ) const;
 
@@ -441,20 +451,20 @@ public:
      */
     struct FaceVertices
     {
+        uint64_t a;
+        uint64_t b;
+        uint64_t c;
+
         /* Hasher struct for the key object */
         struct Hasher
         {
             /**
-             * @brief Calculates a hash sum over the given FaceVertices object
-             * @param face key for the hash calculation
-             * @return hash sum value
-             */
+            * @brief Calculates a hash sum over the given FaceVertices object
+            * @param face key for the hash calculation
+            * @return hash sum value
+            */
             size_t operator()(FaceVertices const& face) const;
         };
-
-        uint64_t a;
-        uint64_t b;
-        uint64_t c;
 
         bool operator==(FaceVertices const& other) const;
     };
@@ -523,6 +533,9 @@ private:
      */
     struct HalfEdgeVertices
     {
+        uint64_t vertexIndexFrom;
+        uint64_t vertexIndexTo;
+
         /* Hasher struct for the key object */
         struct Hasher
         {
@@ -533,9 +546,6 @@ private:
             */
             size_t operator()(HalfEdgeVertices const& edge) const;
         };
-
-        uint64_t vertexIndexFrom;
-        uint64_t vertexIndexTo;
 
         bool operator==(HalfEdgeVertices const& other) const;
     };
@@ -712,6 +722,81 @@ void FindExtremalVertices(
                 minimaVertices[i] = begin;
             }
         }
+    }
+}
+
+/**
+* @brief Calculates box vertices in the model coordinate space from a given orthogonal basis
+*
+* Writes output vertices to the container starting with @p verticesBeginIterator. There must
+* be at least 7 more elements following given iterator.
+* @tparam VerticesContainerIt Random access iterator
+* @param[in] i box axis vector
+* @param[in] j box axis vector
+* @param[in] k box axis vector
+* @param[out] verticesBeginIterator iterator to the container that is able to store 8 vertices
+*/
+template <typename VerticesContainerIt>
+void CalculateBoxVertices(
+    glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k,
+    VerticesContainerIt verticesBeginIterator
+)
+{
+    verticesBeginIterator[0] = (i + j + k);
+    verticesBeginIterator[1] = (i - j + k);
+    verticesBeginIterator[2] = (j - i + k);
+    verticesBeginIterator[3] = (-i - j + k);
+    verticesBeginIterator[4] = (i + j - k);
+    verticesBeginIterator[5] = (i - j - k);
+    verticesBeginIterator[6] = (j - i - k);
+    verticesBeginIterator[7] = (-i - j - k);
+}
+
+/**
+* @brief Effectively calculate all cross product vectors from two input ranges and writes all valid results to the output container
+* @tparam SrcIt1 Forward iterator from the container of GLM vectors of size 3
+* @tparam SrcIt2 Forward iterator from the container of GLM vectors of size 3
+* @tparam DestIt Forward iterator from the container of GLM vectors of size 3
+* @param[in] srcBegin1 iterator pointing to the start of the first input range
+* @param[in] srcEnd1 iterator pointing to the end of the first input range
+* @param[in] srcBegin2 iterator pointing to the start of the second input range
+* @param[in] srcEnd2 iterator pointing to the end of the second input range
+* @param[out] destBegin iterator pointing to the output container
+*/
+template <typename SrcIt1, typename SrcIt2, typename DestIt>
+void CalculateCrossProductForeach(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBegin2, SrcIt2 srcEnd2,
+    std::back_insert_iterator<DestIt> destBegin)
+{
+    for (auto it1 = srcBegin1; it1 != srcEnd1; ++it1)
+    {
+        for (auto it2 = srcBegin2; it2 != srcEnd2; ++it2)
+        {
+            auto const axis = glm::normalize(glm::cross(*it1, *it2));
+            if (glm::length2(axis) != 0.0)
+            {
+                destBegin++ = axis;
+            }
+        }
+    }
+}
+
+/**
+* @brief Calculates a dot product for every element in the input range with given vector and writes it to the output container
+* @tparam VectorType GLM vector type
+* @tparam InIterator forward iterator from the container of VectorType objects
+* @tparam OutIterator forward iterator from the container of double or float
+* @param[in] axis vector along which to calculate dot products
+* @param[in] srcBegin iterator pointing to the start of the input range
+* @param[in] srcEnd iterator pointing to the end of the input range
+* @param[out] destBegin iterator pointing to the output container
+*/
+template <typename VectorType, typename InIterator, typename OutIterator>
+void CalculateDotProductForeach(
+    VectorType const& axis, InIterator srcBegin, InIterator srcEnd, OutIterator destBegin)
+{
+    while (srcBegin != srcEnd)
+    {
+        *destBegin++ = glm::dot(axis, (*srcBegin++));
     }
 }
 
@@ -1215,6 +1300,7 @@ private:
         m_faces.erase(faceIterator);
     }
 };
+
 } // namespace math
 } // namespace pegasus
 
