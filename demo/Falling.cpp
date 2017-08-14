@@ -3,29 +3,29 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
+#include <Pegasus/include/Particle.hpp>
+#include <Pegasus/include/Geometry.hpp>
+#include <Pegasus/include/Mechanics.hpp>
+#include <Pegasus/include/ParticleContacts.hpp>
+#include <Pegasus/include/ParticleForceGenerator.hpp>
+#include <Pegasus/include/ParticleWorld.hpp>
+#include <Pegasus/include/BoundingVolumes.hpp>
+#include <Pegasus/include/Math.hpp>
+#include <demo/Application.hpp>
+#include <demo/OglHeaders.hpp>
+#include <demo/Timing.hpp>
+#include <demo/Bunny.hpp>
+
 #include <cstdlib>
 #include <cmath>
 #include <list>
 #include <random>
 
-#include "Pegasus/include/Particle.hpp"
-#include "Pegasus/include/Geometry.hpp"
-#include "Pegasus/include/Mechanics.hpp"
-#include "Pegasus/include/ParticleContacts.hpp"
-#include "Pegasus/include/ParticleForceGenerator.hpp"
-#include "Pegasus/include/ParticleWorld.hpp"
-#include "Pegasus/include/BoundingVolumes.hpp"
-#include "Pegasus/include/Math.hpp"
-#include "demo/Application.hpp"
-#include "demo/OglHeaders.hpp"
-#include "demo/Timing.hpp"
-#include "demo/Bunny.hpp"
-
-static const uint32_t BOX_COUNT = static_cast<uint32_t>(std::pow(3, 3));
-static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t BOX_COUNT = 2;// static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t SPHERE_COUNT = 0;// static_cast<uint32_t>(std::pow(3, 3));
 static const uint32_t TOTAL_COUNT = BOX_COUNT + SPHERE_COUNT;
 static const double RADIUS = 5;
-static const bool WIRED_ONLY = true;
+static const bool WIRED_ONLY = false;
 static const bool DRAW_CONVEX = true;
 static const bool DRAW_BUNNIES = true;
 
@@ -178,15 +178,21 @@ void FallingDemo::AddPlane(glm::dvec3 const& normal, glm::dvec3 const& point)
 void FallingDemo::AddBoundingVolumes()
 {
     pegasus::geometry::Box gjkTestBox{ glm::dvec3{10, -10, 10}, glm::dvec3{ 1, 0, 0 }, glm::dvec3{ 0, 1, 0 }, glm::dvec3{ 0, 0, 1 } };
-    glm::dvec3 pointBox = pegasus::geometry::gjk::Support(gjkTestBox, glm::normalize(glm::dvec3{ 1, 0, 1 }));
+    glm::dvec3 pointBox = pegasus::geometry::intersection::cso::Support(gjkTestBox, glm::normalize(glm::dvec3{ 1, 0, 1 }));
 
     pegasus::geometry::Sphere gjkTestSphere{ glm::dvec3{ 10, -10, 10 }, 1 };
-    glm::dvec3 pointSphere = pegasus::geometry::gjk::Support(gjkTestSphere, glm::normalize(glm::dvec3{ 1, 0, 1 }));
+    glm::dvec3 pointSphere = pegasus::geometry::intersection::cso::Support(gjkTestSphere, glm::normalize(glm::dvec3{ 1, 0, 1 }));
     double const length = glm::length(pointSphere - gjkTestSphere.centerOfMass);
 
     pegasus::geometry::Box box1{ {0,0,0}, {1,0,0}, {0,1,0}, {0,0,1} };
-    pegasus::geometry::Box box2{ {10,0,0}, {1,0,0}, {0,1,0}, {0,0,1} };
-    bool intersection = pegasus::geometry::gjk::CalculateIntersection(box1, box2);
+    pegasus::geometry::Box box2{ {0,1.75,0}, {1,0,0}, {0,1,0}, {0,0,1} };
+    pegasus::geometry::intersection::gjk::Simplex polytop;
+    bool intersection = pegasus::geometry::intersection::gjk::CalculateIntersection(polytop, box2, box1);
+
+    auto cm = pegasus::geometry::intersection::epa::CalculateContactManifold(box2, box1, polytop);
+
+    pegasus::math::HyperPlane hp({0,1,0}, {1, 0, 0});
+    glm::dvec3 const closestPoint = hp.ClosestPoint({-3,-3,10});
 
     using namespace pegasus::geometry::volumes;
 
@@ -251,17 +257,14 @@ void FallingDemo::AddBoundingVolumes()
 
     using namespace pegasus::geometry::intersection;
     
-    Initialize<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
     m_overlap[0] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
     m_contactNormal[0] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
     m_penetration[0] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
 
-    Initialize<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
     m_overlap[1] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
     m_contactNormal[1] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
     m_penetration[1] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
 
-    Initialize<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
     m_overlap[2] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
     m_contactNormal[2] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
     m_penetration[2] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
@@ -307,14 +310,14 @@ void FallingDemo::SceneReset()
             planeIndex * RADIUS * 2.3 + boxSide * 3,
             col * RADIUS * 2.3 + RADIUS - offset
         );
-        m_particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
-        m_particles.back().SetDamping(1.0f);
+        //m_particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
+        m_particles.back().SetDamping(0.10f);
     }
 
     //Create rigid bodies
     for (auto& particle : m_particles)
     {
-        bool const isBox = randDouble() > 0;
+        bool const isBox = true || randDouble() > 0;
 
         if (isBox)
         {
@@ -322,9 +325,9 @@ void FallingDemo::SceneReset()
                 particle,
                 std::make_unique<pegasus::geometry::Box>(
                     particle.GetPosition(),
-                    glm::dvec3{RADIUS, 0, 0} * 0.5,
-                    glm::dvec3{0, RADIUS, 0} * 0.5,
-                    glm::dvec3{0, 0, RADIUS} * 0.5)
+                    glm::dvec3{RADIUS * randDouble(), 0, 0} * 0.5,
+                    glm::dvec3{0, RADIUS * randDouble(), 0} * 0.5,
+                    glm::dvec3{0, 0, RADIUS * randDouble()} * 0.5)
             );
         }
         else
@@ -349,20 +352,22 @@ void FallingDemo::SceneReset()
     for (auto& body : m_rigidBodies)
     {
         m_contactGenerators.push_back(
-            std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, m_rigidBodies, (randDouble() + 5) / 10)
+            //std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, m_rigidBodies, (randDouble() + 5) / 10)
+            std::make_unique<pegasus::ShapeContactGenerator<RigidBodies>>(body, m_rigidBodies, 0.1)
         );
     }
 
     //Create plane particle and rigid body
-    AddPlane({0, 1, 0}, {1, -position * 2, 0});
-    AddSphere({0, -position * 2, 0}, boxSide);
-    AddCube({position * 2, position, 0}, boxSide);
-    AddCube({-position * 2, position, 0}, boxSide);
-    AddCube({0, position, -position * 2}, boxSide);
-    AddBoundingVolumes();
+    //AddPlane({0, 1, 0}, {1, -position * 2, 0});
+    //AddSphere({0, -position * 2, 0}, boxSide);
+    //AddCube({position * 2, position, 0}, boxSide);
+    //AddCube({-position * 2, position, 0}, boxSide);
+    //AddCube({0, position, -position * 2}, boxSide);
+    //AddBoundingVolumes();
 
-    activeObject = m_rigidBodies.end();
-    std::advance(activeObject, -3);
+    AddPlane({ 0, 1, 0 }, { 1, position * 2, 0 });
+
+    activeObject = std::prev(m_rigidBodies.end());
 }
 
 void FallingDemo::DrawWiredBox(std::array<glm::dvec3, 8> const& boxVertices) const
@@ -809,6 +814,8 @@ void FallingDemo::Key(unsigned char key)
     case 'r':
     case 'R':
         activeObject->p.SetVelocity(0, 0, 0);
+        activeObject->p.SetAcceleration(0, 0, 0);
+        activeObject->p.ClearForceAccumulator();
         break;
     case '+':
         zoom -= zoom * 0.1;

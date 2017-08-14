@@ -3,7 +3,10 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "Pegasus/include/Geometry.hpp"
+#include <Pegasus/include/Geometry.hpp>
+
+#include <algorithm>
+#include <numeric>
 
 using namespace pegasus;
 using namespace geometry;
@@ -82,7 +85,7 @@ Cone::Cone()
 
 Cone::Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r)
     : SimpleShape(centerOfMass, SimpleShape::Type::CONE)
-    , appex(a)
+    , apex(a)
     , radius(r)
 {
 }
@@ -123,17 +126,17 @@ Box::Box()
 }
 
 Box::Box(
-    glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c
+    glm::dvec3 const& centerOfMass, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k
 )
     : SimpleShape(centerOfMass, SimpleShape::Type::BOX)
-    , iAxis(a)
-    , jAxis(b)
-    , kAxis(c)
+    , iAxis(i)
+    , jAxis(j)
+    , kAxis(k)
 {
 }
 
 bool intersection::CalculateRaySphereIntersection(
-    glm::dvec3 raySphere, double sphereRadius, glm::dvec3 rayDirection
+    glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
 )
 {
     double const tCenter = glm::dot(raySphere, rayDirection);
@@ -142,9 +145,9 @@ bool intersection::CalculateRaySphereIntersection(
     return sphereRadius * sphereRadius - distanceSquare >= 0.0;
 }
 
-intersection::RaySphereIntersectionFactors 
+intersection::RayIntersectionFactors
 intersection::CalculateRaySphereIntersectionFactors(
-    glm::dvec3 raySphere, double sphereRadius, glm::dvec3 rayDirection
+    glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
 )
 {
     double const tCenter = glm::dot(raySphere, rayDirection);
@@ -154,9 +157,10 @@ intersection::CalculateRaySphereIntersectionFactors(
     return {tCenter - tDelta, tCenter + tDelta};
 }
 
-intersection::RayBoxIntersectionFactors 
+intersection::RayIntersectionFactors
 intersection::CalculateRayAabbIntersectionFactors(
-    glm::dvec3 boxMinPoint, glm::dvec3 boxMaxPoint, glm::dvec3 rayDirection, glm::dvec3 rayOrigin
+    glm::dvec3 const& boxMinPoint, glm::dvec3 const& boxMaxPoint,
+    glm::dvec3 const& rayDirection, glm::dvec3 const& rayOrigin
 )
 {
     double const t1 = (boxMinPoint.x - rayOrigin.x) / rayDirection.x;
@@ -172,15 +176,380 @@ intersection::CalculateRayAabbIntersectionFactors(
     return {tmin, tmax};
 }
 
+intersection::AabbExtremalVertices
+intersection::MakeExtremalVerticesAabb(
+    glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k
+)
+{
+    glm::dmat3 const boxModelMatrixInverse = glm::inverse(
+        glm::dmat3{glm::normalize(i), glm::normalize(j), glm::normalize(k)}
+    );
+
+    glm::dmat3 const boxAxesModelSpace{
+        boxModelMatrixInverse * i, boxModelMatrixInverse * j, boxModelMatrixInverse * k
+    };
+
+    auto const findMaxAbs = [](double a, double b)
+    {
+        return std::abs(a) < std::abs(b);
+    };
+
+    glm::dvec3 const maxVertex = glm::dvec3{
+        glm::abs(*std::max_element(
+                glm::value_ptr(boxAxesModelSpace[0]), glm::value_ptr(boxAxesModelSpace[0]) + 3, findMaxAbs)
+        ),
+        glm::abs(*std::max_element(
+                glm::value_ptr(boxAxesModelSpace[1]), glm::value_ptr(boxAxesModelSpace[1]) + 3, findMaxAbs)
+        ),
+        glm::abs(*std::max_element(
+                glm::value_ptr(boxAxesModelSpace[2]), glm::value_ptr(boxAxesModelSpace[2]) + 3, findMaxAbs)
+        )
+    };
+
+    return {-maxVertex, maxVertex};
+}
+
 bool intersection::CalculateRayAabbIntersection(double tMin, double tMax)
 {
     // tMax < 0, AABB is behind ray; tMin > tMax, no intesection
     return tMax > 0 && tMin < tMax;
 }
 
+glm::dvec3 intersection::cso::Support(Sphere const& sphere, glm::dvec3 direction)
+{
+    using namespace intersection;
+
+    Ray const ray{sphere.centerOfMass - direction * (sphere.radius + 1), direction};
+    RayIntersectionFactors intersectionFactors = CalculateRaySphereIntersectionFactors(
+        sphere.centerOfMass - ray.centerOfMass, sphere.radius, direction
+    );
+
+    glm::dvec3 const vertex = ray.centerOfMass + direction * intersectionFactors.tMax;
+    assert(!std::isnan(vertex.x));
+    return vertex;
+}
+
+glm::dvec3 intersection::cso::Support(Box const& box, glm::dvec3 direction)
+{
+    using namespace intersection;
+
+    std::array<glm::dvec3, 8> boxVertices;
+    math::CalculateBoxVertices(box.iAxis, box.jAxis, box.kAxis, box.centerOfMass, boxVertices.begin());
+    std::sort(boxVertices.begin(), boxVertices.end(), 
+        [&direction](glm::dvec3 const& a, glm::dvec3 const& b) -> bool
+    {
+        return glm::dot(a, direction) < glm::dot(b, direction);
+    });
+
+    return boxVertices.back();
+}
+
+glm::dvec3 intersection::cso::Support(Box const& box1, Box const& box2, glm::dvec3 direction)
+{
+    glm::dvec3 const vertex = Support(box1, direction) - Support(box2, -direction);
+    assert(!std::isnan(vertex.x));
+    return vertex;
+}
+
+/**
+ * @brief Calculates whether a line passes through the origin and returns true if it does
+ * @param[in] lineStart line segment start point
+ * @param[in] lineEnd line segment end point
+ * @return @c true if a line passes though the origin @c false otherwise
+ */
+bool LineSegmentContainsOrigin(glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd)
+{
+    double const distance = math::LineSegmentPointDistance(lineStart, lineEnd, glm::dvec3{});
+    return math::fp::IsNull(distance);
+}
+
+/**
+ * @brief Calculates whether a triangle contains the origin and returns true if it does
+ *
+ * All input point must not lie on the same line at the same time, otherwise result is undefined
+ * @param[in] a triangle vertex
+ * @param[in] b triangle vertex
+ * @param[in] c triangle vertex
+ * @return @c true if a triangle contains the origin @c false othewise
+ */
+bool TriangleContainsOrigin(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c)
+{
+    return intersection::IsTriangleContainsPoint(a, b, c, glm::dvec3{});
+}
+
+/**
+ * @brief Calculates whether a point is inside a tetrahedron
+ * @param[in] vertices tetrahedron vertices
+ * @return @c true if there is an intersection, @c false otherwise
+ */
+bool TetrahedronContainsOrigin(std::array<glm::dvec3, 4> const& vertices)
+{
+    std::array<math::HyperPlane, 4> const faces{
+        math::HyperPlane{ vertices[0], vertices[1], vertices[2], &vertices[3] },
+        math::HyperPlane{ vertices[1], vertices[2], vertices[3], &vertices[0] },
+        math::HyperPlane{ vertices[0], vertices[2], vertices[3], &vertices[1] },
+        math::HyperPlane{ vertices[0], vertices[1], vertices[3], &vertices[2] }
+    };
+
+    return math::fp::IsGreaterOrEqual(faces[0].GetDistance(), 0.0)
+        && math::fp::IsGreaterOrEqual(faces[1].GetDistance(), 0.0)
+        && math::fp::IsGreaterOrEqual(faces[2].GetDistance(), 0.0)
+        && math::fp::IsGreaterOrEqual(faces[3].GetDistance(), 0.0);
+}
+
+bool intersection::gjk::SimplexContainsOrigin(Simplex const& simplex)
+{
+    if (simplex.size == 2)
+    {
+        return LineSegmentContainsOrigin(simplex.vertices[0], simplex.vertices[1]);
+    }
+    if (simplex.size == 3)
+    {
+        return TriangleContainsOrigin(simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]);
+    }
+
+    return TetrahedronContainsOrigin(simplex.vertices);
+}
+
+/**
+ * @brief Finds nearest simplex from the line sigment simplex to the origin and returns its size and new search direction
+ * @param[in] simplex line segment simplex vertices
+ * @return new simplex size and search direction
+ */
+intersection::gjk::NearestSimplexData NearestSimplexLineSegment(std::array<glm::dvec3, 4>& simplex)
+{
+    glm::dvec3 const AB = simplex[0] - simplex[1];
+    glm::dvec3 const A0 = glm::dvec3{0, 0, 0} - simplex[1];
+
+    if (intersection::IsSameDirection(AB, A0))
+    {
+        glm::dvec3 const direction = glm::cross(glm::cross(AB, A0), AB);
+        assert(glm::length(direction) != 0.0);
+        return {2, direction};
+    }
+
+    simplex[0] = simplex[1];
+    assert(glm::length(A0) != 0.0);
+    return {1, A0};
+}
+
+/**
+ * @brief Finds nearest simplex from the triangle simplex to the origin and returns its size and new search direction
+ * @param[in] simplex triangle simplex vertices
+ * @return new simplex size and search direction
+ */
+intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dvec3, 4>& simplex)
+{
+    glm::dvec3 const AB = simplex[1] - simplex[2];
+    glm::dvec3 const AC = simplex[0] - simplex[2];
+    glm::dvec3 const A0 = glm::dvec3{0, 0, 0} - simplex[2];
+    glm::dvec3 const ABC = glm::cross(AB, AC);
+    intersection::gjk::NearestSimplexData result;
+    
+    if (intersection::IsSameDirection(glm::cross(ABC, AC), -simplex[2]))
+    {
+        if (intersection::IsSameDirection(AC, A0))
+        {
+            simplex = {simplex[0], simplex[2]};
+            glm::dvec3 const direction = glm::cross(glm::cross(AC, -simplex[1]), AC);
+            assert(!std::isnan(direction.x));
+            result = {2, direction};
+        }
+        else if (intersection::IsSameDirection(AB, A0))
+        {
+            simplex = {simplex[1], simplex[2]};
+            glm::dvec3 const direction = glm::cross(glm::cross(AB, -simplex[1]), AB);
+            assert(!std::isnan(direction.x));
+            result = {2, direction};
+        }
+        else 
+        {
+            simplex = { simplex[2] };
+            glm::dvec3 const direction = -simplex[0];
+            assert(!std::isnan(direction.x));
+            result = { 1, direction };
+        }
+    }
+    else if (intersection::IsSameDirection(glm::cross(AB, ABC), -simplex[2]))
+    {
+        if (intersection::IsSameDirection(AB, A0))
+        {
+            simplex = {simplex[1], simplex[2]};
+            glm::dvec3 const direction = glm::cross(glm::cross(AB, -simplex[1]), AB);
+            assert(!std::isnan(direction.x));
+            result = {2, direction};
+        } 
+        else
+        {
+            simplex = { simplex[2] };
+            glm::dvec3 const direction = -simplex[0];
+            assert(!std::isnan(direction.x));
+            result = { 1, direction };
+        }
+    }
+    else
+    {
+        if (intersection::IsSameDirection(ABC, A0))
+        {
+            glm::dvec3 const direction = ABC;
+            assert(!std::isnan(direction.x));
+            result = { 3, direction };
+        }
+        else
+        {
+            glm::dvec3 const direction = -ABC;
+            assert(!std::isnan(direction.x));
+            result = { 3, direction };
+        }
+    }
+
+    return result;
+}
+
+/**
+ * @brief Finds nearest simplex from the tetrahedron simplex to the origin and returns its size and new search direction
+ * @param[in] simplex tetrahedron simplex vertices
+ * @return new simplex size and search direction
+ */
+intersection::gjk::NearestSimplexData NearestSimplexTetrahedron(std::array<glm::dvec3, 4>& simplex)
+{
+    std::array<std::array<uint8_t, 3>, 3> const simplexes{
+        std::array<uint8_t, 3>{0, 1, 3},
+        std::array<uint8_t, 3>{1, 2, 3},
+        std::array<uint8_t, 3>{0, 2, 3}
+    };
+
+    std::array<double, 3> const planeOriginDistances{
+        math::HyperPlane{simplex[0], simplex[1], simplex[3], &simplex[2]}.GetDistance(),
+        math::HyperPlane{simplex[1], simplex[2], simplex[3], &simplex[0]}.GetDistance(),
+        math::HyperPlane{simplex[0], simplex[2], simplex[3], &simplex[1]}.GetDistance()
+    };
+
+    size_t const closestPlaneIndex = std::distance(planeOriginDistances.begin(),
+        std::min_element(planeOriginDistances.begin(), planeOriginDistances.end()));
+
+    simplex = {
+        simplex[simplexes[closestPlaneIndex][0]],
+        simplex[simplexes[closestPlaneIndex][1]],
+        simplex[simplexes[closestPlaneIndex][2]]
+    };
+
+    return NearestSimplexTriangle(simplex);
+}
+
+intersection::gjk::NearestSimplexData intersection::gjk::NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize)
+{
+    if (2 == simplexSize)
+    {
+        auto intersectionData = NearestSimplexLineSegment(simplex);
+        assert(!std::isnan(intersectionData.direction.x) && glm::length(intersectionData.direction) != 0.0);
+        return intersectionData;
+    }
+    if (3 == simplexSize)
+    {
+        auto intersectionData = NearestSimplexTriangle(simplex);
+        assert(!std::isnan(intersectionData.direction.x) && glm::length(intersectionData.direction) != 0.0);
+        return intersectionData;
+    }
+
+    auto intersectionData = NearestSimplexTetrahedron(simplex);
+    assert(!std::isnan(intersectionData.direction.x) && glm::length(intersectionData.direction) != 0.0);
+    return intersectionData;
+}
+
+void intersection::epa::BlowUpPolytope(Polytope& polytope, Box const& box1, Box const& box2)
+{
+    if (polytope.size == 2)
+    {
+        glm::dvec3 const A0 = -polytope.vertices[1];
+        uint8_t const n = (A0[0] != 0) ? 0 : ((A0[1] != 0) ? 1 : 2);
+        uint8_t const m = (n == 0 ? 1 : (n == 1 ? 2 : 1));
+        
+        glm::dvec3 orthogonalDirection;
+        orthogonalDirection[n] = A0[m];
+        orthogonalDirection[m] = A0[n];
+
+        polytope.vertices[2] = cso::Support(box1, box2, glm::normalize(orthogonalDirection));
+        ++polytope.size;
+    }
+
+    if (polytope.size == 3)
+    {
+        math::HyperPlane const hyperPlane{
+            polytope.vertices[0], polytope.vertices[1], polytope.vertices[2]
+        };
+
+        glm::dvec3 const AB = polytope.vertices[1] - polytope.vertices[2];
+        glm::dvec3 const AC = polytope.vertices[0] - polytope.vertices[2];
+        glm::dvec3 const ABC = glm::cross(AB, AC);
+
+        glm::dvec3 const a = cso::Support(box1, box2, glm::normalize(ABC));
+        glm::dvec3 const b = cso::Support(box1, box2, glm::normalize(-ABC));
+
+        polytope.vertices[3] = hyperPlane.Distance(a) > hyperPlane.Distance(b) ? a : b;
+        ++polytope.size;
+    }
+}
+
+intersection::epa::ContactManifold
+intersection::epa::CalculateContactManifold(Box const& box1, Box const& box2, Polytope polytope)
+{
+    using ConvexHull = math::QuickhullConvexHull<std::vector<glm::dvec3>>;
+    using Vertices = std::list<ConvexHull::Vertices::iterator>;
+
+    if (polytope.size < 4)
+    {
+        BlowUpPolytope(polytope, box1, box2);
+    }
+
+    std::vector<glm::dvec3> vertices;
+    vertices.reserve(1000);
+    vertices = {polytope.vertices[0], polytope.vertices[1], polytope.vertices[2], polytope.vertices[3]};
+
+    ConvexHull convexHull(vertices);
+    convexHull.Calculate();
+
+    while (true)
+    {
+        ConvexHull::Faces chFaces = convexHull.GetFaces();
+        Vertices chVertices = convexHull.GetVertices();
+
+        //Sort faces by the distance to the
+        chFaces.sort([](ConvexHull::Face& a, ConvexHull::Face& b) -> bool
+        {
+            return a.GetHyperPlane().GetDistance() < b.GetHyperPlane().GetDistance();
+        });
+
+        //Calculate initial distance and direction
+        math::HyperPlane const& hp = chFaces.front().GetHyperPlane();
+        glm::dvec3 direction = hp.GetNormal();
+        double distance = hp.GetDistance();
+
+        glm::dvec3 const supportVertex = cso::Support(box1, box2, direction);
+        double const supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
+
+        if (math::fp::IsLessOrEqual(supportVertexDistance, distance))
+        {
+            return ContactManifold{
+                cso::Support(box1, direction),
+                cso::Support(box2, -direction),
+                cso::Support(box1, direction) + box1.centerOfMass,
+                cso::Support(box2, -direction) + box2.centerOfMass,
+                direction,
+                distance
+            };
+        }
+
+        vertices.push_back(supportVertex);
+        if (!convexHull.AddVertex(std::prev(vertices.end())))
+        {
+            vertices.pop_back();
+        }
+    }
+}
+
 SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetector()
     : m_intersectionCaches(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
-    , m_initializeFunctors(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
     , m_calculateIntersectionFunctors(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
     , m_calculateContactNormalFunctors(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
     , m_calculatePenetrationFunctors(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
@@ -203,25 +572,6 @@ SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetector()
         = std::make_unique<intersection::Cache<Box, Sphere>>();
     m_intersectionCaches[std::make_pair(SimpleShape::Type::BOX, SimpleShape::Type::BOX)]
         = std::make_unique<intersection::Cache<Box, Box>>();
-
-    m_initializeFunctors[std::make_pair(SimpleShape::Type::PLANE, SimpleShape::Type::PLANE)]
-        = intersection::Initialize<Plane, Plane>;
-    m_initializeFunctors[std::make_pair(SimpleShape::Type::PLANE, SimpleShape::Type::SPHERE)]
-        = intersection::Initialize<Plane, Sphere>;
-    m_initializeFunctors[std::make_pair(SimpleShape::Type::PLANE, SimpleShape::Type::BOX)]
-        = intersection::Initialize<Plane, Box>;
-    m_initializeFunctors[std::make_pair(SimpleShape::Type::SPHERE, SimpleShape::Type::PLANE)]
-        = intersection::Initialize<Sphere, Plane>;
-    m_initializeFunctors[std::make_pair(SimpleShape::Type::SPHERE, SimpleShape::Type::SPHERE)]
-        = intersection::Initialize<Sphere, Sphere>;
-    m_initializeFunctors[std::make_pair(SimpleShape::Type::SPHERE, SimpleShape::Type::BOX)]
-        = intersection::Initialize<Sphere, Box>;
-    m_initializeFunctors[std::make_pair(SimpleShape::Type::BOX, SimpleShape::Type::PLANE)]
-        = intersection::Initialize<Box, Plane>;
-    m_initializeFunctors[std::make_pair(SimpleShape::Type::BOX, SimpleShape::Type::SPHERE)]
-        = intersection::Initialize<Box, Sphere>;
-    m_initializeFunctors[std::make_pair(SimpleShape::Type::BOX, SimpleShape::Type::BOX)]
-        = intersection::Initialize<Box, Box>;
 
     m_calculateIntersectionFunctors[std::make_pair(SimpleShape::Type::PLANE, SimpleShape::Type::PLANE)]
         = intersection::CalculateIntersection<Plane, Plane>;
@@ -281,12 +631,6 @@ SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetector()
         = intersection::CalculatePenetration<Box, Box>;
 }
 
-void SimpleShapeIntersectionDetector::Initialize(SimpleShape const* a, SimpleShape const* b)
-{
-    m_initializeFunctors[std::make_pair(a->type, b->type)](
-        a, b, m_intersectionCaches[std::make_pair(a->type, b->type)].get());
-}
-
 bool SimpleShapeIntersectionDetector::CalculateIntersection(SimpleShape const* a, SimpleShape const* b)
 {
     return m_calculateIntersectionFunctors[std::make_pair(a->type, b->type)](
@@ -309,160 +653,4 @@ size_t SimpleShapeIntersectionDetector::ShapeTypePairHasher::operator()(ShapeTyp
 {
     return std::hash<uint32_t>{}(static_cast<uint32_t>(p.first))
         ^ std::hash<uint32_t>{}(static_cast<uint32_t>(p.second));
-}
-
-glm::dvec3 gjk::Support(Sphere const& sphere, glm::dvec3 direction)
-{
-    using namespace intersection;
-
-    Cache<Ray, Sphere> cache;
-    direction = glm::normalize(direction);
-    Ray const ray{ sphere.centerOfMass - direction * (sphere.radius + 1), direction };
-
-    RaySphereIntersectionFactors intersectionFactors = CalculateRaySphereIntersectionFactors(
-        sphere.centerOfMass - ray.centerOfMass, sphere.radius, direction
-    );
-    
-    return ray.centerOfMass + direction * intersectionFactors.tMax;
-}
-
-glm::dvec3 gjk::Support(Box const& box, glm::dvec3 direction)
-{
-    using namespace intersection;
-
-    Cache<Ray, Box> cache;
-    direction = glm::normalize(direction);
-    Ray const ray{box.centerOfMass - direction, direction};
-
-    Initialize<Ray, Box>(&ray, &box, &cache);
-    RayBoxIntersectionFactors intersectionFactors = CalculateRayAabbIntersectionFactors(
-        cache.boxMinPoint, cache.boxMaxPoint, cache.rayDirectionBoxSpace, cache.rayOriginBoxSpace
-    );
-
-    return ray.centerOfMass + direction * intersectionFactors.tMax;
-}
-
-glm::dvec3 gjk::Support(Box const& box1, Box const& box2, glm::dvec3 direction)
-{
-    return Support(box1, direction) - Support(box2, -direction);
-}
-
-bool gjk::TetrahedronPointIntersection(std::array<glm::dvec3, 4> const& vertices, glm::dvec3 const& vertex)
-{
-    return math::HyperPlane{ vertices[0], vertices[1], vertices[2], &vertices[3] }.SignedDistance(vertex) <= 0.0
-        && math::HyperPlane{ vertices[1], vertices[2], vertices[3], &vertices[0] }.SignedDistance(vertex) <= 0.0
-        && math::HyperPlane{ vertices[0], vertices[2], vertices[3], &vertices[1] }.SignedDistance(vertex) <= 0.0
-        && math::HyperPlane{ vertices[0], vertices[1], vertices[3], &vertices[2] }.SignedDistance(vertex) <= 0.0;
-}
-
-gjk::NearestSimplexData NearestSimplexLineSegment(std::array<glm::dvec3, 4>& simplex)
-{
-    glm::dvec3 const AB = simplex[0] - simplex[1];
-    glm::dvec3 const inverseA = -simplex[1];
-
-    if (glm::dot(AB, inverseA))
-    {
-        return { 2, glm::cross(glm::cross(AB, inverseA), AB) };
-    }
-
-    simplex[0] = simplex[1];
-    return { 1, inverseA };
-}
-
-gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dvec3, 4>& simplex)
-{
-    glm::dvec3 const AB = simplex[1] - simplex[2];
-    glm::dvec3 const AC = simplex[0] - simplex[2];
-    glm::dvec3 const ABC = glm::cross(AB, AC);
-
-    if (glm::dot(glm::cross(ABC, AC), -simplex[2]) > 0)
-    {
-        if (glm::dot(AC, -simplex[2]) > 0)
-        {
-            simplex = { simplex[0], simplex[2] };
-            return { 2, glm::cross(glm::cross(AC, -simplex[1]), AC) };
-        }
-
-        if (glm::dot(AB, -simplex[2]) > 0)
-        {
-            simplex = { simplex[1], simplex[2] };
-            return { 2, glm::cross(glm::cross(AB, -simplex[1]), AB) };
-        }
-
-        simplex = { simplex[2] };
-        return { 1, -simplex[0] };
-    }
-    
-    if (glm::dot(glm::cross(AB, ABC), -simplex[2]) > 0)
-    {
-        if (glm::dot(AB, -simplex[2]) > 0)
-        {
-            simplex = { simplex[1], simplex[2] };
-            return { 2, glm::cross(glm::cross(AB, -simplex[1]), AB) };
-        }
-
-        simplex = { simplex[2] };
-        return { 1, -simplex[0] };
-    }
-
-    if (glm::dot(ABC, -simplex[2]) > 0)
-    {
-        return { 3, ABC };
-    }
-
-    return { 3, ABC };
-}
-
-gjk::NearestSimplexData NearestSimplexTetrahedron(std::array<glm::dvec3, 4>& simplex)
-{
-    std::array<std::array<uint8_t, 3>, 3> const simplexes{
-        std::array<uint8_t, 3>{ 0, 1, 3 }, 
-        std::array<uint8_t, 3>{ 1, 2, 3 }, 
-        std::array<uint8_t, 3>{ 0, 2, 3 } 
-    };
-
-    std::array<double, 3> const planeOriginDistances{
-        math::HyperPlane{ simplex[0], simplex[1], simplex[3], &simplex[2] }.Distance(glm::dvec3{ 0, 0, 0 }),
-        math::HyperPlane{ simplex[1], simplex[2], simplex[3], &simplex[0] }.Distance(glm::dvec3{ 0, 0, 0 }),
-        math::HyperPlane{ simplex[0], simplex[2], simplex[3], &simplex[1] }.Distance(glm::dvec3{ 0, 0, 0 })
-    };
-
-    size_t const closestPlaneIndex = std::distance(planeOriginDistances.begin(), 
-        std::min_element(planeOriginDistances.begin(), planeOriginDistances.end()));
-
-    simplex = { 
-        simplex[simplexes[closestPlaneIndex][0]], 
-        simplex[simplexes[closestPlaneIndex][1]], 
-        simplex[simplexes[closestPlaneIndex][2]] 
-    };
-
-    return NearestSimplexTriangle(simplex);
-}
-
-gjk::NearestSimplexData gjk::NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize)
-{
-    if (2 == simplexSize)
-    {
-        return NearestSimplexLineSegment(simplex);
-    }
-    if (3 == simplexSize)
-    {
-        return NearestSimplexTriangle(simplex);
-    }
-
-    return NearestSimplexTetrahedron(simplex);
-}
-
-epa::ContactManifold epa::CalculateContactManifold(Box const& box1, Box const& box2, Polytope polytope)
-{
-    using ConvexHull = math::QuickhullConvexHull<std::array<glm::dvec3, 4>>;
-    using Vertices = std::list<ConvexHull::Vertices::iterator>;
-
-    ConvexHull convexHull(polytope.vertices);
-    convexHull.Calculate();
-    
-    ConvexHull::Faces faces = convexHull.GetFaces();
-    Vertices vertices = convexHull.GetVertices();
-
-    return {};
 }

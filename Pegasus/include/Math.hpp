@@ -23,6 +23,83 @@ namespace pegasus
 {
 namespace math
 {
+namespace fp
+{
+
+constexpr double g_floatingPointThreshold = 1e-10;
+
+/**
+ * @brief Calculates whether a given floating point number is equal to null within a set threshold
+ * @param[in] n number
+ * @return @c true if a number is equal to null, @c false otherwise
+ */
+inline bool IsNull(double n)
+{
+    return glm::abs(n) < g_floatingPointThreshold;
+}
+
+/**
+ * @brief Calculates whether a left-hand side value is equal to the right-hand side 
+ * within a set threshold and returns true if sos
+ * @param[in] lhs left-hand side value
+ * @param[in] rhs right-hand side value
+ * @return @c true if both numbers are equal, @c false otherwise
+ */
+inline bool IsEqual(double lhs, double rhs)
+{
+    return glm::abs(lhs - rhs) < g_floatingPointThreshold;
+}
+
+/**
+ * @brief Calculates whether a left-hand side value is less than a right-hand side value 
+ * within a set threshold and returns true if so
+ * @param[in] lhs left-hand side value
+ * @param[in] rhs right-hand side value
+ * @return @c true if lhs value is less than rhs value, @c false othewise
+ */
+inline bool IsLess(double lhs, double rhs)
+{
+    return !IsEqual(lhs, rhs) && (lhs - rhs) < 0.0;
+}
+
+/**
+ * @brief Calculates whether a left-hand side value is greater than a right-hand side value 
+ * within a set threshold and returns true if so
+ * @param[in] lhs left-hand side value
+ * @param[in] rhs right-hand side value
+ * @return @c true if lhs value is greater than rhs value, @c false otherwise
+ */
+inline bool IsGreater(double lhs, double rhs) 
+{
+    return !IsEqual(lhs, rhs) && (lhs - rhs) > 0.0;
+}
+
+/**
+ * @brief Calculates whether a left-hand side value is less or equal to a right-hand side value 
+ * within a set threshold and returns true if so
+ * @param[in] lhs left-hand side value
+ * @param[in] rhs right-hand side value 
+ * @return @c true if lhs value is less or equal to rhs value, @c false otherwise
+ */
+inline bool IsLessOrEqual(double lhs, double rhs)
+{
+    return IsEqual(lhs, rhs) || (lhs - rhs) < 0.0;
+}
+
+/**
+ * @brief Calculates whether a legt-hand side value is greater or equal to a right-hand side value 
+ * within a set threshold and returns true if so
+ * @param lhs left-hand side value
+ * @param rhs right-hand side value
+ * @return @c true if lhs velue is greater or equal to rhs value, @c false otherwise
+ */
+inline bool IsGreaterOrEqual(double lhs, double rhs)
+{
+    return IsEqual(lhs, rhs) || (lhs - rhs) > 0.0;
+}
+
+} // namespace fp
+
 /**
  * @brief HyperPlane calculation algorithm
  */
@@ -36,7 +113,7 @@ public:
      *
      * Allows for the normal direction correction
      * using below the hyperplane point if one is specified.
-     * @param[in] normal normal plane vector
+     * @param[in] normal plane's normal vector of unit length
      * @param[in] point point on the plane
      * @param[in] below point below the plane, allows for the normal direction correction
      */
@@ -126,6 +203,13 @@ public:
     bool LineSegmentIntersection(
         glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3& resultPoint
     ) const;
+
+    /**
+     * @brief Calculates closest point on the plane to a given point and returns it
+     * @param[in] point point of interest
+     * @return closest point on the plane
+     */
+    glm::dvec3 ClosestPoint(glm::dvec3 const& point) const;
 
 private:
     glm::dvec3 m_normal;
@@ -668,12 +752,11 @@ size_t FindExtremalVertexIndex(Iterator begin, Iterator end, HyperPlane const& h
 {
     size_t index = 0;
     double maxDistance = 0.0;
-    double distance = 0.0;
     size_t maxIndex = std::numeric_limits<size_t>::max();
 
     for (; begin != end; ++begin)
     {
-        distance = hyperPlane.SignedDistance(*begin);
+        double const distance = hyperPlane.SignedDistance(*begin);
         if (maxDistance < distance)
         {
             maxDistance = distance;
@@ -726,6 +809,34 @@ void FindExtremalVertices(
 }
 
 /**
+* @brief Calculates box vertices in the world coordinate space from a given orthogonal basis and it's position
+*
+* Writes output vertices to the container starting with @p verticesBeginIterator. There must
+* be at least 7 more elements following given iterator.
+* @tparam VerticesContainerIt Random access iterator
+* @param[in] i box axis vector
+* @param[in] j box axis vector
+* @param[in] k box axis vector
+* @param[in] center center of the box
+* @param[out] verticesBeginIterator iterator to the container that is able to store 8 vertices
+*/
+template <typename VerticesContainerIt>
+void CalculateBoxVertices(
+    glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k, glm::dvec3 const& center,
+    VerticesContainerIt verticesBeginIterator
+)
+{
+    verticesBeginIterator[0] = (i + j + k) + center;
+    verticesBeginIterator[1] = (i - j + k) + center;
+    verticesBeginIterator[2] = (j - i + k) + center;
+    verticesBeginIterator[3] = (-i - j + k) + center;
+    verticesBeginIterator[4] = (i + j - k) + center;
+    verticesBeginIterator[5] = (i - j - k) + center;
+    verticesBeginIterator[6] = (j - i - k) + center;
+    verticesBeginIterator[7] = (-i - j - k) + center;
+}
+
+/**
 * @brief Calculates box vertices in the model coordinate space from a given orthogonal basis
 *
 * Writes output vertices to the container starting with @p verticesBeginIterator. There must
@@ -742,14 +853,7 @@ void CalculateBoxVertices(
     VerticesContainerIt verticesBeginIterator
 )
 {
-    *(verticesBeginIterator + 0) = (i + j + k);
-    *(verticesBeginIterator + 1) = (i - j + k);
-    *(verticesBeginIterator + 2) = (j - i + k);
-    *(verticesBeginIterator + 3) = (-i - j + k);
-    *(verticesBeginIterator + 4) = (i + j - k);
-    *(verticesBeginIterator + 5) = (i - j - k);
-    *(verticesBeginIterator + 6) = (j - i - k);
-    *(verticesBeginIterator + 7) = (-i - j - k);
+    CalculateBoxVertices(i, j, k, glm::dvec3{}, verticesBeginIterator);
 }
 
 /**
@@ -781,7 +885,7 @@ void CalculateCrossProductForeach(SrcIt1 srcBegin1, SrcIt1 srcEnd1, SrcIt2 srcBe
 }
 
 /**
-* @brief Calculates a dot product for every element in the input range and writes it to the output container
+* @brief Calculates a dot product for every element in the input range with given vector and writes it to the output container
 * @tparam VectorType GLM vector type
 * @tparam InIterator forward iterator from the container of VectorType objects
 * @tparam OutIterator forward iterator from the container of double or float
@@ -808,7 +912,7 @@ void CalculateDotProductForeach(
  * @return distance between a point and line segment
  */
 double LineSegmentPointDistance(
-    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
+    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 point
 );
 
 /**
@@ -1049,18 +1153,18 @@ public:
      * @brief Adds vertex to the current convex hull if it's outside of it
      * @param vertex point outside of the convex hull
      */
-    void AddVertex(typename Vertices::iterator vertex)
+    bool AddVertex(typename Vertices::iterator vertex)
     {
         //Create stack of convex hull faces
-        std::list<typename Faces::iterator> faceStack;
+        std::list<typename Faces::iterator> faceIteratorStack;
         for (auto faceIt = m_faces.begin(); faceIt != m_faces.end(); ++faceIt)
         {
-            faceStack.push_back(faceIt);
+            faceIteratorStack.push_back(faceIt);
         }
 
         //Find initial visible face
-        typename Faces::iterator visibleFaceIterator = faceStack.end();
-        for (typename Faces::iterator face : faceStack)
+        typename Faces::iterator visibleFaceIterator = m_faces.end();
+        for (typename Faces::iterator face : faceIteratorStack)
         {
             if (face->GetHyperPlane().SignedDistance(*vertex) > 0)
             {
@@ -1070,11 +1174,14 @@ public:
         }
 
         //If the point is outside of the convex hull, add it
-        if (visibleFaceIterator != faceStack.end())
+        if (visibleFaceIterator != m_faces.end())
         {
             size_t const vertexIndex = std::distance(m_vertices.begin(), vertex);
-            AddVertex(faceStack, vertex, vertexIndex, visibleFaceIterator);
+            AddVertex(faceIteratorStack, vertex, vertexIndex, visibleFaceIterator);
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -1115,13 +1222,13 @@ private:
     > m_hedsFaceIteratorMap;
 
     void AddVertex(
-        std::list<typename Faces::iterator>& faceStack, 
-        typename Vertices::iterator extremalVertex, 
-        size_t extremalVertexIndex, 
+        std::list<typename Faces::iterator>& faceStack,
+        typename Vertices::iterator extremalVertex,
+        size_t extremalVertexIndex,
         typename Faces::iterator visibleFaceIterator
     )
     {
-        std::list<typename Vertices::iterator> markedVertexIterators;
+        std::list<typename Vertices::iterator> partitionMarkedVertexIterators;
         std::list<std::pair<size_t, size_t>> horizonRidges;
         std::list<typename Faces::iterator> visibleFaces;
         std::unordered_set<Face*> visibleFacesSet;
@@ -1132,7 +1239,7 @@ private:
             visibleFaces.push_back(visibleFaceIterator);
             visibleFacesSet.insert(&*visibleFaceIterator);
             std::vector<typename Vertices::iterator>& faceVertices = visibleFaceIterator->GetVertices();
-            markedVertexIterators.insert(markedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
+            partitionMarkedVertexIterators.insert(partitionMarkedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
             std::vector<typename Vertices::iterator>().swap(faceVertices);
         }
 
@@ -1159,7 +1266,7 @@ private:
                         visibleFacesSet.insert(&*adjFace);
 
                         std::vector<typename Vertices::iterator>& faceVertices = adjFace->GetVertices();
-                        markedVertexIterators.insert(markedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
+                        partitionMarkedVertexIterators.insert(partitionMarkedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
                         std::vector<typename Vertices::iterator>().swap(faceVertices);
                     }
                     //If face is not visible then find a ridge and save it
@@ -1197,7 +1304,7 @@ private:
         for (auto& ridge : horizonRidges)
         {
             faceStack.push_back(
-                MakeFace(ridge.first, ridge.second, extremalVertexIndex, markedVertexIterators)
+                MakeFace(ridge.first, ridge.second, extremalVertexIndex, partitionMarkedVertexIterators)
             );
         }
     }
@@ -1241,10 +1348,7 @@ private:
         m_faces.erase(faceIterator);
     }
 
-    /**
-    * @brief Calculates initial guess tetrahedron and performs initalization
-    */
-    void CalculateInitialGuess()
+    void CalculateInitialTetraHedron()
     {
         //Calculate covariance matrix and its eigenvectors
         m_mean = CalculateExpectedValue(m_vertices.begin(), m_vertices.end());
@@ -1316,6 +1420,31 @@ private:
         MakeFace(indices[0], indices[1], indices[3], markedVertexIterators);
         MakeFace(indices[0], indices[2], indices[3], markedVertexIterators);
         MakeFace(indices[1], indices[2], indices[3], markedVertexIterators);
+    }
+
+    /**
+    * @brief Calculates initial guess tetrahedron and performs initalization
+    */
+    void CalculateInitialGuess()
+    {
+        if (m_vertices.size() == 4)
+        {
+            m_mean = CalculateExpectedValue(m_vertices.begin(), m_vertices.end());
+            for (auto vertIt = m_vertices.begin(); vertIt != m_vertices.end(); ++vertIt)
+            {
+                m_convexHullVertices.push_back(vertIt);
+            }
+
+            std::list<typename Vertices::iterator> partitionMarkedVertices;
+            MakeFace(0, 1, 2, partitionMarkedVertices);
+            MakeFace(0, 1, 3, partitionMarkedVertices);
+            MakeFace(0, 2, 3, partitionMarkedVertices);
+            MakeFace(1, 2, 3, partitionMarkedVertices);
+        }
+        else
+        {
+            CalculateInitialTetraHedron();
+        }
     }
 
     /**

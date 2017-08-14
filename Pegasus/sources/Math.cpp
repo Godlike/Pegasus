@@ -103,12 +103,20 @@ bool HyperPlane::LineSegmentIntersection(
     return RayIntersection(lineNormal, lineStart, resultPoint);
 }
 
+glm::dvec3 HyperPlane::ClosestPoint(const glm::dvec3 &point) const
+{
+    glm::dvec3 const normal = glm::normalize(glm::cross(glm::cross(m_normal, point), m_normal));
+    glm::dvec3 const closestPoint = normal * (glm::dot(normal, point));
+
+    return closestPoint;
+}
+
 double LineSegmentPointDistance(
     glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
 )
 {
     return glm::length(glm::cross(lineEnd - lineStart, lineStart - point))
-        / glm::length(lineEnd - lineStart);
+            / glm::length(lineEnd - lineStart);
 }
 
 JacobiEigenvalue::JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold, uint32_t maxIterations)
@@ -384,8 +392,11 @@ void HalfEdgeDataStructure::IntializeHalfEdge(
 }
 
 double pegasus::math::LineSegmentPointDistance(
-    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
+    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 point
 )
 {
-    return 0.0;
+    point = point - lineStart;
+    glm::dvec3 const lineDirection = glm::normalize(lineEnd - lineStart);
+    glm::dvec3 const pointLineProjection = glm::dot(lineDirection, point) * lineDirection;
+    return glm::sqrt(glm::length2(point) - glm::length2(pointLineProjection));
 }
