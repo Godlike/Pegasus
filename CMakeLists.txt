@@ -31,3 +31,5 @@ add_subdirectory(Pegasus)
 if (${PEGASUS_BUILD_DEMOS})
     add_subdirectory(demo)
 endif()
+
+set(PEGASUS_PHYSICS_LIB ${PEGASUS_LIB} PARENT_SCOPE)
