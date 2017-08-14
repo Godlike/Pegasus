@@ -312,7 +312,7 @@ struct Cache<Box, Box> : CacheBase
     double penetration = 0;
 };
 
-/** Data structure to store ray factors for Ray, Sphere collisions */
+/** Data structure to store ray factors for Ray collisions */
 struct RayIntersectionFactors
 {
     double tMin;
@@ -320,7 +320,7 @@ struct RayIntersectionFactors
 };
 
 /**
-* @brief Calculates wether a ray and a sphere are intersecting
+* @brief Returns true if a ray and a sphere are intersecting
 * @param[in] raySphere vector from the ray to the sphere center
 * @param[in] sphereRadius radius of the sphere
 * @param[in] rayDirection normalized direction vector of the ray
@@ -351,12 +351,12 @@ struct AabbExtremalVertices
 };
 
 /**
-* @brief Calculates ray intersection factors for AABB, Ray collision
+* @brief Calculates ray intersection factors for AABB-Ray collision
 * @param[in] boxMinPoint min point of AABB
 * @param[in] boxMaxPoint max point of AABB
 * @param[in] rayDirection normalized direction vector
 * @param[in] rayOrigin ray origin
-* @return in and out point factors
+* @return ray intersection factors
 */
 RayIntersectionFactors CalculateRayAabbIntersectionFactors(
     glm::dvec3 const& boxMinPoint, glm::dvec3 const& boxMaxPoint, 
@@ -375,7 +375,7 @@ AabbExtremalVertices MakeExtremalVerticesAabb(
 );
 
 /**
- * @brief Calculates wether a ray and an aabb are intersecting
+ * @brief Returns true if a ray and an aabb are intersecting
  * @param[in] tMin min ray intersection factor
  * @param[in] tMax max ray intersection factor
  * @return @c true if there is intersection, @c false otherwise
@@ -719,7 +719,7 @@ inline bool CalculateIntersection<Plane, Box>(SimpleShape const* a, SimpleShape 
 
     double const planeDistance = glm::dot(plane->centerOfMass, plane->normal);
     std::transform(boxVertices.begin(), boxVertices.end(), cache->boxPenetrations.begin(),
-        [planeDistance, plane](glm::dvec3 const& p) -> double
+        [planeDistance, &plane](glm::dvec3 const& p) -> double
     {
         return planeDistance - glm::dot(p, plane->normal);
     });
@@ -736,7 +736,7 @@ inline glm::dvec3 CalculateContactNormal<Plane, Box>(SimpleShape const* a, Simpl
     auto plane = static_cast<Plane const*>(a);
 
     std::transform(cache->boxFaces.begin(), cache->boxFaces.end(), cache->boxFaceDistances.begin(),
-        [plane](glm::dvec3 const& v) -> double
+        [&plane](glm::dvec3 const& v) -> double
     {
         return glm::dot(v, plane->normal);
     });
@@ -866,7 +866,7 @@ inline bool CalculateIntersection<Sphere, Box>(SimpleShape const* a, SimpleShape
             double const axisNorm = glm::length(cache->boxAxes[i]);
 
             if (d > axisNorm)
-{
+            {
                 d = axisNorm;
             }
             else if (d < -axisNorm)

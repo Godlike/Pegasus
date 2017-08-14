@@ -36,7 +36,7 @@ public:
      *
      * Allows for the normal direction correction
      * using below the hyperplane point if one is specified.
-     * @param[in] normal normal plane vector
+     * @param[in] normal plane's normal vector of unit length
      * @param[in] point point on the plane
      * @param[in] below point below the plane, allows for the normal direction correction
      */
