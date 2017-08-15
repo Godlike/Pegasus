@@ -6,8 +6,10 @@
 #ifndef PEGASUS_MECHANICS_HPP
 #define PEGASUS_MECHANICS_HPP
 
-#include "pegasus/Geometry.hpp"
-#include "pegasus/Particle.hpp"
+#include <pegasus/Geometry.hpp>
+#include <pegasus/Particle.hpp>
+
+#include <pegasus/SharedMacros.hpp>
 
 #include <memory>
 
@@ -20,7 +22,7 @@ public:
     Particle & p;
     std::unique_ptr<geometry::SimpleShape> const s;
 
-    RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s);
+    PEGASUS_EXPORT RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s);
 };
 
 } // namespace pegasus

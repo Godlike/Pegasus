@@ -20,21 +20,21 @@ namespace pegasus
 class ParticleForceGenerator
 {
 public:
-    virtual ~ParticleForceGenerator()
+    PEGASUS_EXPORT virtual ~ParticleForceGenerator()
     {
     }
 
-    virtual void UpdateForce(Particle& p) = 0;
+    PEGASUS_EXPORT virtual void UpdateForce(Particle& p) = 0;
 };
 
 class ParticleForceRegistry
 {
 public:
-    void Add(Particle& p, ParticleForceGenerator& pfg);
-    void Remove(Particle& p);
-    void Remove(Particle& p, ParticleForceGenerator& pfg);
-    void Clear();
-    void UpdateForces();
+    PEGASUS_EXPORT void Add(Particle& p, ParticleForceGenerator& pfg);
+    PEGASUS_EXPORT void Remove(Particle& p);
+    PEGASUS_EXPORT void Remove(Particle& p, ParticleForceGenerator& pfg);
+    PEGASUS_EXPORT void Clear();
+    PEGASUS_EXPORT void UpdateForces();
 
 private:
     std::map<Particle*, std::set<ParticleForceGenerator*>> mRegistrations;
@@ -43,8 +43,8 @@ private:
 class ParticleGravity : public ParticleForceGenerator
 {
 public:
-    explicit ParticleGravity(glm::dvec3 const& g);
-    void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT explicit ParticleGravity(glm::dvec3 const& g);
+    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
 
 private:
     glm::dvec3 const m_gravity;
@@ -53,8 +53,8 @@ private:
 class ParticleDrag : public ParticleForceGenerator
 {
 public:
-    ParticleDrag(double k1, double k2);
-    void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT ParticleDrag(double k1, double k2);
+    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
 
 private:
     double const m_k1;
@@ -64,8 +64,8 @@ private:
 class ParticleSpring : public ParticleForceGenerator
 {
 public:
-    ParticleSpring(Particle& other, double springConstant, double restLength);
-    void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT ParticleSpring(Particle& other, double springConstant, double restLength);
+    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
 
 private:
     Particle& m_other;
@@ -76,8 +76,8 @@ private:
 class ParticleAnchoredSpring : public ParticleForceGenerator
 {
 public:
-    ParticleAnchoredSpring(glm::dvec3 const& anchor, double springConstant, double restLength);
-    void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT ParticleAnchoredSpring(glm::dvec3 const& anchor, double springConstant, double restLength);
+    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
 
 private:
     glm::dvec3 const m_anchor;
@@ -88,8 +88,8 @@ private:
 class ParticleBungee : public ParticleForceGenerator
 {
 public:
-    ParticleBungee(Particle& other, double springConstant, double restLength);
-    void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT ParticleBungee(Particle& other, double springConstant, double restLength);
+    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
 
 private:
     Particle& m_other;
@@ -100,9 +100,9 @@ private:
 class ParticleBuoyancy : public ParticleForceGenerator
 {
 public:
-    ParticleBuoyancy(double maxDepth, double volume,
-                     double waterWight, double liquidDensity);
-    void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT ParticleBuoyancy(double maxDepth, double volume,
+        double waterWight, double liquidDensity);
+    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
 
 private:
     double const m_maxDepth;
@@ -114,9 +114,9 @@ private:
 class ParticleFakeSpring : public ParticleForceGenerator
 {
 public:
-    ParticleFakeSpring(glm::dvec3 const& anchor, double springConstant, double damping);
-    void UpdateForce(Particle& p, double duration) const;
-    void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT ParticleFakeSpring(glm::dvec3 const& anchor, double springConstant, double damping);
+    PEGASUS_EXPORT void UpdateForce(Particle& p, double duration) const;
+    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
 
 private:
     glm::dvec3 const m_anchor;

@@ -6,6 +6,8 @@
 #ifndef PEGASUS_MATH_HPP
 #define PEGASUS_MATH_HPP
 
+#include <pegasus/SharedMacros.hpp>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 #include <glm/glm.hpp>
@@ -41,7 +43,7 @@ public:
      * @param[in] point point on the plane
      * @param[in] below point below the plane, allows for the normal direction correction
      */
-    HyperPlane(glm::dvec3 const& normal,
+    PEGASUS_EXPORT HyperPlane(glm::dvec3 const& normal,
         glm::dvec3 const& point,
         glm::dvec3 const* below = nullptr
     );
@@ -57,7 +59,7 @@ public:
      * @param[in] c point on the plane
      * @param[in] below point below the plane, allows for the normal direction correction
      */
-    HyperPlane(glm::dvec3 const& a,
+    PEGASUS_EXPORT HyperPlane(glm::dvec3 const& a,
         glm::dvec3 const& b,
         glm::dvec3 const& c,
         glm::dvec3 const* below = nullptr
@@ -72,39 +74,39 @@ public:
      * @param[in] vertices points on the plane
      * @param[in] below point below the plane
      */
-    HyperPlane(
+    PEGASUS_EXPORT HyperPlane(
         glm::dmat3 const& vertices,
         glm::dvec3 const* below = nullptr
     );
 
     /** brief Returns point on the plane */
-    glm::dvec3 const& GetPoint() const;
+    PEGASUS_EXPORT glm::dvec3 const& GetPoint() const;
 
     /** Returns plane normal vector */
-    glm::dvec3 const& GetNormal() const;
+    PEGASUS_EXPORT glm::dvec3 const& GetNormal() const;
 
     /** Returns a distance from the plane to the origin */
-    double GetDistance() const;
+    PEGASUS_EXPORT double GetDistance() const;
 
     /** Sets the plane normal vector */
-    void SetNormal(glm::dvec3 const& normal);
+    PEGASUS_EXPORT void SetNormal(glm::dvec3 const& normal);
 
     /** Sets a point on the plane */
-    void SetPoint(glm::dvec3 const& point);
+    PEGASUS_EXPORT void SetPoint(glm::dvec3 const& point);
 
     /**
      * @brief Calculates absolute distance from the plane to a point
      * @param[in] point a point of interest
      * @return absolute distance from a point to the plane
      */
-    double Distance(glm::dvec3 const& point) const;
+    PEGASUS_EXPORT double Distance(glm::dvec3 const& point) const;
 
     /**
      * @brief Calculates signed distance from the plane to a point
      * @param[in] point a point of interest
      * @return signed distance from a point to the plane
      */
-    double SignedDistance(glm::dvec3 const& point) const;
+    PEGASUS_EXPORT double SignedDistance(glm::dvec3 const& point) const;
 
     /**
      * @brief Calculates whether a line segment and the plane are intersecting
@@ -113,7 +115,7 @@ public:
      * @param[out] resultPoint intersetion point
      * @return @c true if there is intersection point, @c false otherwise
      */
-    bool Intersection(
+    PEGASUS_EXPORT bool Intersection(
         glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3& resultPoint
     ) const;
 
@@ -406,31 +408,31 @@ public:
          * @brief Constructs a face from a given half-edge
          * @param[in] halfEdge face hald-edge
          */
-        explicit Face(HalfEdge& halfEdge);
+        PEGASUS_EXPORT explicit Face(HalfEdge& halfEdge);
 
         /**
          * @brief Returns half-edge iterator
          * @return half-edge iterator of current face
          */
-        edge_iterator GetHalfEdgeIterator();
+        PEGASUS_EXPORT edge_iterator GetHalfEdgeIterator();
 
         /**
         * @brief Returns half-edge const iterator
         * @return half-edge const iterator
         */
-        const_edge_iterator GetHalfEdgeIterator() const;
+        PEGASUS_EXPORT const_edge_iterator GetHalfEdgeIterator() const;
 
         /**
          * @brief Returns iterator of adjacent faces
          * @return adjacent face iterator
          */
-        face_iterator GetAdjacentFaceIterator();
+        PEGASUS_EXPORT face_iterator GetAdjacentFaceIterator();
 
         /**
         * @brief Returns iterator to const adjacent faces
         * @return adjacent face const iterator
         */
-        const_face_iterator GetAdjacentFaceIterator() const;
+        PEGASUS_EXPORT const_face_iterator GetAdjacentFaceIterator() const;
 
     private:
         HalfEdge* m_halfEdge;
@@ -449,14 +451,14 @@ public:
              * @param face key for the hash calculation
              * @return hash sum value
              */
-            size_t operator()(FaceVertices const& face) const;
+            PEGASUS_EXPORT size_t operator()(FaceVertices const& face) const;
         };
 
         uint64_t a;
         uint64_t b;
         uint64_t c;
 
-        bool operator==(FaceVertices const& other) const;
+        PEGASUS_EXPORT bool operator==(FaceVertices const& other) const;
     };
 
     /**
@@ -477,7 +479,7 @@ public:
      * @param[in] b vertex index
      * @param[in] c vertex index
      */
-    void MakeFace(uint64_t a, uint64_t b, uint64_t c);
+    PEGASUS_EXPORT void MakeFace(uint64_t a, uint64_t b, uint64_t c);
 
     /**
      * @brief Returns a face iterator
@@ -486,7 +488,7 @@ public:
      * @param[in] c vertex index
      * @return face iterator
      */
-    face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c);
+    PEGASUS_EXPORT face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c);
 
     /**
     * @brief Returns a const face iterator
@@ -495,13 +497,13 @@ public:
     * @param[in] c vertex index
     * @return face const iterator
     */
-    const_face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c) const;
+    PEGASUS_EXPORT const_face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c) const;
 
     /**
      * @brief Returns end face iterator
      * @return end face const iterator
      */
-    const_face_iterator GetFaceEnd() const;
+    PEGASUS_EXPORT const_face_iterator GetFaceEnd() const;
 
     /**
      * @brief Removes face from the current data structure
@@ -509,13 +511,13 @@ public:
      * @param[in] b vertex index
      * @param[in] c vertex index
      */
-    void RemoveFace(uint64_t a, uint64_t b, uint64_t c);
+    PEGASUS_EXPORT void RemoveFace(uint64_t a, uint64_t b, uint64_t c);
 
     /**
      * @brief Removes a face from the current data structure
      * @param[in] faceIterator iterator pointing to the element to be removed
      */
-    void RemoveFace(face_iterator faceIterator);
+    PEGASUS_EXPORT void RemoveFace(face_iterator faceIterator);
 
 private:
     /**
@@ -722,7 +724,7 @@ void FindExtremalVertices(
  * @param[in] point point of interest
  * @return distance between a point and line segment
  */
-double LineSegmentPointDistance(
+PEGASUS_EXPORT double LineSegmentPointDistance(
     glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
 );
 
@@ -738,7 +740,7 @@ public:
      * @param[in] coverageThreshold
      * @param[in] maxIterations
      */
-    explicit JacobiEigenvalue(
+    PEGASUS_EXPORT explicit JacobiEigenvalue(
         glm::dmat3 const& symmetricMatrix,
         double coverageThreshold = 1.0e-4,
         uint32_t maxIterations = 100
@@ -748,13 +750,13 @@ public:
      * @brief Returns eigenvectors
      * @return eigenvectos matrix
      */
-    glm::dmat3 const& GetEigenvectors() const;
+    PEGASUS_EXPORT glm::dmat3 const& GetEigenvectors() const;
 
     /**
      * @brief Returns eigenvalues
      * @return eigenvalue vector
      */
-    glm::dvec3 const& GetEigenvalues() const;
+    PEGASUS_EXPORT glm::dvec3 const& GetEigenvalues() const;
 
 private:
     glm::dmat3 const& m_symmetricMatrix;

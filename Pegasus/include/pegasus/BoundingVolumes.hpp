@@ -6,7 +6,9 @@
 #ifndef PEGASUS_BOUNDING_VOLUMES_HPP
 #define PEGASUS_BOUNDING_VOLUMES_HPP
 
-#include "pegasus/Geometry.hpp"
+#include <pegasus/Geometry.hpp>
+
+#include <pegasus/SharedMacros.hpp>
 
 #include <vector>
 #include <set>
@@ -25,19 +27,19 @@ using Faces    = std::vector<Face>;
 
 struct Shape
 {
-    Shape(volumes::Vertices const& vertices, volumes::Faces const& indices);
+    PEGASUS_EXPORT Shape(volumes::Vertices const& vertices, volumes::Faces const& indices);
 
     Vertices const& vertices;
     Faces const& indices;
 };
 
-glm::dvec3 CalculateMeanVertex(
+PEGASUS_EXPORT glm::dvec3 CalculateMeanVertex(
     volumes::Shape const& shape, volumes::Indices const& indices
 );
-glm::dmat3 CalculateCovarianceMatrix(
+PEGASUS_EXPORT glm::dmat3 CalculateCovarianceMatrix(
     volumes::Shape const& shape, volumes::Indices const& indices, glm::dvec3 const& mean
 );
-glm::dmat3 CalculateExtremalVertices(
+PEGASUS_EXPORT glm::dmat3 CalculateExtremalVertices(
     glm::dmat3 const& eigenVectors, volumes::Shape const& shape, volumes::Indices const& indices
 );
 
@@ -56,8 +58,8 @@ public:
         glm::dmat3 boxAxes;
     };
 
-    OrientedBoundingBox(Shape const& shape, Indices const& indices);
-    geometry::Box GetBox() const;
+    PEGASUS_EXPORT OrientedBoundingBox(Shape const& shape, Indices const& indices);
+    PEGASUS_EXPORT geometry::Box GetBox() const;
 
 private:
     geometry::Box m_boxShape;
@@ -86,8 +88,8 @@ public:
         glm::dvec3 zAxis;
     };
 
-    AxisAlignedBoundingBox(Shape const& shape, Indices const& indices);
-    geometry::Box GetBox() const;
+    PEGASUS_EXPORT AxisAlignedBoundingBox(Shape const& shape, Indices const& indices);
+    PEGASUS_EXPORT geometry::Box GetBox() const;
 
 private:
     geometry::Box m_boxShape;
@@ -115,8 +117,8 @@ public:
         glm::dmat3 eigenVectorsNormalized;
     };
 
-    BoundingSphere(Shape const& shape, Indices const& indices);
-    geometry::Sphere GetSphere() const;
+    PEGASUS_EXPORT BoundingSphere(Shape const& shape, Indices const& indices);
+    PEGASUS_EXPORT geometry::Sphere GetSphere() const;
 
 private:
     geometry::Sphere m_sphereShape;

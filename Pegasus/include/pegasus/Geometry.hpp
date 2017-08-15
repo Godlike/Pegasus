@@ -6,6 +6,8 @@
 #ifndef PEGASUS_GEOMETRY_HPP
 #define PEGASUS_GEOMETRY_HPP
 
+#include <pegasus/SharedMacros.hpp>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/optimum_pow.hpp>
@@ -29,11 +31,11 @@ namespace geometry
 class Shape
 {
 public:
-    explicit Shape(glm::dvec3 const& centerOfMass);
+    PEGASUS_EXPORT explicit Shape(glm::dvec3 const& centerOfMass);
 
-    void SetCenterOfMass(glm::dvec3 const& centerOfMass);
+    PEGASUS_EXPORT void SetCenterOfMass(glm::dvec3 const& centerOfMass);
 
-    glm::dvec3 const& GetCenterOfMass() const;
+    PEGASUS_EXPORT glm::dvec3 const& GetCenterOfMass() const;
 
 private:
     glm::dvec3 m_centerOfMass;
@@ -56,17 +58,17 @@ class SimpleShape : public Shape
 public:
     SimpleShapeType type;
 
-    SimpleShape(glm::dvec3 const& centerOfMass, SimpleShapeType type);
+    PEGASUS_EXPORT SimpleShape(glm::dvec3 const& centerOfMass, SimpleShapeType type);
 };
 
 class Plane : public SimpleShape
 {
 public:
-    Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
+    PEGASUS_EXPORT Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
 
-    void SetNormal(glm::dvec3 const& normal);
+    PEGASUS_EXPORT void SetNormal(glm::dvec3 const& normal);
 
-    glm::dvec3 const& GetNormal() const;
+    PEGASUS_EXPORT glm::dvec3 const& GetNormal() const;
 
 private:
     glm::dvec3 m_normal;
@@ -75,13 +77,13 @@ private:
 class Triangle : public SimpleShape
 {
 public:
-    Triangle(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
+    PEGASUS_EXPORT Triangle(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
 
-    void SetAxes(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
+    PEGASUS_EXPORT void SetAxes(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
 
-    void GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c) const;
+    PEGASUS_EXPORT void GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c) const;
 
-    glm::dvec3 const& GetNormal() const;
+    PEGASUS_EXPORT glm::dvec3 const& GetNormal() const;
 
 private:
     glm::dvec3 m_aVertex;
@@ -95,11 +97,11 @@ private:
 class Sphere : public SimpleShape
 {
 public:
-    Sphere(glm::dvec3 const& centerOfMass, double r);
+    PEGASUS_EXPORT Sphere(glm::dvec3 const& centerOfMass, double r);
 
-    void SetRadius(double r);
+    PEGASUS_EXPORT void SetRadius(double r);
 
-    double GetRadius() const;
+    PEGASUS_EXPORT double GetRadius() const;
 
 private:
     double m_radius;
@@ -108,15 +110,15 @@ private:
 class Cone : public SimpleShape
 {
 public:
-    Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r);
+    PEGASUS_EXPORT Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r);
 
-    void SetAppex(glm::dvec3 const& a);
+    PEGASUS_EXPORT void SetAppex(glm::dvec3 const& a);
 
-    glm::dvec3 const& GetAppex() const;
+    PEGASUS_EXPORT glm::dvec3 const& GetAppex() const;
 
-    void SetRadius(double r);
+    PEGASUS_EXPORT void SetRadius(double r);
 
-    double GetRadius() const;
+    PEGASUS_EXPORT double GetRadius() const;
 
 private:
     glm::dvec3 m_appex;
@@ -126,15 +128,15 @@ private:
 class Capsule : public SimpleShape
 {
 public:
-    Capsule(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
+    PEGASUS_EXPORT Capsule(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
 
-    void SetHalfHeight(glm::dvec3 const& halfHeight);
+    PEGASUS_EXPORT void SetHalfHeight(glm::dvec3 const& halfHeight);
 
-    glm::dvec3 const& GetHalfHeight() const;
+    PEGASUS_EXPORT glm::dvec3 const& GetHalfHeight() const;
 
-    void SetRadius(double r);
+    PEGASUS_EXPORT void SetRadius(double r);
 
-    double GetRadius() const;
+    PEGASUS_EXPORT double GetRadius() const;
 
 private:
     glm::dvec3 m_halfHeight;
@@ -144,17 +146,17 @@ private:
 class Cylinder : public Capsule
 {
 public:
-    Cylinder(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
+    PEGASUS_EXPORT Cylinder(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
 };
 
 class Box : public SimpleShape
 {
 public:
-    Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
+    PEGASUS_EXPORT Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
 
-    void SetAxes(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
+    PEGASUS_EXPORT void SetAxes(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
 
-    void GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c) const;
+    PEGASUS_EXPORT void GetAxes(glm::dvec3& a, glm::dvec3& b, glm::dvec3& c) const;
 
 private:
     glm::dvec3 m_aAxis;
@@ -820,7 +822,7 @@ using ShapeTypePair = std::pair<SimpleShapeType, SimpleShapeType>;
 
 struct ShapeTypePairHash
 {
-    size_t operator()(ShapeTypePair const& p) const;
+    PEGASUS_EXPORT size_t operator()(ShapeTypePair const& p) const;
 };
 
 class IntersectionQuery
