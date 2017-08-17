@@ -3,10 +3,11 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "demo/Application.hpp"
-#include "demo/OglHeaders.hpp"
-#include "demo/Timing.hpp"
-#include "demo/Bunny.hpp"
+#include <cstdlib>
+#include <cmath>
+#include <list>
+#include <random>
+
 #include "Pegasus/include/Particle.hpp"
 #include "Pegasus/include/Geometry.hpp"
 #include "Pegasus/include/Mechanics.hpp"
@@ -15,15 +16,10 @@
 #include "Pegasus/include/ParticleWorld.hpp"
 #include "Pegasus/include/BoundingVolumes.hpp"
 #include "Pegasus/include/Math.hpp"
-
-#include <glm/ext.hpp>
-
-#include <cassert>
-#include <cmath>
-#include <cstdlib>
-#include <sstream>
-#include <list>
-#include <random>
+#include "demo/Application.hpp"
+#include "demo/OglHeaders.hpp"
+#include "demo/Timing.hpp"
+#include "demo/Bunny.hpp"
 
 static const uint32_t BOX_COUNT = static_cast<uint32_t>(std::pow(3, 3));
 static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
@@ -84,6 +80,15 @@ private:
     ConvexHull::Faces cvFaces;
     std::list<ConvexHull::Vertices::iterator> cvVertices;
 
+    std::array<bool, 4> m_overlap;
+    std::array<glm::dvec3, 4> m_contactNormal;
+    std::array<double, 4> m_penetration;
+    std::array<pegasus::geometry::Ray, 4> m_rays;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Plane> m_rayPlaneCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Sphere> m_raySphereCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayObbCache;
+    pegasus::geometry::intersection::Cache<pegasus::geometry::Ray, pegasus::geometry::Box> m_rayAabbCache;
+
     pegasus::geometry::volumes::Vertices vertices;
     pegasus::geometry::volumes::Faces faces;
     pegasus::geometry::volumes::Indices indices;
@@ -99,6 +104,8 @@ private:
     void AddBoundingVolumes();
 
     void SceneReset();
+
+    void DrawWiredBox(std::array<glm::dvec3, 8> const& boxVertices) const;
 };
 
 // Method definitions
@@ -107,7 +114,7 @@ FallingDemo::FallingDemo()
     , xAxis(0)
     , yAxis(0)
     , zAxis(0)
-    , zoom(4)
+    , zoom(0.5)
     , yEye(0)
     , yRotationAngle(0)
     , activeObject(m_rigidBodies.begin())
@@ -186,12 +193,6 @@ void FallingDemo::AddBoundingVolumes()
     for (size_t i = 0; i < faces.size(); ++i)
         indices.insert(i);
 
-    //CV
-    cv = std::make_unique<ConvexHull>(vertices);
-    cv->Calculate();
-    cvVertices = cv->GetVertices();
-    cvFaces = cv->GetFaces();
-
     //OBB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
     {
@@ -199,9 +200,14 @@ void FallingDemo::AddBoundingVolumes()
     });
     orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
     auto obb = orientedBoundingBox->GetBox();
-    glm::dmat3 obbAxes;
-    obb.GetAxes(obbAxes[0], obbAxes[1], obbAxes[2]);
-    AddBox(obb.GetCenterOfMass(), obbAxes[0], obbAxes[1], obbAxes[2]);
+    glm::dmat3 obbAxes{ obb.iAxis, obb.jAxis, obb.kAxis };
+    AddBox(obb.centerOfMass, obbAxes[0], obbAxes[1], obbAxes[2]);
+
+    //CV
+    cv = std::make_unique<ConvexHull>(vertices);
+    cv->Calculate();
+    cvVertices = cv->GetVertices();
+    cvFaces = cv->GetFaces();
 
     //AABB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
@@ -210,9 +216,8 @@ void FallingDemo::AddBoundingVolumes()
     });
     axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
     auto aabb = axisAlignedBoundingBox->GetBox();
-    glm::dmat3 aabbAxes;
-    aabb.GetAxes(aabbAxes[0], aabbAxes[1], aabbAxes[2]);
-    AddBox(aabb.GetCenterOfMass(), aabbAxes[0], aabbAxes[1], aabbAxes[2]);
+    glm::dmat3 aabbAxes{ aabb.iAxis, aabb.jAxis, aabb.kAxis };
+    AddBox(aabb.centerOfMass, aabbAxes[0], aabbAxes[1], aabbAxes[2]);
 
     //BS
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
@@ -221,26 +226,31 @@ void FallingDemo::AddBoundingVolumes()
     });
     boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
     auto sphere = boundingSphere->GetSphere();
+    AddSphere(sphere.centerOfMass, sphere.radius);
+    std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
+    {
+        v -= boundingSphereTranslate;
+    });
 
-    Shape bunnyShape {vertices, faces};
+    m_rays = {
+        pegasus::geometry::Ray{ sphere.centerOfMass + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0}) },
+        pegasus::geometry::Ray{ aabb.centerOfMass + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0 }) },
+        pegasus::geometry::Ray{ obb.centerOfMass + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0 }) },
+    };
 
-    hierarchy::BoundingVolumeHierarchy<obb::OrientedBoundingBox> bvhObb(bunnyShape, indices);
-    auto obbLowerChild = bvhObb.getLowerChild()->getVolume().GetBox();
-    auto obbUpperChild = bvhObb.getUpperChild()->getVolume().GetBox();
-    glm::dmat3 obbLowerAxes, obbUpperAxes;
-    obbLowerChild.GetAxes(obbLowerAxes[0], obbLowerAxes[1], obbLowerAxes[2]);
-    obbUpperChild.GetAxes(obbUpperAxes[0], obbUpperAxes[1], obbUpperAxes[2]);
-    AddBox(obbLowerChild.getCenterOfMass(), obbLowerAxes[0], obbLowerAxes[1], obbLowerAxes[2]);
-    AddBox(obbUpperChild.getCenterOfMass(), obbUpperAxes[0], obbUpperAxes[1], obbUpperAxes[2]);
+    using namespace pegasus::geometry::intersection;
+    
+    m_overlap[0] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
+    m_contactNormal[0] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
+    m_penetration[0] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
 
-//    hierarchy::BoundingVolumeHierarchy<aabb::AxisAlignedBoundingBox> bvhAabb(bunnyShape, indices);
-//    auto aabbLowerChild = bvhAabb.lowerChild->m_volume.GetBox();
-//    auto aabbUpperChild = bvhAabb.upperChild->m_volume.GetBox();
-//    glm::dmat3 aabbLowerAxes, aabbUpperAxes;
-//    aabbLowerChild.GetAxes(aabbLowerAxes[0], aabbLowerAxes[1], aabbLowerAxes[2]);
-//    aabbUpperChild.GetAxes(aabbUpperAxes[0], aabbUpperAxes[1], aabbUpperAxes[2]);
-//    AddBox(aabbLowerChild.getCenterOfMass(), aabbLowerAxes[0], aabbLowerAxes[1], aabbLowerAxes[2]);
-//    AddBox(aabbUpperChild.getCenterOfMass(), aabbUpperAxes[0], aabbUpperAxes[1], aabbUpperAxes[2]);
+    m_overlap[1] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
+    m_contactNormal[1] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
+    m_penetration[1] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[1], &aabb, &m_rayAabbCache);
+
+    m_overlap[2] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
+    m_contactNormal[2] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
+    m_penetration[2] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Box>(&m_rays[2], &obb, &m_rayObbCache);
 }
 
 void FallingDemo::SceneReset()
@@ -341,16 +351,135 @@ void FallingDemo::SceneReset()
     std::advance(activeObject, -3);
 }
 
+void FallingDemo::DrawWiredBox(std::array<glm::dvec3, 8> const& boxVertices) const
+{
+    glBegin(GL_LINES);
+    glVertex3dv(glm::value_ptr(boxVertices[0]));
+    glVertex3dv(glm::value_ptr(boxVertices[1]));
+    glVertex3dv(glm::value_ptr(boxVertices[1]));
+    glVertex3dv(glm::value_ptr(boxVertices[3]));
+    glVertex3dv(glm::value_ptr(boxVertices[3]));
+    glVertex3dv(glm::value_ptr(boxVertices[2]));
+    glVertex3dv(glm::value_ptr(boxVertices[2]));
+    glVertex3dv(glm::value_ptr(boxVertices[0]));
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3dv(glm::value_ptr(boxVertices[4]));
+    glVertex3dv(glm::value_ptr(boxVertices[5]));
+    glVertex3dv(glm::value_ptr(boxVertices[5]));
+    glVertex3dv(glm::value_ptr(boxVertices[7]));
+    glVertex3dv(glm::value_ptr(boxVertices[7]));
+    glVertex3dv(glm::value_ptr(boxVertices[6]));
+    glVertex3dv(glm::value_ptr(boxVertices[6]));
+    glVertex3dv(glm::value_ptr(boxVertices[4]));
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3dv(glm::value_ptr(boxVertices[0]));
+    glVertex3dv(glm::value_ptr(boxVertices[1]));
+    glVertex3dv(glm::value_ptr(boxVertices[1]));
+    glVertex3dv(glm::value_ptr(boxVertices[5]));
+    glVertex3dv(glm::value_ptr(boxVertices[5]));
+    glVertex3dv(glm::value_ptr(boxVertices[4]));
+    glVertex3dv(glm::value_ptr(boxVertices[4]));
+    glVertex3dv(glm::value_ptr(boxVertices[0]));
+    glEnd();
+    glBegin(GL_LINES);
+    glVertex3dv(glm::value_ptr(boxVertices[2]));
+    glVertex3dv(glm::value_ptr(boxVertices[3]));
+    glVertex3dv(glm::value_ptr(boxVertices[3]));
+    glVertex3dv(glm::value_ptr(boxVertices[7]));
+    glVertex3dv(glm::value_ptr(boxVertices[7]));
+    glVertex3dv(glm::value_ptr(boxVertices[6]));
+    glVertex3dv(glm::value_ptr(boxVertices[6]));
+    glVertex3dv(glm::value_ptr(boxVertices[2]));
+    glEnd();
+}
+
 void FallingDemo::Display()
 {
-    // Clear the view port and set the camera direction
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(255 / 255.0, 127 / 255.0, 80 / 255.0, 1.0);
     glLoadIdentity();
 
     auto const& pos = activeObject->p.GetPosition();
-    gluLookAt(pos.x * zoom, pos.y + 30 * zoom + yEye, pos.z + 30 * zoom, pos.x, pos.y, pos.z, 0.0, 1.0, 0.0);
+
+    glm::dvec3 from{ pos.x, (pos.y + 30 + yEye), (pos.z + 30) };
+    glm::dvec3 to{ pos.x, pos.y, pos.z };
+    glm::dvec3 viewVec = from - to;
+    viewVec *= zoom;
+    from = viewVec + to;
+
+    gluLookAt(from.x, from.y, from.z, to.x, to.y, to.z, 0.0, 1.0, 0.0);
     glPointSize(5);
+
+    //Draw rays
+    for (uint32_t i = 0; i < 3; ++i)
+    {
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+
+        //Original ray
+        {
+            if (m_overlap[i]) {
+                glColor3f(1.0, 0.0, 0.0);
+            }
+            else {
+                glColor3d(0.0, 1.0, 0.0);
+            }
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(m_rays[i].centerOfMass));
+            glm::dvec3 rayEnd = m_rays[i].centerOfMass;
+            rayEnd += m_rays[i].direction * 2.5;
+            glVertex3dv(glm::value_ptr(rayEnd));
+            glEnd();
+        }
+
+        glPopMatrix();
+    }
+
+    {
+        glPushMatrix();
+        glRotated(yRotationAngle, 0, 1, 0);
+        glColor3d(0.0, 1.0, 0.0);
+
+        //Sphere intersection points
+        {
+            glBegin(GL_POINTS);
+            glVertex3dv(glm::value_ptr(m_raySphereCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_raySphereCache.outPoint));
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(m_raySphereCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_raySphereCache.inPoint + m_raySphereCache.sphereContactNormal));
+            glEnd();
+        }
+
+        //Aabb intersection points
+        {
+            glBegin(GL_POINTS);
+            glVertex3dv(glm::value_ptr(m_rayAabbCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_rayAabbCache.outPoint));
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(m_rayAabbCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_rayAabbCache.inPoint + m_rayAabbCache.boxContactNormal));
+            glEnd();
+        }
+
+        //Obb intersection points
+        {
+            glBegin(GL_POINTS);
+            glVertex3dv(glm::value_ptr(m_rayObbCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_rayObbCache.outPoint));
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3dv(glm::value_ptr(m_rayObbCache.inPoint));
+            glVertex3dv(glm::value_ptr(m_rayObbCache.inPoint + m_rayObbCache.boxContactNormal));
+            glEnd();
+        }
+
+        glPopMatrix();
+    }
 
     if (DRAW_CONVEX)
     {
@@ -443,12 +572,12 @@ void FallingDemo::Display()
         double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
         double blue = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
 
-        if (s == pegasus::geometry::SimpleShapeType::PLANE)
+        if (s == pegasus::geometry::SimpleShape::Type::PLANE)
         {
             double const planeSideLength = 100;
 
-            glm::dvec3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetCenterOfMass();
-            glm::dvec3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->GetNormal();
+            glm::dvec3 p0 = static_cast<pegasus::geometry::Plane*>(body.s.get())->centerOfMass;
+            glm::dvec3 const planeNormal = static_cast<pegasus::geometry::Plane*>(body.s.get())->normal;
             glm::dvec3 const posNormalProjection = planeNormal * glm::dot(p0, planeNormal);
             glm::dvec3 p1 = p0 + (posNormalProjection - p0) * 2.0;
 
@@ -483,10 +612,10 @@ void FallingDemo::Display()
             }
             glEnd();
         }
-        else if (s == pegasus::geometry::SimpleShapeType::SPHERE)
+        else if (s == pegasus::geometry::SimpleShape::Type::SPHERE)
         {
             pegasus::geometry::Sphere* sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
-            double const r = sphere->GetRadius();
+            double const r = sphere->radius;
             glTranslatef(p.x, p.y, p.z);
 
             if (&*activeObject != &body)
@@ -509,11 +638,12 @@ void FallingDemo::Display()
             }
             glutWireSphere(r + 0.001, 20, 20);
         }
-        else if (s == pegasus::geometry::SimpleShapeType::BOX)
+        else if (s == pegasus::geometry::SimpleShape::Type::BOX)
         {
             pegasus::geometry::Box* box = static_cast<pegasus::geometry::Box*>(body.s.get());
-            std::array<glm::dvec3, 3> boxAxes;
-            box->GetAxes(boxAxes[0], boxAxes[1], boxAxes[2]);
+            std::array<glm::dvec3, 3> boxAxes = {
+                box->iAxis, box->jAxis, box->kAxis
+            };
 
             glTranslatef(p.x, p.y, p.z);
             glm::dvec3 const& i = boxAxes[0];
@@ -578,46 +708,7 @@ void FallingDemo::Display()
             {
                 glColor3f(1.0f, 0.0, 0.0);
             }
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[1]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[5]));
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glVertex3dv(glm::value_ptr(boxVertices[4]));
-            glVertex3dv(glm::value_ptr(boxVertices[0]));
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[3]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[7]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[6]));
-            glVertex3dv(glm::value_ptr(boxVertices[2]));
-            glEnd();
+            DrawWiredBox(boxVertices);
         }
         glPopMatrix();
     }
@@ -640,7 +731,7 @@ void FallingDemo::Update()
 
     for (auto const& body : m_rigidBodies)
     {
-        body.s->SetCenterOfMass(body.p.GetPosition());
+        body.s->centerOfMass = body.p.GetPosition();
     }
 
     Application::Update();

@@ -8,7 +8,8 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
-#include <cmath>
+
+#include <functional>
 
 using namespace pegasus;
 using namespace geometry;
@@ -265,8 +266,8 @@ geometry::Sphere sphere::BoundingSphere::RefineSphere(
     geometry::Sphere const& sphere, volumes::Shape const& shape, volumes::Indices const& indices
 )
 {
-    double sphereRadius = sphere.GetRadius();
-    glm::dvec3 sphereCenter = sphere.GetCenterOfMass();
+    double sphereRadius = sphere.radius;
+    glm::dvec3 sphereCenter = sphere.centerOfMass;
 
     //Find point outside of the sphere and resize sphere
     for (auto faceIndex : indices)
