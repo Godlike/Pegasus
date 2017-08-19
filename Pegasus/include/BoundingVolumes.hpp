@@ -14,8 +14,9 @@
 #include <algorithm>
 #include <random>
 #include <unordered_map>
-#include <iostream>
 #include <glm/ext.hpp>
+#include <queue>
+#include <stack>
 
 namespace pegasus
 {
@@ -142,80 +143,76 @@ private:
 namespace hierarchy
 {
 
-
+struct SplitIndices
+{
+    Indices lowerIndices;
+    Indices upperIndices;
+};
 
 template <typename BoundingVolume>
 class BoundingVolumeHierarchy
 {
 public:
-    BoundingVolumeHierarchy(Shape const& shape, Indices const& indices)
-        : m_shape(shape)
-        , m_indices(indices)
-        , m_volume(BoundingVolume(shape, indices))
+    class Node
     {
-        if (indices.size() <= MAX_NODE_SIZE)
+    public:
+        BoundingVolume const volume;
+
+        Node(Node const&) = delete;
+        Node(Node &&) = delete;
+        Node & operator=(Node const&) = delete;
+        Node & operator=(Node &&) = delete;
+
+        std::unique_ptr<Node> const& GetLowerChild() const
         {
-            return;
+            return lowerChild;
         }
 
-        Vertices shapeVertices = GetShapeVertices();
-        glm::dvec3 maxDistanceVector = GetMaximumDistanceDirectionApprox(shapeVertices);
-        glm::dvec3 min = GetMinVectorAlongDirection(maxDistanceVector, shapeVertices);
-        math::Plane minPlane(min, maxDistanceVector);
+        std::unique_ptr<Node> const& GetUpperChild() const
+        {
+            return upperChild;
+        }
 
-        CentroidsMap centroids = GetFacesCentroids();
-        Indices lowerIndices, upperIndices;
-        std::tie(lowerIndices, upperIndices) = GetPartitionIndices(minPlane, centroids);
+        ~Node() = default;
 
-        std::cout << lowerIndices.size() << " " << upperIndices.size() << "\n";
+    private:
+        mutable std::unique_ptr<Node> lowerChild;
+        mutable std::unique_ptr<Node> upperChild;
 
-        lowerChild = std::make_unique<BoundingVolumeHierarchy<BoundingVolume>>(m_shape, lowerIndices);
-        upperChild = std::make_unique<BoundingVolumeHierarchy<BoundingVolume>>(m_shape, upperIndices);
-    }
+        explicit Node(BoundingVolume && volume)
+            : volume(volume)
+            , lowerChild(nullptr)
+            , upperChild(nullptr)
+        {}
 
-    std::unique_ptr<BoundingVolumeHierarchy> const& getLowerChild() const
-    {
-        return lowerChild;
-    }
-
-    std::unique_ptr<BoundingVolumeHierarchy> const& getUpperChild() const
-    {
-        return upperChild;
-    }
-
-    BoundingVolume const getVolume() const
-    {
-        return m_volume;
-    }
+        friend class BoundingVolumeHierarchy;
+    };
 
 private:
     using CentroidsMap = std::unordered_map<std::size_t, glm::dvec3>;
+    using NodePtr = std::unique_ptr<Node>;
 
     std::size_t static const MAX_NODE_SIZE = 5;
 
-    Shape const& m_shape;
-    Indices const& m_indices;
-    BoundingVolume const m_volume;
+    Shape const& shape;
+    NodePtr root;
 
-    std::unique_ptr<BoundingVolumeHierarchy<BoundingVolume>> lowerChild;
-    std::unique_ptr<BoundingVolumeHierarchy<BoundingVolume>> upperChild;
-
-    Vertices GetShapeVertices()
+    Vertices GetShapeVertices(Indices const& indices) const
     {
         Vertices result;
-        result.reserve(3 * m_indices.size());
-        for (std::size_t i : m_indices)
+        result.reserve(3 * indices.size());
+        for (std::size_t i : indices)
         {
             result.insert(result.end(), {
-                m_shape.vertices[m_shape.faces[i][0]],
-                m_shape.vertices[m_shape.faces[i][1]],
-                m_shape.vertices[m_shape.faces[i][2]]
+                shape.vertices[shape.faces[i][0]],
+                shape.vertices[shape.faces[i][1]],
+                shape.vertices[shape.faces[i][2]]
             });
         }
         return result;
     }
 
-    glm::dvec3 GetMaximumDistanceDirectionApprox(Vertices const& vertices)
+    glm::dvec3 GetMaximumDistanceDirectionApprox(Vertices const& vertices) const
     {
         glm::dvec3
             xMin(vertices[0]), yMin(vertices[0]), zMin(vertices[0]),
@@ -251,7 +248,7 @@ private:
         return glm::normalize(max - min);
     }
 
-    glm::dvec3 GetMinVectorAlongDirection(glm::dvec3 maxDistanceVector, Vertices vertices)
+    glm::dvec3 GetMinVectorAlongDirection(glm::dvec3 maxDistanceVector, Vertices const& vertices) const
     {
         return *std::min_element(
             vertices.begin(),
@@ -262,36 +259,37 @@ private:
             });
     }
 
-    CentroidsMap GetFacesCentroids()
+    CentroidsMap GetFacesCentroids(Indices const& indices) const
     {
         CentroidsMap centroids;
-        for (std::size_t index : m_indices)
+        for (std::size_t index : indices)
         {
-            Face const& currFace = m_shape.faces[index];
+            Face const& currFace = shape.faces[index];
             centroids[index] = pegasus::math::CalculateCentroid(
                 {
-                    m_shape.vertices[currFace[0]],
-                    m_shape.vertices[currFace[1]],
-                    m_shape.vertices[currFace[2]]
+                    shape.vertices[currFace[0]],
+                    shape.vertices[currFace[1]],
+                    shape.vertices[currFace[2]]
                 }
             );
         }
         return centroids;
     }
 
-    std::pair<Indices, Indices> GetPartitionIndices(math::Plane const& minPlane, CentroidsMap const& centroids)
+    SplitIndices GetPartitionIndices(
+        math::HyperPlane const& minPlane,
+        CentroidsMap const& centroids) const
     {
         std::vector<std::size_t> indicesArr;
         std::unordered_map<std::size_t, double> distances;
         indicesArr.reserve(centroids.size());
         for (auto const& keyValuePair : centroids)
         {
-            std::size_t index;
-            glm::dvec3 centroid;
-            std::tie(index, centroid) = keyValuePair;
+            std::size_t index = keyValuePair.first;
+            glm::dvec3 const& centroid = keyValuePair.second;
 
             indicesArr.push_back(index);
-            distances[index] = minPlane.DistanceToPoint(centroid);
+            distances[index] = minPlane.Distance(centroid);
         }
 
         std::size_t middleIndex = indicesArr.size() / 2;
@@ -330,9 +328,85 @@ private:
             }
         }
 
-        Indices lowerIndices(indicesArr.begin(), indicesArr.begin() + middleIndex);
-        Indices upperIndices(indicesArr.begin() + middleIndex, indicesArr.end());
-        return std::make_pair(std::move(lowerIndices), std::move(upperIndices));
+        return {
+            Indices(indicesArr.begin(), indicesArr.begin() + middleIndex),
+            Indices(indicesArr.begin() + middleIndex, indicesArr.end())
+        };
+    }
+
+public:
+
+    BoundingVolumeHierarchy(Shape const& shape, Indices const& indices)
+        : shape(shape)
+        , root(new Node(BoundingVolume(shape, indices)))
+    {
+        std::queue<Node*> nodeQueue;
+        std::queue<Indices> indicesQueue;
+        nodeQueue.push(root.get());
+        indicesQueue.push(indices);
+
+        while (!nodeQueue.empty())
+        {
+            Node* currNode = nodeQueue.front();
+            Indices currIndices = std::move(indicesQueue.front());
+            nodeQueue.pop();
+            indicesQueue.pop();
+
+            BoundingVolume currVolume = currNode->volume;
+
+            if (currIndices.size() < MAX_NODE_SIZE)
+            {
+                currNode->lowerChild.reset();
+                currNode->upperChild.reset();
+                continue;
+            }
+
+            Vertices currVertices = GetShapeVertices(currIndices);
+            glm::dvec3 maxDistanceVector = GetMaximumDistanceDirectionApprox(currVertices);
+            glm::dvec3 min = GetMinVectorAlongDirection(maxDistanceVector, currVertices);
+            math::HyperPlane minPlane(maxDistanceVector, min);
+
+            CentroidsMap centroids = GetFacesCentroids(currIndices);
+            SplitIndices splitIndices = GetPartitionIndices(minPlane, centroids);
+
+            BoundingVolume lowerVolume(shape, splitIndices.lowerIndices);
+            BoundingVolume upperVolume(shape, splitIndices.upperIndices);
+
+            currNode->lowerChild = NodePtr(new Node(std::move(lowerVolume)));
+            currNode->upperChild = NodePtr(new Node(std::move(upperVolume)));
+
+            nodeQueue.push(currNode->lowerChild.get());
+            indicesQueue.push(std::move(splitIndices.lowerIndices));
+            nodeQueue.push(currNode->upperChild.get());
+            indicesQueue.push(std::move(splitIndices.upperIndices));
+        }
+    }
+
+    ~BoundingVolumeHierarchy()
+    {
+        std::stack<NodePtr> nodeStack;
+        nodeStack.push(NodePtr(root.release()));
+
+        while (!nodeStack.empty())
+        {
+            NodePtr & currNode = nodeStack.top();
+            if (currNode->lowerChild.get() != nullptr)
+            {
+                nodeStack.push(NodePtr(currNode->lowerChild.release()));
+                continue;
+            }
+            if (currNode->upperChild.get() != nullptr)
+            {
+                nodeStack.push(NodePtr(currNode->upperChild.release()));
+                continue;
+            }
+            nodeStack.pop();
+        }
+    }
+
+    NodePtr const& GetRoot() const
+    {
+        return root;
     }
 };
 } // namespace hierarchy
