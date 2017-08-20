@@ -171,7 +171,6 @@ public:
 
 namespace intersection
 {
-
 /** Data structure to store ray factors for Ray collisions */
 struct RayIntersectionFactors
 {
@@ -283,7 +282,7 @@ inline bool IsTriangleContainsPoint(
     glm::dvec3 const& point
 )
 {
-    double const distance = math::HyperPlane{ triangleVertex1, triangleVertex2, triangleVertex3 }.Distance(point);
+    double const distance = math::HyperPlane{triangleVertex1, triangleVertex2, triangleVertex3}.Distance(point);
     if (!math::fp::IsNull(distance))
     {
         return false;
@@ -296,7 +295,6 @@ inline bool IsTriangleContainsPoint(
 
 namespace cso
 {
-
 /**
 * @brief Calculates farthest vertex on the surface of the sphere in the given direction
 * @param[in] sphere shape object
@@ -324,12 +322,10 @@ glm::dvec3 Support(Box const& box, glm::dvec3 direction);
 * @return farthes point on the surface of CSO
 */
 glm::dvec3 Support(Box const& box1, Box const& box2, glm::dvec3 direction);
-
 } // namespace cso
 
 namespace gjk
 {
-
 /**
 * @brief Simplex data container
 */
@@ -377,7 +373,7 @@ NearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t si
 * @param[in] direction initial search direction vector of unit length
 * @return @c true if there is intersection, @c false otherwise
 */
-template < typename ShapeA, typename ShapeB >
+template <typename ShapeA, typename ShapeB>
 bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
 {
     while (true)
@@ -402,7 +398,6 @@ bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bSha
         NearestSimplexData const data = NearestSimplex(simplex.vertices, simplex.size);
         direction = glm::normalize(data.direction);
         simplex.size = data.simplexSize;
-        assert(!std::isnan(direction.x));
     }
 }
 
@@ -414,10 +409,10 @@ bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bSha
 * @param[in] bShape reference to the shape object
 * @return @c true if there is intersection, @c false otherwise
 */
-template < typename ShapeA, typename ShapeB >
+template <typename ShapeA, typename ShapeB>
 bool CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
 {
-    Simplex simplex{ { cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1})) }, 1 };
+    Simplex simplex{{cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1}))}, 1};
 
     return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
 }
@@ -431,19 +426,17 @@ bool CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
 * @param[in] bShape reference to the shape object
 * @return @c true if there is intersection, @c false otherwise
 */
-template < typename ShapeA, typename ShapeB >
+template <typename ShapeA, typename ShapeB>
 bool CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
 {
-    simplex = { { cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1})) }, 1 };
+    simplex = {{cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1}))}, 1};
 
     return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
 }
-
 } // namespace gjk
 
 namespace epa
 {
-
 /**
  * @brief Data structure that holds contact information
  */
@@ -467,7 +460,7 @@ struct ContactManifold
  * @param[in] aShape input shape
  * @param[in] bShape input shape
  */
-template < typename ShapeA, typename ShapeB >
+template <typename ShapeA, typename ShapeB>
 void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
 {
     if (simplex.size == 2)
@@ -511,7 +504,7 @@ void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& b
  * @param[in] simplex input simplex
  * @return contact manifold
  */
-template < typename ShapeA, typename ShapeB >
+template <typename ShapeA, typename ShapeB>
 ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bShape, gjk::Simplex simplex)
 {
     using ConvexHull = math::QuickhullConvexHull<std::vector<glm::dvec3>>;
@@ -525,7 +518,7 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
     //Initialize polytope
     std::vector<glm::dvec3> polytopeVertices;
     polytopeVertices.reserve(1000);
-    polytopeVertices = { simplex.vertices[0], simplex.vertices[1], simplex.vertices[2], simplex.vertices[3] };
+    polytopeVertices = {simplex.vertices[0], simplex.vertices[1], simplex.vertices[2], simplex.vertices[3]};
 
     //Calculate initial convex hull
     ConvexHull convexHull(polytopeVertices);
@@ -570,7 +563,6 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
         }
     }
 }
-
 } // namespace epa
 
 /** Base cache data structure for shapes intersection queries */
@@ -781,7 +773,7 @@ inline bool CalculateIntersection<Ray, Ray>(SimpleShape const* a, SimpleShape co
     cache->bClosestApproach =
         bRay->centerOfMass + bNumerator / cache->denominator * bRay->direction;
 
-    return math::fp::IsEqual(glm::length2(cache->aClosestApproach),  glm::length2(cache->bClosestApproach));
+    return math::fp::IsEqual(glm::length2(cache->aClosestApproach), glm::length2(cache->bClosestApproach));
 }
 
 /** Ray, Ray CalculateContactNormal specialization */
@@ -809,7 +801,7 @@ inline bool CalculateIntersection<Ray, Plane>(SimpleShape const* a, SimpleShape 
     auto ray = static_cast<Ray const*>(a);
     auto plane = static_cast<Plane const*>(b);
 
-    math::HyperPlane hyperPlane{ plane->normal, plane->centerOfMass };
+    math::HyperPlane hyperPlane{plane->normal, plane->centerOfMass};
 
     return hyperPlane.RayIntersection(ray->direction, ray->centerOfMass, cache->contact);
 }
@@ -927,7 +919,7 @@ inline glm::dvec3 CalculateContactNormal<Ray, Box>(SimpleShape const* a, SimpleS
         {
             return glm::abs(a) < glm::abs(b);
         }
-    ));
+        ));
 
     //Transforming intersection points in the world space
     cache->inPoint = cache->boxModelMatrix * cache->inPoint + box->centerOfMass;
@@ -1036,7 +1028,7 @@ inline bool CalculateIntersection<Plane, Box>(SimpleShape const* a, SimpleShape 
     auto box = static_cast<Box const*>(b);
     auto cache = static_cast<Cache<Plane, Box>*>(cacheBase);
 
-    cache->boxFaces = { box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis };
+    cache->boxFaces = {box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis};
 
     std::array<glm::dvec3, 8> boxVertices;
     math::CalculateBoxVertices(box->iAxis, box->jAxis, box->kAxis, boxVertices.begin());
@@ -1175,7 +1167,7 @@ inline bool CalculateIntersection<Sphere, Box>(SimpleShape const* a, SimpleShape
         vertex += box->centerOfMass;
     }
 
-    cache->boxAxes = { box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis };
+    cache->boxAxes = {box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis};
     cache->boxSphereVector = sphere->centerOfMass - box->centerOfMass;
 
     for (uint8_t i = 0; i < cache->boxNormals.size(); ++i)
@@ -1194,7 +1186,7 @@ inline bool CalculateIntersection<Sphere, Box>(SimpleShape const* a, SimpleShape
             double const axisNorm = glm::length(cache->boxAxes[i]);
 
             if (d > axisNorm)
-{
+            {
                 d = axisNorm;
             }
             else if (d < -axisNorm)
@@ -1371,7 +1363,6 @@ inline double CalculatePenetration<Box, Box>(SimpleShape const* a, SimpleShape c
     auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
     return cache->penetration;
 }
-
 } // namespace intersection
 
 /**
@@ -1446,7 +1437,6 @@ private:
                        ShapeTypePairHasher>
     m_calculatePenetrationFunctors;
 };
-
 } // namespace geometry
 } // namespace pegasus
 

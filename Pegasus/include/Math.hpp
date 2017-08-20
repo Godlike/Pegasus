@@ -25,7 +25,6 @@ namespace math
 {
 namespace fp
 {
-
 constexpr double g_floatingPointThreshold = 1e-10;
 
 /**
@@ -97,7 +96,6 @@ inline bool IsGreaterOrEqual(double lhs, double rhs)
 {
     return IsEqual(lhs, rhs) || (lhs - rhs) > 0.0;
 }
-
 } // namespace fp
 
 /**
@@ -1283,7 +1281,8 @@ private:
                         horizonRidges.emplace_back(ridgeIndices[0], ridgeIndices[1]);
                     }
                 }
-            } while (++adjHedsFaceIt != adjHedsFaceBegin);
+            }
+            while (++adjHedsFaceIt != adjHedsFaceBegin);
         }
 
         //Add vertex to the convex hull set
@@ -1474,7 +1473,6 @@ private:
         }
     }
 };
-
 } // namespace math
 } // namespace pegasus
 

@@ -3,7 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "Pegasus/include/Math.hpp"
+#include <Pegasus/include/Math.hpp>
 
 using namespace pegasus;
 using namespace math;
@@ -103,7 +103,7 @@ bool HyperPlane::LineSegmentIntersection(
     return RayIntersection(lineNormal, lineStart, resultPoint);
 }
 
-glm::dvec3 HyperPlane::ClosestPoint(const glm::dvec3 &point) const
+glm::dvec3 HyperPlane::ClosestPoint(const glm::dvec3& point) const
 {
     glm::dvec3 const normal = glm::normalize(glm::cross(glm::cross(m_normal, point), m_normal));
     glm::dvec3 const closestPoint = normal * (glm::dot(normal, point));
@@ -116,7 +116,7 @@ double LineSegmentPointDistance(
 )
 {
     return glm::length(glm::cross(lineEnd - lineStart, lineStart - point))
-            / glm::length(lineEnd - lineStart);
+        / glm::length(lineEnd - lineStart);
 }
 
 JacobiEigenvalue::JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold, uint32_t maxIterations)

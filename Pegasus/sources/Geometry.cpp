@@ -225,7 +225,6 @@ glm::dvec3 intersection::cso::Support(Sphere const& sphere, glm::dvec3 direction
     );
 
     glm::dvec3 const vertex = ray.centerOfMass + direction * intersectionFactors.tMax;
-    assert(!std::isnan(vertex.x));
     return vertex;
 }
 
@@ -247,7 +246,6 @@ glm::dvec3 intersection::cso::Support(Box const& box, glm::dvec3 direction)
 glm::dvec3 intersection::cso::Support(Box const& box1, Box const& box2, glm::dvec3 direction)
 {
     glm::dvec3 const vertex = Support(box1, direction) - Support(box2, -direction);
-    assert(!std::isnan(vertex.x));
     return vertex;
 }
 
@@ -285,10 +283,10 @@ bool TriangleContainsOrigin(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3
 bool TetrahedronContainsOrigin(std::array<glm::dvec3, 4> const& vertices)
 {
     std::array<math::HyperPlane, 4> const faces{
-        math::HyperPlane{ vertices[0], vertices[1], vertices[2], &vertices[3] },
-        math::HyperPlane{ vertices[1], vertices[2], vertices[3], &vertices[0] },
-        math::HyperPlane{ vertices[0], vertices[2], vertices[3], &vertices[1] },
-        math::HyperPlane{ vertices[0], vertices[1], vertices[3], &vertices[2] }
+        math::HyperPlane{vertices[0], vertices[1], vertices[2], &vertices[3]},
+        math::HyperPlane{vertices[1], vertices[2], vertices[3], &vertices[0]},
+        math::HyperPlane{vertices[0], vertices[2], vertices[3], &vertices[1]},
+        math::HyperPlane{vertices[0], vertices[1], vertices[3], &vertices[2]}
     };
 
     return math::fp::IsGreaterOrEqual(faces[0].GetDistance(), 0.0)
@@ -324,12 +322,10 @@ intersection::gjk::NearestSimplexData NearestSimplexLineSegment(std::array<glm::
     if (intersection::IsSameDirection(AB, A0))
     {
         glm::dvec3 const direction = glm::cross(glm::cross(AB, A0), AB);
-        assert(glm::length(direction) != 0.0);
         return {2, direction};
     }
 
     simplex[0] = simplex[1];
-    assert(glm::length(A0) != 0.0);
     return {1, A0};
 }
 
@@ -352,22 +348,19 @@ intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dve
         {
             simplex = {simplex[0], simplex[2]};
             glm::dvec3 const direction = glm::cross(glm::cross(AC, -simplex[1]), AC);
-            assert(!std::isnan(direction.x));
             result = {2, direction};
         }
         else if (intersection::IsSameDirection(AB, A0))
         {
             simplex = {simplex[1], simplex[2]};
             glm::dvec3 const direction = glm::cross(glm::cross(AB, -simplex[1]), AB);
-            assert(!std::isnan(direction.x));
             result = {2, direction};
         }
         else
         {
-            simplex = { simplex[2] };
+            simplex = {simplex[2]};
             glm::dvec3 const direction = -simplex[0];
-            assert(!std::isnan(direction.x));
-            result = { 1, direction };
+            result = {1, direction};
         }
     }
     else if (intersection::IsSameDirection(glm::cross(AB, ABC), -simplex[2]))
@@ -376,15 +369,13 @@ intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dve
         {
             simplex = {simplex[1], simplex[2]};
             glm::dvec3 const direction = glm::cross(glm::cross(AB, -simplex[1]), AB);
-            assert(!std::isnan(direction.x));
             result = {2, direction};
         }
         else
         {
-            simplex = { simplex[2] };
+            simplex = {simplex[2]};
             glm::dvec3 const direction = -simplex[0];
-            assert(!std::isnan(direction.x));
-            result = { 1, direction };
+            result = {1, direction};
         }
     }
     else
@@ -392,14 +383,12 @@ intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dve
         if (intersection::IsSameDirection(ABC, A0))
         {
             glm::dvec3 const direction = ABC;
-            assert(!std::isnan(direction.x));
-            result = { 3, direction };
+            result = {3, direction};
         }
         else
         {
             glm::dvec3 const direction = -ABC;
-            assert(!std::isnan(direction.x));
-            result = { 3, direction };
+            result = {3, direction};
         }
     }
 
@@ -441,20 +430,14 @@ intersection::gjk::NearestSimplexData intersection::gjk::NearestSimplex(std::arr
 {
     if (2 == simplexSize)
     {
-        auto intersectionData = NearestSimplexLineSegment(simplex);
-        assert(!std::isnan(intersectionData.direction.x) && glm::length(intersectionData.direction) != 0.0);
-        return intersectionData;
+        return NearestSimplexLineSegment(simplex);
     }
     if (3 == simplexSize)
     {
-        auto intersectionData = NearestSimplexTriangle(simplex);
-        assert(!std::isnan(intersectionData.direction.x) && glm::length(intersectionData.direction) != 0.0);
-        return intersectionData;
+        return NearestSimplexTriangle(simplex);
     }
 
-    auto intersectionData = NearestSimplexTetrahedron(simplex);
-    assert(!std::isnan(intersectionData.direction.x) && glm::length(intersectionData.direction) != 0.0);
-    return intersectionData;
+    return NearestSimplexTetrahedron(simplex);
 }
 
 SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetector()
