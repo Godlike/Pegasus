@@ -444,8 +444,9 @@ bool CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const&
 namespace epa
 {
 
-using Polytope = gjk::Simplex;
-
+/**
+ * @brief Data structure that holds contact information
+ */
 struct ContactManifold
 {
     glm::dvec3 aContactPointModelSpace;
@@ -457,21 +458,118 @@ struct ContactManifold
 };
 
 /**
- * @brief Blows up polytope into tetrahedron
- * @param[in, out] polytope
- * @param[in] box1 input shape
- * @param[in] box2 input shape
+ * @brief Blows up simplex into tetrahedron
+ *
+ * Works only the simplex of size 2 or 3, otherwise does nothing
+ * @tparam ShapeA SimpleShape or SimpleShape derived object
+ * @tparam ShapeB SimpleShape or SimpleShape derived object
+ * @param[in, out] simplex initial simplex
+ * @param[in] aShape input shape
+ * @param[in] bShape input shape
  */
-void BlowUpPolytope(Polytope& polytope, Box const& box1, Box const& box2);
+template < typename ShapeA, typename ShapeB >
+void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
+{
+    if (simplex.size == 2)
+    {
+        glm::dvec3 const A0 = -simplex.vertices[1];
+        uint8_t const n = (A0[0] != 0) ? 0 : ((A0[1] != 0) ? 1 : 2);
+        uint8_t const m = (n == 0 ? 1 : (n == 1 ? 2 : 1));
+
+        glm::dvec3 orthogonalDirection;
+        orthogonalDirection[n] = A0[m];
+        orthogonalDirection[m] = A0[n];
+
+        simplex.vertices[2] = cso::Support(aShape, bShape, glm::normalize(orthogonalDirection));
+        ++simplex.size;
+    }
+
+    if (simplex.size == 3)
+    {
+        math::HyperPlane const hyperPlane{
+            simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]
+        };
+
+        glm::dvec3 const AB = simplex.vertices[1] - simplex.vertices[2];
+        glm::dvec3 const AC = simplex.vertices[0] - simplex.vertices[2];
+        glm::dvec3 const ABC = glm::cross(AB, AC);
+
+        glm::dvec3 const a = cso::Support(aShape, bShape, glm::normalize(ABC));
+        glm::dvec3 const b = cso::Support(aShape, bShape, glm::normalize(-ABC));
+
+        simplex.vertices[3] = hyperPlane.Distance(a) > hyperPlane.Distance(b) ? a : b;
+        ++simplex.size;
+    }
+}
 
 /**
  * @brief Calculates contact manifold using Expanding Polytope Algorithm and returns it
- * @param[in] box1 input shape
- * @param[in] box2 input shape
- * @param[in] polytope input simplex
+ * @tparam ShapeA SimpleShape or SimpleShape derived object
+ * @tparam ShapeB SimpleShape or SimpleShape derived object
+ * @param[in] aShape input shape
+ * @param[in] bShape input shape
+ * @param[in] simplex input simplex
  * @return contact manifold
  */
-ContactManifold CalculateContactManifold(Box const& box1, Box const& box2, Polytope polytope);
+template < typename ShapeA, typename ShapeB >
+ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bShape, gjk::Simplex simplex)
+{
+    using ConvexHull = math::QuickhullConvexHull<std::vector<glm::dvec3>>;
+
+    //Blow up initial simplex if needed
+    if (simplex.size < 4)
+    {
+        BlowUpPolytope(simplex, aShape, bShape);
+    }
+
+    //Initialize polytope
+    std::vector<glm::dvec3> polytopeVertices;
+    polytopeVertices.reserve(1000);
+    polytopeVertices = { simplex.vertices[0], simplex.vertices[1], simplex.vertices[2], simplex.vertices[3] };
+
+    //Calculate initial convex hull
+    ConvexHull convexHull(polytopeVertices);
+    convexHull.Calculate();
+
+    while (true)
+    {
+        //Get polytope faces adn sort them by the distance to the origin
+        ConvexHull::Faces chFaces = convexHull.GetFaces();
+        chFaces.sort([](ConvexHull::Face& a, ConvexHull::Face& b) -> bool
+        {
+            return a.GetHyperPlane().GetDistance() < b.GetHyperPlane().GetDistance();
+        });
+
+        //Get distance and direction to the polytope's face that is nearest to the origin
+        math::HyperPlane const& hp = chFaces.front().GetHyperPlane();
+        glm::dvec3 const& direction = hp.GetNormal();
+        double const distance = hp.GetDistance();
+
+        //Find CSO point on the new search direction
+        glm::dvec3 const supportVertex = cso::Support(aShape, bShape, direction);
+        double const supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
+
+        //If the edge face and it is the neares one end EPA
+        if (math::fp::IsLessOrEqual(supportVertexDistance, distance))
+        {
+            return ContactManifold{
+                cso::Support(aShape, direction),
+                cso::Support(bShape, -direction),
+                cso::Support(aShape, direction) + aShape.centerOfMass,
+                cso::Support(bShape, -direction) + bShape.centerOfMass,
+                direction,
+                distance
+            };
+        }
+
+        //Expand polytope if possible
+        polytopeVertices.push_back(supportVertex);
+        if (!convexHull.AddVertex(std::prev(polytopeVertices.end())))
+        {
+            polytopeVertices.pop_back();
+        }
+    }
+}
 
 } // namespace epa
 
