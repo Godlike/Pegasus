@@ -171,6 +171,310 @@ public:
 
 namespace intersection
 {
+
+/** Data structure to store ray factors for Ray collisions */
+struct RayIntersectionFactors
+{
+    double tMin;
+    double tMax;
+};
+
+/**
+* @brief Returns true if a ray and a sphere are intersecting
+* @param[in] raySphere vector from the ray to the sphere center
+* @param[in] sphereRadius radius of the sphere
+* @param[in] rayDirection normalized direction vector of the ray
+* @return @c true if there is intersection, @c false otherwise
+*/
+bool CalculateRaySphereIntersection(
+    glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
+);
+
+/**
+* @brief Calculates ray factors for the sphere intersection points
+*
+* Must be called if and only if the ray and the sphere are intersecting
+* @param[in] raySphere vector from the ray to the sphere center
+* @param[in] sphereRadius radius of the sphere
+* @param[in] rayDirection normalized direction vector of the ray
+* @return ray intersection factors
+*/
+RayIntersectionFactors CalculateRaySphereIntersectionFactors(
+    glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
+);
+
+/** Data structure for storing AABB using minimum and maximum points */
+struct AabbExtremalVertices
+{
+    glm::dvec3 minVertex;
+    glm::dvec3 maxVertex;
+};
+
+/**
+* @brief Calculates ray intersection factors for AABB-Ray collision
+* @param[in] boxMinPoint min point of AABB
+* @param[in] boxMaxPoint max point of AABB
+* @param[in] rayDirection normalized direction vector
+* @param[in] rayOrigin ray origin
+* @return ray intersection factors
+*/
+RayIntersectionFactors CalculateRayAabbIntersectionFactors(
+    glm::dvec3 const& boxMinPoint, glm::dvec3 const& boxMaxPoint,
+    glm::dvec3 const& rayDirection, glm::dvec3 const& rayOrigin
+);
+
+/**
+ * @brief Calculates AABB min and max points from the given OBB basis
+ * @param[in] i vector from an orthogonal basis
+ * @param[in] j vector from an orthogonal basis
+ * @param[in] k vector from an orthogonal basis
+ * @return AABB min and max points
+ */
+AabbExtremalVertices MakeExtremalVerticesAabb(
+    glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k
+);
+
+/**
+ * @brief Returns true if a ray and an aabb are intersecting
+ * @param[in] tMin min ray intersection factor
+ * @param[in] tMax max ray intersection factor
+ * @return @c true if there is intersection, @c false otherwise
+ */
+bool CalculateRayAabbIntersection(double tMin, double tMax);
+
+/**
+ * @brief Calculates whether two vectors are pointed in the same diretion and returns true if they are
+ * @param[in] aVector input vector
+ * @param[in] bVector input vector
+ * @return @c true if dot product is positive @c false otherwise
+ */
+inline bool IsSameDirection(glm::dvec3 const& aVector, glm::dvec3 const& bVector)
+{
+    return math::fp::IsGreater(glm::dot(aVector, bVector), 0);
+}
+
+/**
+ * @brief Calculates whether two points are on the same side of the halfspace defined by the line direction
+ * @param[in] lineStart line start point
+ * @param[in] lineEnd line end point
+ * @param[in] aPoint point of interest
+ * @param[in] bPoint point of interest
+ * @return @c true if point are on the same side, @c false otherwise
+ */
+inline bool IsSameSide(
+    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& aPoint, glm::dvec3 const& bPoint
+)
+{
+    glm::dvec3 const cp1 = glm::cross(lineEnd - lineStart, aPoint - lineStart);
+    glm::dvec3 const cp2 = glm::cross(lineEnd - lineStart, bPoint - lineStart);
+    return math::fp::IsGreaterOrEqual(glm::dot(cp1, cp2), 0);
+}
+
+/**
+ * @brief Calculates whether a point is inside the triangle and returns true if it is
+ * @param[in] triangleVertex1 triangle vertex
+ * @param[in] triangleVertex2 triangle vertex
+ * @param[in] triangleVertex3 triangle vertex
+ * @param[in] point point of interest
+ * @return @c true if point is inside the triangle, @c false otherwise
+ */
+inline bool IsTriangleContainsPoint(
+    glm::dvec3 const& triangleVertex1, glm::dvec3 const& triangleVertex2, glm::dvec3 const& triangleVertex3,
+    glm::dvec3 const& point
+)
+{
+    double const distance = math::HyperPlane{ triangleVertex1, triangleVertex2, triangleVertex3 }.Distance(point);
+    if (!math::fp::IsNull(distance))
+    {
+        return false;
+    }
+
+    return IsSameSide(triangleVertex1, triangleVertex2, triangleVertex3, point)
+        && IsSameSide(triangleVertex1, triangleVertex3, triangleVertex2, point)
+        && IsSameSide(triangleVertex2, triangleVertex3, triangleVertex1, point);
+}
+
+namespace cso
+{
+
+/**
+* @brief Calculates farthest vertex on the surface of the sphere in the given direction
+* @param[in] sphere shape object
+* @param[in] direction normalized search vector
+* @return point on the surface
+*/
+glm::dvec3 Support(Sphere const& sphere, glm::dvec3 direction);
+
+/**
+* @brief Calculates farthest vertex on the surface of the box in the given direction
+* @param[in] box shape object
+* @param[in] direction normalized search vector
+* @return point on the surface
+*/
+glm::dvec3 Support(Box const& box, glm::dvec3 direction);
+
+/**
+* @brief Calculates farthest vertex on the surface of the Configuration Space Object in the given direction
+*
+* Configuration Space Object or Minkowski Difference or Minkowski Configuration Object is
+* a cartesian product of two sets of points, where each element of one of sets is multiplied by -1.
+* @param[in] box1 shape object
+* @param[in] box2 shape object
+* @param[in] direction vector of the search
+* @return farthes point on the surface of CSO
+*/
+glm::dvec3 Support(Box const& box1, Box const& box2, glm::dvec3 direction);
+
+} // namespace cso
+
+namespace gjk
+{
+
+/**
+* @brief Simplex data container
+*/
+struct Simplex
+{
+    std::array<glm::dvec3, 4> vertices;
+    uint8_t size;
+};
+
+/**
+* @brief Stores simplex size and current direction of search
+*/
+struct NearestSimplexData
+{
+    uint8_t simplexSize;
+    glm::dvec3 direction;
+};
+
+/**
+ * @brief Calculates whether a simplex contains origin and returns true if it does
+ *
+ * Can only be called when a simplex size is in the range of [2; 4], otherwise result is undefined
+ * @param[in] simplex simplex data
+ * @return @c true if a simplex contains origin @c false otherwise
+ */
+bool SimplexContainsOrigin(Simplex const& simplex);
+
+/**
+* @brief Calculates nearest simplex to the origin
+*
+* Presumes that simplex vertices are stored such that the latest added vertex has index @p simplexSize - 1
+* @param[in, out] simplex an array of vertices of a simplex
+* @param[in] simplexSize size of a simplex
+* @return new size of a simplex and a next directory of the search
+*/
+NearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize);
+
+/**
+* @brief Attempts to calculate a tetrahedron from the CSO vertices such that it contains the origin
+* @tparam ShapeA any shape type for which gjk::Support is overloaded
+* @tparam ShapeB any shape type for which gjk::Support is overloaded
+* @param[in, out] simplex initial simplex
+* @param[in] aShape reference to the shape object
+* @param[in] bShape reference to the shape object
+* @param[in] direction initial search direction vector of unit length
+* @return @c true if there is intersection, @c false otherwise
+*/
+template < typename ShapeA, typename ShapeB >
+bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
+{
+    while (true)
+    {
+        //Add new vertex to the simplex
+        simplex.vertices[simplex.size++] = cso::Support(aShape, bShape, direction);
+
+        //Calculate if the new vertex is pass the origin
+        double const newPointDirectionProj = glm::dot(simplex.vertices[simplex.size - 1], direction);
+        if (math::fp::IsLess(newPointDirectionProj, 0.0))
+        {
+            return false;
+        }
+
+        //Check if a current simplex contains the origin
+        if (SimplexContainsOrigin(simplex))
+        {
+            return true;
+        }
+
+        //Calculate sub simplex nearest to the origin
+        NearestSimplexData const data = NearestSimplex(simplex.vertices, simplex.size);
+        direction = glm::normalize(data.direction);
+        simplex.size = data.simplexSize;
+        assert(!std::isnan(direction.x));
+    }
+}
+
+/**
+* @brief Calculates whether two shapes are intersecting using GJK algorithm
+* @tparam ShapeA any shape type for which gjk::Support is overloaded
+* @tparam ShapeB any shape type for which gjk::Support is overloaded
+* @param[in] aShape reference to the shape object
+* @param[in] bShape reference to the shape object
+* @return @c true if there is intersection, @c false otherwise
+*/
+template < typename ShapeA, typename ShapeB >
+bool CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
+{
+    Simplex simplex{ { cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1})) }, 1 };
+
+    return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
+}
+
+/**
+* @brief Calculates whether two shapes are intersecting using GJK algorithm
+* @tparam ShapeA any shape type for which gjk::Support is overloaded
+* @tparam ShapeB any shape type for which gjk::Support is overloaded
+* @param[out] simplex tetrahedron from CSO points containing the origin if one exists
+* @param[in] aShape reference to the shape object
+* @param[in] bShape reference to the shape object
+* @return @c true if there is intersection, @c false otherwise
+*/
+template < typename ShapeA, typename ShapeB >
+bool CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
+{
+    simplex = { { cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1})) }, 1 };
+
+    return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
+}
+
+} // namespace gjk
+
+namespace epa
+{
+
+using Polytope = gjk::Simplex;
+
+struct ContactManifold
+{
+    glm::dvec3 aContactPointModelSpace;
+    glm::dvec3 bContactPointModelSpace;
+    glm::dvec3 aContactPointWorldSpace;
+    glm::dvec3 bContactPointWorldSpace;
+    glm::dvec3 contactNormal;
+    double penetration;
+};
+
+/**
+ * @brief Blows up polytope into tetrahedron
+ * @param[in, out] polytope
+ * @param[in] box1 input shape
+ * @param[in] box2 input shape
+ */
+void BlowUpPolytope(Polytope& polytope, Box const& box1, Box const& box2);
+
+/**
+ * @brief Calculates contact manifold using Expanding Polytope Algorithm and returns it
+ * @param[in] box1 input shape
+ * @param[in] box2 input shape
+ * @param[in] polytope input simplex
+ * @return contact manifold
+ */
+ContactManifold CalculateContactManifold(Box const& box1, Box const& box2, Polytope polytope);
+
+} // namespace epa
+
 /** Base cache data structure for shapes intersection queries */
 struct CacheBase
 {
@@ -302,318 +606,11 @@ struct Cache<Box, Sphere> : CacheBase
 template <>
 struct Cache<Box, Box> : CacheBase
 {
-    std::array<glm::dvec3, 8> aBoxVertices, bBoxVertices;
-    std::array<glm::dvec3, 6> aBoxAxes, bBoxAxes;
-    std::array<glm::dvec3, 6> aBoxFaces, bBoxFaces;
-    std::vector<glm::dvec3> separatingAxes;
-    std::array<double, 6> aBoxFaceDistances, bBoxFaceDistances;
-    std::array<double, 8> aBoxVerticesDistances, bBoxVerticesDistances;
-    glm::dvec3 contactNormal;
-    double penetration = 0;
-};
-
-/** Data structure to store ray factors for Ray collisions */
-struct RayIntersectionFactors
-{
-    double tMin;
-    double tMax;
-};
-
-/**
-* @brief Returns true if a ray and a sphere are intersecting
-* @param[in] raySphere vector from the ray to the sphere center
-* @param[in] sphereRadius radius of the sphere
-* @param[in] rayDirection normalized direction vector of the ray
-* @return @c true if there is intersection, @c false otherwise
-*/
-bool CalculateRaySphereIntersection(
-    glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
-);
-
-/**
-* @brief Calculates ray factors for the sphere intersection points
-*
-* Must be called if and only if the ray and the sphere are intersecting
-* @param[in] raySphere vector from the ray to the sphere center
-* @param[in] sphereRadius radius of the sphere
-* @param[in] rayDirection normalized direction vector of the ray
-* @return ray intersection factors
-*/
-RayIntersectionFactors CalculateRaySphereIntersectionFactors(
-    glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
-);
-
-/** Data structure for storing AABB using minimum and maximum points */
-struct AabbExtremalVertices
-{
-    glm::dvec3 minVertex;
-    glm::dvec3 maxVertex;
-};
-
-/**
-* @brief Calculates ray intersection factors for AABB-Ray collision
-* @param[in] boxMinPoint min point of AABB
-* @param[in] boxMaxPoint max point of AABB
-* @param[in] rayDirection normalized direction vector
-* @param[in] rayOrigin ray origin
-* @return ray intersection factors
-*/
-RayIntersectionFactors CalculateRayAabbIntersectionFactors(
-    glm::dvec3 const& boxMinPoint, glm::dvec3 const& boxMaxPoint,
-    glm::dvec3 const& rayDirection, glm::dvec3 const& rayOrigin
-);
-
-/**
- * @brief Calculates AABB min and max points from the given OBB basis
- * @param[in] i vector from an orthogonal basis
- * @param[in] j vector from an orthogonal basis
- * @param[in] k vector from an orthogonal basis
- * @return AABB min and max points
- */
-AabbExtremalVertices MakeExtremalVerticesAabb(
-    glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k
-);
-
-/**
- * @brief Returns true if a ray and an aabb are intersecting
- * @param[in] tMin min ray intersection factor
- * @param[in] tMax max ray intersection factor
- * @return @c true if there is intersection, @c false otherwise
- */
-bool CalculateRayAabbIntersection(double tMin, double tMax);
-
-/**
- * @brief Calculates whether two vectors are pointed in the same diretion and returns true if they are
- * @param[in] aVector input vector
- * @param[in] bVector input vector
- * @return @c true if dot product is positive @c false otherwise
- */
-inline bool IsSameDirection(glm::dvec3 const& aVector, glm::dvec3 const& bVector)
-{
-    return math::fp::IsGreater(glm::dot(aVector, bVector), 0);
-}
-
-/**
- * @brief Calculates whether two points are on the same side of the halfspace defined by the line direction
- * @param[in] lineStart line start point
- * @param[in] lineEnd line end point
- * @param[in] aPoint point of interest
- * @param[in] bPoint point of interest
- * @return @c true if point are on the same side, @c false otherwise
- */
-inline bool IsSameSide(
-    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& aPoint, glm::dvec3 const& bPoint
-)
-{
-    glm::dvec3 const cp1 = glm::cross(lineEnd - lineStart, aPoint - lineStart);
-    glm::dvec3 const cp2 = glm::cross(lineEnd - lineStart, bPoint - lineStart);
-    return math::fp::IsGreaterOrEqual(glm::dot(cp1, cp2), 0);
-}
-
-/**
- * @brief Calculates whether a point is inside the triangle and returns true if it is
- * @param[in] triangleVertex1 triangle vertex
- * @param[in] triangleVertex2 triangle vertex
- * @param[in] triangleVertex3 triangle vertex
- * @param[in] point point of interest
- * @return @c true if point is inside the triangle, @c false otherwise
- */
-inline bool IsTriangleContainsPoint(
-    glm::dvec3 const& triangleVertex1, glm::dvec3 const& triangleVertex2, glm::dvec3 const& triangleVertex3, 
-    glm::dvec3 const& point
-)
-{
-    double const distance = math::HyperPlane{ triangleVertex1, triangleVertex2, triangleVertex3 }.Distance(point);
-    if (!math::fp::IsNull(distance))
-    {
-        return false;
-    }
-
-    return IsSameSide(triangleVertex1, triangleVertex2, triangleVertex3, point)
-        && IsSameSide(triangleVertex1, triangleVertex3, triangleVertex2, point)
-        && IsSameSide(triangleVertex2, triangleVertex3, triangleVertex1, point);
-}
-
-namespace cso
-{
-
-/**
-* @brief Calculates farthest vertex on the surface of the sphere in the given direction
-* @param[in] sphere shape object
-* @param[in] direction normalized search vector
-* @return point on the surface
-*/
-glm::dvec3 Support(Sphere const& sphere, glm::dvec3 direction);
-
-/**
-* @brief Calculates farthest vertex on the surface of the box in the given direction
-* @param[in] box shape object
-* @param[in] direction normalized search vector
-* @return point on the surface
-*/
-glm::dvec3 Support(Box const& box, glm::dvec3 direction);
-
-/**
-* @brief Calculates farthest vertex on the surface of the Configuration Space Object in the given direction
-*
-* Configuration Space Object or Minkowski Difference or Minkowski Configuration Object is
-* a cartesian product of two sets of points, where each element of one of sets is multiplied by -1.
-* @param[in] box1 shape object
-* @param[in] box2 shape object
-* @param[in] direction vector of the search
-* @return farthes point on the surface of CSO
-*/
-glm::dvec3 Support(Box const& box1, Box const& box2, glm::dvec3 direction);
-
-} // namespace cso
-
-namespace gjk
-{
-
-/**
-* @brief Simplex data container
-*/
-struct Simplex
-{
-    std::array<glm::dvec3, 4> vertices;
-    uint8_t size;
-};
-
-/**
-* @brief Stores simplex size and current direction of search
-*/
-struct NearestSimplexData
-{
-    uint8_t simplexSize;
-    glm::dvec3 direction;
-};
-
-/**
- * @brief Calculates whether a simplex contains origin and returns true if it does
- * 
- * Can only be called when a simplex size is in the range of [2; 4], otherwise result is undefined
- * @param[in] simplex simplex data
- * @return @c true if a simplex contains origin @c false otherwise
- */
-bool SimplexContainsOrigin(Simplex const& simplex);
-
-/**
-* @brief Calculates nearest simplex to the origin
-*
-* Presumes that simplex vertices are stored such that the latest added vertex has index @p simplexSize - 1
-* @param[in, out] simplex an array of vertices of a simplex
-* @param[in] simplexSize size of a simplex
-* @return new size of a simplex and a next directory of the search
-*/
-NearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize);
-
-/**
-* @brief Attempts to calculate a tetrahedron from the CSO vertices such that it contains the origin
-* @tparam ShapeA any shape type for which gjk::Support is overloaded
-* @tparam ShapeB any shape type for which gjk::Support is overloaded
-* @param[in, out] simplex initial simplex
-* @param[in] aShape reference to the shape object
-* @param[in] bShape reference to the shape object
-* @param[in] direction initial search direction vector of unit length
-* @return @c true if there is intersection, @c false otherwise
-*/
-template < typename ShapeA, typename ShapeB >
-bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
-{
-    while (true)
-    {
-        //Add new vertex to the simplex
-        simplex.vertices[simplex.size++] = cso::Support(aShape, bShape, direction);
-
-        //Calculate if the new vertex is pass the origin
-        double const newPointDirectionProj = glm::dot(simplex.vertices[simplex.size - 1], direction);
-        if (math::fp::IsLess(newPointDirectionProj, 0.0))
-        {
-            return false;
-        }
-
-        //Check if a current simplex contains the origin
-        if (SimplexContainsOrigin(simplex))
-        {
-            return true;
-        }
-
-        //Calculate sub simplex nearest to the origin
-        NearestSimplexData const data = NearestSimplex(simplex.vertices, simplex.size);
-        direction = glm::normalize(data.direction);
-        simplex.size = data.simplexSize;
-        assert(!std::isnan(direction.x));
-    }
-}
-
-/**
-* @brief Calculates whether two shapes are intersecting using GJK algorithm
-* @tparam ShapeA any shape type for which gjk::Support is overloaded
-* @tparam ShapeB any shape type for which gjk::Support is overloaded
-* @param[in] aShape reference to the shape object
-* @param[in] bShape reference to the shape object
-* @return @c true if there is intersection, @c false otherwise
-*/
-template < typename ShapeA, typename ShapeB >
-bool CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
-{
-    Simplex simplex{ { cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1})) }, 1 };
-
-    return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
-}
-
-/**
-* @brief Calculates whether two shapes are intersecting using GJK algorithm
-* @tparam ShapeA any shape type for which gjk::Support is overloaded
-* @tparam ShapeB any shape type for which gjk::Support is overloaded
-* @param[out] simplex tetrahedron from CSO points containing the origin if one exists
-* @param[in] aShape reference to the shape object
-* @param[in] bShape reference to the shape object
-* @return @c true if there is intersection, @c false otherwise
-*/
-template < typename ShapeA, typename ShapeB >
-bool CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
-{
-    simplex = { { cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1})) }, 1 };
-
-    return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
-}
-
-} // namespace gjk
-
-namespace epa
-{
-
-using Polytope = gjk::Simplex;
-
-struct ContactManifold
-{
-    glm::dvec3 aContactPointModelSpace;
-    glm::dvec3 bContactPointModelSpace;
-    glm::dvec3 aContactPointWorldSpace;
-    glm::dvec3 bContactPointWorldSpace;
+    gjk::Simplex simplex;
+    bool intersection;
     glm::dvec3 contactNormal;
     double penetration;
 };
-
-/**
- * @brief Blows up polytope into tetrahedron
- * @param[in, out] polytope 
- * @param[in] box1 input shape
- * @param[in] box2 input shape
- */
-void BlowUpPolytope(Polytope& polytope, Box const& box1, Box const& box2);
-
-/**
- * @brief Calculates contact manifold using Expanding Polytope Algorithm and returns it
- * @param[in] box1 input shape
- * @param[in] box2 input shape
- * @param[in] polytope input simplex 
- * @return contact manifold
- */
-ContactManifold CalculateContactManifold(Box const& box1, Box const& box2, Polytope polytope);
-
-} // namespace epa
 
 /**
  * @brief Performs intersection test using shapes and cache data and returns true if shapes are intersecting
@@ -1250,79 +1247,8 @@ inline bool CalculateIntersection<Box, Box>(SimpleShape const* a, SimpleShape co
     auto bBox = static_cast<Box const*>(b);
     auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
 
-    //cache->aBoxAxes = { aBox->iAxis, aBox->jAxis, aBox->kAxis, -aBox->iAxis, -aBox->jAxis, -aBox->kAxis };
-    //cache->bBoxAxes = { bBox->iAxis, bBox->jAxis, bBox->kAxis, -bBox->iAxis, -bBox->jAxis, -bBox->kAxis };
-
-    //math::CalculateBoxVertices(cache->aBoxAxes[0], cache->aBoxAxes[1], cache->aBoxAxes[2], cache->aBoxVertices.begin());
-    //math::CalculateBoxVertices(cache->bBoxAxes[0], cache->bBoxAxes[1], cache->bBoxAxes[2], cache->bBoxVertices.begin());
-
-    //for (glm::dvec3& vertex : cache->aBoxVertices)
-    //{
-    //    vertex += aBox->centerOfMass;
-    //}
-    //for (glm::dvec3& vertex : cache->bBoxVertices)
-    //{
-    //    vertex += bBox->centerOfMass;
-    //}
-
-    //std::transform(cache->aBoxAxes.begin(), cache->aBoxAxes.end(), cache->aBoxFaces.begin(),
-    //    [aBox](glm::dvec3 const& v)
-    //{
-    //    return v + aBox->centerOfMass;
-    //});
-    //std::transform(cache->bBoxAxes.begin(), cache->bBoxAxes.end(), cache->bBoxFaces.begin(),
-    //    [bBox](glm::dvec3 const& v)
-    //{
-    //    return v + bBox->centerOfMass;
-    //});
-
-    //cache->separatingAxes = {
-    //    glm::normalize(cache->aBoxAxes[0]), glm::normalize(cache->aBoxAxes[1]), glm::normalize(cache->aBoxAxes[2]),
-    //    glm::normalize(cache->bBoxAxes[0]), glm::normalize(cache->bBoxAxes[1]), glm::normalize(cache->bBoxAxes[2])
-    //};
-    //math::CalculateCrossProductForeach(cache->aBoxAxes.begin(), cache->aBoxAxes.begin() + 3,
-    //    cache->bBoxAxes.begin(), cache->bBoxAxes.begin() + 3, std::back_inserter(cache->separatingAxes));
-
-    //for (glm::dvec3 const& axis : cache->separatingAxes)
-    //{
-    //    math::CalculateDotProductForeach(
-    //        axis, cache->aBoxVertices.begin(), cache->aBoxVertices.end(), cache->aBoxVerticesDistances.begin()
-    //    );
-    //    math::CalculateDotProductForeach(
-    //        axis, cache->bBoxVertices.begin(), cache->bBoxVertices.end(), cache->bBoxVerticesDistances.begin()
-    //    );
-    //    std::sort(cache->aBoxVerticesDistances.begin(), cache->aBoxVerticesDistances.end());
-    //    std::sort(cache->bBoxVerticesDistances.begin(), cache->bBoxVerticesDistances.end());
-
-    //    if (cache->aBoxVerticesDistances.back() < cache->bBoxVerticesDistances.back())
-    //    {
-    //        if (cache->aBoxVerticesDistances.back() < cache->bBoxVerticesDistances.front())
-    //        {
-    //            //return false;
-    //            break;
-
-    //        }
-    //    }
-    //    else if (cache->bBoxVerticesDistances.back() < cache->aBoxVerticesDistances.front())
-    //    {
-    //        //return false;
-    //        break;
-    //    }
-    //}
-    //
-    //return true;
-
-    gjk::Simplex simplex;
-    bool intersection = gjk::CalculateIntersection(simplex, *bBox, *aBox);
-    if (intersection)
-    {
-        epa::ContactManifold cm = epa::CalculateContactManifold(*bBox, *aBox, simplex);
-        cache->contactNormal = cm.contactNormal;
-        cache->penetration = cm.penetration;
-        return true;
-    }
-
-    return false;
+    cache->intersection = gjk::CalculateIntersection(cache->simplex, *bBox, *aBox);
+    return cache->intersection;
 }
 
 /** Box, Box CalculateContactNormal specialization */
@@ -1331,17 +1257,11 @@ inline glm::dvec3 CalculateContactNormal<Box, Box>(SimpleShape const* a, SimpleS
 {
     auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
     auto aBox = static_cast<Box const*>(a);
+    auto bBox = static_cast<Box const*>(b);
 
-    //std::array<double, 6> distances;
-    //for (uint32_t i = 0; i < distances.size(); ++i)
-    //{
-    //    distances[i] = glm::length(aBox->centerOfMass - cache->bBoxFaces[i]);
-    //}
-
-    //size_t const minIndex = std::distance(
-    //    distances.begin(), std::min_element(distances.begin(), distances.end())
-    //);
-    //cache->contactNormal = glm::normalize(cache->bBoxAxes[minIndex]);
+    epa::ContactManifold cm = epa::CalculateContactManifold(*bBox, *aBox, cache->simplex);
+    cache->contactNormal = cm.contactNormal;
+    cache->penetration = cm.penetration;
 
     return cache->contactNormal;
 }
@@ -1351,18 +1271,9 @@ template <>
 inline double CalculatePenetration<Box, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
-
-    //math::CalculateDotProductForeach(cache->contactNormal, cache->aBoxVertices.begin(),
-    //    cache->aBoxVertices.end(), cache->aBoxVerticesDistances.begin());
-    //math::CalculateDotProductForeach(cache->contactNormal, cache->bBoxVertices.begin(),
-    //    cache->bBoxVertices.end(), cache->bBoxVerticesDistances.begin());
-
-    //double const bMaxVertexDistance = *std::max_element(cache->bBoxVerticesDistances.begin(), cache->bBoxVerticesDistances.end());
-    //double const aMinVertexDistance = *std::min_element(cache->aBoxVerticesDistances.begin(), cache->aBoxVerticesDistances.end());
-    //cache->penetration = bMaxVertexDistance - aMinVertexDistance;
-
     return cache->penetration;
 }
+
 } // namespace intersection
 
 /**

@@ -235,7 +235,7 @@ glm::dvec3 intersection::cso::Support(Box const& box, glm::dvec3 direction)
 
     std::array<glm::dvec3, 8> boxVertices;
     math::CalculateBoxVertices(box.iAxis, box.jAxis, box.kAxis, box.centerOfMass, boxVertices.begin());
-    std::sort(boxVertices.begin(), boxVertices.end(), 
+    std::sort(boxVertices.begin(), boxVertices.end(),
         [&direction](glm::dvec3 const& a, glm::dvec3 const& b) -> bool
     {
         return glm::dot(a, direction) < glm::dot(b, direction);
@@ -345,7 +345,7 @@ intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dve
     glm::dvec3 const A0 = glm::dvec3{0, 0, 0} - simplex[2];
     glm::dvec3 const ABC = glm::cross(AB, AC);
     intersection::gjk::NearestSimplexData result;
-    
+
     if (intersection::IsSameDirection(glm::cross(ABC, AC), -simplex[2]))
     {
         if (intersection::IsSameDirection(AC, A0))
@@ -362,7 +362,7 @@ intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dve
             assert(!std::isnan(direction.x));
             result = {2, direction};
         }
-        else 
+        else
         {
             simplex = { simplex[2] };
             glm::dvec3 const direction = -simplex[0];
@@ -378,7 +378,7 @@ intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dve
             glm::dvec3 const direction = glm::cross(glm::cross(AB, -simplex[1]), AB);
             assert(!std::isnan(direction.x));
             result = {2, direction};
-        } 
+        }
         else
         {
             simplex = { simplex[2] };
@@ -464,7 +464,7 @@ void intersection::epa::BlowUpPolytope(Polytope& polytope, Box const& box1, Box 
         glm::dvec3 const A0 = -polytope.vertices[1];
         uint8_t const n = (A0[0] != 0) ? 0 : ((A0[1] != 0) ? 1 : 2);
         uint8_t const m = (n == 0 ? 1 : (n == 1 ? 2 : 1));
-        
+
         glm::dvec3 orthogonalDirection;
         orthogonalDirection[n] = A0[m];
         orthogonalDirection[m] = A0[n];

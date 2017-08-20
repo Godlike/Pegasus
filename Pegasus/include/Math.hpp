@@ -39,7 +39,7 @@ inline bool IsNull(double n)
 }
 
 /**
- * @brief Calculates whether a left-hand side value is equal to the right-hand side 
+ * @brief Calculates whether a left-hand side value is equal to the right-hand side
  * within a set threshold and returns true if sos
  * @param[in] lhs left-hand side value
  * @param[in] rhs right-hand side value
@@ -51,7 +51,7 @@ inline bool IsEqual(double lhs, double rhs)
 }
 
 /**
- * @brief Calculates whether a left-hand side value is less than a right-hand side value 
+ * @brief Calculates whether a left-hand side value is less than a right-hand side value
  * within a set threshold and returns true if so
  * @param[in] lhs left-hand side value
  * @param[in] rhs right-hand side value
@@ -63,22 +63,22 @@ inline bool IsLess(double lhs, double rhs)
 }
 
 /**
- * @brief Calculates whether a left-hand side value is greater than a right-hand side value 
+ * @brief Calculates whether a left-hand side value is greater than a right-hand side value
  * within a set threshold and returns true if so
  * @param[in] lhs left-hand side value
  * @param[in] rhs right-hand side value
  * @return @c true if lhs value is greater than rhs value, @c false otherwise
  */
-inline bool IsGreater(double lhs, double rhs) 
+inline bool IsGreater(double lhs, double rhs)
 {
     return !IsEqual(lhs, rhs) && (lhs - rhs) > 0.0;
 }
 
 /**
- * @brief Calculates whether a left-hand side value is less or equal to a right-hand side value 
+ * @brief Calculates whether a left-hand side value is less or equal to a right-hand side value
  * within a set threshold and returns true if so
  * @param[in] lhs left-hand side value
- * @param[in] rhs right-hand side value 
+ * @param[in] rhs right-hand side value
  * @return @c true if lhs value is less or equal to rhs value, @c false otherwise
  */
 inline bool IsLessOrEqual(double lhs, double rhs)
@@ -87,7 +87,7 @@ inline bool IsLessOrEqual(double lhs, double rhs)
 }
 
 /**
- * @brief Calculates whether a legt-hand side value is greater or equal to a right-hand side value 
+ * @brief Calculates whether a legt-hand side value is greater or equal to a right-hand side value
  * within a set threshold and returns true if so
  * @param lhs left-hand side value
  * @param rhs right-hand side value
