@@ -277,21 +277,10 @@ inline bool IsSameSide(
  * @param[in] point point of interest
  * @return @c true if point is inside the triangle, @c false otherwise
  */
-inline bool IsTriangleContainsPoint(
+bool IsTriangleContainsPoint(
     glm::dvec3 const& triangleVertex1, glm::dvec3 const& triangleVertex2, glm::dvec3 const& triangleVertex3,
     glm::dvec3 const& point
-)
-{
-    double const distance = math::HyperPlane{triangleVertex1, triangleVertex2, triangleVertex3}.Distance(point);
-    if (!math::fp::IsNull(distance))
-    {
-        return false;
-    }
-
-    return IsSameSide(triangleVertex1, triangleVertex2, triangleVertex3, point)
-        && IsSameSide(triangleVertex1, triangleVertex3, triangleVertex2, point)
-        && IsSameSide(triangleVertex2, triangleVertex3, triangleVertex1, point);
-}
+);
 
 namespace cso
 {
@@ -925,7 +914,7 @@ inline glm::dvec3 CalculateContactNormal<Ray, Box>(SimpleShape const* a, SimpleS
         {
             return glm::abs(a) < glm::abs(b);
         }
-        ));
+    ));
 
     //Transforming intersection points in the world space
     cache->inPoint = cache->boxModelMatrix * cache->inPoint + box->centerOfMass;
@@ -1367,6 +1356,7 @@ template <>
 inline double CalculatePenetration<Box, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Box, Box>*>(cacheBase);
+
     return cache->penetration;
 }
 } // namespace intersection
@@ -1443,6 +1433,7 @@ private:
                        ShapeTypePairHasher>
     m_calculatePenetrationFunctors;
 };
+
 } // namespace geometry
 } // namespace pegasus
 

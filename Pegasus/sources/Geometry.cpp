@@ -215,6 +215,21 @@ bool intersection::CalculateRayAabbIntersection(double tMin, double tMax)
     return tMax > 0 && tMin < tMax;
 }
 
+bool intersection::IsTriangleContainsPoint(
+    glm::dvec3 const& triangleVertex1, glm::dvec3 const& triangleVertex2, glm::dvec3 const& triangleVertex3, glm::dvec3 const& point
+)
+{
+    double const distance = math::HyperPlane{triangleVertex1, triangleVertex2, triangleVertex3}.Distance(point);
+    if (!math::fp::IsNull(distance))
+    {
+        return false;
+    }
+
+    return IsSameSide(triangleVertex1, triangleVertex2, triangleVertex3, point)
+        && IsSameSide(triangleVertex1, triangleVertex3, triangleVertex2, point)
+        && IsSameSide(triangleVertex2, triangleVertex3, triangleVertex1, point);
+}
+
 glm::dvec3 intersection::cso::Support(Sphere const& sphere, glm::dvec3 direction)
 {
     using namespace intersection;

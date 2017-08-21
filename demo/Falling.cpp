@@ -745,7 +745,7 @@ void FallingDemo::Update()
     zAxis *= pow(0.1, duration);
     activeObject->p.AddForce(glm::dvec3(xAxis * 10.0, yAxis * 20.0, zAxis * 10.0));
 
-    m_world.RunPhysics(0.1);
+    m_world.RunPhysics(0.02);
 
     for (auto const& body : m_rigidBodies)
     {
