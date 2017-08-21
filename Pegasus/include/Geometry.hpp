@@ -472,8 +472,14 @@ void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& b
         glm::dvec3 orthogonalDirection;
         orthogonalDirection[n] = A0[m];
         orthogonalDirection[m] = A0[n];
+        orthogonalDirection = glm::normalize(orthogonalDirection);
 
-        simplex.vertices[2] = cso::Support(aShape, bShape, glm::normalize(orthogonalDirection));
+        glm::dvec3 const a = cso::Support(aShape, bShape, orthogonalDirection);
+        glm::dvec3 const b = cso::Support(aShape, bShape, -orthogonalDirection);
+        double const adist = math::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], a);
+        double const bdist = math::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], b);
+
+        simplex.vertices[2] = adist > bdist ? a : b;
         ++simplex.size;
     }
 
@@ -540,7 +546,7 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
 
         //Find CSO point on the new search direction
         glm::dvec3 const supportVertex = cso::Support(aShape, bShape, direction);
-        double const supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
+        volatile double const supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
 
         //If the edge face and it is the neares one end EPA
         if (math::fp::IsLessOrEqual(supportVertexDistance, distance))

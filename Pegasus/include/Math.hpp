@@ -25,7 +25,7 @@ namespace math
 {
 namespace fp
 {
-constexpr double g_floatingPointThreshold = 1e-10;
+constexpr double g_floatingPointThreshold = 1e-4;
 
 /**
  * @brief Calculates whether a given floating point number is equal to null within a set threshold
@@ -46,7 +46,7 @@ inline bool IsNull(double n)
  */
 inline bool IsEqual(double lhs, double rhs)
 {
-    return glm::abs(lhs - rhs) < g_floatingPointThreshold;
+    return glm::abs(glm::abs(lhs) - glm::abs(rhs)) < g_floatingPointThreshold;
 }
 
 /**
