@@ -353,6 +353,15 @@ bool SimplexContainsOrigin(Simplex const& simplex);
 NearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize);
 
 /**
+ * @brief Checks if simplex contains origin and returs true if it does, 
+ * otherwise finds closest sub simplex to the origin
+ * @param[in, out] simplex current simplex
+ * @param[in, out] direction current search direction
+ * @return @c true if simplex contains origin, @c false otherwise
+ */
+bool DoSimplex(gjk::Simplex& simplex, glm::dvec3& direction);
+
+/**
 * @brief Attempts to calculate a tetrahedron from the CSO vertices such that it contains the origin
 * @tparam ShapeA any shape type for which gjk::Support is overloaded
 * @tparam ShapeB any shape type for which gjk::Support is overloaded
@@ -365,7 +374,7 @@ NearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t si
 template <typename ShapeA, typename ShapeB>
 bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
 {
-    while (true)
+    do
     {
         //Add new vertex to the simplex
         simplex.vertices[simplex.size++] = cso::Support(aShape, bShape, direction);
@@ -376,18 +385,9 @@ bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bSha
         {
             return false;
         }
+    } while (!DoSimplex(simplex, direction));
 
-        //Check if a current simplex contains the origin
-        if (SimplexContainsOrigin(simplex))
-        {
-            return true;
-        }
-
-        //Calculate sub simplex nearest to the origin
-        NearestSimplexData const data = NearestSimplex(simplex.vertices, simplex.size);
-        direction = glm::normalize(data.direction);
-        simplex.size = data.simplexSize;
-    }
+    return true;
 }
 
 /**
@@ -510,16 +510,17 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
         BlowUpPolytope(simplex, aShape, bShape);
     }
 
-    //Initialize polytope
-    std::vector<glm::dvec3> polytopeVertices{
-        simplex.vertices[0], simplex.vertices[1], simplex.vertices[2], simplex.vertices[3]
-    };
-
-    //Calculate initial convex hull
+    //Initialize polytope and calculate initial convex hull
+    std::vector<glm::dvec3> polytopeVertices{ simplex.vertices.begin(), simplex.vertices.end() };
     ConvexHull convexHull(polytopeVertices);
     convexHull.Calculate();
 
-    while (true)
+    //Support information
+    glm::dvec3 direction;
+    double supportVertexDistance;
+    double distance;
+    
+    do
     {
         //Get polytope's faces and sort them by the distance to the origin
         ConvexHull::Faces chFaces = convexHull.GetFaces();
@@ -530,33 +531,34 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
 
         //Get distance and direction to the polytope's face that is nearest to the origin
         math::HyperPlane const& hp = chFaces.front().GetHyperPlane();
-        glm::dvec3 const& direction = hp.GetNormal();
-        double const distance = hp.GetDistance();
+        direction = hp.GetNormal();
+        distance = hp.GetDistance();
 
         //Find CSO point using new search direction
         glm::dvec3 const supportVertex = cso::Support(aShape, bShape, direction);
-        double const supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
+        supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
 
         //If it's a face from the edge, end EPA
-        if (math::fp::IsLessOrEqual(supportVertexDistance, distance))
+        if (math::fp::IsGreater(supportVertexDistance, distance))
         {
-            return ContactManifold{
-                cso::Support(aShape, direction),
-                cso::Support(bShape, -direction),
-                cso::Support(aShape, direction) + aShape.centerOfMass,
-                cso::Support(bShape, -direction) + bShape.centerOfMass,
-                direction,
-                distance
-            };
+            //Expand polytope if possible
+            polytopeVertices.push_back(supportVertex);
+            if (!convexHull.AddVertex(polytopeVertices.size() - 1))
+            {
+                polytopeVertices.pop_back();
+            }
         }
 
-        //Expand polytope if possible
-        polytopeVertices.push_back(supportVertex);
-        if (!convexHull.AddVertex(polytopeVertices.size() - 1))
-        {
-            polytopeVertices.pop_back();
-        }
-    }
+    } while (math::fp::IsGreater(supportVertexDistance, distance));
+
+    return {
+        cso::Support(aShape, direction),
+        cso::Support(bShape, -direction),
+        cso::Support(aShape, direction) + aShape.centerOfMass,
+        cso::Support(bShape, -direction) + bShape.centerOfMass,
+        direction,
+        distance
+    };
 }
 } // namespace epa
 
@@ -589,9 +591,9 @@ template <>
 struct Cache<Ray, Sphere> : CacheBase
 {
     glm::dvec3 sphereContactNormal;
-    bool intersection;
     glm::dvec3 inPoint;
     glm::dvec3 outPoint;
+    bool intersection;
 };
 
 template <>
@@ -692,9 +694,9 @@ template <>
 struct Cache<Box, Box> : CacheBase
 {
     gjk::Simplex simplex;
-    bool intersection;
     glm::dvec3 contactNormal;
     double penetration;
+    bool intersection;
 };
 
 /**

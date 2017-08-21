@@ -458,6 +458,22 @@ intersection::gjk::NearestSimplexData intersection::gjk::NearestSimplex(std::arr
     return ::NearestSimplexTetrahedron(simplex);
 }
 
+bool intersection::gjk::DoSimplex(gjk::Simplex& simplex, glm::dvec3& direction)
+{
+    //Check if a current simplex contains the origin
+    if (SimplexContainsOrigin(simplex))
+    {
+        return true;
+    }
+
+    //Calculate sub simplex nearest to the origin
+    NearestSimplexData const data = NearestSimplex(simplex.vertices, simplex.size);
+    direction = glm::normalize(data.direction);
+    simplex.size = data.simplexSize;
+
+    return false;
+}
+
 SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetector()
     : m_intersectionCaches(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
     , m_calculateIntersectionFunctors(s_unorderedMapInitialPrimeSize, ShapeTypePairHasher())
