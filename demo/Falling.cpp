@@ -78,7 +78,7 @@ private:
     using ConvexHull = pegasus::math::QuickhullConvexHull<std::vector<glm::dvec3>>;
     std::unique_ptr<ConvexHull> cv;
     ConvexHull::Faces cvFaces;
-    std::list<ConvexHull::Vertices::iterator> cvVertices;
+    std::list<size_t> cvVertices;
 
     std::array<bool, 4> m_overlap;
     std::array<glm::dvec3, 4> m_contactNormal;
@@ -510,7 +510,7 @@ void FallingDemo::Display()
             glRotated(yRotationAngle, 0, 1, 0);
             glBegin(GL_POINTS);
             glColor3f(1, 0, 0);
-            glVertex3dv(glm::value_ptr(*vertex));
+            glVertex3dv(glm::value_ptr(vertices[vertex]));
             glEnd();
             glPopMatrix();
         }
