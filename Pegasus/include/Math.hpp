@@ -18,6 +18,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <numeric>
 
 namespace pegasus
 {
@@ -1004,7 +1005,7 @@ public:
          * @brief Constructs a face without initializing above vertices
          * @param[in] hedsFaceIterator HEDS face iterator
          * @param[in] hyperPlane hyperplane that given face lies on
-         * @param[in] indices face indices
+         * @param[in] indices indices of the face's vertices
          */
         Face(HalfEdgeDataStructure::face_iterator hedsFaceIterator,
             HyperPlane const& hyperPlane,
@@ -1024,21 +1025,21 @@ public:
          * @param[in] partitionMarkedVertices vertices marked for partitioning
          * @param[in] hedsFaceIterator HEDS face iterator
          * @param[in] hyperPlane hyperplane that given face lies on
-         * @param[in] indices face indices
+         * @param[in] indices indices of the face's vertices
          */
         Face(Vertices& vertexBuffer,
-            std::list<typename Vertices::iterator>& partitionMarkedVertices,
+            std::list<size_t>& partitionMarkedVertices,
             HalfEdgeDataStructure::face_iterator hedsFaceIterator,
             HyperPlane const& hyperPlane,
             std::array<size_t, 3> const& indices
         )
             : Face(hedsFaceIterator, hyperPlane, indices)
         {
-            SetVertices(vertexBuffer, partitionMarkedVertices);
+            AddVertices(vertexBuffer, partitionMarkedVertices);
         }
 
         /**
-         * @brief Partitions vertices that are above the face
+         * @brief Moves vertices that are above the face from the input container to the local container
          *
          * Uses vertexBuffer as a reference point for the index calculation without changing it,
          * removes vertices from partitionMarkedVertices list that are above the current face's hyperplane
@@ -1046,11 +1047,11 @@ public:
          * @param[in] vertexBuffer common vertex buffer
          * @param[in, out] partitionMarkedVertices vertices marked for partitioning
          */
-        void SetVertices(Vertices const& vertexBuffer, std::list<typename Vertices::iterator>& partitionMarkedVertices)
+        void AddVertices(Vertices const& vertexBuffer, std::list<size_t>& partitionMarkedVertices)
         {
-            auto findAboveVertices = [this](typename Vertices::iterator& vertexIt)
+            auto findAboveVertices = [this, &vertexBuffer](size_t index)
             {
-                return m_hyperPlane.SignedDistance(*vertexIt) > 0;
+                return m_hyperPlane.SignedDistance(vertexBuffer[index]) > 0;
             };
 
             std::copy_if(partitionMarkedVertices.begin(), partitionMarkedVertices.end(),
@@ -1063,15 +1064,13 @@ public:
 
             if (!m_vertices.empty())
             {
-                m_extremalVertex = *std::max_element(m_vertices.begin(), m_vertices.end(),
-                    [this](typename Vertices::iterator& a, typename Vertices::iterator& b)
+                m_extremalVertexIndex = *std::max_element(m_vertices.begin(), m_vertices.end(),
+                    [this, &vertexBuffer](size_t a, size_t b)
                 {
-                    return m_hyperPlane.SignedDistance(*a) < m_hyperPlane.SignedDistance(*b);
+                    return m_hyperPlane.SignedDistance(vertexBuffer[a]) < m_hyperPlane.SignedDistance(vertexBuffer[b]);
                 });
 
-                m_extremalVertexIndex = std::distance<typename Vertices::const_iterator>(
-                    vertexBuffer.cbegin(), m_extremalVertex
-                );
+                m_extremalVertex = vertexBuffer[m_extremalVertexIndex];
             }
         }
 
@@ -1079,7 +1078,7 @@ public:
          * @brief Returns vertices that are above current face's hyperplane
          * @return face vertices container
          */
-        std::vector<typename Vertices::iterator>& GetVertices()
+        std::vector<size_t>& GetVertices()
         {
             return m_vertices;
         }
@@ -1088,7 +1087,7 @@ public:
          * @brief Returns farthest vertex above face's hyperplane
          * @return extremal vertex iterator
          */
-        typename Vertices::iterator GetExtremalVertex() const
+        glm::dvec3 GetExtremalVertex() const
         {
             return m_extremalVertex;
         }
@@ -1130,8 +1129,8 @@ public:
         }
 
     private:
-        std::vector<typename Vertices::iterator> m_vertices;
-        typename Vertices::iterator m_extremalVertex;
+        std::vector<size_t> m_vertices;
+        glm::dvec3 m_extremalVertex;
         size_t m_extremalVertexIndex;
         HalfEdgeDataStructure::face_iterator m_hedsFaceIterator;
         HyperPlane m_hyperPlane;
@@ -1143,15 +1142,15 @@ public:
      * @param vertices vertex buffer object
      */
     explicit QuickhullConvexHull(Vertices& vertices)
-        : m_vertices(vertices)
+        : m_vertexBuffer(vertices)
     {
     }
 
     /**
      * @brief Adds vertex to the current convex hull if it's outside of it
-     * @param vertex point outside of the convex hull
+     * @param index point outside of the convex hull
      */
-    bool AddVertex(typename Vertices::iterator vertex)
+    bool AddVertex(size_t index)
     {
         //Create stack of convex hull faces
         std::list<typename Faces::iterator> faceIteratorStack;
@@ -1162,11 +1161,11 @@ public:
 
         //Find initial visible face
         typename Faces::iterator visibleFaceIterator = m_faces.end();
-        for (typename Faces::iterator face : faceIteratorStack)
+        for (typename Faces::iterator faceIt : faceIteratorStack)
         {
-            if (face->GetHyperPlane().SignedDistance(*vertex) > 0)
+            if (faceIt->GetHyperPlane().SignedDistance(m_vertexBuffer[index]) > 0)
             {
-                visibleFaceIterator = face;
+                visibleFaceIterator = faceIt;
                 break;
             }
         }
@@ -1174,8 +1173,7 @@ public:
         //If the point is outside of the convex hull, add it
         if (visibleFaceIterator != m_faces.end())
         {
-            size_t const vertexIndex = std::distance(m_vertices.begin(), vertex);
-            AddVertex(faceIteratorStack, vertex, vertexIndex, visibleFaceIterator);
+            AddVertex(faceIteratorStack, index, visibleFaceIterator);
             return true;
         }
 
@@ -1204,15 +1202,15 @@ public:
      * @brief Returns convex hull vertices
      * @return convex hull vertices
      */
-    std::list<typename Vertices::iterator> const& GetVertices() const
+    std::list<size_t> const& GetVertices() const
     {
         return m_convexHullVertices;
     }
 
 private:
     Faces m_faces;
-    Vertices& m_vertices;
-    std::list<typename Vertices::iterator> m_convexHullVertices;
+    Vertices& m_vertexBuffer;
+    std::list<size_t> m_convexHullVertices;
     glm::dvec3 m_mean;
     HalfEdgeDataStructure m_heds;
     std::unordered_map<
@@ -1221,12 +1219,11 @@ private:
 
     void AddVertex(
         std::list<typename Faces::iterator>& faceStack,
-        typename Vertices::iterator extremalVertex,
         size_t extremalVertexIndex,
         typename Faces::iterator visibleFaceIterator
     )
     {
-        std::list<typename Vertices::iterator> partitionMarkedVertexIterators;
+        std::list<size_t> partitionMarkedVertexIndices;
         std::list<std::pair<size_t, size_t>> horizonRidges;
         std::list<typename Faces::iterator> visibleFaces;
         std::unordered_set<Face*> visibleFacesSet;
@@ -1236,9 +1233,8 @@ private:
         {
             visibleFaces.push_back(visibleFaceIterator);
             visibleFacesSet.insert(&*visibleFaceIterator);
-            std::vector<typename Vertices::iterator>& faceVertices = visibleFaceIterator->GetVertices();
-            partitionMarkedVertexIterators.insert(partitionMarkedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
-            std::vector<typename Vertices::iterator>().swap(faceVertices);
+            std::vector<size_t>& faceVertices = visibleFaceIterator->GetVertices();
+            partitionMarkedVertexIndices.insert(partitionMarkedVertexIndices.end(), faceVertices.begin(), faceVertices.end());
         }
 
         //Find all visible faces and horizon ridges
@@ -1258,14 +1254,13 @@ private:
                     && visibleFacesSet.find(&*adjFace) == visibleFacesSet.end())
                 {
                     //If face is visible add it to the visible faces set
-                    if (adjFace->GetHyperPlane().SignedDistance(*extremalVertex) > 0)
+                    if (adjFace->GetHyperPlane().SignedDistance(m_vertexBuffer[extremalVertexIndex]) > 0)
                     {
                         visibleFaces.push_back(adjFace);
                         visibleFacesSet.insert(&*adjFace);
 
-                        std::vector<typename Vertices::iterator>& faceVertices = adjFace->GetVertices();
-                        partitionMarkedVertexIterators.insert(partitionMarkedVertexIterators.end(), faceVertices.begin(), faceVertices.end());
-                        std::vector<typename Vertices::iterator>().swap(faceVertices);
+                        std::vector<size_t>& faceVertices = adjFace->GetVertices();
+                        partitionMarkedVertexIndices.insert(partitionMarkedVertexIndices.end(), faceVertices.begin(), faceVertices.end());
                     }
                     //If face is not visible then find a ridge and save it
                     else
@@ -1286,7 +1281,7 @@ private:
         }
 
         //Add vertex to the convex hull set
-        m_convexHullVertices.push_back(extremalVertex);
+        m_convexHullVertices.push_back(extremalVertexIndex);
 
         //Remove visible faces
         for (typename Faces::iterator visibleFaceIt : visibleFaces)
@@ -1303,7 +1298,7 @@ private:
         for (auto& ridge : horizonRidges)
         {
             faceStack.push_back(
-                MakeFace(ridge.first, ridge.second, extremalVertexIndex, partitionMarkedVertexIterators)
+                MakeFace(ridge.first, ridge.second, extremalVertexIndex, partitionMarkedVertexIndices)
             );
         }
     }
@@ -1320,15 +1315,15 @@ private:
      */
     typename Faces::iterator MakeFace(
         size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3,
-        std::list<typename Vertices::iterator>& partitionMarkedVertices
+        std::list<size_t>& partitionMarkedVertices
     )
     {
         m_heds.MakeFace(vertexIndex1, vertexIndex2, vertexIndex3);
         m_faces.push_front(Face{
-            m_vertices,
+            m_vertexBuffer,
             partitionMarkedVertices,
             m_heds.GetFace(vertexIndex1, vertexIndex2, vertexIndex3),
-            HyperPlane{m_vertices[vertexIndex1], m_vertices[vertexIndex2], m_vertices[vertexIndex3], &m_mean},
+            HyperPlane{m_vertexBuffer[vertexIndex1], m_vertexBuffer[vertexIndex2], m_vertexBuffer[vertexIndex3], &m_mean},
             std::array<size_t, 3>{vertexIndex1, vertexIndex2, vertexIndex3}
         });
         m_hedsFaceIteratorMap[&*m_faces.front().GetHedsFaceIterator()] = m_faces.begin();
@@ -1347,11 +1342,14 @@ private:
         m_faces.erase(faceIterator);
     }
 
+    /**
+     * @brief Calculates initial tetrahedron from the vertex buffer
+     */
     void CalculateInitialTetraHedron()
     {
         //Calculate covariance matrix and its eigenvectors
-        m_mean = CalculateExpectedValue(m_vertices.begin(), m_vertices.end());
-        JacobiEigenvalue const eigenvalue(CalculateCovarianceMatrix(m_vertices.begin(), m_vertices.end(), m_mean));
+        m_mean = CalculateExpectedValue(m_vertexBuffer.begin(), m_vertexBuffer.end());
+        JacobiEigenvalue const eigenvalue(CalculateCovarianceMatrix(m_vertexBuffer.begin(), m_vertexBuffer.end(), m_mean));
         glm::dmat3 eigenvectorsNormalized = eigenvalue.GetEigenvectors();
         eigenvectorsNormalized = {
             glm::normalize(eigenvectorsNormalized[0]),
@@ -1361,7 +1359,7 @@ private:
 
         //Calculate extremal vertices
         std::array<typename Vertices::iterator, 3> maximaVertices, minimaVertices;
-        FindExtremalVertices(m_vertices.begin(), m_vertices.end(), eigenvectorsNormalized, minimaVertices, maximaVertices);
+        FindExtremalVertices(m_vertexBuffer.begin(), m_vertexBuffer.end(), eigenvectorsNormalized, minimaVertices, maximaVertices);
         std::set<typename Vertices::iterator> extremalPoints(maximaVertices.begin(), maximaVertices.end());
         extremalPoints.insert(minimaVertices.begin(), minimaVertices.end());
 
@@ -1393,7 +1391,7 @@ private:
         //Calculate tetrahedron apex point
         HyperPlane baseFacePlane(*mostDistantPair.first, *mostDistantPair.second, *triangleBasePoint);
         auto tetrahedronApexPoint = std::max_element(
-            m_vertices.begin(), m_vertices.end(),
+            m_vertexBuffer.begin(), m_vertexBuffer.end(),
             [&baseFacePlane](glm::dvec3& a, glm::dvec3& b)
         {
             return baseFacePlane.Distance(a) < baseFacePlane.Distance(b);
@@ -1401,24 +1399,25 @@ private:
 
         //Initialize base hull tetrahedron
         m_convexHullVertices = {
-            mostDistantPair.first, mostDistantPair.second, triangleBasePoint, tetrahedronApexPoint
-        };
-        std::array<size_t, 4> indices = {
-            static_cast<size_t>(std::distance(m_vertices.begin(), mostDistantPair.first)),
-            static_cast<size_t>(std::distance(m_vertices.begin(), mostDistantPair.second)),
-            static_cast<size_t>(std::distance(m_vertices.begin(), triangleBasePoint)),
-            static_cast<size_t>(std::distance(m_vertices.begin(), tetrahedronApexPoint))
+            static_cast<size_t>(std::distance(m_vertexBuffer.begin(), mostDistantPair.first)),
+            static_cast<size_t>(std::distance(m_vertexBuffer.begin(), mostDistantPair.second)),
+            static_cast<size_t>(std::distance(m_vertexBuffer.begin(), triangleBasePoint)),
+            static_cast<size_t>(std::distance(m_vertexBuffer.begin(), tetrahedronApexPoint))
         };
 
-        std::list<typename Vertices::iterator> markedVertexIterators;
-        for (auto vertexIt = m_vertices.begin(); vertexIt != m_vertices.end(); ++vertexIt)
-        {
-            markedVertexIterators.push_back(vertexIt);
-        }
-        MakeFace(indices[0], indices[1], indices[2], markedVertexIterators);
-        MakeFace(indices[0], indices[1], indices[3], markedVertexIterators);
-        MakeFace(indices[0], indices[2], indices[3], markedVertexIterators);
-        MakeFace(indices[1], indices[2], indices[3], markedVertexIterators);
+        std::list<size_t> markedVertexIndices(m_vertexBuffer.size());
+        std::iota(markedVertexIndices.begin(), markedVertexIndices.end(), 0);     
+        std::array<size_t, 4> const indices = {
+            static_cast<size_t>(std::distance(m_vertexBuffer.begin(), mostDistantPair.first)),
+            static_cast<size_t>(std::distance(m_vertexBuffer.begin(), mostDistantPair.second)),
+            static_cast<size_t>(std::distance(m_vertexBuffer.begin(), triangleBasePoint)),
+            static_cast<size_t>(std::distance(m_vertexBuffer.begin(), tetrahedronApexPoint))
+        };
+
+        MakeFace(indices[0], indices[1], indices[2], markedVertexIndices);
+        MakeFace(indices[0], indices[1], indices[3], markedVertexIndices);
+        MakeFace(indices[0], indices[2], indices[3], markedVertexIndices);
+        MakeFace(indices[1], indices[2], indices[3], markedVertexIndices);
     }
 
     /**
@@ -1426,15 +1425,13 @@ private:
     */
     void CalculateInitialGuess()
     {
-        if (m_vertices.size() == 4)
+        if (m_vertexBuffer.size() == 4)
         {
-            m_mean = CalculateExpectedValue(m_vertices.begin(), m_vertices.end());
-            for (auto vertIt = m_vertices.begin(); vertIt != m_vertices.end(); ++vertIt)
-            {
-                m_convexHullVertices.push_back(vertIt);
-            }
-
-            std::list<typename Vertices::iterator> partitionMarkedVertices;
+            m_mean = CalculateExpectedValue(m_vertexBuffer.begin(), m_vertexBuffer.end());
+            m_convexHullVertices.resize(m_vertexBuffer.size());
+            std::iota(m_convexHullVertices.begin(), m_convexHullVertices.end(), 0);
+            
+            std::list<size_t> partitionMarkedVertices;
             MakeFace(0, 1, 2, partitionMarkedVertices);
             MakeFace(0, 1, 3, partitionMarkedVertices);
             MakeFace(0, 2, 3, partitionMarkedVertices);
@@ -1467,7 +1464,7 @@ private:
             if (!faceIt->GetVertices().empty())
             {
                 AddVertex(
-                    faceStack, faceIt->GetExtremalVertex(), faceIt->GetExtremalVertexIndex(), faceIt
+                    faceStack, faceIt->GetExtremalVertexIndex(), faceIt
                 );
             }
         }

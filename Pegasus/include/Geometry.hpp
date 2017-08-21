@@ -511,9 +511,9 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
     }
 
     //Initialize polytope
-    std::vector<glm::dvec3> polytopeVertices;
-    polytopeVertices.reserve(1000);
-    polytopeVertices = {simplex.vertices[0], simplex.vertices[1], simplex.vertices[2], simplex.vertices[3]};
+    std::vector<glm::dvec3> polytopeVertices{
+        simplex.vertices[0], simplex.vertices[1], simplex.vertices[2], simplex.vertices[3]
+    };
 
     //Calculate initial convex hull
     ConvexHull convexHull(polytopeVertices);
@@ -535,7 +535,7 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
 
         //Find CSO point on the new search direction
         glm::dvec3 const supportVertex = cso::Support(aShape, bShape, direction);
-        volatile double const supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
+        double const supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
 
         //If the edge face and it is the neares one end EPA
         if (math::fp::IsLessOrEqual(supportVertexDistance, distance))
@@ -552,7 +552,7 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
 
         //Expand polytope if possible
         polytopeVertices.push_back(supportVertex);
-        if (!convexHull.AddVertex(std::prev(polytopeVertices.end())))
+        if (!convexHull.AddVertex(polytopeVertices.size() - 1))
         {
             polytopeVertices.pop_back();
         }
