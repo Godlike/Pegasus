@@ -264,6 +264,8 @@ glm::dvec3 intersection::cso::Support(Box const& box1, Box const& box2, glm::dve
     return vertex;
 }
 
+namespace 
+{
 /**
  * @brief Calculates whether a line passes through the origin and returns true if it does
  * @param[in] lineStart line segment start point
@@ -308,20 +310,6 @@ bool TetrahedronContainsOrigin(std::array<glm::dvec3, 4> const& vertices)
         && math::fp::IsGreaterOrEqual(faces[1].GetDistance(), 0.0)
         && math::fp::IsGreaterOrEqual(faces[2].GetDistance(), 0.0)
         && math::fp::IsGreaterOrEqual(faces[3].GetDistance(), 0.0);
-}
-
-bool intersection::gjk::SimplexContainsOrigin(Simplex const& simplex)
-{
-    if (simplex.size == 2)
-    {
-        return LineSegmentContainsOrigin(simplex.vertices[0], simplex.vertices[1]);
-    }
-    if (simplex.size == 3)
-    {
-        return TriangleContainsOrigin(simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]);
-    }
-
-    return TetrahedronContainsOrigin(simplex.vertices);
 }
 
 /**
@@ -440,19 +428,34 @@ intersection::gjk::NearestSimplexData NearestSimplexTetrahedron(std::array<glm::
 
     return NearestSimplexTriangle(simplex);
 }
+} // anonymous namespace
+
+bool intersection::gjk::SimplexContainsOrigin(Simplex const& simplex)
+{
+    if (simplex.size == 2)
+    {
+        return ::LineSegmentContainsOrigin(simplex.vertices[0], simplex.vertices[1]);
+    }
+    if (simplex.size == 3)
+    {
+        return ::TriangleContainsOrigin(simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]);
+    }
+
+    return ::TetrahedronContainsOrigin(simplex.vertices);
+}
 
 intersection::gjk::NearestSimplexData intersection::gjk::NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize)
 {
     if (2 == simplexSize)
     {
-        return NearestSimplexLineSegment(simplex);
+        return ::NearestSimplexLineSegment(simplex);
     }
     if (3 == simplexSize)
     {
-        return NearestSimplexTriangle(simplex);
+        return ::NearestSimplexTriangle(simplex);
     }
 
-    return NearestSimplexTetrahedron(simplex);
+    return ::NearestSimplexTetrahedron(simplex);
 }
 
 SimpleShapeIntersectionDetector::SimpleShapeIntersectionDetector()
