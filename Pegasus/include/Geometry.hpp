@@ -180,7 +180,7 @@ struct RayIntersectionFactors
 
 /**
 * @brief Returns true if a ray and a sphere are intersecting
-* @param[in] raySphere vector from the ray to the sphere center
+* @param[in] raySphere vector from the ray origin to the sphere center
 * @param[in] sphereRadius radius of the sphere
 * @param[in] rayDirection normalized direction vector of the ray
 * @return @c true if there is intersection, @c false otherwise
@@ -224,9 +224,9 @@ RayIntersectionFactors CalculateRayAabbIntersectionFactors(
 
 /**
  * @brief Calculates AABB min and max points from the given OBB basis
- * @param[in] i vector from an orthogonal basis
- * @param[in] j vector from an orthogonal basis
- * @param[in] k vector from an orthogonal basis
+ * @param[in] i vector from an orthogonal basis different from j, k
+ * @param[in] j vector from an orthogonal basis different from i, k
+ * @param[in] k vector from an orthogonal basis different from i, j
  * @return AABB min and max points
  */
 AabbExtremalVertices MakeExtremalVerticesAabb(
@@ -353,7 +353,7 @@ bool SimplexContainsOrigin(Simplex const& simplex);
 NearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize);
 
 /**
- * @brief Checks if simplex contains origin and returs true if it does, 
+ * @brief Checks if simplex contains origin and returs true if it does,
  * otherwise finds closest sub simplex to the origin
  * @param[in, out] simplex current simplex
  * @param[in, out] direction current search direction
@@ -519,7 +519,7 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
     glm::dvec3 direction;
     double supportVertexDistance;
     double distance;
-    
+
     do
     {
         //Get polytope's faces and sort them by the distance to the origin
