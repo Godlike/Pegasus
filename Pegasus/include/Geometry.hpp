@@ -242,18 +242,18 @@ AabbExtremalVertices MakeExtremalVerticesAabb(
 bool CalculateRayAabbIntersection(double tMin, double tMax);
 
 /**
- * @brief Calculates whether two vectors are pointed in the same diretion and returns true if they are
+ * @brief Calculates whether two vectors are pointed in the same direction and returns true if they are
  * @param[in] aVector input vector
  * @param[in] bVector input vector
  * @return @c true if dot product is positive @c false otherwise
  */
-inline bool IsSameDirection(glm::dvec3 const& aVector, glm::dvec3 const& bVector)
+inline bool IsAtAcuteAngle(glm::dvec3 const& aVector, glm::dvec3 const& bVector)
 {
     return math::fp::IsGreater(glm::dot(aVector, bVector), 0);
 }
 
 /**
- * @brief Calculates whether two points are on the same side of the halfspace defined by the line direction
+ * @brief Calculates whether two points are on the same side of the halfspace defined by line and a point
  * @param[in] lineStart line start point
  * @param[in] lineEnd line end point
  * @param[in] aPoint point of interest
@@ -348,7 +348,7 @@ bool SimplexContainsOrigin(Simplex const& simplex);
 * Presumes that simplex vertices are stored such that the latest added vertex has index @p simplexSize - 1
 * @param[in, out] simplex an array of vertices of a simplex
 * @param[in] simplexSize size of a simplex
-* @return new size of a simplex and a next directory of the search
+* @return new size of a simplex and a next direction of the search
 */
 NearestSimplexData NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize);
 
@@ -379,7 +379,7 @@ bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bSha
         //Add new vertex to the simplex
         simplex.vertices[simplex.size++] = cso::Support(aShape, bShape, direction);
 
-        //Calculate if the new vertex is pass the origin
+        //Calculate if the new vertex is past the origin
         double const newPointDirectionProj = glm::dot(simplex.vertices[simplex.size - 1], direction);
         if (math::fp::IsLess(newPointDirectionProj, 0.0))
         {
@@ -455,7 +455,7 @@ void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& b
     if (simplex.size == 2)
     {
         glm::dvec3 const A0 = -simplex.vertices[1];
-        uint8_t const n = (A0[0] != 0) ? 0 : ((A0[1] != 0) ? 1 : 2);
+        uint8_t const n = (math::fp::IsNotEqual(A0[0], 0.0) ? 0 : (math::fp::IsNotEqual(A0[1], 0.0) ? 1 : 2));
         uint8_t const m = (n == 0 ? 1 : (n == 1 ? 2 : 1));
 
         glm::dvec3 orthogonalDirection;
@@ -468,7 +468,7 @@ void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& b
         double const adist = math::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], a);
         double const bdist = math::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], b);
 
-        simplex.vertices[2] = adist > bdist ? a : b;
+        simplex.vertices[2] = math::fp::IsGreater(adist, bdist) ? a : b;
         ++simplex.size;
     }
 
@@ -485,7 +485,7 @@ void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& b
         glm::dvec3 const a = cso::Support(aShape, bShape, glm::normalize(ABC));
         glm::dvec3 const b = cso::Support(aShape, bShape, glm::normalize(-ABC));
 
-        simplex.vertices[3] = hyperPlane.Distance(a) > hyperPlane.Distance(b) ? a : b;
+        simplex.vertices[3] = math::fp::IsGreater(hyperPlane.Distance(a), hyperPlane.Distance(b)) ? a : b;
         ++simplex.size;
     }
 }

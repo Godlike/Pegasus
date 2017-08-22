@@ -220,7 +220,7 @@ bool intersection::IsTriangleContainsPoint(
 )
 {
     double const distance = math::HyperPlane{triangleVertex1, triangleVertex2, triangleVertex3}.Distance(point);
-    if (!math::fp::IsNull(distance))
+    if (!math::fp::IsZero(distance))
     {
         return false;
     }
@@ -249,13 +249,13 @@ glm::dvec3 intersection::cso::Support(Box const& box, glm::dvec3 direction)
 
     std::array<glm::dvec3, 8> boxVertices;
     math::CalculateBoxVertices(box.iAxis, box.jAxis, box.kAxis, box.centerOfMass, boxVertices.begin());
-    std::sort(boxVertices.begin(), boxVertices.end(),
+    glm::dvec3 const maxPoint = *std::max_element(boxVertices.begin(), boxVertices.end(),
         [&direction](glm::dvec3 const& a, glm::dvec3 const& b) -> bool
     {
         return glm::dot(a, direction) < glm::dot(b, direction);
     });
 
-    return boxVertices.back();
+    return maxPoint;
 }
 
 glm::dvec3 intersection::cso::Support(Box const& box1, Box const& box2, glm::dvec3 direction)
@@ -264,7 +264,7 @@ glm::dvec3 intersection::cso::Support(Box const& box1, Box const& box2, glm::dve
     return vertex;
 }
 
-namespace 
+namespace
 {
 /**
  * @brief Calculates whether a line passes through the origin and returns true if it does
@@ -275,7 +275,7 @@ namespace
 bool LineSegmentContainsOrigin(glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd)
 {
     double const distance = math::LineSegmentPointDistance(lineStart, lineEnd, glm::dvec3{});
-    return math::fp::IsNull(distance);
+    return math::fp::IsZero(distance);
 }
 
 /**
@@ -313,7 +313,7 @@ bool TetrahedronContainsOrigin(std::array<glm::dvec3, 4> const& vertices)
 }
 
 /**
- * @brief Finds nearest simplex from the line sigment simplex to the origin and returns its size and new search direction
+ * @brief Finds nearest simplex from the line segment simplex to the origin and returns its size and new search direction
  * @param[in] simplex line segment simplex vertices
  * @return new simplex size and search direction
  */
@@ -322,7 +322,7 @@ intersection::gjk::NearestSimplexData NearestSimplexLineSegment(std::array<glm::
     glm::dvec3 const AB = simplex[0] - simplex[1];
     glm::dvec3 const A0 = glm::dvec3{0, 0, 0} - simplex[1];
 
-    if (intersection::IsSameDirection(AB, A0))
+    if (intersection::IsAtAcuteAngle(AB, A0))
     {
         glm::dvec3 const direction = glm::cross(glm::cross(AB, A0), AB);
         return {2, direction};
@@ -339,51 +339,54 @@ intersection::gjk::NearestSimplexData NearestSimplexLineSegment(std::array<glm::
  */
 intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dvec3, 4>& simplex)
 {
-    glm::dvec3 const AB = simplex[1] - simplex[2];
-    glm::dvec3 const AC = simplex[0] - simplex[2];
-    glm::dvec3 const A0 = glm::dvec3{0, 0, 0} - simplex[2];
+    glm::dvec3 const& A = simplex[2];
+    glm::dvec3 const& B = simplex[1];
+    glm::dvec3 const& C = simplex[0];
+    glm::dvec3 const AB = B - A;
+    glm::dvec3 const AC = C - A;
+    glm::dvec3 const A0 = glm::dvec3{0, 0, 0} - A;
     glm::dvec3 const ABC = glm::cross(AB, AC);
     intersection::gjk::NearestSimplexData result;
 
-    if (intersection::IsSameDirection(glm::cross(ABC, AC), -simplex[2]))
+    if (intersection::IsAtAcuteAngle(glm::cross(ABC, AC), -A))
     {
-        if (intersection::IsSameDirection(AC, A0))
+        if (intersection::IsAtAcuteAngle(AC, A0))
         {
-            simplex = {simplex[0], simplex[2]};
-            glm::dvec3 const direction = glm::cross(glm::cross(AC, -simplex[1]), AC);
+            simplex = {C, A};
+            glm::dvec3 const direction = glm::cross(glm::cross(AC, -B), AC);
             result = {2, direction};
         }
-        else if (intersection::IsSameDirection(AB, A0))
+        else if (intersection::IsAtAcuteAngle(AB, A0))
         {
-            simplex = {simplex[1], simplex[2]};
-            glm::dvec3 const direction = glm::cross(glm::cross(AB, -simplex[1]), AB);
+            simplex = {B, A};
+            glm::dvec3 const direction = glm::cross(glm::cross(AB, -B), AB);
             result = {2, direction};
         }
         else
         {
-            simplex = {simplex[2]};
-            glm::dvec3 const direction = -simplex[0];
+            simplex = {A};
+            glm::dvec3 const direction = -C;
             result = {1, direction};
         }
     }
-    else if (intersection::IsSameDirection(glm::cross(AB, ABC), -simplex[2]))
+    else if (intersection::IsAtAcuteAngle(glm::cross(AB, ABC), -A))
     {
-        if (intersection::IsSameDirection(AB, A0))
+        if (intersection::IsAtAcuteAngle(AB, A0))
         {
-            simplex = {simplex[1], simplex[2]};
-            glm::dvec3 const direction = glm::cross(glm::cross(AB, -simplex[1]), AB);
+            simplex = {B, A};
+            glm::dvec3 const direction = glm::cross(glm::cross(AB, -B), AB);
             result = {2, direction};
         }
         else
         {
-            simplex = {simplex[2]};
-            glm::dvec3 const direction = -simplex[0];
+            simplex = {A};
+            glm::dvec3 const direction = -C;
             result = {1, direction};
         }
     }
     else
     {
-        if (intersection::IsSameDirection(ABC, A0))
+        if (intersection::IsAtAcuteAngle(ABC, A0))
         {
             glm::dvec3 const direction = ABC;
             result = {3, direction};
@@ -405,7 +408,7 @@ intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dve
  */
 intersection::gjk::NearestSimplexData NearestSimplexTetrahedron(std::array<glm::dvec3, 4>& simplex)
 {
-    std::array<std::array<uint8_t, 3>, 3> const simplexes{
+    std::array<std::array<uint8_t, 3>, 3> const simplices{
         std::array<uint8_t, 3>{0, 1, 3},
         std::array<uint8_t, 3>{1, 2, 3},
         std::array<uint8_t, 3>{0, 2, 3}
@@ -421,9 +424,9 @@ intersection::gjk::NearestSimplexData NearestSimplexTetrahedron(std::array<glm::
         std::min_element(planeOriginDistances.begin(), planeOriginDistances.end()));
 
     simplex = {
-        simplex[simplexes[closestPlaneIndex][0]],
-        simplex[simplexes[closestPlaneIndex][1]],
-        simplex[simplexes[closestPlaneIndex][2]]
+        simplex[simplices[closestPlaneIndex][0]],
+        simplex[simplices[closestPlaneIndex][1]],
+        simplex[simplices[closestPlaneIndex][2]]
     };
 
     return NearestSimplexTriangle(simplex);

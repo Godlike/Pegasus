@@ -33,7 +33,7 @@ constexpr double g_floatingPointThreshold = 1e-4;
  * @param[in] n number
  * @return @c true if a number is equal to null, @c false otherwise
  */
-inline bool IsNull(double n)
+inline bool IsZero(double n)
 {
     return glm::abs(n) < g_floatingPointThreshold;
 }
@@ -48,6 +48,11 @@ inline bool IsNull(double n)
 inline bool IsEqual(double lhs, double rhs)
 {
     return glm::abs(glm::abs(lhs) - glm::abs(rhs)) < g_floatingPointThreshold;
+}
+
+inline bool IsNotEqual(double lhs, double rhs)
+{
+    return !IsEqual(lhs, rhs);
 }
 
 /**

@@ -105,18 +105,9 @@ bool HyperPlane::LineSegmentIntersection(
 
 glm::dvec3 HyperPlane::ClosestPoint(const glm::dvec3& point) const
 {
-    glm::dvec3 const normal = glm::normalize(glm::cross(glm::cross(m_normal, point), m_normal));
-    glm::dvec3 const closestPoint = normal * (glm::dot(normal, point));
+    glm::dvec3 const closestPoint = point - (glm::dot(point, m_normal) - m_distance) * m_normal;
 
     return closestPoint;
-}
-
-double LineSegmentPointDistance(
-    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
-)
-{
-    return glm::length(glm::cross(lineEnd - lineStart, lineStart - point))
-        / glm::length(lineEnd - lineStart);
 }
 
 JacobiEigenvalue::JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold, uint32_t maxIterations)
@@ -398,5 +389,5 @@ double pegasus::math::LineSegmentPointDistance(
     point = point - lineStart;
     glm::dvec3 const lineDirection = glm::normalize(lineEnd - lineStart);
     glm::dvec3 const pointLineProjection = glm::dot(lineDirection, point) * lineDirection;
-    return glm::sqrt(glm::length2(point) - glm::length2(pointLineProjection));
+    return glm::distance(point, pointLineProjection);
 }
