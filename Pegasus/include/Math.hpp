@@ -29,9 +29,11 @@ namespace fp
 constexpr double g_floatingPointThreshold = 1e-4;
 
 /**
- * @brief Calculates whether a given floating point number is equal to null within a set threshold
- * @param[in] n number
- * @return @c true if a number is equal to null, @c false otherwise
+ *  @brief  Checks if given floating point number is equal to null within a set threshold
+ *
+ *  @param  n   number
+ *
+ *  @return @c true if a number is equal to null, @c false otherwise
  */
 inline bool IsZero(double n)
 {
@@ -39,28 +41,45 @@ inline bool IsZero(double n)
 }
 
 /**
- * @brief Calculates whether a left-hand side value is equal to the right-hand side
- * within a set threshold and returns true if sos
- * @param[in] lhs left-hand side value
- * @param[in] rhs right-hand side value
- * @return @c true if both numbers are equal, @c false otherwise
+ *  @brief  Checks if left-hand side value is equal to the right-hand side
+ *          within a set threshold
+ *
+ *  @param  lhs left-hand side value
+ *  @param  rhs right-hand side value
+ *
+ *  @return @c true if numbers are equal, @c false otherwise
+ *
+ *  @sa IsNotEqual
  */
 inline bool IsEqual(double lhs, double rhs)
 {
     return glm::abs(glm::abs(lhs) - glm::abs(rhs)) < g_floatingPointThreshold;
 }
 
+/**
+ *  @brief  Checks if left-hand side value is not equal to the right-hand side
+ *          within a set threshold
+ *
+ *  @param  lhs left-hand side value
+ *  @param  rhs right-hand side value
+ *
+ *  @return @c true if numbers are equal, @c false otherwise
+ *
+ *  @sa IsEqual
+ */
 inline bool IsNotEqual(double lhs, double rhs)
 {
     return !IsEqual(lhs, rhs);
 }
 
 /**
- * @brief Calculates whether a left-hand side value is less than a right-hand side value
- * within a set threshold and returns true if so
- * @param[in] lhs left-hand side value
- * @param[in] rhs right-hand side value
- * @return @c true if lhs value is less than rhs value, @c false othewise
+ *  @brief  Checks if left-hand side value is less than right-hand side value
+ *          within a set threshold
+ *
+ *  @param  lhs left-hand side value
+ *  @param  rhs right-hand side value
+ *
+ *  @return @c true if lhs is less than rhs, @c false othewise
  */
 inline bool IsLess(double lhs, double rhs)
 {
@@ -68,11 +87,13 @@ inline bool IsLess(double lhs, double rhs)
 }
 
 /**
- * @brief Calculates whether a left-hand side value is greater than a right-hand side value
- * within a set threshold and returns true if so
- * @param[in] lhs left-hand side value
- * @param[in] rhs right-hand side value
- * @return @c true if lhs value is greater than rhs value, @c false otherwise
+ *  @brief  Checks if left-hand side value is greater than right-hand side value
+ *          within a set threshold and returns true if so
+ *
+ *  @param  lhs left-hand side value
+ *  @param  rhs right-hand side value
+ *
+ *  @return @c true if lhs is greater than rhs, @c false otherwise
  */
 inline bool IsGreater(double lhs, double rhs)
 {
@@ -80,27 +101,31 @@ inline bool IsGreater(double lhs, double rhs)
 }
 
 /**
- * @brief Calculates whether a left-hand side value is less or equal to a right-hand side value
- * within a set threshold and returns true if so
- * @param[in] lhs left-hand side value
- * @param[in] rhs right-hand side value
- * @return @c true if lhs value is less or equal to rhs value, @c false otherwise
+ *  @brief  Checks if left-hand side value is less than or equal to right-hand
+ *          side value within a set threshold
+ *
+ *  @param  lhs left-hand side value
+ *  @param  rhs right-hand side value
+ *
+ *  @return @c true if lhs is less than or equal to rhs, @c false otherwise
  */
 inline bool IsLessOrEqual(double lhs, double rhs)
 {
-    return IsEqual(lhs, rhs) || (lhs - rhs) < 0.0;
+    return !IsGreater(lhs, rhs);
 }
 
 /**
- * @brief Calculates whether a legt-hand side value is greater or equal to a right-hand side value
- * within a set threshold and returns true if so
- * @param lhs left-hand side value
- * @param rhs right-hand side value
- * @return @c true if lhs velue is greater or equal to rhs value, @c false otherwise
+ *  @brief  Checks if left-hand side value is greater than or equal to a
+ *          right-hand side value within a set threshold
+ *
+ *  @param  lhs left-hand side value
+ *  @param  rhs right-hand side value
+ *
+ *  @return @c true if lhs is greater than or equal to rhs, @c false otherwise
  */
 inline bool IsGreaterOrEqual(double lhs, double rhs)
 {
-    return IsEqual(lhs, rhs) || (lhs - rhs) > 0.0;
+    return !IsLess(lhs, rhs);
 }
 } // namespace fp
 
@@ -209,9 +234,11 @@ public:
     ) const;
 
     /**
-     * @brief Calculates closest point on the plane to a given point and returns it
-     * @param[in] point point of interest
-     * @return closest point on the plane
+     *  @brief  Calculates closest point on the plane to a given point
+     *
+     *  @param  point point of interest
+     *
+     *  @return closest point on the plane
      */
     glm::dvec3 ClosestPoint(glm::dvec3 const& point) const;
 
@@ -813,17 +840,21 @@ void FindExtremalVertices(
 }
 
 /**
-* @brief Calculates box vertices in the world coordinate space from a given orthogonal basis and it's position
-*
-* Writes output vertices to the container starting with @p verticesBeginIterator. There must
-* be at least 7 more elements following given iterator.
-* @tparam VerticesContainerIt Random access iterator
-* @param[in] i box axis vector
-* @param[in] j box axis vector
-* @param[in] k box axis vector
-* @param[in] center center of the box
-* @param[out] verticesBeginIterator iterator to the container that is able to store 8 vertices
-*/
+ *  @brief  Calculates box vertices in the world coordinate space from a given
+ *          orthogonal basis and it's position
+ *
+ *  Writes output vertices to the container starting with @p verticesBeginIterator
+ *
+ *  @attention  There must be at least 7 more elements following given iterator
+ *
+ *  @tparam VerticesContainerIt Random access iterator
+ *
+ *  @param[in]  i       box axis vector
+ *  @param[in]  j       box axis vector
+ *  @param[in]  k       box axis vector
+ *  @param[in]  center  center of the box
+ *  @param[out] verticesBeginIterator   iterator to the container
+ */
 template <typename VerticesContainerIt>
 void CalculateBoxVertices(
     glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k, glm::dvec3 const& center,
@@ -1152,8 +1183,13 @@ public:
     }
 
     /**
-     * @brief Adds vertex to the current convex hull if it's outside of it
-     * @param index point outside of the convex hull
+     *  @brief  Adds vertex to the current convex hull if it's outside
+     *
+     *  Does nothing if vertex is positioned inside conver hull
+     *
+     *  @param  index   index of a point to be added to the convex hull
+     *
+     *  @return @c true if vertex was added, @c false otherwise
      */
     bool AddVertex(size_t index)
     {
@@ -1223,10 +1259,11 @@ private:
     > m_hedsFaceIteratorMap;
 
     /**
-     * @brief Adds vertex to the convex hull
-     * @param[in, out] faceStack container of the convex hull's faces
-     * @param[in] extremalVertexIndex index of the extremal vertex of the visible face
-     * @param[in] visibleFaceIterator initial visible face of the convex hull
+     *  @brief Adds vertex to the convex hull
+     *
+     *  @param[in,out]  faceStack           container of the convex hull's faces
+     *  @param[in]      extremalVertexIndex index of extremal vertex on the visible face
+     *  @param[in]      visibleFaceIterator initial visible face of the convex hull
      */
     void AddVertex(
         std::list<typename Faces::iterator>& faceStack,
@@ -1315,14 +1352,17 @@ private:
     }
 
     /**
-     * @brief Inserts a new face into current convex hull
+     *  @brief  Inserts a new face into current convex hull
      *
-     * Removes vertices from partitionMarkedVertices list that are above the current face's hyperplane
-     * @param[in] vertexIndex1 index of a face
-     * @param[in] vertexIndex2 index of a face
-     * @param[in] vertexIndex3 index of a face
-     * @param[in, out] partitionMarkedVertices modifiable vertex buffer
-     * @return iterator to a new face
+     *  Removes vertices from @p partitionMarkedVertices list if they are above
+     *  the current face's hyperplane
+     *
+     *  @param[in]      vertexIndex1            index of a face
+     *  @param[in]      vertexIndex2            index of a face
+     *  @param[in]      vertexIndex3            index of a face
+     *  @param[in,out]  partitionMarkedVertices modifiable vertex buffer
+     *
+     *  @return iterator to a new face
      */
     typename Faces::iterator MakeFace(
         size_t vertexIndex1, size_t vertexIndex2, size_t vertexIndex3,
@@ -1343,8 +1383,9 @@ private:
     }
 
     /**
-     * @brief Removes face from a current convex hull and corresponding HEDS object
-     * @param faceIterator face to be removed iterator
+     *  @brief  Removes face from a current convex hull and corresponding HEDS object
+     *
+     *  @param  faceIterator    face to be removed
      */
     void RemoveFace(typename Faces::iterator faceIterator)
     {
@@ -1354,9 +1395,9 @@ private:
     }
 
     /**
-     * @brief Calculates initial tetrahedron from the vertex buffer
+     *  @brief  Calculates initial tetrahedron from the vertex buffer
      */
-    void CalculateInitialTetraHedron()
+    void CalculateInitialTetrahedron()
     {
         //Calculate covariance matrix and its eigenvectors
         m_mean = CalculateExpectedValue(m_vertexBuffer.begin(), m_vertexBuffer.end());
@@ -1417,7 +1458,7 @@ private:
         };
 
         std::list<size_t> markedVertexIndices(m_vertexBuffer.size());
-        std::iota(markedVertexIndices.begin(), markedVertexIndices.end(), 0);     
+        std::iota(markedVertexIndices.begin(), markedVertexIndices.end(), 0);
         std::array<size_t, 4> const indices = {
             static_cast<size_t>(std::distance(m_vertexBuffer.begin(), mostDistantPair.first)),
             static_cast<size_t>(std::distance(m_vertexBuffer.begin(), mostDistantPair.second)),
@@ -1432,8 +1473,8 @@ private:
     }
 
     /**
-    * @brief Calculates initial guess tetrahedron and performs initalization
-    */
+     *  @brief  Calculates initial guess tetrahedron
+     */
     void CalculateInitialGuess()
     {
         if (m_vertexBuffer.size() == 4)
@@ -1441,7 +1482,7 @@ private:
             m_mean = CalculateExpectedValue(m_vertexBuffer.begin(), m_vertexBuffer.end());
             m_convexHullVertices.resize(m_vertexBuffer.size());
             std::iota(m_convexHullVertices.begin(), m_convexHullVertices.end(), 0);
-            
+
             std::list<size_t> partitionMarkedVertices;
             MakeFace(0, 1, 2, partitionMarkedVertices);
             MakeFace(0, 1, 3, partitionMarkedVertices);
@@ -1450,13 +1491,13 @@ private:
         }
         else
         {
-            CalculateInitialTetraHedron();
+            CalculateInitialTetrahedron();
         }
     }
 
     /**
-    * @brief Refines initial guess tetrahedron by calculating final convex hull
-    */
+     *  @brief  Refines initial guess tetrahedron by calculating final convex hull
+     */
     void Refine()
     {
         //Create stack of convex hull faces

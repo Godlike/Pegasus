@@ -135,7 +135,7 @@ Box::Box(
 {
 }
 
-bool intersection::CalculateRaySphereIntersection(
+bool intersection::CheckRaySphereIntersection(
     glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
 )
 {
@@ -209,13 +209,13 @@ intersection::MakeExtremalVerticesAabb(
     return {-maxVertex, maxVertex};
 }
 
-bool intersection::CalculateRayAabbIntersection(double tMin, double tMax)
+bool intersection::CheckRayIntersectionFactors(RayIntersectionFactors factors)
 {
-    // tMax < 0, AABB is behind ray; tMin > tMax, no intesection
-    return tMax > 0 && tMin < tMax;
+    // tMax < 0, intersection is behind ray; tMin > tMax, no intesection
+    return factors.tMax > 0 && factors.tMin < factors.tMax;
 }
 
-bool intersection::IsTriangleContainsPoint(
+bool intersection::IsPointInsideTriangle(
     glm::dvec3 const& triangleVertex1, glm::dvec3 const& triangleVertex2, glm::dvec3 const& triangleVertex3, glm::dvec3 const& point
 )
 {
@@ -267,10 +267,12 @@ glm::dvec3 intersection::cso::Support(Box const& box1, Box const& box2, glm::dve
 namespace
 {
 /**
- * @brief Calculates whether a line passes through the origin and returns true if it does
- * @param[in] lineStart line segment start point
- * @param[in] lineEnd line segment end point
- * @return @c true if a line passes though the origin @c false otherwise
+ *  @brief  Checks if line passes through the origin
+ *
+ *  @param  lineStart   line segment start point
+ *  @param  lineEnd     line segment end point
+ *
+ *  @return @c true if line passes though the origin, @c false otherwise
  */
 bool LineSegmentContainsOrigin(glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd)
 {
@@ -279,23 +281,27 @@ bool LineSegmentContainsOrigin(glm::dvec3 const& lineStart, glm::dvec3 const& li
 }
 
 /**
- * @brief Calculates whether a triangle contains the origin and returns true if it does
+ *  @brief  Checks if triangle contains the origin
  *
- * All input point must not lie on the same line at the same time, otherwise result is undefined
- * @param[in] a triangle vertex
- * @param[in] b triangle vertex
- * @param[in] c triangle vertex
- * @return @c true if a triangle contains the origin @c false othewise
+ *  @attention  All input points must not lie on the same line at the same time
+ *
+ *  @param  a   triangle vertex
+ *  @param  b   triangle vertex
+ *  @param  c   triangle vertex
+ *
+ *  @return @c true if triangle contains the origin, @c false othewise
  */
 bool TriangleContainsOrigin(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c)
 {
-    return intersection::IsTriangleContainsPoint(a, b, c, glm::dvec3{});
+    return intersection::IsPointInsideTriangle(a, b, c, glm::dvec3{});
 }
 
 /**
- * @brief Calculates whether a point is inside a tetrahedron
- * @param[in] vertices tetrahedron vertices
- * @return @c true if there is an intersection, @c false otherwise
+ *  @brief  Checks if tetrahedron contains the origin
+ *
+ *  @param  vertices    tetrahedron vertices
+ *
+ *  @return @c true if tetrahedron contains the origin, @c false otherwise
  */
 bool TetrahedronContainsOrigin(std::array<glm::dvec3, 4> const& vertices)
 {
@@ -313,88 +319,104 @@ bool TetrahedronContainsOrigin(std::array<glm::dvec3, 4> const& vertices)
 }
 
 /**
- * @brief Finds nearest simplex from the line segment simplex to the origin and returns its size and new search direction
- * @param[in] simplex line segment simplex vertices
- * @return new simplex size and search direction
+ *  @brief  Finds nearest simplex from the line segment simplex to the origin
+ *
+ *  Given simplex may be reduced down to size 1 as a result of this method.
+ *
+ *  @param[in,out]  simplex line segment simplex
+ *
+ *  @return new search direction
  */
-intersection::gjk::NearestSimplexData NearestSimplexLineSegment(std::array<glm::dvec3, 4>& simplex)
+glm::dvec3 NearestSimplexLineSegment(intersection::gjk::Simplex& simplex)
 {
-    glm::dvec3 const AB = simplex[0] - simplex[1];
-    glm::dvec3 const A0 = glm::dvec3{0, 0, 0} - simplex[1];
+    glm::dvec3 const AB = simplex.vertices[0] - simplex.vertices[1];
+    glm::dvec3 const A0 = glm::dvec3{0, 0, 0} - simplex.vertices[1];
 
-    if (intersection::IsAtAcuteAngle(AB, A0))
+    if (intersection::IsAngleAcute(AB, A0))
     {
         glm::dvec3 const direction = glm::cross(glm::cross(AB, A0), AB);
-        return {2, direction};
+        simplex.size = 2;
+        return direction;
     }
 
-    simplex[0] = simplex[1];
-    return {1, A0};
+    simplex.vertices[0] = simplex.vertices[1];
+    simplex.size = 1;
+    return A0;
 }
 
 /**
- * @brief Finds nearest simplex from the triangle simplex to the origin and returns its size and new search direction
- * @param[in] simplex triangle simplex vertices
- * @return new simplex size and search direction
+ *  @brief  Finds nearest simplex from given triangle simplex to the origin
+ *
+ *  Given simplex may be reduced down to size 1 as a result of this method.
+ *
+ *  @param[in,out]  simplex triange simplex
+ *
+ *  @return new search direction
  */
-intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dvec3, 4>& simplex)
+glm::dvec3 NearestSimplexTriangle(intersection::gjk::Simplex& simplex)
 {
-    glm::dvec3 const& A = simplex[2];
-    glm::dvec3 const& B = simplex[1];
-    glm::dvec3 const& C = simplex[0];
+    glm::dvec3 const& A = simplex.vertices[2];
+    glm::dvec3 const& B = simplex.vertices[1];
+    glm::dvec3 const& C = simplex.vertices[0];
+
     glm::dvec3 const AB = B - A;
     glm::dvec3 const AC = C - A;
+
     glm::dvec3 const A0 = glm::dvec3{0, 0, 0} - A;
     glm::dvec3 const ABC = glm::cross(AB, AC);
-    intersection::gjk::NearestSimplexData result;
 
-    if (intersection::IsAtAcuteAngle(glm::cross(ABC, AC), -A))
+    glm::dvec3 result;
+
+    if (intersection::IsAngleAcute(glm::cross(ABC, AC), -A))
     {
-        if (intersection::IsAtAcuteAngle(AC, A0))
+        if (intersection::IsAngleAcute(AC, A0))
         {
-            simplex = {C, A};
-            glm::dvec3 const direction = glm::cross(glm::cross(AC, -B), AC);
-            result = {2, direction};
+            simplex.vertices = {C, A};
+            simplex.size = 2;
+
+            result = glm::cross(glm::cross(AC, -B), AC);
         }
-        else if (intersection::IsAtAcuteAngle(AB, A0))
+        else if (intersection::IsAngleAcute(AB, A0))
         {
-            simplex = {B, A};
-            glm::dvec3 const direction = glm::cross(glm::cross(AB, -B), AB);
-            result = {2, direction};
+            simplex.vertices = {B, A};
+            simplex.size = 2;
+
+            result = glm::cross(glm::cross(AB, -B), AB);
         }
         else
         {
-            simplex = {A};
-            glm::dvec3 const direction = -C;
-            result = {1, direction};
+            simplex.vertices = {A};
+            simplex.size = 1;
+
+            result = -C;
         }
     }
-    else if (intersection::IsAtAcuteAngle(glm::cross(AB, ABC), -A))
+    else if (intersection::IsAngleAcute(glm::cross(AB, ABC), -A))
     {
-        if (intersection::IsAtAcuteAngle(AB, A0))
+        if (intersection::IsAngleAcute(AB, A0))
         {
-            simplex = {B, A};
-            glm::dvec3 const direction = glm::cross(glm::cross(AB, -B), AB);
-            result = {2, direction};
+            simplex.vertices = {B, A};
+            simplex.size = 2;
+
+            result = glm::cross(glm::cross(AB, -B), AB);
         }
         else
         {
-            simplex = {A};
-            glm::dvec3 const direction = -C;
-            result = {1, direction};
+            simplex.vertices = {A};
+            simplex.size = 1;
+
+            result = -C;
         }
     }
     else
     {
-        if (intersection::IsAtAcuteAngle(ABC, A0))
+        if (intersection::IsAngleAcute(ABC, A0))
         {
-            glm::dvec3 const direction = ABC;
-            result = {3, direction};
+            result = ABC;
         }
         else
         {
-            glm::dvec3 const direction = -ABC;
-            result = {3, direction};
+            result = -ABC;
         }
     }
 
@@ -402,11 +424,17 @@ intersection::gjk::NearestSimplexData NearestSimplexTriangle(std::array<glm::dve
 }
 
 /**
- * @brief Finds nearest simplex from the tetrahedron simplex to the origin and returns its size and new search direction
- * @param[in] simplex tetrahedron simplex vertices
- * @return new simplex size and search direction
+ *  @brief  Finds nearest simplex from the tetrahedron simplex to the origin
+ *
+ *  Given simplex may be reduced down to size 1 as a result of this method.
+ *
+ *  @param[in,out]  simplex tetrahedron simplex
+ *
+ *  @return new search direction
+ *
+ *  @sa NearestSimplexTriangle
  */
-intersection::gjk::NearestSimplexData NearestSimplexTetrahedron(std::array<glm::dvec3, 4>& simplex)
+glm::dvec3 NearestSimplexTetrahedron(intersection::gjk::Simplex& simplex)
 {
     std::array<std::array<uint8_t, 3>, 3> const simplices{
         std::array<uint8_t, 3>{0, 1, 3},
@@ -414,20 +442,23 @@ intersection::gjk::NearestSimplexData NearestSimplexTetrahedron(std::array<glm::
         std::array<uint8_t, 3>{0, 2, 3}
     };
 
+    std::array<glm::dvec3, 4> const& vertices = simplex.vertices;
+
     std::array<double, 3> const planeOriginDistances{
-        math::HyperPlane{simplex[0], simplex[1], simplex[3], &simplex[2]}.GetDistance(),
-        math::HyperPlane{simplex[1], simplex[2], simplex[3], &simplex[0]}.GetDistance(),
-        math::HyperPlane{simplex[0], simplex[2], simplex[3], &simplex[1]}.GetDistance()
+        math::HyperPlane{vertices[0], vertices[1], vertices[3], &vertices[2]}.GetDistance(),
+        math::HyperPlane{vertices[1], vertices[2], vertices[3], &vertices[0]}.GetDistance(),
+        math::HyperPlane{vertices[0], vertices[2], vertices[3], &vertices[1]}.GetDistance()
     };
 
     size_t const closestPlaneIndex = std::distance(planeOriginDistances.begin(),
         std::min_element(planeOriginDistances.begin(), planeOriginDistances.end()));
 
-    simplex = {
-        simplex[simplices[closestPlaneIndex][0]],
-        simplex[simplices[closestPlaneIndex][1]],
-        simplex[simplices[closestPlaneIndex][2]]
+    simplex.vertices = {
+        vertices[simplices[closestPlaneIndex][0]],
+        vertices[simplices[closestPlaneIndex][1]],
+        vertices[simplices[closestPlaneIndex][2]]
     };
+    simplex.size = 3;
 
     return NearestSimplexTriangle(simplex);
 }
@@ -447,13 +478,13 @@ bool intersection::gjk::SimplexContainsOrigin(Simplex const& simplex)
     return ::TetrahedronContainsOrigin(simplex.vertices);
 }
 
-intersection::gjk::NearestSimplexData intersection::gjk::NearestSimplex(std::array<glm::dvec3, 4>& simplex, uint8_t simplexSize)
+glm::dvec3 intersection::gjk::NearestSimplex(Simplex& simplex)
 {
-    if (2 == simplexSize)
+    if (2 == simplex.size)
     {
         return ::NearestSimplexLineSegment(simplex);
     }
-    if (3 == simplexSize)
+    else if (3 == simplex.size)
     {
         return ::NearestSimplexTriangle(simplex);
     }
@@ -470,9 +501,7 @@ bool intersection::gjk::DoSimplex(gjk::Simplex& simplex, glm::dvec3& direction)
     }
 
     //Calculate sub simplex nearest to the origin
-    NearestSimplexData const data = NearestSimplex(simplex.vertices, simplex.size);
-    direction = glm::normalize(data.direction);
-    simplex.size = data.simplexSize;
+    direction = glm::normalize(NearestSimplex(simplex));
 
     return false;
 }
