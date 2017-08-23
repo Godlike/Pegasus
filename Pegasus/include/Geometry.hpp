@@ -412,16 +412,30 @@ bool DoSimplex(gjk::Simplex& simplex, glm::dvec3& direction);
 template <typename ShapeA, typename ShapeB>
 bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
 {
+    uint8_t counter = 0;
+    double previousPointDirectionProjection = std::numeric_limits<double>::min();
+
     do
     {
         //Add new vertex to the simplex
         simplex.vertices[simplex.size++] = cso::Support(aShape, bShape, direction);
 
         //Calculate if the new vertex is past the origin
-        double const newPointDirectionProj = glm::dot(simplex.vertices[simplex.size - 1], direction);
-        if (math::fp::IsLess(newPointDirectionProj, 0.0))
+        double const newPointDirectionProjection = glm::dot(simplex.vertices[simplex.size - 1], direction);
+        if (math::fp::IsLess(newPointDirectionProjection, 0.0))
         {
             return false;
+        }
+
+        //Endless loop detection
+        if (++counter == 2)
+        {
+            if (previousPointDirectionProjection == newPointDirectionProjection)
+            {
+                return false;
+            }
+            previousPointDirectionProjection = newPointDirectionProjection;
+            counter = 0;
         }
     } while (!DoSimplex(simplex, direction));
 
@@ -567,6 +581,7 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
     //Support information
     glm::dvec3 direction;
     double supportVertexDistance;
+    double previousDistance = std::numeric_limits<double>::min();
     double distance;
 
     do
@@ -597,6 +612,13 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
                 polytopeVertices.pop_back();
             }
         }
+
+        //Endless loop detection
+        if (previousDistance == distance)
+        {
+            break;
+        }
+        previousDistance = distance;
 
     } while (math::fp::IsGreater(supportVertexDistance, distance));
 
