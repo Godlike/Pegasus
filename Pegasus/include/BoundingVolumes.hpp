@@ -150,6 +150,38 @@ struct SplitIndices
 };
 
 template <typename BoundingVolume>
+struct SimpleShapeExtractor
+{
+};
+
+template <>
+struct SimpleShapeExtractor<aabb::AxisAlignedBoundingBox>
+{
+    Box GetSimpleShape(aabb::AxisAlignedBoundingBox const& aabb)
+    {
+        return aabb.GetBox();
+    }
+};
+
+template <>
+struct SimpleShapeExtractor<obb::OrientedBoundingBox>
+{
+    Box GetSimpleShape(obb::OrientedBoundingBox const& obb)
+    {
+        return obb.GetBox();
+    }
+};
+
+template <>
+struct SimpleShapeExtractor<sphere::BoundingSphere>
+{
+    Sphere GetSimpleShape(sphere::BoundingSphere const& sphere)
+    {
+        return sphere.GetSphere();
+    }
+};
+
+template <typename BoundingVolume>
 class BoundingVolumeHierarchy
 {
 public:
@@ -173,16 +205,23 @@ public:
             return upperChild;
         }
 
+        bool IsLeaf() const
+        {
+            return isLeaf;
+        }
+
         ~Node() = default;
 
     private:
         mutable std::unique_ptr<Node> lowerChild;
         mutable std::unique_ptr<Node> upperChild;
+        bool isLeaf;
 
         explicit Node(BoundingVolume && volume)
             : volume(volume)
             , lowerChild(nullptr)
             , upperChild(nullptr)
+            , isLeaf(true)
         {}
 
         friend class BoundingVolumeHierarchy;
@@ -196,6 +235,8 @@ private:
 
     Shape const& shape;
     NodePtr root;
+    mutable SimpleShapeIntersectionDetector detector;
+    mutable SimpleShapeExtractor<BoundingVolume> extractor;
 
     Vertices GetShapeVertices(Indices const& indices) const
     {
@@ -334,6 +375,35 @@ private:
         };
     }
 
+    bool CollideNode(Node* node, SimpleShape const* shape) const
+    {
+        auto nodeShape = extractor.GetSimpleShape(node->volume);
+        return detector.CalculateIntersection(&nodeShape, shape);
+    }
+
+    bool GenericCollide(SimpleShape const* shape) const
+    {
+        std::stack<Node*> nodeStack;
+        nodeStack.push(root.get());
+
+        while (!nodeStack.empty())
+        {
+            Node* currNode = nodeStack.top();
+            nodeStack.pop();
+            if (!CollideNode(currNode, shape))
+            {
+                continue;
+            }
+            if (currNode->isLeaf)
+            {
+                return true;
+            }
+            nodeStack.push(currNode->lowerChild.get());
+            nodeStack.push(currNode->upperChild.get());
+        }
+        return false;
+    }
+
 public:
 
     BoundingVolumeHierarchy(Shape const& shape, Indices const& indices)
@@ -352,14 +422,14 @@ public:
             nodeQueue.pop();
             indicesQueue.pop();
 
-            BoundingVolume currVolume = currNode->volume;
-
             if (currIndices.size() < MAX_NODE_SIZE)
             {
                 currNode->lowerChild.reset();
                 currNode->upperChild.reset();
                 continue;
             }
+
+            currNode->isLeaf = false;
 
             Vertices currVertices = GetShapeVertices(currIndices);
             glm::dvec3 maxDistanceVector = GetMaximumDistanceDirectionApprox(currVertices);
@@ -407,6 +477,21 @@ public:
     NodePtr const& GetRoot() const
     {
         return root;
+    }
+
+    bool Collide(Plane const* plane) const
+    {
+        return GenericCollide(plane);
+    }
+
+    bool Collide(Sphere const* sphere) const
+    {
+        return GenericCollide(sphere);
+    }
+
+    bool Collide(Box const* box) const
+    {
+        return GenericCollide(box);
     }
 };
 } // namespace hierarchy
