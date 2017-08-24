@@ -65,10 +65,29 @@ add_library(${PEGASUS_LIB}
     ${PEGASUS_SOURCES}
 )
 
+set_target_properties(
+    ${PEGASUS_LIB}
+    PROPERTIES
+        VERSION ${PEGASUS_VERSION}
+        SOVERSION ${PEGASUS_SOVERSION}
+)
+
 target_link_libraries(${PEGASUS_LIB})
 
+install( DIRECTORY ${GLM_INCLUDE_DIR}/glm
+    DESTINATION ${PEGASUS_INSTALL_INCLUDE_DIR}
+    COMPONENT pegasus_extra
+    FILES_MATCHING
+        PATTERN "*.hpp"
+            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+        PATTERN "*.h"
+            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+        PATTERN "*.inl"
+            PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+)
+
 install( TARGETS ${PEGASUS_LIB}
-    COMPONENT godlike_libraries
+    COMPONENT pegasus_libraries
     RUNTIME DESTINATION ${PEGASUS_INSTALL_LIBRARY_DIR}
     LIBRARY DESTINATION ${PEGASUS_INSTALL_LIBRARY_DIR}
     ARCHIVE DESTINATION ${PEGASUS_INSTALL_LIBRARY_DIR}
@@ -76,9 +95,17 @@ install( TARGETS ${PEGASUS_LIB}
 
 install( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
     DESTINATION ${PEGASUS_INSTALL_INCLUDE_DIR}
-    COMPONENT godlike_headers
+    COMPONENT pegasus_headers
     FILES_MATCHING PATTERN "*.hpp"
     PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
+)
+
+include(CMakePackageConfigHelpers)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfigVersion.cmake
+    VERSION ${PEGASUS_VERSION}
+    COMPATIBILITY SameMajorVersion
 )
 
 configure_file(
@@ -88,7 +115,10 @@ configure_file(
     @ONLY
 )
 
-install( FILES ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfig.cmake
+install(
+    FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfigVersion.cmake
     DESTINATION ${PEGASUS_INSTALL_LIBRARY_DIR}
-    COMPONENT godlike_libraries
+    COMPONENT pegasus_libraries
 )
