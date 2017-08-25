@@ -5,19 +5,13 @@
 cmake_minimum_required (VERSION 3.1)
 
 include(PegasusConfig)
-if(NOT DEFINED PEGASUS_NAME)
-    set(PEGASUS_NAME "PegasusPhysics" CACHE STRING "Pegasus project name.")
-endif ()
-if(NOT DEFINED PEGASUS_LIB)
-    set(PEGASUS_LIB ${PEGASUS_NAME} CACHE STRING "Pegasus library name.")
-endif ()
 
 project(${PEGASUS_NAME})
 set(CMAKE_CXX_STANDARD 14)
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build (Debug or Release)" FORCE)
-endif (NOT CMAKE_BUILD_TYPE)
+endif()
 
 if (UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -pedantic")
@@ -36,6 +30,8 @@ endif()
 include_directories(
     ${PEGASUS_INCLUDE_DIR}
 )
+
+message(STATUS "Version: ${PEGASUS_VERSION}")
 
 set(PEGASUS_HEADERS
     include/pegasus/Particle.hpp
@@ -60,9 +56,26 @@ set(PEGASUS_SOURCES
     sources/BoundingVolumes.cpp
 )
 
+set(PEGASUS_EXTRA)
+
+if (MSVC)
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/PegasusVersionInfo.rc.in
+        ${CMAKE_CURRENT_BINARY_DIR}/PegasusVersionInfo.rc
+
+        @ONLY
+    )
+
+    set(PEGASUS_EXTRA
+        ${PEGASUS_EXTRA}
+        ${CMAKE_CURRENT_BINARY_DIR}/PegasusVersionInfo.rc
+    )
+endif()
+
 add_library(${PEGASUS_LIB}
     ${PEGASUS_HEADERS}
     ${PEGASUS_SOURCES}
+    ${PEGASUS_EXTRA}
 )
 
 set_target_properties(
