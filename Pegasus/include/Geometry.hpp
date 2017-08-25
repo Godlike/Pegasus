@@ -335,13 +335,23 @@ glm::dvec3 Support(Box const& box, glm::dvec3 direction);
  *  Configuration Object) is a cartesian product of two sets of points, where
  *  each element in one of the sets is multiplied by -1.
  *
- *  @param  box1        shape object
- *  @param  box2        shape object
+ *  @tparam ShapeA      any shape type for which gjk::Support is overloaded
+ *  @tparam ShapeB      any shape type for which gjk::Support is overloaded
+ *
+ *  @param  aShape      shape object
+ *  @param  bShape      shape object
  *  @param  direction   normalized search vector
  *
  *  @return point on the surface
  */
-glm::dvec3 Support(Box const& box1, Box const& box2, glm::dvec3 direction);
+template < typename ShapeA, typename ShapeB >
+glm::dvec3 Support(ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
+{
+    glm::dvec3 const aShapeSupportVertex = Support(aShape, direction);
+    glm::dvec3 const bShapeSupportVertex = Support(bShape, -direction);
+    glm::dvec3 const vertex = aShapeSupportVertex - bShapeSupportVertex;
+    return vertex;
+}
 } // namespace cso
 
 namespace gjk
@@ -412,8 +422,7 @@ bool DoSimplex(gjk::Simplex& simplex, glm::dvec3& direction);
 template <typename ShapeA, typename ShapeB>
 bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
 {
-    uint8_t counter = 0;
-    double previousPointDirectionProjection = std::numeric_limits<double>::min();
+    std::vector<double> distances;
 
     do
     {
@@ -421,22 +430,19 @@ bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bSha
         simplex.vertices[simplex.size++] = cso::Support(aShape, bShape, direction);
 
         //Calculate if the new vertex is past the origin
-        double const newPointDirectionProjection = glm::dot(simplex.vertices[simplex.size - 1], direction);
-        if (math::fp::IsLess(newPointDirectionProjection, 0.0))
+        double const scalarDirectionProjection = glm::dot(simplex.vertices[simplex.size - 1], direction);
+        if (math::fp::IsLess(scalarDirectionProjection, 0.0))
         {
             return false;
         }
 
-        //Endless loop detection
-        if (++counter == 2)
+        //Endless loop
+        if (std::find(distances.begin(), distances.end(), scalarDirectionProjection) != distances.end())
         {
-            if (previousPointDirectionProjection == newPointDirectionProjection)
-            {
-                return false;
-            }
-            previousPointDirectionProjection = newPointDirectionProjection;
-            counter = 0;
+            return false;
         }
+        distances.push_back(scalarDirectionProjection);
+
     } while (!DoSimplex(simplex, direction));
 
     return true;
@@ -480,7 +486,7 @@ bool CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const&
 {
     simplex = {{cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1}))}, 1};
 
-    return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
+    return CalculateSimplex(simplex, aShape, bShape, glm::normalize(-simplex.vertices[0]));
 }
 } // namespace gjk
 
@@ -727,18 +733,10 @@ struct Cache<Sphere, Sphere> : CacheBase
 template <>
 struct Cache<Sphere, Box> : CacheBase
 {
-    std::array<glm::dvec3, 6> boxAxes;
-    std::array<glm::dvec3, 6> boxNormals;
-    std::array<glm::dvec3, 6> boxFaceCenterVertices;
-    std::array<double, 6> boxFaceDistances;
-    std::array<glm::dvec3, 8> boxVertices;
-    std::array<double, 8> boxVerticesProjections;
-    std::array<glm::dvec3, 4> separatingAxes;
-    glm::dvec3 boxContactNormal;
-    glm::dvec3 boxSphereVector;
-    glm::dvec3 sphereContactNormal;
-    glm::dvec3 boxContactPoint;
-    glm::dvec3 sphereContactPoint;
+    gjk::Simplex simplex;
+    glm::dvec3 contactNormal;
+    double penetration;
+    bool intersection;
 };
 
 template <>
@@ -758,7 +756,10 @@ struct Cache<Box, Plane> : CacheBase
 template <>
 struct Cache<Box, Sphere> : CacheBase
 {
-    Cache<Sphere, Box> sbCache;
+    gjk::Simplex simplex;
+    glm::dvec3 contactNormal;
+    double penetration;
+    bool intersection;
 };
 
 template <>
@@ -1229,52 +1230,8 @@ inline bool CalculateIntersection<Sphere, Box>(SimpleShape const* a, SimpleShape
     auto sphere = static_cast<Sphere const*>(a);
     auto box = static_cast<Box const*>(b);
 
-    math::CalculateBoxVertices(box->iAxis, box->jAxis, box->kAxis, cache->boxVertices.begin());
-    for (glm::dvec3& vertex : cache->boxVertices)
-    {
-        vertex += box->centerOfMass;
-    }
-
-    cache->boxAxes = {box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis};
-    cache->boxSphereVector = sphere->centerOfMass - box->centerOfMass;
-
-    for (uint8_t i = 0; i < cache->boxNormals.size(); ++i)
-    {
-        cache->boxFaceCenterVertices[i] = cache->boxAxes[i] + box->centerOfMass;
-        cache->boxNormals[i] = glm::normalize(cache->boxAxes[i]);
-    }
-
-    if (glm::length2(cache->boxSphereVector))
-    {
-        cache->boxContactPoint = box->centerOfMass;
-
-        for (uint8_t i = 0; i < 3; ++i)
-        {
-            double d = glm::dot(cache->boxSphereVector, cache->boxNormals[i]);
-            double const axisNorm = glm::length(cache->boxAxes[i]);
-
-            if (d > axisNorm)
-            {
-                d = axisNorm;
-            }
-            else if (d < -axisNorm)
-            {
-                d = -axisNorm;
-            }
-
-            cache->boxContactPoint += cache->boxNormals[i] * d;
-        }
-    }
-    else
-    {
-        cache->boxContactPoint = cache->boxFaceCenterVertices.front();
-        cache->boxSphereVector = cache->boxAxes.front();
-    }
-
-    cache->sphereContactNormal = glm::normalize(cache->boxContactPoint - sphere->centerOfMass);
-    cache->sphereContactPoint = cache->sphereContactNormal * sphere->radius + sphere->centerOfMass;
-
-    return glm::length2(sphere->centerOfMass - cache->boxContactPoint) <= glm::pow2(sphere->radius);
+    cache->intersection = gjk::CalculateIntersection(cache->simplex, *box, *sphere);
+    return cache->intersection;
 }
 
 /** Sphere, Box CalculateContactNormal specialization */
@@ -1285,25 +1242,11 @@ inline glm::dvec3 CalculateContactNormal<Sphere, Box>(SimpleShape const* a, Simp
     auto sphere = static_cast<Sphere const*>(a);
     auto box = static_cast<Box const*>(b);
 
-    for (uint8_t i = 0; i < cache->boxFaceDistances.size(); ++i)
-    {
-        cache->boxFaceDistances[i] = glm::length(cache->boxFaceCenterVertices[i] - sphere->centerOfMass);
-    }
+    epa::ContactManifold const contactManifold = epa::CalculateContactManifold(*box, *sphere, cache->simplex);
+    cache->contactNormal = contactManifold.contactNormal;
+    cache->penetration = contactManifold.penetration;
 
-    size_t const minIndex = std::distance(cache->boxFaceDistances.begin(),
-        std::min_element(cache->boxFaceDistances.begin(), cache->boxFaceDistances.end())
-    );
-    cache->boxContactNormal = cache->boxNormals[minIndex];
-
-    if (cache->boxContactPoint == sphere->centerOfMass)
-    {
-        cache->boxContactPoint = box->centerOfMass + glm::normalize(cache->boxSphereVector)
-            * glm::dot(cache->boxAxes[minIndex], glm::normalize(cache->boxSphereVector));
-        cache->sphereContactNormal = glm::normalize(cache->boxContactPoint - sphere->centerOfMass);
-        cache->sphereContactPoint = cache->sphereContactNormal * sphere->radius + sphere->centerOfMass;
-    }
-
-    return cache->boxContactNormal;
+    return cache->contactNormal;
 }
 
 /** Sphere, Box CalculatePenetration specialization */
@@ -1311,14 +1254,7 @@ template <>
 inline double CalculatePenetration<Sphere, Box>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Sphere, Box>*>(cacheBase);
-    auto box = static_cast<Box const*>(b);
-
-    if (cache->boxContactPoint == box->centerOfMass)
-    {
-        return glm::length(cache->boxAxes.front());
-    }
-
-    return glm::length(cache->sphereContactPoint - cache->boxContactPoint);
+    return cache->penetration;
 }
 
 /** Box, Ray CalculateIntersection specialization */
@@ -1376,7 +1312,12 @@ template <>
 inline bool CalculateIntersection<Box, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Box, Sphere>*>(cacheBase);
-    return CalculateIntersection<Sphere, Box>(b, a, &cache->sbCache);
+    auto box = static_cast<Box const*>(a);
+    auto sphere = static_cast<Sphere const*>(b);
+
+    cache->intersection = gjk::CalculateIntersection(cache->simplex, *sphere, *box);
+
+    return cache->intersection;
 }
 
 /** Box, Sphere CalculateContactNormal specialization */
@@ -1384,9 +1325,14 @@ template <>
 inline glm::dvec3 CalculateContactNormal<Box, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Box, Sphere>*>(cacheBase);
-    CalculateContactNormal<Sphere, Box>(b, a, &cache->sbCache);
+    auto box = static_cast<Box const*>(a);
+    auto sphere = static_cast<Sphere const*>(b);
 
-    return cache->sbCache.sphereContactNormal;
+    epa::ContactManifold const contactManifold = epa::CalculateContactManifold(*sphere, *box, cache->simplex);
+    cache->contactNormal = contactManifold.contactNormal;
+    cache->penetration = contactManifold.penetration;
+
+    return cache->contactNormal;
 }
 
 /** Box, Sphere CalculatePenetration specialization */
@@ -1394,7 +1340,7 @@ template <>
 inline double CalculatePenetration<Box, Sphere>(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase)
 {
     auto cache = static_cast<Cache<Box, Sphere>*>(cacheBase);
-    return CalculatePenetration<Sphere, Box>(b, a, &cache->sbCache);
+    return cache->penetration;
 }
 
 /** Box, Box CalculateIntersection specialization */

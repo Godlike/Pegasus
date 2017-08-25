@@ -232,14 +232,7 @@ bool intersection::IsPointInsideTriangle(
 
 glm::dvec3 intersection::cso::Support(Sphere const& sphere, glm::dvec3 direction)
 {
-    using namespace intersection;
-
-    Ray const ray{sphere.centerOfMass - direction * (sphere.radius + 1), direction};
-    RayIntersectionFactors intersectionFactors = CalculateRaySphereIntersectionFactors(
-        sphere.centerOfMass - ray.centerOfMass, sphere.radius, direction
-    );
-
-    glm::dvec3 const vertex = ray.centerOfMass + direction * intersectionFactors.tMax;
+    glm::dvec3 const vertex = sphere.centerOfMass + direction * sphere.radius;
     return vertex;
 }
 
@@ -256,12 +249,6 @@ glm::dvec3 intersection::cso::Support(Box const& box, glm::dvec3 direction)
     });
 
     return maxPoint;
-}
-
-glm::dvec3 intersection::cso::Support(Box const& box1, Box const& box2, glm::dvec3 direction)
-{
-    glm::dvec3 const vertex = Support(box1, direction) - Support(box2, -direction);
-    return vertex;
 }
 
 namespace
@@ -470,6 +457,7 @@ bool intersection::gjk::SimplexContainsOrigin(Simplex const& simplex)
     {
         return ::LineSegmentContainsOrigin(simplex.vertices[0], simplex.vertices[1]);
     }
+    
     if (simplex.size == 3)
     {
         return ::TriangleContainsOrigin(simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]);
@@ -484,7 +472,8 @@ glm::dvec3 intersection::gjk::NearestSimplex(Simplex& simplex)
     {
         return ::NearestSimplexLineSegment(simplex);
     }
-    else if (3 == simplex.size)
+    
+    if (3 == simplex.size)
     {
         return ::NearestSimplexTriangle(simplex);
     }
