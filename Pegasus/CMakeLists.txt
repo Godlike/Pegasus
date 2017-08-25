@@ -133,5 +133,5 @@ install(
         ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfigVersion.cmake
     DESTINATION ${PEGASUS_INSTALL_LIBRARY_DIR}
-    COMPONENT pegasus_libraries
+    COMPONENT pegasus_headers
 )
