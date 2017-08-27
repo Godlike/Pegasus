@@ -1375,7 +1375,7 @@ private:
             partitionMarkedVertices,
             m_heds.GetFace(vertexIndex1, vertexIndex2, vertexIndex3),
             HyperPlane{m_vertexBuffer[vertexIndex1], m_vertexBuffer[vertexIndex2], m_vertexBuffer[vertexIndex3], &m_mean},
-            std::array<size_t, 3>{vertexIndex1, vertexIndex2, vertexIndex3}
+            std::array<size_t, 3>{{vertexIndex1, vertexIndex2, vertexIndex3}}
         });
         m_hedsFaceIteratorMap[&*m_faces.front().GetHedsFaceIterator()] = m_faces.begin();
 
@@ -1459,12 +1459,12 @@ private:
 
         std::list<size_t> markedVertexIndices(m_vertexBuffer.size());
         std::iota(markedVertexIndices.begin(), markedVertexIndices.end(), 0);
-        std::array<size_t, 4> const indices = {
+        std::array<size_t, 4> const indices = {{
             static_cast<size_t>(std::distance(m_vertexBuffer.begin(), mostDistantPair.first)),
             static_cast<size_t>(std::distance(m_vertexBuffer.begin(), mostDistantPair.second)),
             static_cast<size_t>(std::distance(m_vertexBuffer.begin(), triangleBasePoint)),
             static_cast<size_t>(std::distance(m_vertexBuffer.begin(), tetrahedronApexPoint))
-        };
+        }};
 
         MakeFace(indices[0], indices[1], indices[2], markedVertexIndices);
         MakeFace(indices[0], indices[1], indices[3], markedVertexIndices);
