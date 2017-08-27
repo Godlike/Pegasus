@@ -6,7 +6,8 @@
 #ifndef PEGASUS_GEOMETRY_HPP
 #define PEGASUS_GEOMETRY_HPP
 
-#include <Pegasus/include/Math.hpp>
+#include <pegasus/SharedMacros.hpp>
+#include <pegasus/Math.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
@@ -32,11 +33,10 @@ namespace geometry
 class Shape
 {
 public:
-    glm::dvec3 centerOfMass;
-
     Shape() = default;
+    PEGASUS_EXPORT explicit Shape(glm::dvec3 const& centerOfMass);
 
-    explicit Shape(glm::dvec3 const& centerOfMass);
+    glm::dvec3 centerOfMass;
 };
 
 /**
@@ -62,12 +62,12 @@ public:
 
     SimpleShape() = default;
 
-    explicit SimpleShape(Type type)
+    PEGASUS_EXPORT explicit SimpleShape(Type type)
         : type(type)
     {
     }
 
-    SimpleShape(glm::dvec3 const& centerOfMass, Type type);
+    PEGASUS_EXPORT SimpleShape(glm::dvec3 const& centerOfMass, Type type);
 };
 
 /** Ray data storage class */
@@ -76,97 +76,89 @@ class Ray : public SimpleShape
 public:
     glm::dvec3 direction;
 
-    Ray();
-
-    Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
+    PEGASUS_EXPORT Ray();
+    PEGASUS_EXPORT Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
 };
 
 /** Plane data storage class */
 class Plane : public SimpleShape
 {
 public:
+    PEGASUS_EXPORT Plane();
+    PEGASUS_EXPORT Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
+
     glm::dvec3 normal;
-
-    Plane();
-
-    Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
 };
 
 /** Triangle data storage class */
 class Triangle : public SimpleShape
 {
 public:
+    PEGASUS_EXPORT Triangle();
+    PEGASUS_EXPORT Triangle(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
+
+    /** Calculates normal from member vertices and writes it to the normal member field */
+    void CalculateNormal();
+
     glm::dvec3 aVertex;
     glm::dvec3 bVertex;
     glm::dvec3 cVertex;
     glm::dvec3 normal;
-
-    Triangle();
-
-    Triangle(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
-
-    /** Calculates normal from member vertices and writes it to the normal member field */
-    void CalculateNormal();
 };
 
 /** Sphere data storage class */
 class Sphere : public SimpleShape
 {
 public:
+    PEGASUS_EXPORT Sphere();
+    PEGASUS_EXPORT Sphere(glm::dvec3 const& centerOfMass, double r);
+
     double radius;
-
-    Sphere();
-
-    Sphere(glm::dvec3 const& centerOfMass, double r);
 };
 
 /** Cone data storage class */
 class Cone : public SimpleShape
 {
 public:
+    PEGASUS_EXPORT Cone();
+    PEGASUS_EXPORT Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r);
+
     glm::dvec3 apex;
     double radius;
-
-    Cone();
-
-    Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r);
 };
 
 /** Capsule data storage class */
 class Capsule : public SimpleShape
 {
 public:
+    PEGASUS_EXPORT Capsule();
+    PEGASUS_EXPORT Capsule(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
+
     glm::dvec3 halfHeight;
     double radius;
-
-    Capsule();
-
-    Capsule(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
 };
 
 /** Cylinder data storage class */
 class Cylinder : public SimpleShape
 {
 public:
+    PEGASUS_EXPORT Cylinder();
+    PEGASUS_EXPORT Cylinder(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
+
     glm::dvec3 halfHeight;
     double radius;
-
-    Cylinder();
-
-    Cylinder(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
 };
 
 /** Box data storage class */
 class Box : public SimpleShape
 {
 public:
+    PEGASUS_EXPORT Box();
+    PEGASUS_EXPORT Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);
+
     glm::dvec3 iAxis;
     glm::dvec3 jAxis;
     glm::dvec3 kAxis;
-
-    Box();
-
-    Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);
 };
 
 namespace intersection
@@ -478,7 +470,10 @@ bool CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
 template <typename ShapeA, typename ShapeB>
 bool CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
 {
-    simplex = {{cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1}))}, 1};
+    simplex = {
+        {{ cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1})) }},
+        1
+    };
 
     return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
 }
@@ -971,15 +966,15 @@ inline glm::dvec3 CalculateContactNormal<Ray, Box>(SimpleShape const* a, SimpleS
     auto cache = static_cast<Cache<Ray, Box>*>(cacheBase);
     auto box = static_cast<Box const*>(b);
 
-    std::array<double, 6> const faces = {
+    std::array<double, 6> const faces = {{
         cache->aabbMaxPoint[0], cache->aabbMaxPoint[1], cache->aabbMaxPoint[2],
         cache->aabbMinPoint[0], cache->aabbMinPoint[1], cache->aabbMinPoint[2]
-    };
+    }};
 
-    std::array<double, 6> const deltas = {
+    std::array<double, 6> const deltas = {{
         faces[0] - cache->inPoint[0], faces[1] - cache->inPoint[1], faces[2] - cache->inPoint[2],
         faces[3] - cache->inPoint[0], faces[4] - cache->inPoint[1], faces[5] - cache->inPoint[2],
-    };
+    }};
 
     size_t const contactFaceIndex = std::distance(deltas.begin(),
         std::min_element(deltas.begin(), deltas.end(),
@@ -1096,7 +1091,7 @@ inline bool CalculateIntersection<Plane, Box>(SimpleShape const* a, SimpleShape 
     auto box = static_cast<Box const*>(b);
     auto cache = static_cast<Cache<Plane, Box>*>(cacheBase);
 
-    cache->boxFaces = {box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis};
+    cache->boxFaces = {{box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis}};
 
     std::array<glm::dvec3, 8> boxVertices;
     math::CalculateBoxVertices(box->iAxis, box->jAxis, box->kAxis, boxVertices.begin());
@@ -1235,7 +1230,7 @@ inline bool CalculateIntersection<Sphere, Box>(SimpleShape const* a, SimpleShape
         vertex += box->centerOfMass;
     }
 
-    cache->boxAxes = {box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis};
+    cache->boxAxes = {{box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis}};
     cache->boxSphereVector = sphere->centerOfMass - box->centerOfMass;
 
     for (uint8_t i = 0; i < cache->boxNormals.size(); ++i)
