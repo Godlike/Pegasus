@@ -8,13 +8,12 @@
 #include "pegasus/Particle.hpp"
 
 #include <limits>
-#include <cmath>
 #include <stdexcept>
 
 pegasus::Particle::Particle()
-    : m_damping(1)
-    , m_mass(1)
-    , m_inverseMass(1)
+    : m_damping(1.0)
+    , m_mass(1.0)
+    , m_inverseMass(1.0)
 {
 }
 

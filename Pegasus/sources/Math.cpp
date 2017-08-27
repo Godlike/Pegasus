@@ -3,7 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "pegasus/Math.hpp"
+#include <pegasus/Math.hpp>
 
 using namespace pegasus;
 using namespace math;
@@ -72,7 +72,23 @@ double HyperPlane::SignedDistance(glm::dvec3 const& point) const
     return glm::dot(m_normal, point) - m_distance;
 }
 
-bool HyperPlane::Intersection(
+bool HyperPlane::RayIntersection(
+    glm::dvec3 const& rayNormal, glm::dvec3 const& rayPoint, glm::dvec3& resultPoint
+) const
+{
+    double const rayPlaneProjection = glm::dot(m_normal, rayNormal);
+
+    if (rayPlaneProjection != 0.0)
+    {
+        double const t = (glm::dot(m_normal, m_point - rayPoint)) / rayPlaneProjection;
+        resultPoint = rayPoint + rayNormal * t;
+        return true;
+    }
+
+    return false;
+}
+
+bool HyperPlane::LineSegmentIntersection(
     glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3& resultPoint
 ) const
 {
@@ -82,26 +98,16 @@ bool HyperPlane::Intersection(
         return false;
     }
 
-    glm::dvec3 const line = lineEnd - lineStart;
-    glm::dvec3 const lineNormal = glm::normalize(line);
-    double const linePlaneProjection = glm::dot(m_normal, lineNormal);
+    glm::dvec3 const lineNormal = glm::normalize(lineEnd - lineStart);
 
-    if (linePlaneProjection != 0.0)
-    {
-        double const t = (glm::dot(m_normal, m_point - lineStart)) / linePlaneProjection;
-        resultPoint = lineStart + lineNormal * t;
-        return true;
-    }
-
-    return false;
+    return RayIntersection(lineNormal, lineStart, resultPoint);
 }
 
-double LineSegmentPointDistance(
-    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
-)
+glm::dvec3 HyperPlane::ClosestPoint(const glm::dvec3& point) const
 {
-    return glm::length(glm::cross(lineEnd - lineStart, lineStart - point))
-        / glm::length(lineEnd - lineStart);
+    glm::dvec3 const closestPoint = point - (glm::dot(point, m_normal) - m_distance) * m_normal;
+
+    return closestPoint;
 }
 
 JacobiEigenvalue::JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold, uint32_t maxIterations)
@@ -377,8 +383,11 @@ void HalfEdgeDataStructure::IntializeHalfEdge(
 }
 
 double pegasus::math::LineSegmentPointDistance(
-    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
+    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 point
 )
 {
-    return 0.0;
+    point = point - lineStart;
+    glm::dvec3 const lineDirection = glm::normalize(lineEnd - lineStart);
+    glm::dvec3 const pointLineProjection = glm::dot(lineDirection, point) * lineDirection;
+    return glm::distance(point, pointLineProjection);
 }
