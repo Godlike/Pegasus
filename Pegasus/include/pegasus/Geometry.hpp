@@ -470,7 +470,10 @@ bool CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
 template <typename ShapeA, typename ShapeB>
 bool CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
 {
-    simplex = {{cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1}))}, 1};
+    simplex = {
+        {{ cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1})) }},
+        1
+    };
 
     return CalculateSimplex(simplex, aShape, bShape, -simplex.vertices[0]);
 }
@@ -963,15 +966,15 @@ inline glm::dvec3 CalculateContactNormal<Ray, Box>(SimpleShape const* a, SimpleS
     auto cache = static_cast<Cache<Ray, Box>*>(cacheBase);
     auto box = static_cast<Box const*>(b);
 
-    std::array<double, 6> const faces = {
+    std::array<double, 6> const faces = {{
         cache->aabbMaxPoint[0], cache->aabbMaxPoint[1], cache->aabbMaxPoint[2],
         cache->aabbMinPoint[0], cache->aabbMinPoint[1], cache->aabbMinPoint[2]
-    };
+    }};
 
-    std::array<double, 6> const deltas = {
+    std::array<double, 6> const deltas = {{
         faces[0] - cache->inPoint[0], faces[1] - cache->inPoint[1], faces[2] - cache->inPoint[2],
         faces[3] - cache->inPoint[0], faces[4] - cache->inPoint[1], faces[5] - cache->inPoint[2],
-    };
+    }};
 
     size_t const contactFaceIndex = std::distance(deltas.begin(),
         std::min_element(deltas.begin(), deltas.end(),
@@ -1088,7 +1091,7 @@ inline bool CalculateIntersection<Plane, Box>(SimpleShape const* a, SimpleShape 
     auto box = static_cast<Box const*>(b);
     auto cache = static_cast<Cache<Plane, Box>*>(cacheBase);
 
-    cache->boxFaces = {box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis};
+    cache->boxFaces = {{box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis}};
 
     std::array<glm::dvec3, 8> boxVertices;
     math::CalculateBoxVertices(box->iAxis, box->jAxis, box->kAxis, boxVertices.begin());
@@ -1227,7 +1230,7 @@ inline bool CalculateIntersection<Sphere, Box>(SimpleShape const* a, SimpleShape
         vertex += box->centerOfMass;
     }
 
-    cache->boxAxes = {box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis};
+    cache->boxAxes = {{box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis}};
     cache->boxSphereVector = sphere->centerOfMass - box->centerOfMass;
 
     for (uint8_t i = 0; i < cache->boxNormals.size(); ++i)
