@@ -410,17 +410,17 @@ public:
         : shape(shape)
         , root(new Node(BoundingVolume(shape, indices)))
     {
-        std::queue<Node*> nodeQueue;
-        std::queue<Indices> indicesQueue;
-        nodeQueue.push(root.get());
-        indicesQueue.push(indices);
+        std::stack<Node*> nodeStack;
+        std::stack<Indices> indicesStack;
+        nodeStack.push(root.get());
+        indicesStack.push(indices);
 
-        while (!nodeQueue.empty())
+        while (!nodeStack.empty())
         {
-            Node* currNode = nodeQueue.front();
-            Indices currIndices = std::move(indicesQueue.front());
-            nodeQueue.pop();
-            indicesQueue.pop();
+            Node* currNode = nodeStack.top();
+            Indices currIndices = std::move(indicesStack.top());
+            nodeStack.pop();
+            indicesStack.pop();
 
             if (currIndices.size() < MAX_NODE_SIZE)
             {
@@ -445,10 +445,10 @@ public:
             currNode->lowerChild = NodePtr(new Node(std::move(lowerVolume)));
             currNode->upperChild = NodePtr(new Node(std::move(upperVolume)));
 
-            nodeQueue.push(currNode->lowerChild.get());
-            indicesQueue.push(std::move(splitIndices.lowerIndices));
-            nodeQueue.push(currNode->upperChild.get());
-            indicesQueue.push(std::move(splitIndices.upperIndices));
+            nodeStack.push(currNode->lowerChild.get());
+            indicesStack.push(std::move(splitIndices.lowerIndices));
+            nodeStack.push(currNode->upperChild.get());
+            indicesStack.push(std::move(splitIndices.upperIndices));
         }
     }
 
