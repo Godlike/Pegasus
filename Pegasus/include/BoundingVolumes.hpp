@@ -143,12 +143,6 @@ private:
 namespace hierarchy
 {
 
-struct SplitIndices
-{
-    Indices lowerIndices;
-    Indices upperIndices;
-};
-
 template <typename BoundingVolume>
 struct SimpleShapeExtractor
 {
@@ -320,6 +314,13 @@ public:
     }
 
 private:
+
+    struct SplitIndices
+    {
+        Indices lowerIndices;
+        Indices upperIndices;
+    };
+
     using CentroidsMap = std::unordered_map<std::size_t, glm::dvec3>;
 
     Shape const& shape;
