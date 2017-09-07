@@ -219,6 +219,50 @@ void FallingDemo::AddBoundingVolumes()
     glm::dmat3 aabbAxes{ aabb.iAxis, aabb.jAxis, aabb.kAxis };
     AddBox(aabb.centerOfMass, aabbAxes[0], aabbAxes[1], aabbAxes[2]);
 
+    pegasus::geometry::SimpleShapeIntersectionDetector detector;
+
+    Shape bunnyShape {vertices, faces};
+    hierarchy::BoundingVolumeHierarchy<aabb::AxisAlignedBoundingBox> bvh(bunnyShape, indices);
+
+    double lilBoxSize = 0.1;
+    pegasus::geometry::Box lilShapeIn(
+        aabb.centerOfMass + 0.23,
+        { lilBoxSize, 0, 0 }, { 0, lilBoxSize, 0 }, { 0, 0, lilBoxSize }
+    );
+    pegasus::geometry::Box lilShapeOut(
+        aabb.centerOfMass + 0.24,
+        { lilBoxSize, 0, 0 }, { 0, lilBoxSize, 0 }, { 0, 0, lilBoxSize }
+    );
+    AddBox(lilShapeIn.centerOfMass, lilShapeIn.iAxis, lilShapeIn.jAxis, lilShapeIn.kAxis);
+    AddBox(lilShapeOut.centerOfMass, lilShapeOut.iAxis, lilShapeOut.jAxis, lilShapeOut.kAxis);
+    assert(bvh.Collide(&lilShapeIn));
+    assert(!bvh.Collide(&lilShapeOut));
+
+    std::size_t maxDepth = 999;
+    auto root = bvh.GetRoot().get();
+    std::queue<hierarchy::BoundingVolumeHierarchy<aabb::AxisAlignedBoundingBox>::Node*> nodeQueue;
+    std::queue<std::size_t> depthQueue;
+    nodeQueue.push(root);
+    depthQueue.push(0);
+    while (!nodeQueue.empty())
+    {
+        auto currNode = nodeQueue.front();
+        nodeQueue.pop();
+        std::size_t currDepth = depthQueue.front();
+        depthQueue.pop();
+
+        auto currBox = currNode->volume.GetBox();
+        AddBox(currBox.centerOfMass, currBox.iAxis, currBox.jAxis, currBox.kAxis);
+
+        if (currDepth < maxDepth && !currNode->IsLeaf())
+        {
+            nodeQueue.push(currNode->GetLowerChild().get());
+            nodeQueue.push(currNode->GetUpperChild().get());
+            depthQueue.push(currDepth + 1);
+            depthQueue.push(currDepth + 1);
+        }
+    }
+
     //BS
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
     {
