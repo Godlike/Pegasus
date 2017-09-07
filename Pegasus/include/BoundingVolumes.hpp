@@ -185,6 +185,8 @@ template <typename BoundingVolume>
 class BoundingVolumeHierarchy
 {
 public:
+    std::size_t static const MAX_NODE_SIZE = 5;
+
     class Node
     {
     public:
@@ -227,11 +229,98 @@ public:
         friend class BoundingVolumeHierarchy;
     };
 
-private:
-    using CentroidsMap = std::unordered_map<std::size_t, glm::dvec3>;
     using NodePtr = std::unique_ptr<Node>;
 
-    std::size_t static const MAX_NODE_SIZE = 5;
+    BoundingVolumeHierarchy(Shape const& shape, Indices const& indices)
+        : shape(shape)
+        , root(new Node(BoundingVolume(shape, indices)))
+    {
+        std::stack<Node*> nodeStack;
+        std::stack<Indices> indicesStack;
+        nodeStack.push(root.get());
+        indicesStack.push(indices);
+
+        while (!nodeStack.empty())
+        {
+            Node* currNode = nodeStack.top();
+            Indices currIndices = std::move(indicesStack.top());
+            nodeStack.pop();
+            indicesStack.pop();
+
+            if (currIndices.size() < MAX_NODE_SIZE)
+            {
+                currNode->lowerChild.reset();
+                currNode->upperChild.reset();
+                continue;
+            }
+
+            currNode->isLeaf = false;
+
+            Vertices currVertices = GetShapeVertices(currIndices);
+            glm::dvec3 maxDistanceVector = GetMaximumDistanceDirectionApprox(currVertices);
+            glm::dvec3 min = GetMinVectorAlongDirection(maxDistanceVector, currVertices);
+            math::HyperPlane minPlane(maxDistanceVector, min);
+
+            CentroidsMap centroids = GetFacesCentroids(currIndices);
+            SplitIndices splitIndices = GetPartitionIndices(minPlane, centroids);
+
+            BoundingVolume lowerVolume(shape, splitIndices.lowerIndices);
+            BoundingVolume upperVolume(shape, splitIndices.upperIndices);
+
+            currNode->lowerChild = NodePtr(new Node(std::move(lowerVolume)));
+            currNode->upperChild = NodePtr(new Node(std::move(upperVolume)));
+
+            nodeStack.push(currNode->lowerChild.get());
+            indicesStack.push(std::move(splitIndices.lowerIndices));
+            nodeStack.push(currNode->upperChild.get());
+            indicesStack.push(std::move(splitIndices.upperIndices));
+        }
+    }
+
+    ~BoundingVolumeHierarchy()
+    {
+        std::stack<NodePtr> nodeStack;
+        nodeStack.push(NodePtr(root.release()));
+
+        while (!nodeStack.empty())
+        {
+            NodePtr & currNode = nodeStack.top();
+            if (currNode->lowerChild.get() != nullptr)
+            {
+                nodeStack.push(NodePtr(currNode->lowerChild.release()));
+                continue;
+            }
+            if (currNode->upperChild.get() != nullptr)
+            {
+                nodeStack.push(NodePtr(currNode->upperChild.release()));
+                continue;
+            }
+            nodeStack.pop();
+        }
+    }
+
+    NodePtr const& GetRoot() const
+    {
+        return root;
+    }
+
+    bool Collide(Plane const* plane) const
+    {
+        return GenericCollide(plane);
+    }
+
+    bool Collide(Sphere const* sphere) const
+    {
+        return GenericCollide(sphere);
+    }
+
+    bool Collide(Box const* box) const
+    {
+        return GenericCollide(box);
+    }
+
+private:
+    using CentroidsMap = std::unordered_map<std::size_t, glm::dvec3>;
 
     Shape const& shape;
     NodePtr root;
@@ -402,96 +491,6 @@ private:
             nodeStack.push(currNode->upperChild.get());
         }
         return false;
-    }
-
-public:
-
-    BoundingVolumeHierarchy(Shape const& shape, Indices const& indices)
-        : shape(shape)
-        , root(new Node(BoundingVolume(shape, indices)))
-    {
-        std::stack<Node*> nodeStack;
-        std::stack<Indices> indicesStack;
-        nodeStack.push(root.get());
-        indicesStack.push(indices);
-
-        while (!nodeStack.empty())
-        {
-            Node* currNode = nodeStack.top();
-            Indices currIndices = std::move(indicesStack.top());
-            nodeStack.pop();
-            indicesStack.pop();
-
-            if (currIndices.size() < MAX_NODE_SIZE)
-            {
-                currNode->lowerChild.reset();
-                currNode->upperChild.reset();
-                continue;
-            }
-
-            currNode->isLeaf = false;
-
-            Vertices currVertices = GetShapeVertices(currIndices);
-            glm::dvec3 maxDistanceVector = GetMaximumDistanceDirectionApprox(currVertices);
-            glm::dvec3 min = GetMinVectorAlongDirection(maxDistanceVector, currVertices);
-            math::HyperPlane minPlane(maxDistanceVector, min);
-
-            CentroidsMap centroids = GetFacesCentroids(currIndices);
-            SplitIndices splitIndices = GetPartitionIndices(minPlane, centroids);
-
-            BoundingVolume lowerVolume(shape, splitIndices.lowerIndices);
-            BoundingVolume upperVolume(shape, splitIndices.upperIndices);
-
-            currNode->lowerChild = NodePtr(new Node(std::move(lowerVolume)));
-            currNode->upperChild = NodePtr(new Node(std::move(upperVolume)));
-
-            nodeStack.push(currNode->lowerChild.get());
-            indicesStack.push(std::move(splitIndices.lowerIndices));
-            nodeStack.push(currNode->upperChild.get());
-            indicesStack.push(std::move(splitIndices.upperIndices));
-        }
-    }
-
-    ~BoundingVolumeHierarchy()
-    {
-        std::stack<NodePtr> nodeStack;
-        nodeStack.push(NodePtr(root.release()));
-
-        while (!nodeStack.empty())
-        {
-            NodePtr & currNode = nodeStack.top();
-            if (currNode->lowerChild.get() != nullptr)
-            {
-                nodeStack.push(NodePtr(currNode->lowerChild.release()));
-                continue;
-            }
-            if (currNode->upperChild.get() != nullptr)
-            {
-                nodeStack.push(NodePtr(currNode->upperChild.release()));
-                continue;
-            }
-            nodeStack.pop();
-        }
-    }
-
-    NodePtr const& GetRoot() const
-    {
-        return root;
-    }
-
-    bool Collide(Plane const* plane) const
-    {
-        return GenericCollide(plane);
-    }
-
-    bool Collide(Sphere const* sphere) const
-    {
-        return GenericCollide(sphere);
-    }
-
-    bool Collide(Box const* box) const
-    {
-        return GenericCollide(box);
     }
 };
 } // namespace hierarchy
