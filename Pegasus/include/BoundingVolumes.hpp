@@ -6,17 +6,19 @@
 #ifndef PEGASUS_BOUNDING_VOLUMES_HPP
 #define PEGASUS_BOUNDING_VOLUMES_HPP
 
-#include "Pegasus/include/Geometry.hpp"
+#include <Pegasus/include/Geometry.hpp>
+#include <Pegasus/include/Math.hpp>
 
-#include <vector>
-#include <set>
-#include <array>
-#include <algorithm>
-#include <random>
-#include <unordered_map>
 #include <glm/ext.hpp>
+
+#include <algorithm>
+#include <array>
+#include <random>
 #include <queue>
+#include <set>
 #include <stack>
+#include <unordered_map>
+#include <vector>
 
 namespace pegasus
 {
