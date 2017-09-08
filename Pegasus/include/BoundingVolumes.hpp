@@ -243,7 +243,7 @@ public:
          */
         std::unique_ptr<Node> const& GetLowerChild() const
         {
-            return lowerChild;
+            return m_lowerChild;
         }
 
         /**
@@ -253,7 +253,7 @@ public:
          */
         std::unique_ptr<Node> const& GetUpperChild() const
         {
-            return upperChild;
+            return m_upperChild;
         }
 
         /**
@@ -263,15 +263,15 @@ public:
          */
         bool IsLeaf() const
         {
-            return isLeaf;
+            return m_isLeaf;
         }
 
         ~Node() = default;
 
     private:
-        mutable std::unique_ptr<Node> lowerChild;
-        mutable std::unique_ptr<Node> upperChild;
-        bool isLeaf;
+        mutable std::unique_ptr<Node> m_lowerChild;
+        mutable std::unique_ptr<Node> m_upperChild;
+        bool m_isLeaf;
 
         /**
          * Constructs a node out of volume. Children are initialized
@@ -281,9 +281,9 @@ public:
          */
         explicit Node(BoundingVolume && volume)
             : volume(volume)
-            , lowerChild(nullptr)
-            , upperChild(nullptr)
-            , isLeaf(true)
+            , m_lowerChild(nullptr)
+            , m_upperChild(nullptr)
+            , m_isLeaf(true)
         {}
 
         friend class BoundingVolumeHierarchy;
@@ -298,12 +298,12 @@ public:
      * @param indices indices of faces of shape to use in algorithm
      */
     BoundingVolumeHierarchy(Shape const& shape, Indices const& indices)
-        : shape(shape)
-        , root(new Node(BoundingVolume(shape, indices)))
+        : m_shape(shape)
+        , m_root(new Node(BoundingVolume(shape, indices)))
     {
         std::stack<Node*> nodeStack;
         std::stack<Indices> indicesStack;
-        nodeStack.push(root.get());
+        nodeStack.push(m_root.get());
         indicesStack.push(indices);
 
         while (!nodeStack.empty())
@@ -315,12 +315,12 @@ public:
 
             if (currIndices.size() < MAX_NODE_SIZE)
             {
-                currNode->lowerChild.reset();
-                currNode->upperChild.reset();
+                currNode->m_lowerChild.reset();
+                currNode->m_upperChild.reset();
                 continue;
             }
 
-            currNode->isLeaf = false;
+            currNode->m_isLeaf = false;
 
             Vertices currVertices = GetShapeVertices(currIndices);
             glm::dvec3 maxDistanceVector = GetMaximumDistanceDirectionApprox(currVertices);
@@ -330,15 +330,15 @@ public:
             CentroidsMap centroids = GetFacesCentroids(currIndices);
             SplitIndices splitIndices = GetPartitionIndices(minPlane, centroids);
 
-            BoundingVolume lowerVolume(shape, splitIndices.lowerIndices);
-            BoundingVolume upperVolume(shape, splitIndices.upperIndices);
+            BoundingVolume lowerVolume(m_shape, splitIndices.lowerIndices);
+            BoundingVolume upperVolume(m_shape, splitIndices.upperIndices);
 
-            currNode->lowerChild = NodePtr(new Node(std::move(lowerVolume)));
-            currNode->upperChild = NodePtr(new Node(std::move(upperVolume)));
+            currNode->m_lowerChild = NodePtr(new Node(std::move(lowerVolume)));
+            currNode->m_upperChild = NodePtr(new Node(std::move(upperVolume)));
 
-            nodeStack.push(currNode->lowerChild.get());
+            nodeStack.push(currNode->m_lowerChild.get());
             indicesStack.push(std::move(splitIndices.lowerIndices));
-            nodeStack.push(currNode->upperChild.get());
+            nodeStack.push(currNode->m_upperChild.get());
             indicesStack.push(std::move(splitIndices.upperIndices));
         }
     }
@@ -346,19 +346,19 @@ public:
     ~BoundingVolumeHierarchy()
     {
         std::stack<NodePtr> nodeStack;
-        nodeStack.push(NodePtr(root.release()));
+        nodeStack.push(NodePtr(m_root.release()));
 
         while (!nodeStack.empty())
         {
             NodePtr & currNode = nodeStack.top();
-            if (currNode->lowerChild.get() != nullptr)
+            if (currNode->m_lowerChild.get() != nullptr)
             {
-                nodeStack.push(NodePtr(currNode->lowerChild.release()));
+                nodeStack.push(NodePtr(currNode->m_lowerChild.release()));
                 continue;
             }
-            if (currNode->upperChild.get() != nullptr)
+            if (currNode->m_upperChild.get() != nullptr)
             {
-                nodeStack.push(NodePtr(currNode->upperChild.release()));
+                nodeStack.push(NodePtr(currNode->m_upperChild.release()));
                 continue;
             }
             nodeStack.pop();
@@ -372,7 +372,7 @@ public:
      */
     NodePtr const& GetRoot() const
     {
-        return root;
+        return m_root;
     }
 
     /**
@@ -418,10 +418,10 @@ private:
 
     using CentroidsMap = std::unordered_map<std::size_t, glm::dvec3>;
 
-    Shape const& shape;
-    NodePtr root;
-    mutable SimpleShapeIntersectionDetector detector;
-    mutable SimpleShapeExtractor<BoundingVolume> extractor;
+    Shape const& m_shape;
+    NodePtr m_root;
+    mutable SimpleShapeIntersectionDetector m_detector;
+    mutable SimpleShapeExtractor<BoundingVolume> m_extractor;
 
     /**
      * Gets vertices, belonging to m_shape with given indices.
@@ -436,9 +436,9 @@ private:
         for (std::size_t i : indices)
         {
             result.insert(result.end(), {
-                shape.vertices[shape.faces[i][0]],
-                shape.vertices[shape.faces[i][1]],
-                shape.vertices[shape.faces[i][2]]
+                m_shape.vertices[m_shape.faces[i][0]],
+                m_shape.vertices[m_shape.faces[i][1]],
+                m_shape.vertices[m_shape.faces[i][2]]
             });
         }
         return result;
@@ -516,12 +516,12 @@ private:
         CentroidsMap centroids;
         for (std::size_t index : indices)
         {
-            Face const& currFace = shape.faces[index];
+            Face const& currFace = m_shape.faces[index];
             centroids[index] = pegasus::math::CalculateCentroid(
                 {
-                    shape.vertices[currFace[0]],
-                    shape.vertices[currFace[1]],
-                    shape.vertices[currFace[2]]
+                    m_shape.vertices[currFace[0]],
+                    m_shape.vertices[currFace[1]],
+                    m_shape.vertices[currFace[2]]
                 }
             );
         }
@@ -605,8 +605,8 @@ private:
      */
     bool CollideNode(Node* node, SimpleShape const* shape) const
     {
-        auto nodeShape = extractor.GetSimpleShape(node->volume);
-        return detector.CalculateIntersection(&nodeShape, shape);
+        auto nodeShape = m_extractor.GetSimpleShape(node->volume);
+        return m_detector.CalculateIntersection(&nodeShape, shape);
     }
 
     /**
@@ -618,7 +618,7 @@ private:
     bool GenericCollide(SimpleShape const* shape) const
     {
         std::stack<Node*> nodeStack;
-        nodeStack.push(root.get());
+        nodeStack.push(m_root.get());
 
         while (!nodeStack.empty())
         {
@@ -628,12 +628,12 @@ private:
             {
                 continue;
             }
-            if (currNode->isLeaf)
+            if (currNode->m_isLeaf)
             {
                 return true;
             }
-            nodeStack.push(currNode->lowerChild.get());
-            nodeStack.push(currNode->upperChild.get());
+            nodeStack.push(currNode->m_lowerChild.get());
+            nodeStack.push(currNode->m_upperChild.get());
         }
         return false;
     }
