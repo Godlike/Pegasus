@@ -143,44 +143,87 @@ private:
 namespace hierarchy
 {
 
+/**
+ * Template struct for extracting SimpleShape instances out of bounding volumes,
+ * specialized for different bounding volumes.
+ *
+ * @tparam BoundingVolume bounding volume type
+ */
 template <typename BoundingVolume>
 struct SimpleShapeExtractor
 {
 };
 
+/**
+ * AxisAlignedBoundingBox SimpleShapeExtractor specialization
+ */
 template <>
 struct SimpleShapeExtractor<aabb::AxisAlignedBoundingBox>
 {
+    /**
+     * Extracts Box from AxisAlignedBoundingBox instance.
+     *
+     * @param aabb AxisAlignedBoundingBox instance to extract volume from
+     * @return extracted Box
+     */
     Box GetSimpleShape(aabb::AxisAlignedBoundingBox const& aabb)
     {
         return aabb.GetBox();
     }
 };
 
+/**
+ * OrientedBoundingBox SimpleShapeExtractor specialization
+ */
 template <>
 struct SimpleShapeExtractor<obb::OrientedBoundingBox>
 {
+    /**
+     * Extracts Box from OrientedBoundingBox instance.
+     *
+     * @param obb OrientedBoundingBox instance to extract volume from
+     * @return extracted Box
+     */
     Box GetSimpleShape(obb::OrientedBoundingBox const& obb)
     {
         return obb.GetBox();
     }
 };
 
+/**
+ * BoundingSphere SimpleShapeExtractor specialization
+ */
 template <>
 struct SimpleShapeExtractor<sphere::BoundingSphere>
 {
+    /**
+     * Extracts Sphere from BoundingSphere instance.
+     *
+     * @param sphere BoundingSphere instance to extract volume from
+     * @return extracted Sphere
+     */
     Sphere GetSimpleShape(sphere::BoundingSphere const& sphere)
     {
         return sphere.GetSphere();
     }
 };
 
+/**
+ * General bounding volume hierarchy calculation class, builds a binary tree of bounding volumes.
+ *
+ * @tparam BoundingVolume bounding volume type to be used in hierarchy
+ */
 template <typename BoundingVolume>
 class BoundingVolumeHierarchy
 {
 public:
     std::size_t static const MAX_NODE_SIZE = 5;
 
+    /**
+     * BoundingVolumeHierarchy internal node data structure.
+     *
+     * Cannot be copied or moved. Can only be constructed inside BoundingVolumeHierarchy class.
+     */
     class Node
     {
     public:
@@ -191,16 +234,31 @@ public:
         Node & operator=(Node const&) = delete;
         Node & operator=(Node &&) = delete;
 
+        /**
+         * Gets a lower child of this node.
+         *
+         * @return lower child
+         */
         std::unique_ptr<Node> const& GetLowerChild() const
         {
             return lowerChild;
         }
 
+        /**
+         * Gets an upper child of this node.
+         *
+         * @return upper child
+         */
         std::unique_ptr<Node> const& GetUpperChild() const
         {
             return upperChild;
         }
 
+        /**
+         * Checks if this node is a leaf, i.e. doesn't have any children.
+         *
+         * @return true if this node is a leaf, false otherwise
+         */
         bool IsLeaf() const
         {
             return isLeaf;
@@ -213,6 +271,12 @@ public:
         mutable std::unique_ptr<Node> upperChild;
         bool isLeaf;
 
+        /**
+         * Constructs a node out of volume. Children are initialized
+         * to nullptr, and the node is assumed to be a leaf.
+         *
+         * @param volume
+         */
         explicit Node(BoundingVolume && volume)
             : volume(volume)
             , lowerChild(nullptr)
@@ -225,6 +289,12 @@ public:
 
     using NodePtr = std::unique_ptr<Node>;
 
+    /**
+     * Constructs BoundingVolumeHierarchy, using iterative depth-first traversal.
+     *
+     * @param shape shape to construct volume hierarchy around
+     * @param indices indices of faces of shape to use in algorithm
+     */
     BoundingVolumeHierarchy(Shape const& shape, Indices const& indices)
         : shape(shape)
         , root(new Node(BoundingVolume(shape, indices)))
@@ -293,21 +363,44 @@ public:
         }
     }
 
+    /**
+     * Gets hierarchy's root.
+     *
+     * @return unique_ptr to root
+     */
     NodePtr const& GetRoot() const
     {
         return root;
     }
 
+    /**
+     * Tests volume hierarchy collision with a plane.
+     *
+     * @param plane plane to test collision with
+     * @return true if there exists a leaf node, whose volume intersects with a plane; false otherwise
+     */
     bool Collide(Plane const* plane) const
     {
         return GenericCollide(plane);
     }
 
+    /**
+     * Tests volume hierarchy collision with a sphere.
+     *
+     * @param sphere sphere to test collision with
+     * @return true if there exists a leaf node, whose volume intersects with a sphere; false otherwise
+     */
     bool Collide(Sphere const* sphere) const
     {
         return GenericCollide(sphere);
     }
 
+    /**
+     * Tests volume hierarchy collision with a box.
+     *
+     * @param box plane to test collision with
+     * @return true if there exists a leaf node, whose volume intersects with a box; false otherwise
+     */
     bool Collide(Box const* box) const
     {
         return GenericCollide(box);
@@ -328,6 +421,12 @@ private:
     mutable SimpleShapeIntersectionDetector detector;
     mutable SimpleShapeExtractor<BoundingVolume> extractor;
 
+    /**
+     * Gets vertices, belonging to m_shape with given indices.
+     *
+     * @param indices indices of faces to extract vertices from
+     * @return vertices of a shape
+     */
     Vertices GetShapeVertices(Indices const& indices) const
     {
         Vertices result;
@@ -343,6 +442,12 @@ private:
         return result;
     }
 
+    /**
+     * Calculates an approximation of a vector, alongside which the shape has maximum length.
+     *
+     * @param vertices vertices of a shape
+     * @return approximate maximum distance vector
+     */
     glm::dvec3 GetMaximumDistanceDirectionApprox(Vertices const& vertices) const
     {
         glm::dvec3
@@ -379,6 +484,14 @@ private:
         return glm::normalize(max - min);
     }
 
+    /**
+     * Calculates a vertice, which has minimal radius when projected onto
+     * a given maximum distance vector.
+     *
+     * @param maxDistanceVector approximate maximum distance vector
+     * @param vertices vertices of a shape
+     * @return calculated vertice
+     */
     glm::dvec3 GetMinVectorAlongDirection(glm::dvec3 maxDistanceVector, Vertices const& vertices) const
     {
         return *std::min_element(
@@ -390,6 +503,12 @@ private:
             });
     }
 
+    /**
+     * Gets centroids of faces of the shape.
+     *
+     * @param indices indices of faces to use
+     * @return map of indices to centroids
+     */
     CentroidsMap GetFacesCentroids(Indices const& indices) const
     {
         CentroidsMap centroids;
@@ -407,6 +526,16 @@ private:
         return centroids;
     }
 
+    /**
+     * Calculates indices of shapes for a lower child and an upper child.
+     * Finds a median centroid, using distance to minPlane,
+     * then returning the closest half of vertices as lower child indices
+     * and furthest half of vertices as upper child indices.
+     *
+     * @param minPlane a plane to measure distance of centroids from
+     * @param centroids centroids of faces
+     * @return indices for children
+     */
     SplitIndices GetPartitionIndices(
         math::HyperPlane const& minPlane,
         CentroidsMap const& centroids) const
@@ -465,12 +594,25 @@ private:
         };
     }
 
+    /**
+     * Checks if shape in a node intersects with a given shape.
+     *
+     * @param node node to extract the shape from
+     * @param shape shape to intersect node's shape with
+     * @return true if node's shape intersects with a given shape; false otherwise
+     */
     bool CollideNode(Node* node, SimpleShape const* shape) const
     {
         auto nodeShape = extractor.GetSimpleShape(node->volume);
         return detector.CalculateIntersection(&nodeShape, shape);
     }
 
+    /**
+     * Checks if a given shape intersects with any of the hierarchy's leafs.
+     *
+     * @param shape
+     * @return
+     */
     bool GenericCollide(SimpleShape const* shape) const
     {
         std::stack<Node*> nodeStack;
