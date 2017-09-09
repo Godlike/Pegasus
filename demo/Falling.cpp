@@ -3,34 +3,34 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
+#include <Pegasus/include/Particle.hpp>
+#include <Pegasus/include/Geometry.hpp>
+#include <Pegasus/include/Mechanics.hpp>
+#include <Pegasus/include/ParticleContacts.hpp>
+#include <Pegasus/include/ParticleForceGenerator.hpp>
+#include <Pegasus/include/ParticleWorld.hpp>
+#include <Pegasus/include/BoundingVolumes.hpp>
+#include <Pegasus/include/Math.hpp>
+#include <demo/Application.hpp>
+#include <demo/OglHeaders.hpp>
+#include <demo/Timing.hpp>
+#include <demo/Bunny.hpp>
+
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
 #include <list>
 #include <random>
 
-#include "Pegasus/include/Particle.hpp"
-#include "Pegasus/include/Geometry.hpp"
-#include "Pegasus/include/Mechanics.hpp"
-#include "Pegasus/include/ParticleContacts.hpp"
-#include "Pegasus/include/ParticleForceGenerator.hpp"
-#include "Pegasus/include/ParticleWorld.hpp"
-#include "Pegasus/include/BoundingVolumes.hpp"
-#include "Pegasus/include/Math.hpp"
-#include "demo/Application.hpp"
-#include "demo/OglHeaders.hpp"
-#include "demo/Timing.hpp"
-#include "demo/Bunny.hpp"
-
-static const uint32_t BOX_COUNT = static_cast<uint32_t>(std::pow(3, 0));
-static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 0));
+static const uint32_t BOX_COUNT = static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
 static const uint32_t TOTAL_COUNT = BOX_COUNT + SPHERE_COUNT;
 static const double RADIUS = 5;
 static const bool WIRED_ONLY = true;
 static const bool DRAW_CONVEX = false;
 static const bool DRAW_BUNNIES = true;
 static const bool DRAW_BVH_AABB = false;
-static const bool DRAW_BVH_OBB = true;
+static const bool DRAW_BVH_OBB = false;
 static const bool DRAW_BVH_SPHERE = false;
 
 class FallingDemo : public Application
@@ -82,7 +82,6 @@ private:
     using ConvexHull = pegasus::math::QuickhullConvexHull<std::vector<glm::dvec3>>;
     std::unique_ptr<ConvexHull> cv;
     ConvexHull::Faces cvFaces;
-    std::list<ConvexHull::Vertices::iterator> cvVertices;
     using Aabb = pegasus::geometry::volumes::aabb::AxisAlignedBoundingBox;
     using Obb = pegasus::geometry::volumes::obb::OrientedBoundingBox;
     using SphereVolume = pegasus::geometry::volumes::sphere::BoundingSphere;
@@ -92,6 +91,7 @@ private:
     std::unique_ptr<BvhAabb> bvhAabb;
     std::unique_ptr<BvhObb> bvhObb;
     std::unique_ptr<BvhSphere> bvhSphere;
+    std::list<size_t> cvVertices;
 
     std::array<bool, 4> m_overlap;
     std::array<glm::dvec3, 4> m_contactNormal;
@@ -258,6 +258,23 @@ void FallingDemo::AddPlane(glm::dvec3 const& normal, glm::dvec3 const& point)
 
 void FallingDemo::AddBoundingVolumes()
 {
+    pegasus::geometry::Box gjkTestBox{glm::dvec3{10, -10, 10}, glm::dvec3{1, 0, 0}, glm::dvec3{0, 1, 0}, glm::dvec3{0, 0, 1}};
+    glm::dvec3 pointBox = pegasus::geometry::intersection::cso::Support(gjkTestBox, glm::normalize(glm::dvec3{1, 0, 1}));
+
+    pegasus::geometry::Sphere gjkTestSphere{glm::dvec3{10, -10, 10}, 1};
+    glm::dvec3 pointSphere = pegasus::geometry::intersection::cso::Support(gjkTestSphere, glm::normalize(glm::dvec3{1, 0, 1}));
+    double const length = glm::length(pointSphere - gjkTestSphere.centerOfMass);
+
+    pegasus::geometry::Box box1{{0,0,0}, {1,0,0}, {0,1,0}, {0,0,1}};
+    pegasus::geometry::Box box2{{0,1.75,0}, {1,0,0}, {0,1,0}, {0,0,1}};
+    pegasus::geometry::intersection::gjk::Simplex polytop;
+    bool intersection = pegasus::geometry::intersection::gjk::CalculateIntersection(polytop, box2, box1);
+
+    auto cm = pegasus::geometry::intersection::epa::CalculateContactManifold(box2, box1, polytop);
+
+    pegasus::math::HyperPlane hp({0,1,0}, {1, 0, 0});
+    glm::dvec3 const closestPoint = hp.ClosestPoint({-3,-3,10});
+
     using namespace pegasus::geometry::volumes;
     //Bunny Data
     std::transform(bunnyVertices, bunnyVertices + bunnyVerticesSize, std::back_inserter(vertices),
@@ -282,7 +299,7 @@ void FallingDemo::AddBoundingVolumes()
     });
     orientedBoundingBox = std::make_unique<obb::OrientedBoundingBox>(Shape{vertices, faces}, indices);
     auto obb = orientedBoundingBox->GetBox();
-    glm::dmat3 obbAxes{ obb.iAxis, obb.jAxis, obb.kAxis };
+    glm::dmat3 obbAxes{obb.iAxis, obb.jAxis, obb.kAxis};
     AddBox(obb.centerOfMass, obbAxes[0], obbAxes[1], obbAxes[2]);
     Shape bunnyShapeObb {vertices, faces};
     bvhObb = std::make_unique<BvhObb>(bunnyShapeObb, indices);
@@ -314,7 +331,7 @@ void FallingDemo::AddBoundingVolumes()
     });
     axisAlignedBoundingBox = std::make_unique<aabb::AxisAlignedBoundingBox>(Shape{vertices, faces}, indices);
     auto aabb = axisAlignedBoundingBox->GetBox();
-    glm::dmat3 aabbAxes{ aabb.iAxis, aabb.jAxis, aabb.kAxis };
+    glm::dmat3 aabbAxes{aabb.iAxis, aabb.jAxis, aabb.kAxis};
     AddBox(aabb.centerOfMass, aabbAxes[0], aabbAxes[1], aabbAxes[2]);
     Shape bunnyShapeAabb {vertices, faces};
     bvhAabb = std::make_unique<BvhAabb>(bunnyShapeAabb, indices);
@@ -350,9 +367,9 @@ void FallingDemo::AddBoundingVolumes()
     });
 
     m_rays = {
-        pegasus::geometry::Ray{ sphere.centerOfMass + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0}) },
-        pegasus::geometry::Ray{ aabb.centerOfMass + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0 }) },
-        pegasus::geometry::Ray{ obb.centerOfMass + glm::dvec3{ 1, 0, 0 }, glm::normalize(glm::dvec3{ -1, 0.5, 0 }) },
+        pegasus::geometry::Ray{sphere.centerOfMass + glm::dvec3{1, 0, 0}, glm::normalize(glm::dvec3{-1, 0.5, 0})},
+        pegasus::geometry::Ray{aabb.centerOfMass + glm::dvec3{1, 0, 0}, glm::normalize(glm::dvec3{-1, 0.5, 0})},
+        pegasus::geometry::Ray{obb.centerOfMass + glm::dvec3{1, 0, 0}, glm::normalize(glm::dvec3{-1, 0.5, 0})},
     };
 
     using namespace pegasus::geometry::intersection;
@@ -411,7 +428,7 @@ void FallingDemo::SceneReset()
             col * RADIUS * 2.3 + RADIUS - offset
         );
         m_particles.back().SetVelocity(randDouble(), randDouble() - 5, randDouble());
-        m_particles.back().SetDamping(1.0f);
+        m_particles.back().SetDamping(0.98);
     }
 
     //Create rigid bodies
@@ -425,9 +442,9 @@ void FallingDemo::SceneReset()
                 particle,
                 std::make_unique<pegasus::geometry::Box>(
                     particle.GetPosition(),
-                    glm::dvec3{RADIUS, 0, 0} * 0.5,
-                    glm::dvec3{0, RADIUS, 0} * 0.5,
-                    glm::dvec3{0, 0, RADIUS} * 0.5)
+                    glm::dvec3{RADIUS * randDouble(), 0, 0} * 0.5,
+                    glm::dvec3{0, RADIUS * randDouble(), 0} * 0.5,
+                    glm::dvec3{0, 0, RADIUS * randDouble()} * 0.5)
             );
         }
         else
@@ -464,8 +481,7 @@ void FallingDemo::SceneReset()
     AddCube({0, position, -position * 2}, boxSide);
     AddBoundingVolumes();
 
-    activeObject = m_rigidBodies.end();
-    std::advance(activeObject, -3);
+    activeObject = std::prev(m_rigidBodies.end());
 }
 
 void FallingDemo::DrawWiredBox(std::array<glm::dvec3, 8> const& boxVertices) const
@@ -520,8 +536,8 @@ void FallingDemo::Display()
 
     auto const& pos = activeObject->p.GetPosition();
 
-    glm::dvec3 from{ pos.x, (pos.y + 30 + yEye), (pos.z + 30) };
-    glm::dvec3 to{ pos.x, pos.y, pos.z };
+    glm::dvec3 from{pos.x, (pos.y + 30 + yEye), (pos.z + 30)};
+    glm::dvec3 to{pos.x, pos.y, pos.z};
     glm::dvec3 viewVec = from - to;
     viewVec *= zoom;
     from = viewVec + to;
@@ -537,10 +553,12 @@ void FallingDemo::Display()
 
         //Original ray
         {
-            if (m_overlap[i]) {
+            if (m_overlap[i])
+            {
                 glColor3f(1.0, 0.0, 0.0);
             }
-            else {
+            else
+            {
                 glColor3d(0.0, 1.0, 0.0);
             }
             glBegin(GL_LINES);
@@ -609,7 +627,7 @@ void FallingDemo::Display()
             glRotated(yRotationAngle, 0, 1, 0);
             glBegin(GL_POINTS);
             glColor3f(1, 0, 0);
-            glVertex3dv(glm::value_ptr(*vertex));
+            glVertex3dv(glm::value_ptr(vertices[vertex]));
             glEnd();
             glPopMatrix();
         }
@@ -955,7 +973,7 @@ void FallingDemo::Update()
     zAxis *= pow(0.1, duration);
     activeObject->p.AddForce(glm::dvec3(xAxis * 10.0, yAxis * 20.0, zAxis * 10.0));
 
-    m_world.RunPhysics(0.01);
+    m_world.RunPhysics(0.02);
 
     for (auto const& body : m_rigidBodies)
     {
@@ -1023,6 +1041,8 @@ void FallingDemo::Key(unsigned char key)
     case 'r':
     case 'R':
         activeObject->p.SetVelocity(0, 0, 0);
+        activeObject->p.SetAcceleration(0, 0, 0);
+        activeObject->p.ClearForceAccumulator();
         break;
     case '+':
         zoom -= zoom * 0.1;

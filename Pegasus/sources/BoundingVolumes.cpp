@@ -130,7 +130,7 @@ aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(
     , m_indices(indices)
 {
     //ToDo: Calculate extremal vertices from a convex hull
-    CalculateExtremalVetices(m_shape, indices, m_box);
+    CalculateExtremalVetices(m_shape, m_indices, m_box);
     CalculateMean(m_box);
     CreateBox(m_box);
 }

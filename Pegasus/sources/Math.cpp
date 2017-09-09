@@ -3,7 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "Pegasus/include/Math.hpp"
+#include <Pegasus/include/Math.hpp>
 
 #include <glm/ext.hpp>
 #include <array>
@@ -105,12 +105,11 @@ bool HyperPlane::LineSegmentIntersection(
     return RayIntersection(lineNormal, lineStart, resultPoint);
 }
 
-double LineSegmentPointDistance(
-    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
-)
+glm::dvec3 HyperPlane::ClosestPoint(const glm::dvec3& point) const
 {
-    return glm::length(glm::cross(lineEnd - lineStart, lineStart - point))
-        / glm::length(lineEnd - lineStart);
+    glm::dvec3 const closestPoint = point - (glm::dot(point, m_normal) - m_distance) * m_normal;
+
+    return closestPoint;
 }
 
 JacobiEigenvalue::JacobiEigenvalue(glm::dmat3 const& symmetricMatrix, double coverageThreshold, uint32_t maxIterations)
@@ -240,9 +239,9 @@ HalfEdgeDataStructure::Face::const_face_iterator HalfEdgeDataStructure::Face::Ge
 
 bool HalfEdgeDataStructure::FaceVertices::operator==(FaceVertices const& other) const
 {
-    std::array<uint64_t, 3> pointers = {a, b, c};
+    std::array<uint64_t, 3> pointers = {{a, b, c}};
     std::sort(pointers.begin(), pointers.end());
-    std::array<uint64_t, 3> otherPointers = {other.a, other.b, other.c};
+    std::array<uint64_t, 3> otherPointers = {{other.a, other.b, other.c}};
     std::sort(otherPointers.begin(), otherPointers.end());
 
     return pointers[0] == otherPointers[0]
@@ -263,11 +262,11 @@ void HalfEdgeDataStructure::MakeFace(uint64_t a, uint64_t b, uint64_t c)
     if (m_faceVerticesIteratorMap.find(faceVerticesKey) == m_faceVerticesIteratorMap.end())
     {
         //Allocate half edges
-        std::array<HalfEdges::iterator, 3> newHalfEdges = {
+        std::array<HalfEdges::iterator, 3> newHalfEdges = {{
             m_halfEdgeList.emplace(m_halfEdgeList.end()),
             m_halfEdgeList.emplace(m_halfEdgeList.end()),
             m_halfEdgeList.emplace(m_halfEdgeList.end())
-        };
+        }};
 
         //Allocate face
         auto backFaceIterator = m_facesList.emplace(m_facesList.end(), *newHalfEdges.back());
@@ -323,11 +322,11 @@ void HalfEdgeDataStructure::RemoveFace(face_iterator faceIterator)
     markedHalfEdgeIterators[0] = m_halfEdgePointerIteratorMap[&*heIterator++];
     markedHalfEdgeIterators[1] = m_halfEdgePointerIteratorMap[&*heIterator++];
     markedHalfEdgeIterators[2] = m_halfEdgePointerIteratorMap[&*heIterator];
-    std::array<HalfEdge*, 3> twinMarkedHalfEdgeIterators = {
+    std::array<HalfEdge*, 3> twinMarkedHalfEdgeIterators = {{
         markedHalfEdgeIterators[0]->twin,
         markedHalfEdgeIterators[1]->twin,
         markedHalfEdgeIterators[2]->twin,
-    };
+    }};
 
     for (auto markedHalfEdgeIterator : markedHalfEdgeIterators)
     {
@@ -365,9 +364,9 @@ void HalfEdgeDataStructure::RemoveFace(face_iterator faceIterator)
 
 bool HalfEdgeDataStructure::HalfEdgeVertices::operator==(HalfEdgeVertices const& other) const
 {
-    std::array<uint64_t, 2> indices = {vertexIndexFrom, vertexIndexTo};
+    std::array<uint64_t, 2> indices = {{vertexIndexFrom, vertexIndexTo}};
     std::sort(indices.begin(), indices.end());
-    std::array<uint64_t, 2> otherIndices = {other.vertexIndexFrom, other.vertexIndexTo};
+    std::array<uint64_t, 2> otherIndices = {{other.vertexIndexFrom, other.vertexIndexTo}};
     std::sort(otherIndices.begin(), otherIndices.end());
 
     return indices[0] == otherIndices[0] && indices[1] == otherIndices[1];
@@ -402,8 +401,11 @@ void HalfEdgeDataStructure::IntializeHalfEdge(
 }
 
 double pegasus::math::LineSegmentPointDistance(
-    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 const& point
+    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd, glm::dvec3 point
 )
 {
-    return 0.0;
+    point = point - lineStart;
+    glm::dvec3 const lineDirection = glm::normalize(lineEnd - lineStart);
+    glm::dvec3 const pointLineProjection = glm::dot(lineDirection, point) * lineDirection;
+    return glm::distance(point, pointLineProjection);
 }
