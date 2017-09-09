@@ -5,6 +5,7 @@
 */
 #include <cstdlib>
 #include <cmath>
+#include <iostream>
 #include <list>
 #include <random>
 
@@ -21,13 +22,16 @@
 #include "demo/Timing.hpp"
 #include "demo/Bunny.hpp"
 
-static const uint32_t BOX_COUNT = static_cast<uint32_t>(std::pow(3, 3));
-static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 3));
+static const uint32_t BOX_COUNT = static_cast<uint32_t>(std::pow(3, 0));
+static const uint32_t SPHERE_COUNT = static_cast<uint32_t>(std::pow(3, 0));
 static const uint32_t TOTAL_COUNT = BOX_COUNT + SPHERE_COUNT;
 static const double RADIUS = 5;
 static const bool WIRED_ONLY = true;
-static const bool DRAW_CONVEX = true;
+static const bool DRAW_CONVEX = false;
 static const bool DRAW_BUNNIES = true;
+static const bool DRAW_BVH_AABB = false;
+static const bool DRAW_BVH_OBB = true;
+static const bool DRAW_BVH_SPHERE = false;
 
 class FallingDemo : public Application
 {
@@ -79,6 +83,15 @@ private:
     std::unique_ptr<ConvexHull> cv;
     ConvexHull::Faces cvFaces;
     std::list<ConvexHull::Vertices::iterator> cvVertices;
+    using Aabb = pegasus::geometry::volumes::aabb::AxisAlignedBoundingBox;
+    using Obb = pegasus::geometry::volumes::obb::OrientedBoundingBox;
+    using SphereVolume = pegasus::geometry::volumes::sphere::BoundingSphere;
+    using BvhAabb = pegasus::geometry::volumes::hierarchy::BoundingVolumeHierarchy<Aabb>;
+    using BvhObb = pegasus::geometry::volumes::hierarchy::BoundingVolumeHierarchy<Obb>;
+    using BvhSphere = pegasus::geometry::volumes::hierarchy::BoundingVolumeHierarchy<SphereVolume>;
+    std::unique_ptr<BvhAabb> bvhAabb;
+    std::unique_ptr<BvhObb> bvhObb;
+    std::unique_ptr<BvhSphere> bvhSphere;
 
     std::array<bool, 4> m_overlap;
     std::array<glm::dvec3, 4> m_contactNormal;
@@ -92,6 +105,8 @@ private:
     pegasus::geometry::volumes::Vertices vertices;
     pegasus::geometry::volumes::Faces faces;
     pegasus::geometry::volumes::Indices indices;
+
+    void DrawWiredBoxShape(pegasus::geometry::Box const& box, double red, double green, double blue) const;
 
     void AddCube(glm::dvec3 const& pos, double boxSide);
 
@@ -123,6 +138,72 @@ FallingDemo::FallingDemo()
     , boundingSphereTranslate(0, 0, 10)
 {
     SceneReset();
+}
+
+void FallingDemo::DrawWiredBoxShape(pegasus::geometry::Box const& box, double red, double green, double blue) const
+{
+    glPushMatrix();
+    glRotated(yRotationAngle, 0, 1, 0);
+
+    std::array<glm::dvec3, 3> boxAxes = {
+        box.iAxis, box.jAxis, box.kAxis
+    };
+
+    glTranslatef(box.centerOfMass.x, box.centerOfMass.y, box.centerOfMass.z);
+    glm::dvec3 const& i = boxAxes[0];
+    glm::dvec3 const& j = boxAxes[1];
+    glm::dvec3 const& k = boxAxes[2];
+    std::array<glm::dvec3, 8> boxVertices = {
+        i + j + k, i - j + k, -i + j + k, -i - j + k,
+        i + j - k, i - j - k, -i + j - k, -i - j - k
+    };
+
+    glColor3f(red, green, blue);
+
+    //Draw solid Cube
+    if (!WIRED_ONLY)
+    {
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(boxVertices[0]));
+        glVertex3dv(glm::value_ptr(boxVertices[1]));
+        glVertex3dv(glm::value_ptr(boxVertices[3]));
+        glVertex3dv(glm::value_ptr(boxVertices[2]));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(boxVertices[4]));
+        glVertex3dv(glm::value_ptr(boxVertices[5]));
+        glVertex3dv(glm::value_ptr(boxVertices[7]));
+        glVertex3dv(glm::value_ptr(boxVertices[6]));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(boxVertices[0]));
+        glVertex3dv(glm::value_ptr(boxVertices[1]));
+        glVertex3dv(glm::value_ptr(boxVertices[5]));
+        glVertex3dv(glm::value_ptr(boxVertices[4]));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(boxVertices[2]));
+        glVertex3dv(glm::value_ptr(boxVertices[3]));
+        glVertex3dv(glm::value_ptr(boxVertices[7]));
+        glVertex3dv(glm::value_ptr(boxVertices[6]));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(boxVertices[0]));
+        glVertex3dv(glm::value_ptr(boxVertices[2]));
+        glVertex3dv(glm::value_ptr(boxVertices[6]));
+        glVertex3dv(glm::value_ptr(boxVertices[4]));
+        glEnd();
+        glBegin(GL_QUADS);
+        glVertex3dv(glm::value_ptr(boxVertices[1]));
+        glVertex3dv(glm::value_ptr(boxVertices[3]));
+        glVertex3dv(glm::value_ptr(boxVertices[7]));
+        glVertex3dv(glm::value_ptr(boxVertices[5]));
+        glEnd();
+    }
+
+    DrawWiredBox(boxVertices);
+
+    glPopMatrix();
 }
 
 void FallingDemo::AddCube(glm::dvec3 const& pos, double boxSide)
@@ -178,7 +259,6 @@ void FallingDemo::AddPlane(glm::dvec3 const& normal, glm::dvec3 const& point)
 void FallingDemo::AddBoundingVolumes()
 {
     using namespace pegasus::geometry::volumes;
-
     //Bunny Data
     std::transform(bunnyVertices, bunnyVertices + bunnyVerticesSize, std::back_inserter(vertices),
         [](GLfloat v[3]) -> glm::dvec3
@@ -193,6 +273,8 @@ void FallingDemo::AddBoundingVolumes()
     for (size_t i = 0; i < faces.size(); ++i)
         indices.insert(i);
 
+    pegasus::geometry::SimpleShapeIntersectionDetector detector;
+
     //OBB
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
     {
@@ -202,6 +284,22 @@ void FallingDemo::AddBoundingVolumes()
     auto obb = orientedBoundingBox->GetBox();
     glm::dmat3 obbAxes{ obb.iAxis, obb.jAxis, obb.kAxis };
     AddBox(obb.centerOfMass, obbAxes[0], obbAxes[1], obbAxes[2]);
+    Shape bunnyShapeObb {vertices, faces};
+    bvhObb = std::make_unique<BvhObb>(bunnyShapeObb, indices);
+
+    double lilBoxSizeObb = 0.1;
+    pegasus::geometry::Box lilShapeInObb(
+        obb.centerOfMass + 0.27,
+        { lilBoxSizeObb, 0, 0 }, { 0, lilBoxSizeObb, 0 }, { 0, 0, lilBoxSizeObb }
+    );
+    pegasus::geometry::Box lilShapeOutObb(
+        obb.centerOfMass + 0.3,
+        { lilBoxSizeObb, 0, 0 }, { 0, lilBoxSizeObb, 0 }, { 0, 0, lilBoxSizeObb }
+    );
+    AddBox(lilShapeInObb.centerOfMass, lilShapeInObb.iAxis, lilShapeInObb.jAxis, lilShapeInObb.kAxis);
+    AddBox(lilShapeOutObb.centerOfMass, lilShapeOutObb.iAxis, lilShapeOutObb.jAxis, lilShapeOutObb.kAxis);
+    assert(bvhObb->Collide(&lilShapeInObb));
+    assert(!bvhObb->Collide(&lilShapeOutObb));
 
     //CV
     cv = std::make_unique<ConvexHull>(vertices);
@@ -218,50 +316,22 @@ void FallingDemo::AddBoundingVolumes()
     auto aabb = axisAlignedBoundingBox->GetBox();
     glm::dmat3 aabbAxes{ aabb.iAxis, aabb.jAxis, aabb.kAxis };
     AddBox(aabb.centerOfMass, aabbAxes[0], aabbAxes[1], aabbAxes[2]);
+    Shape bunnyShapeAabb {vertices, faces};
+    bvhAabb = std::make_unique<BvhAabb>(bunnyShapeAabb, indices);
 
-    pegasus::geometry::SimpleShapeIntersectionDetector detector;
-
-    Shape bunnyShape {vertices, faces};
-    hierarchy::BoundingVolumeHierarchy<aabb::AxisAlignedBoundingBox> bvh(bunnyShape, indices);
-
-    double lilBoxSize = 0.1;
-    pegasus::geometry::Box lilShapeIn(
+    double lilBoxSizeAabb = 0.1;
+    pegasus::geometry::Box lilShapeInAabb(
         aabb.centerOfMass + 0.23,
-        { lilBoxSize, 0, 0 }, { 0, lilBoxSize, 0 }, { 0, 0, lilBoxSize }
+        { lilBoxSizeAabb, 0, 0 }, { 0, lilBoxSizeAabb, 0 }, { 0, 0, lilBoxSizeAabb }
     );
-    pegasus::geometry::Box lilShapeOut(
+    pegasus::geometry::Box lilShapeOutAabb(
         aabb.centerOfMass + 0.24,
-        { lilBoxSize, 0, 0 }, { 0, lilBoxSize, 0 }, { 0, 0, lilBoxSize }
+        { lilBoxSizeAabb, 0, 0 }, { 0, lilBoxSizeAabb, 0 }, { 0, 0, lilBoxSizeAabb }
     );
-    AddBox(lilShapeIn.centerOfMass, lilShapeIn.iAxis, lilShapeIn.jAxis, lilShapeIn.kAxis);
-    AddBox(lilShapeOut.centerOfMass, lilShapeOut.iAxis, lilShapeOut.jAxis, lilShapeOut.kAxis);
-    assert(bvh.Collide(&lilShapeIn));
-    assert(!bvh.Collide(&lilShapeOut));
-
-    std::size_t maxDepth = 999;
-    auto root = bvh.GetRoot().get();
-    std::queue<hierarchy::BoundingVolumeHierarchy<aabb::AxisAlignedBoundingBox>::Node*> nodeQueue;
-    std::queue<std::size_t> depthQueue;
-    nodeQueue.push(root);
-    depthQueue.push(0);
-    while (!nodeQueue.empty())
-    {
-        auto currNode = nodeQueue.front();
-        nodeQueue.pop();
-        std::size_t currDepth = depthQueue.front();
-        depthQueue.pop();
-
-        auto currBox = currNode->volume.GetBox();
-        AddBox(currBox.centerOfMass, currBox.iAxis, currBox.jAxis, currBox.kAxis);
-
-        if (currDepth < maxDepth && !currNode->IsLeaf())
-        {
-            nodeQueue.push(currNode->GetLowerChild().get());
-            nodeQueue.push(currNode->GetUpperChild().get());
-            depthQueue.push(currDepth + 1);
-            depthQueue.push(currDepth + 1);
-        }
-    }
+    AddBox(lilShapeInAabb.centerOfMass, lilShapeInAabb.iAxis, lilShapeInAabb.jAxis, lilShapeInAabb.kAxis);
+    AddBox(lilShapeOutAabb.centerOfMass, lilShapeOutAabb.iAxis, lilShapeOutAabb.jAxis, lilShapeOutAabb.kAxis);
+    assert(bvhAabb->Collide(&lilShapeInAabb));
+    assert(!bvhAabb->Collide(&lilShapeOutAabb));
 
     //BS
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
@@ -271,6 +341,9 @@ void FallingDemo::AddBoundingVolumes()
     boundingSphere = std::make_unique<sphere::BoundingSphere>(Shape{vertices, faces}, indices);
     auto sphere = boundingSphere->GetSphere();
     AddSphere(sphere.centerOfMass, sphere.radius);
+    Shape bunnyShapeSphere {vertices, faces};
+    bvhSphere = std::make_unique<BvhSphere>(bunnyShapeSphere, indices);
+
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
     {
         v -= boundingSphereTranslate;
@@ -283,7 +356,7 @@ void FallingDemo::AddBoundingVolumes()
     };
 
     using namespace pegasus::geometry::intersection;
-    
+
     m_overlap[0] = CalculateIntersection<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
     m_contactNormal[0] = CalculateContactNormal<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
     m_penetration[0] = CalculatePenetration<pegasus::geometry::Ray, pegasus::geometry::Sphere>(&m_rays[0], &sphere, &m_raySphereCache);
@@ -597,6 +670,116 @@ void FallingDemo::Display()
         glPopMatrix();
     }
 
+    if (DRAW_BVH_AABB)
+    {
+        std::size_t maxDepth = 999;
+
+        std::queue<BvhAabb::Node *> nodeQueueAabb;
+        std::queue<std::size_t> depthQueueAabb;
+        int bvhIndexAabb = -1;
+        nodeQueueAabb.push(bvhAabb->GetRoot().get());
+        depthQueueAabb.push(0);
+        while (!nodeQueueAabb.empty())
+        {
+            bvhIndexAabb += 1;
+            auto currNode = nodeQueueAabb.front();
+            nodeQueueAabb.pop();
+            std::size_t currDepth = depthQueueAabb.front();
+            depthQueueAabb.pop();
+
+            auto currBox = currNode->volume.GetBox();
+
+            int const kekdex = bvhIndexAabb + 1;
+            double red = static_cast<double>(0xb00b1e55 % kekdex) / static_cast<double>(kekdex);
+            double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
+            double blue = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
+
+            DrawWiredBoxShape(currBox, red, green, blue);
+
+            if (currDepth < maxDepth && !currNode->IsLeaf())
+            {
+                nodeQueueAabb.push(currNode->GetLowerChild().get());
+                nodeQueueAabb.push(currNode->GetUpperChild().get());
+                depthQueueAabb.push(currDepth + 1);
+                depthQueueAabb.push(currDepth + 1);
+            }
+        }
+    }
+
+    if (DRAW_BVH_OBB)
+    {
+        int maxDepth = 999;
+        std::queue<BvhObb::Node *> nodeQueueObb;
+        std::queue<std::size_t> depthQueueObb;
+        int bvhIndexObb = -1;
+        nodeQueueObb.push(bvhObb->GetRoot().get());
+        depthQueueObb.push(0);
+        while (!nodeQueueObb.empty())
+        {
+            bvhIndexObb += 1;
+            auto currNode = nodeQueueObb.front();
+            nodeQueueObb.pop();
+            std::size_t currDepth = depthQueueObb.front();
+            depthQueueObb.pop();
+
+            auto currBox = currNode->volume.GetBox();
+
+            int const kekdex = bvhIndexObb + 1;
+            double red = static_cast<double>(0xb00b1e55 % kekdex) / static_cast<double>(kekdex);
+            double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
+            double blue = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
+
+            DrawWiredBoxShape(currBox, red, green, blue);
+
+            if (currDepth < maxDepth && !currNode->IsLeaf())
+            {
+                nodeQueueObb.push(currNode->GetLowerChild().get());
+                nodeQueueObb.push(currNode->GetUpperChild().get());
+                depthQueueObb.push(currDepth + 1);
+                depthQueueObb.push(currDepth + 1);
+            }
+        }
+    }
+
+    if (DRAW_BVH_SPHERE)
+    {
+        int maxDepth = 999;
+        std::queue<BvhSphere::Node*> nodeQueueSphere;
+        std::queue<std::size_t> depthQueueSphere;
+        int bvhIndexSphere = -1;
+        nodeQueueSphere.push(bvhSphere->GetRoot().get());
+        depthQueueSphere.push(0);
+        while (!nodeQueueSphere.empty())
+        {
+            bvhIndexSphere += 1;
+            auto currNode = nodeQueueSphere.front();
+            nodeQueueSphere.pop();
+            std::size_t currDepth = depthQueueSphere.front();
+            depthQueueSphere.pop();
+
+            auto currSphere = currNode->volume.GetSphere();
+
+            int const kekdex = bvhIndexSphere + 1;
+            double red = static_cast<double>(0xb00b1e55 % kekdex) / static_cast<double>(kekdex);
+            double green = static_cast<double>(0x31337420 % kekdex) / static_cast<double>(kekdex);
+            double blue = static_cast<double>(0xdeadbeef % kekdex) / static_cast<double>(kekdex);
+
+            glPushMatrix();
+            glColor3f(red, green, blue);
+            glTranslatef(currSphere.centerOfMass.x, currSphere.centerOfMass.y, currSphere.centerOfMass.z);
+            glutWireSphere(currSphere.radius, 10, 10);
+            glPopMatrix();
+
+            if (currDepth < maxDepth && !currNode->IsLeaf())
+            {
+                nodeQueueSphere.push(currNode->GetLowerChild().get());
+                nodeQueueSphere.push(currNode->GetUpperChild().get());
+                depthQueueSphere.push(currDepth + 1);
+                depthQueueSphere.push(currDepth + 1);
+            }
+        }
+    }
+
     //Add bodies
     for (auto& body : m_rigidBodies)
     {
@@ -753,6 +936,7 @@ void FallingDemo::Display()
                 glColor3f(1.0f, 0.0, 0.0);
             }
             DrawWiredBox(boxVertices);
+
         }
         glPopMatrix();
     }
