@@ -232,14 +232,7 @@ bool intersection::IsPointInsideTriangle(
 
 glm::dvec3 intersection::cso::Support(Sphere const& sphere, glm::dvec3 direction)
 {
-    using namespace intersection;
-
-    Ray const ray{sphere.centerOfMass - direction * (sphere.radius + 1), direction};
-    RayIntersectionFactors intersectionFactors = CalculateRaySphereIntersectionFactors(
-        sphere.centerOfMass - ray.centerOfMass, sphere.radius, direction
-    );
-
-    glm::dvec3 const vertex = ray.centerOfMass + direction * intersectionFactors.tMax;
+    glm::dvec3 const vertex = sphere.centerOfMass + direction * sphere.radius;
     return vertex;
 }
 
@@ -256,12 +249,6 @@ glm::dvec3 intersection::cso::Support(Box const& box, glm::dvec3 direction)
     });
 
     return maxPoint;
-}
-
-glm::dvec3 intersection::cso::Support(Box const& box1, Box const& box2, glm::dvec3 direction)
-{
-    glm::dvec3 const vertex = Support(box1, direction) - Support(box2, -direction);
-    return vertex;
 }
 
 namespace
@@ -305,12 +292,12 @@ bool TriangleContainsOrigin(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3
  */
 bool TetrahedronContainsOrigin(std::array<glm::dvec3, 4> const& vertices)
 {
-    std::array<math::HyperPlane, 4> const faces{
+    std::array<math::HyperPlane, 4> const faces{{
         math::HyperPlane{vertices[0], vertices[1], vertices[2], &vertices[3]},
         math::HyperPlane{vertices[1], vertices[2], vertices[3], &vertices[0]},
         math::HyperPlane{vertices[0], vertices[2], vertices[3], &vertices[1]},
         math::HyperPlane{vertices[0], vertices[1], vertices[3], &vertices[2]}
-    };
+    }};
 
     return math::fp::IsGreaterOrEqual(faces[0].GetDistance(), 0.0)
         && math::fp::IsGreaterOrEqual(faces[1].GetDistance(), 0.0)
@@ -371,21 +358,21 @@ glm::dvec3 NearestSimplexTriangle(intersection::gjk::Simplex& simplex)
     {
         if (intersection::IsAngleAcute(AC, A0))
         {
-            simplex.vertices = {C, A};
+            simplex.vertices = {{C, A}};
             simplex.size = 2;
 
             result = glm::cross(glm::cross(AC, -B), AC);
         }
         else if (intersection::IsAngleAcute(AB, A0))
         {
-            simplex.vertices = {B, A};
+            simplex.vertices = {{B, A}};
             simplex.size = 2;
 
             result = glm::cross(glm::cross(AB, -B), AB);
         }
         else
         {
-            simplex.vertices = {A};
+            simplex.vertices = {{A}};
             simplex.size = 1;
 
             result = -C;
@@ -395,14 +382,14 @@ glm::dvec3 NearestSimplexTriangle(intersection::gjk::Simplex& simplex)
     {
         if (intersection::IsAngleAcute(AB, A0))
         {
-            simplex.vertices = {B, A};
+            simplex.vertices = {{B, A}};
             simplex.size = 2;
 
             result = glm::cross(glm::cross(AB, -B), AB);
         }
         else
         {
-            simplex.vertices = {A};
+            simplex.vertices = {{A}};
             simplex.size = 1;
 
             result = -C;
@@ -436,28 +423,28 @@ glm::dvec3 NearestSimplexTriangle(intersection::gjk::Simplex& simplex)
  */
 glm::dvec3 NearestSimplexTetrahedron(intersection::gjk::Simplex& simplex)
 {
-    std::array<std::array<uint8_t, 3>, 3> const simplices{
-        std::array<uint8_t, 3>{0, 1, 3},
-        std::array<uint8_t, 3>{1, 2, 3},
-        std::array<uint8_t, 3>{0, 2, 3}
-    };
+    std::array<std::array<uint8_t, 3>, 3> const simplices{{
+        std::array<uint8_t, 3>{{0, 1, 3}},
+        std::array<uint8_t, 3>{{1, 2, 3}},
+        std::array<uint8_t, 3>{{0, 2, 3}}
+    }};
 
     std::array<glm::dvec3, 4> const& vertices = simplex.vertices;
 
-    std::array<double, 3> const planeOriginDistances{
+    std::array<double, 3> const planeOriginDistances{{
         math::HyperPlane{vertices[0], vertices[1], vertices[3], &vertices[2]}.GetDistance(),
         math::HyperPlane{vertices[1], vertices[2], vertices[3], &vertices[0]}.GetDistance(),
         math::HyperPlane{vertices[0], vertices[2], vertices[3], &vertices[1]}.GetDistance()
-    };
+    }};
 
     size_t const closestPlaneIndex = std::distance(planeOriginDistances.begin(),
         std::min_element(planeOriginDistances.begin(), planeOriginDistances.end()));
 
-    simplex.vertices = {
+    simplex.vertices = {{
         vertices[simplices[closestPlaneIndex][0]],
         vertices[simplices[closestPlaneIndex][1]],
         vertices[simplices[closestPlaneIndex][2]]
-    };
+    }};
     simplex.size = 3;
 
     return NearestSimplexTriangle(simplex);
@@ -470,6 +457,7 @@ bool intersection::gjk::SimplexContainsOrigin(Simplex const& simplex)
     {
         return ::LineSegmentContainsOrigin(simplex.vertices[0], simplex.vertices[1]);
     }
+    
     if (simplex.size == 3)
     {
         return ::TriangleContainsOrigin(simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]);
@@ -484,7 +472,8 @@ glm::dvec3 intersection::gjk::NearestSimplex(Simplex& simplex)
     {
         return ::NearestSimplexLineSegment(simplex);
     }
-    else if (3 == simplex.size)
+    
+    if (3 == simplex.size)
     {
         return ::NearestSimplexTriangle(simplex);
     }
