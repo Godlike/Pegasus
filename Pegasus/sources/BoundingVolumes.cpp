@@ -15,9 +15,9 @@ using namespace pegasus;
 using namespace geometry;
 using namespace volumes;
 
-volumes::Shape::Shape(volumes::Vertices const& vertices, volumes::Faces const& indices)
+volumes::Shape::Shape(volumes::Vertices const& vertices, volumes::Faces const& faces)
     : vertices(vertices)
-    , indices(indices)
+    , faces(faces)
 {
 }
 
@@ -26,7 +26,7 @@ glm::dvec3 volumes::CalculateMeanVertex(volumes::Shape const& shape, volumes::In
     glm::dvec3 sum{0, 0, 0};
     for (auto index : indices)
     {
-        auto const& face = shape.indices[index];
+        auto const& face = shape.faces[index];
 
         sum += shape.vertices[face[0]];
         sum += shape.vertices[face[1]];
@@ -44,7 +44,7 @@ glm::dmat3 volumes::CalculateCovarianceMatrix(
 
     for (auto index : indices)
     {
-        auto const& face = shape.indices[index];
+        auto const& face = shape.faces[index];
 
         glm::dvec3 const p = shape.vertices[face[0]] - mean;
         glm::dvec3 const q = shape.vertices[face[1]] - mean;
@@ -78,7 +78,7 @@ glm::dmat3 volumes::CalculateExtremalVertices(
     std::vector<glm::dvec3 const *> vertices;
     for (auto index : indices)
     {
-        auto const& face = shape.indices[index];
+        auto const& face = shape.faces[index];
         vertices.insert(vertices.end(), {&shape.vertices[face[0]], &shape.vertices[face[1]], &shape.vertices[face[2]]});
     }
 
@@ -150,7 +150,7 @@ void aabb::AxisAlignedBoundingBox::CalculateExtremalVetices(
     validVertices.reserve(indices.size() * 3);
     for (auto faceIndex : indices)
     {
-        for (auto vertexIndex : shape.indices[faceIndex])
+        for (auto vertexIndex : shape.faces[faceIndex])
         {
             validVertices.push_back(&shape.vertices[vertexIndex]);
         }
@@ -239,7 +239,7 @@ geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
     size_t maxVertexIndex = 0;
     for (auto face_index : indices)
     {
-        for (auto vertex_index : shape.indices[face_index])
+        for (auto vertex_index : shape.faces[face_index])
         {
             auto const currentVertexProjection = glm::dot(shape.vertices[vertex_index], maxDispersionAxis);
             if (currentVertexProjection > glm::dot(shape.vertices[maxVertexIndex], maxDispersionAxis))
@@ -272,7 +272,7 @@ geometry::Sphere sphere::BoundingSphere::RefineSphere(
     //Find point outside of the sphere and resize sphere
     for (auto faceIndex : indices)
     {
-        for (auto vertexIndex : shape.indices[faceIndex])
+        for (auto vertexIndex : shape.faces[faceIndex])
         {
             glm::dvec3 const & vertex = shape.vertices[vertexIndex];
             glm::dvec3 const sphereVertexVec = vertex - sphereCenter;

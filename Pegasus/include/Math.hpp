@@ -7,6 +7,9 @@
 #define PEGASUS_MATH_HPP
 
 #define GLM_ENABLE_EXPERIMENTAL
+#include <initializer_list>
+
+#include <glm/ext.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/glm.hpp>
 
@@ -1018,6 +1021,10 @@ private:
      */
     void Calculate();
 };
+
+glm::dvec3 CalculateCentroid(std::initializer_list<glm::dvec3> vectors);
+
+glm::dvec3 GetScalarProjection(glm::dvec3 const& toProject, glm::dvec3 const& projectOnto);
 
 /**
  * @brief Quickhull convex hull calculation algorithm
