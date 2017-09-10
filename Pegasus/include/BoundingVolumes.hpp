@@ -146,69 +146,37 @@ namespace hierarchy
 {
 
 /**
- * Template struct for extracting SimpleShape instances out of bounding volumes,
- * specialized for different bounding volumes.
+ * Extracts Box from AxisAlignedBoundingBox instance.
  *
- * @tparam BoundingVolume bounding volume type
+ * @param aabb AxisAlignedBoundingBox instance to extract volume from
+ * @return extracted Box
  */
-template <typename BoundingVolume>
-struct SimpleShapeExtractor
+inline Box GetSimpleShape(aabb::AxisAlignedBoundingBox const& aabb)
 {
-};
+    return aabb.GetBox();
+}
 
 /**
- * AxisAlignedBoundingBox SimpleShapeExtractor specialization
+ * Extracts Box from OrientedBoundingBox instance.
+ *
+ * @param obb OrientedBoundingBox instance to extract volume from
+ * @return extracted Box
  */
-template <>
-struct SimpleShapeExtractor<aabb::AxisAlignedBoundingBox>
+inline Box GetSimpleShape(obb::OrientedBoundingBox const& obb)
 {
-    /**
-     * Extracts Box from AxisAlignedBoundingBox instance.
-     *
-     * @param aabb AxisAlignedBoundingBox instance to extract volume from
-     * @return extracted Box
-     */
-    Box GetSimpleShape(aabb::AxisAlignedBoundingBox const& aabb)
-    {
-        return aabb.GetBox();
-    }
-};
+    return obb.GetBox();
+}
 
 /**
- * OrientedBoundingBox SimpleShapeExtractor specialization
+ * Extracts Sphere from BoundingSphere instance.
+ *
+ * @param sphere BoundingSphere instance to extract volume from
+ * @return extracted Sphere
  */
-template <>
-struct SimpleShapeExtractor<obb::OrientedBoundingBox>
+inline Sphere GetSimpleShape(sphere::BoundingSphere const& boundingSphere)
 {
-    /**
-     * Extracts Box from OrientedBoundingBox instance.
-     *
-     * @param obb OrientedBoundingBox instance to extract volume from
-     * @return extracted Box
-     */
-    Box GetSimpleShape(obb::OrientedBoundingBox const& obb)
-    {
-        return obb.GetBox();
-    }
-};
-
-/**
- * BoundingSphere SimpleShapeExtractor specialization
- */
-template <>
-struct SimpleShapeExtractor<sphere::BoundingSphere>
-{
-    /**
-     * Extracts Sphere from BoundingSphere instance.
-     *
-     * @param sphere BoundingSphere instance to extract volume from
-     * @return extracted Sphere
-     */
-    Sphere GetSimpleShape(sphere::BoundingSphere const& sphere)
-    {
-        return sphere.GetSphere();
-    }
-};
+    return boundingSphere.GetSphere();
+}
 
 /**
  * General bounding volume hierarchy calculation class, builds a binary tree of bounding volumes.
@@ -421,7 +389,6 @@ private:
     Shape const& m_shape;
     NodePtr m_root;
     mutable SimpleShapeIntersectionDetector m_detector;
-    mutable SimpleShapeExtractor<BoundingVolume> m_extractor;
 
     /**
      * Gets vertices, belonging to m_shape with given indices.
@@ -605,7 +572,7 @@ private:
      */
     bool CollideNode(Node* node, SimpleShape const* shape) const
     {
-        auto nodeShape = m_extractor.GetSimpleShape(node->volume);
+        auto nodeShape = GetSimpleShape(node->volume);
         return m_detector.CalculateIntersection(&nodeShape, shape);
     }
 
