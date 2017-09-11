@@ -10,9 +10,18 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PEGASUS_ROOT}/Pegasus/cmake")
 
-include(GlmConfig)
+#Build flags
+if (UNIX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -pedantic")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s -O3")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -ggdb3 -O0")
+elseif(WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /MP /W3")
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
 
 #GLM
+include(GlmConfig)
 find_package(GLM)
 
 set(PEGASUS_INCLUDE_DIR

@@ -5,7 +5,6 @@
 cmake_minimum_required (VERSION 3.1)
 
 project(PegasusDemo)
-set(CMAKE_CXX_STANDARD 14)
 
 #FreeGLUT
 include(GlutConfig)
@@ -39,12 +38,12 @@ set(DEMO_SOURCES
     Main.cpp
 )
 
-add_executable (${PROJECT_NAME} 
-    ${DEMO_SOURCES} 
+add_executable (${PROJECT_NAME}
+    ${DEMO_SOURCES}
     ${DEMO_HEADERS}
 )
-target_link_libraries(${PROJECT_NAME} 
-    ${OPENGL_LIBRARIES} 
+target_link_libraries(${PROJECT_NAME}
+    ${OPENGL_LIBRARIES}
     ${GLUT_LIBRARIES}
     ${PEGASUS_LIB}
 )

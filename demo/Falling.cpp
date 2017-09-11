@@ -177,23 +177,6 @@ void FallingDemo::AddPlane(glm::dvec3 const& normal, glm::dvec3 const& point)
 
 void FallingDemo::AddBoundingVolumes()
 {
-    pegasus::geometry::Box gjkTestBox{glm::dvec3{10, -10, 10}, glm::dvec3{1, 0, 0}, glm::dvec3{0, 1, 0}, glm::dvec3{0, 0, 1}};
-    glm::dvec3 pointBox = pegasus::geometry::intersection::cso::Support(gjkTestBox, glm::normalize(glm::dvec3{1, 0, 1}));
-
-    pegasus::geometry::Sphere gjkTestSphere{glm::dvec3{10, -10, 10}, 1};
-    glm::dvec3 pointSphere = pegasus::geometry::intersection::cso::Support(gjkTestSphere, glm::normalize(glm::dvec3{1, 0, 1}));
-    double const length = glm::length(pointSphere - gjkTestSphere.centerOfMass);
-
-    pegasus::geometry::Box box1{{0,0,0}, {1,0,0}, {0,1,0}, {0,0,1}};
-    pegasus::geometry::Box box2{{0,1.75,0}, {1,0,0}, {0,1,0}, {0,0,1}};
-    pegasus::geometry::intersection::gjk::Simplex polytop;
-    bool intersection = pegasus::geometry::intersection::gjk::CalculateIntersection(polytop, box2, box1);
-
-    auto cm = pegasus::geometry::intersection::epa::CalculateContactManifold(box2, box1, polytop);
-
-    pegasus::math::HyperPlane hp({0,1,0}, {1, 0, 0});
-    glm::dvec3 const closestPoint = hp.ClosestPoint({-3,-3,10});
-
     using namespace pegasus::geometry::volumes;
 
     //Bunny Data
@@ -205,7 +188,7 @@ void FallingDemo::AddBoundingVolumes()
     std::transform(bunnyFaceIndicies, bunnyFaceIndicies + bunnyFaceIndiciesSize, std::back_inserter(faces),
         [](short f[6]) -> std::array<size_t, 3>
     {
-        return {static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])};
+        return {{static_cast<size_t>(f[0]), static_cast<size_t>(f[1]), static_cast<size_t>(f[2])}};
     });
     for (size_t i = 0; i < faces.size(); ++i)
         indices.insert(i);
@@ -249,11 +232,11 @@ void FallingDemo::AddBoundingVolumes()
         v -= boundingSphereTranslate;
     });
 
-    m_rays = {
+    m_rays = {{
         pegasus::geometry::Ray{sphere.centerOfMass + glm::dvec3{1, 0, 0}, glm::normalize(glm::dvec3{-1, 0.5, 0})},
         pegasus::geometry::Ray{aabb.centerOfMass + glm::dvec3{1, 0, 0}, glm::normalize(glm::dvec3{-1, 0.5, 0})},
         pegasus::geometry::Ray{obb.centerOfMass + glm::dvec3{1, 0, 0}, glm::normalize(glm::dvec3{-1, 0.5, 0})},
-    };
+    }};
 
     using namespace pegasus::geometry::intersection;
 
@@ -607,12 +590,12 @@ void FallingDemo::Display()
             glm::dvec3 b = glm::normalize(glm::cross(glm::cross(planeNormal, p1), planeNormal)) * planeSideLength;
             glm::dvec3 c = glm::normalize(glm::cross(planeNormal, b)) * planeSideLength;
 
-            std::array<glm::dvec3, 4> quadVertices{
+            std::array<glm::dvec3, 4> quadVertices{{
                 b * -1.0 - c + posNormalProjection,
                 b - c + posNormalProjection,
                 b + c + posNormalProjection,
                 b * -1.0 + c + posNormalProjection
-            };
+            }};
 
             glBegin(GL_QUADS);
             if (&*activeObject != &body)
@@ -659,18 +642,18 @@ void FallingDemo::Display()
         else if (s == pegasus::geometry::SimpleShape::Type::BOX)
         {
             pegasus::geometry::Box* box = static_cast<pegasus::geometry::Box*>(body.s.get());
-            std::array<glm::dvec3, 3> boxAxes = {
+            std::array<glm::dvec3, 3> boxAxes = {{
                 box->iAxis, box->jAxis, box->kAxis
-            };
+            }};
 
             glTranslatef(p.x, p.y, p.z);
             glm::dvec3 const& i = boxAxes[0];
             glm::dvec3 const& j = boxAxes[1];
             glm::dvec3 const& k = boxAxes[2];
-            std::array<glm::dvec3, 8> boxVertices = {
+            std::array<glm::dvec3, 8> boxVertices = {{
                 i + j + k, i - j + k, -i + j + k, -i - j + k,
                 i + j - k, i - j - k, -i + j - k, -i - j - k
-            };
+            }};
             if (&*activeObject != &body)
             {
                 glColor3f(red, green, blue);
