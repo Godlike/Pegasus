@@ -8,8 +8,8 @@
 #ifndef PEGASUS_PARTICLE_LINKS_HPP
 #define PEGASUS_PARTICLE_LINKS_HPP
 
-#include "Pegasus/include/Particle.hpp"
-#include "Pegasus/include/ParticleContacts.hpp"
+#include "pegasus/Particle.hpp"
+#include "pegasus/ParticleContacts.hpp"
 
 namespace pegasus
 {

@@ -3,7 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include <Pegasus/include/Math.hpp>
+#include <pegasus/Math.hpp>
 
 using namespace pegasus;
 using namespace math;

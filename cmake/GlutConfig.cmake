@@ -8,6 +8,6 @@ set(FREEGLUT_PRINT_ERRORS OFF CACHE BOOL "Lib prints errors to stderr")
 set(FREEGLUT_PRINT_WARNINGS OFF CACHE BOOL "Lib prints warnings to stderr")
 
 set(GLUT_SOURCE_DIR "${PEGASUS_ROOT}/third_party/FreeGLUT/freeglut/freeglut")
-set(GLUT_BINARY_DIR "${PEGASUS_ROOT}/third_party/FreeGLUT/freeglut/freeglut")
+set(GLUT_BINARY_DIR "${CMAKE_BINARY_DIR}/FreeGLUT")
 set(GLUT_INCLUDE_DIR ${GLUT_SOURCE_DIR}/include)
 set(GLUT_LIBRARIES freeglut_static)

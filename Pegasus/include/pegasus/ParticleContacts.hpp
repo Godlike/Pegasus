@@ -8,9 +8,11 @@
 #ifndef PEGASUS_PARTICLE_CONTACTS_HPP
 #define PEGASUS_PARTICLE_CONTACTS_HPP
 
-#include "Pegasus/include/Geometry.hpp"
-#include "Pegasus/include/Mechanics.hpp"
-#include "Pegasus/include/Particle.hpp"
+#include <pegasus/Geometry.hpp>
+#include <pegasus/Mechanics.hpp>
+#include <pegasus/Particle.hpp>
+
+#include <pegasus/SharedMacros.hpp>
 
 #include <vector>
 
@@ -19,10 +21,10 @@ namespace pegasus
 class ParticleContact
 {
 public:
-    ParticleContact(Particle& a, Particle* b,
+    PEGASUS_EXPORT ParticleContact(Particle& a, Particle* b,
                     double restitution, glm::dvec3 const& contactNormal, double penetration);
-    void Resolve(double duration) const;
-    double CalculateSeparatingVelocity() const;
+    PEGASUS_EXPORT void Resolve(double duration) const;
+    PEGASUS_EXPORT double CalculateSeparatingVelocity() const;
 
 private:
     Particle* m_pParticleA;
@@ -40,9 +42,9 @@ using ParticleContacts = std::vector<ParticleContact>;
 class ParticleContactResolver
 {
 public:
-    explicit ParticleContactResolver(uint32_t iterations = 0);
-    void SetIterations(uint32_t iterations);
-    void ResolveContacts(ParticleContacts& contacts, double duration);
+    PEGASUS_EXPORT explicit ParticleContactResolver(uint32_t iterations = 0);
+    PEGASUS_EXPORT void SetIterations(uint32_t iterations);
+    PEGASUS_EXPORT void ResolveContacts(ParticleContacts& contacts, double duration);
 
 private:
     uint32_t m_iterations;
@@ -52,8 +54,8 @@ private:
 class ParticleContactGenerator
 {
 public:
-    virtual ~ParticleContactGenerator();
-    virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const = 0;
+    PEGASUS_EXPORT virtual ~ParticleContactGenerator();
+    PEGASUS_EXPORT virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const = 0;
 };
 
 template <typename RigidBodies>

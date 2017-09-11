@@ -3,7 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include <Pegasus/include/Geometry.hpp>
+#include <pegasus/Geometry.hpp>
 
 #include <algorithm>
 #include <numeric>

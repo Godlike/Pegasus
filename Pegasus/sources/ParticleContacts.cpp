@@ -5,7 +5,7 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "Pegasus/include/ParticleContacts.hpp"
+#include "pegasus/ParticleContacts.hpp"
 
 pegasus::ParticleContact::ParticleContact(
     Particle& a,
