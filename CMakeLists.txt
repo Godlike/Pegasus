@@ -9,6 +9,7 @@ project(Pegasus)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 option(PEGASUS_BUILD_DEMOS "Build Pegasus demo." ON)
+option(PEGASUS_BUILD_TESTS "Build Pegasus tests." ON)
 
 message(STATUS "${PROJECT_NAME} configuration:")
 message(STATUS "-- PEGASUS_BUILD_DEMOS: ${PEGASUS_BUILD_DEMOS}")
@@ -36,3 +37,9 @@ if (${PEGASUS_BUILD_DEMOS})
 endif()
 
 set(PEGASUS_PHYSICS_LIB ${PEGASUS_LIB} PARENT_SCOPE)
+
+if (PEGASUS_BUILD_TESTS)
+    enable_testing()
+    set(CATCH_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/third_party/Catch)
+    add_subdirectory(test)
+endif()
