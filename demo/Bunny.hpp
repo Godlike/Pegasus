@@ -65,8 +65,7 @@
 #ifndef PEGASUS_BUNNY_HPP
 #define PEGASUS_BUNNY_HPP
 
-#include "demo/OglHeaders.hpp"
-
+#include <GLFW/glfw3.h>
 #include <cstdint>
 
 static const GLuint bunnyFaceIndiciesSize = 16301;

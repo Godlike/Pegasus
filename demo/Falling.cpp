@@ -11,10 +11,9 @@
 #include <pegasus/ParticleWorld.hpp>
 #include <pegasus/BoundingVolumes.hpp>
 #include <pegasus/Math.hpp>
-#include <demo/Application.hpp>
-#include <demo/OglHeaders.hpp>
-#include <demo/Timing.hpp>
 #include <demo/Bunny.hpp>
+
+#include <GLFW/glfw3.h>
 
 #include <cstdlib>
 #include <cmath>
@@ -29,22 +28,22 @@ static const bool WIRED_ONLY = false;
 static const bool DRAW_CONVEX = true;
 static const bool DRAW_BUNNIES = true;
 
-class FallingDemo : public Application
+class FallingDemo
 {
 public:
     FallingDemo();
 
-    virtual ~FallingDemo() = default;
+   ~FallingDemo() = default;
 
-    void InitGraphics() override;
+    void InitGraphics();
 
-    const char* GetTitle() override;
+    const char* GetTitle();
 
-    void Display() override;
+    void Display();
 
-    void Update() override;
+    void Update();
 
-    void Key(unsigned char key) override;
+    void Key(unsigned char key);
 
 private:
     using Particles = std::list<pegasus::Particle>;
@@ -408,7 +407,7 @@ void FallingDemo::Display()
     viewVec *= zoom;
     from = viewVec + to;
 
-    gluLookAt(from.x, from.y, from.z, to.x, to.y, to.z, 0.0, 1.0, 0.0);
+    //gluLookAt(from.x, from.y, from.z, to.x, to.y, to.z, 0.0, 1.0, 0.0);
     glPointSize(5);
 
     //Draw rays
@@ -615,8 +614,8 @@ void FallingDemo::Display()
         }
         else if (s == pegasus::geometry::SimpleShape::Type::SPHERE)
         {
-            pegasus::geometry::Sphere* sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
-            double const r = sphere->radius;
+            //pegasus::geometry::Sphere* sphere = static_cast<pegasus::geometry::Sphere*>(body.s.get());
+            //double const r = sphere->radius;
             glTranslatef(p.x, p.y, p.z);
 
             if (&*activeObject != &body)
@@ -630,14 +629,14 @@ void FallingDemo::Display()
 
             if (!WIRED_ONLY)
             {
-                glutSolidSphere(r, 20, 20);
+                //glutSolidSphere(r, 20, 20);
             }
 
             if (&*activeObject != &body && !WIRED_ONLY)
             {
                 glColor3f(1.0f, 0.0, 0.0);
             }
-            glutWireSphere(r + 0.001, 20, 20);
+            //glutWireSphere(r + 0.001, 20, 20);
         }
         else if (s == pegasus::geometry::SimpleShape::Type::BOX)
         {
@@ -719,7 +718,7 @@ void FallingDemo::Update()
 {
     m_world.StartFrame();
 
-    double duration = TimingData::Get().lastFrameDuration * 0.001;
+    double duration = 0; // TimingData::Get().lastFrameDuration * 0.001;
     if (duration <= 0.0)
         return;
 
@@ -735,7 +734,7 @@ void FallingDemo::Update()
         body.s->centerOfMass = body.p.GetPosition();
     }
 
-    Application::Update();
+    //Application::Update();
 }
 
 void FallingDemo::InitGraphics()
@@ -743,7 +742,7 @@ void FallingDemo::InitGraphics()
     glClearColor(0.9f, 0.95f, 1.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
-    SetView();
+    //SetView();
 
     solidBunnyGlListIndex = glGenLists(2);
     wiredBunnyGlListIndex = solidBunnyGlListIndex + 1;
@@ -830,9 +829,4 @@ void FallingDemo::Key(unsigned char key)
     default:
         break;
     }
-}
-
-Application* GetApplication()
-{
-    return new FallingDemo();
 }

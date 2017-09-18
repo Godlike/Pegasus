@@ -941,6 +941,24 @@ void CalculateDotProductForeach(
     }
 }
 
+template < typename VectorType >
+VectorType CalculateOrthogonalVector(VectorType vector)
+{
+    VectorType result;
+
+    for (uint8_t i = 0; i < result.length(); ++i)
+    {
+        if (vector[i] != 0.0)
+        {
+            result[3 - i - 1] = vector[i];
+            result[i] = -vector[3 - i - 1];
+        }
+    }
+    result = glm::normalize(result);
+
+    return result;
+}
+
 /**
  * @brief Calculates distance between a point and line segment
  * @param[in] lineStart start of the line segment

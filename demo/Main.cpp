@@ -1,88 +1,35 @@
 /*
-* Copyright (c) Icosagon 2003. All Rights Reserved.
-*
-* This software is distributed under licence. Use of this software
-* implies agreement with all terms and conditions of the accompanying
-* software licence.
+* Copyright (C) 2017 by Godlike
+* This code is licensed under the MIT license (MIT)
+* (http://opensource.org/licenses/MIT)
 */
 
-#include "demo/Application.hpp"
-#include "demo/OglHeaders.hpp"
-#include "demo/Timing.hpp"
+#include <demo/Renderer.hpp>
 
-extern Application* GetApplication();
+#include <glm/glm.hpp>
 
-Application* g_application;
-
-void createWindow(const char* title)
-{
-    glutSetOption(GLUT_MULTISAMPLE, 8);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
-    glutInitWindowSize(1366, 768);
-    glutInitWindowPosition(200, 200);
-    glutCreateWindow(title);
-}
-
-void update()
-{
-    TimingData::Get().Update();
-    g_application->Update();
-}
-
-void display()
-{
-    g_application->Display();
-
-    // Update the displayed content.
-    glFlush();
-    glutSwapBuffers();
-}
-
-void mouse(int button, int state, int x, int y)
-{
-    g_application->Mouse(button, state, x, y);
-}
-
-void reshape(int width, int height)
-{
-    g_application->Resize(width, height);
-}
-
-void keyboard(unsigned char key, int x, int y)
-{
-    // Note we omit passing on the x and y: they are rarely needed.
-    g_application->Key(key);
-}
-
-void motion(int x, int y)
-{
-    g_application->MouseDrag(x, y);
-}
+#include <chrono>
+#include <thread>
 
 int main(int argc, char** argv)
 {
-    // Set up GLUT and the timers
-    glutInit(&argc, argv);
-    TimingData::Init();
+    pegasus::render::Renderer render;
 
-    // Create the application and its window
-    g_application = GetApplication();
-    createWindow(g_application->GetTitle());
+    pegasus::render::primitive::Plane plane(render, glm::mat4(), glm::normalize(glm::dvec3{0, 0, 1}), 0.0);
+    pegasus::render::primitive::Sphere sphere(render, glm::mat4(), 0.5, { 1,0,0 });
+    pegasus::render::primitive::Box box(render, glm::mat4(), {{ 0.1,0,0 },{ 0,0.1,0 },{ 0,0,0.1 }}, { 1,0,0 });
 
-    // Set up the appropriate handler functions
-    glutReshapeFunc(reshape);
-    glutKeyboardFunc(keyboard);
-    glutDisplayFunc(display);
-    glutIdleFunc(update);
-    glutMouseFunc(mouse);
-    glutMotionFunc(motion);
+    while (render.IsValid())
+    {
+        static std::chrono::steady_clock::time_point nextFrameTime = std::chrono::steady_clock::now();
+        static std::chrono::milliseconds const deltaTime(16);
+        nextFrameTime += deltaTime;
 
-    // Run the application
-    g_application->InitGraphics();
-    glutMainLoop();
+        plane.SetModel(glm::rotate(plane.GetModel(), 0.01f, glm::vec3(1, 0.5, 0.5)));
+        sphere.SetModel(glm::rotate(sphere.GetModel(), 0.01f, glm::vec3(0.5, 1, 0.5)));
+        box.SetModel(glm::rotate(box.GetModel(), 0.01f, glm::vec3(0.5, 0.5, 1)));
 
-    // Clean up the application
-    g_application->Deinit();
-    delete g_application;
-    TimingData::Deinit();
+        render.RenderFrame();
+        std::this_thread::sleep_until(nextFrameTime);
+    }
 }
