@@ -125,19 +125,52 @@ struct Program
 Program MakeProgram(Program::Handles shaders);
 } // namespace shader
 
+class Camera
+{
+public:
+    Camera();
+
+    void SetRatio(float ratio);
+
+    void SetPosition(glm::vec3 position);
+
+    void SetDirection(glm::vec3 direction);
+
+    void SetUp(glm::vec3 up);
+
+    glm::vec3 GetPosition() const;
+
+    glm::vec3 GetDirection() const;
+
+    glm::vec3 GetUp() const;
+
+    glm::mat4 GetView() const;
+
+    glm::mat4 GetProjection() const;
+
+    float speed;
+
+private:
+    float m_ratio;
+    glm::vec3 m_position;
+    glm::vec3 m_direction;
+    glm::vec3 m_up;
+    glm::mat4 m_view;
+    glm::mat4 m_projection;
+
+    void UpdateView();
+
+    void UpdateProjection();
+};
+
 class Renderer
 {
 public:
-    Renderer();
-
-    ~Renderer();
+    static Renderer& GetInstance();
 
     Renderer(Renderer const&) = delete;
-
     Renderer& operator==(Renderer const&) = delete;
-
     Renderer(Renderer&&) = delete;
-
     Renderer& operator==(Renderer&&) = delete;
 
     bool IsValid() const;
@@ -154,14 +187,22 @@ private:
     struct Window
     {
         GLFWwindow* pWindow;
-        int windowWidth;
-        int windowHeight;
+        int windowWidth = 600;
+        int windowHeight = 600;
         int frameBufferWidth;
         int frameBufferHeight;
     };
 
+    struct Controls
+    {
+        bool leftMousePressed = false;
+        bool rightMousePressed = false;
+    };
+
     bool m_initialized;
     Window m_window;
+    Camera m_camera;
+    Controls m_controls;
     std::vector<asset::Asset<mesh::Mesh>> m_meshes;
 
     shader::Program m_program;
@@ -191,11 +232,26 @@ private:
         }
     )";
 
+    Renderer();
+
+    ~Renderer();
+
     void InitializeGlfw();
 
     void InitializeContext();
 
+    void InitializeCallbacks() const;
+
     void InitializeShaderProgram();
+
+
+    static void Resize(GLFWwindow* window, int width, int height);
+
+    static void KeyButton(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+    static void CursoreMove(GLFWwindow* window, double xpos, double ypos);
+
+    static void MouseButton(GLFWwindow* window, int button, int action, int mods);
 };
 
 namespace primitive
