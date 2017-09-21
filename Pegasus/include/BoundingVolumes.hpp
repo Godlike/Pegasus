@@ -17,7 +17,7 @@
 #include <queue>
 #include <set>
 #include <stack>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 namespace pegasus
@@ -187,7 +187,7 @@ template <typename BoundingVolume>
 class BoundingVolumeHierarchy
 {
 public:
-    std::size_t static const MAX_NODE_SIZE = 5;
+    std::uint8_t static const MAX_NODE_SIZE = 5;
 
     /**
      * @brief BoundingVolumeHierarchy internal node data structure
@@ -211,7 +211,7 @@ public:
          */
         std::unique_ptr<Node> const& GetLowerChild() const
         {
-            return m_lowerChild;
+            return m_pLowerChild;
         }
 
         /**
@@ -221,7 +221,7 @@ public:
          */
         std::unique_ptr<Node> const& GetUpperChild() const
         {
-            return m_upperChild;
+            return m_pUpperChild;
         }
 
         /**
@@ -237,8 +237,8 @@ public:
         ~Node() = default;
 
     private:
-        mutable std::unique_ptr<Node> m_lowerChild;
-        mutable std::unique_ptr<Node> m_upperChild;
+        mutable std::unique_ptr<Node> m_pLowerChild;
+        mutable std::unique_ptr<Node> m_pUpperChild;
         bool m_isLeaf;
 
         /**
@@ -250,8 +250,8 @@ public:
          */
         explicit Node(BoundingVolume && volume)
             : volume(volume)
-            , m_lowerChild(nullptr)
-            , m_upperChild(nullptr)
+            , m_pLowerChild(nullptr)
+            , m_pUpperChild(nullptr)
             , m_isLeaf(true)
         {}
 
@@ -286,8 +286,8 @@ public:
 
             if (currIndices.size() < MAX_NODE_SIZE)
             {
-                currNode->m_lowerChild.reset();
-                currNode->m_upperChild.reset();
+                currNode->m_pLowerChild.reset();
+                currNode->m_pUpperChild.reset();
                 continue;
             }
 
@@ -304,12 +304,12 @@ public:
             BoundingVolume lowerVolume(m_shape, splitIndices.lowerIndices);
             BoundingVolume upperVolume(m_shape, splitIndices.upperIndices);
 
-            currNode->m_lowerChild = NodePtr(new Node(std::move(lowerVolume)));
-            currNode->m_upperChild = NodePtr(new Node(std::move(upperVolume)));
+            currNode->m_pLowerChild = NodePtr(new Node(std::move(lowerVolume)));
+            currNode->m_pUpperChild = NodePtr(new Node(std::move(upperVolume)));
 
-            nodeStack.push(currNode->m_lowerChild.get());
+            nodeStack.push(currNode->m_pLowerChild.get());
             indicesStack.push(std::move(splitIndices.lowerIndices));
-            nodeStack.push(currNode->m_upperChild.get());
+            nodeStack.push(currNode->m_pUpperChild.get());
             indicesStack.push(std::move(splitIndices.upperIndices));
         }
     }
@@ -321,15 +321,15 @@ public:
 
         while (!nodeStack.empty())
         {
-            NodePtr & currNode = nodeStack.top();
-            if (currNode->m_lowerChild.get() != nullptr)
+            NodePtr& currNode = nodeStack.top();
+            if (currNode->m_pLowerChild.get() != nullptr)
             {
-                nodeStack.push(NodePtr(currNode->m_lowerChild.release()));
+                nodeStack.push(NodePtr(currNode->m_pLowerChild.release()));
                 continue;
             }
-            if (currNode->m_upperChild.get() != nullptr)
+            if (currNode->m_pUpperChild.get() != nullptr)
             {
-                nodeStack.push(NodePtr(currNode->m_upperChild.release()));
+                nodeStack.push(NodePtr(currNode->m_pUpperChild.release()));
                 continue;
             }
             nodeStack.pop();
@@ -387,7 +387,7 @@ private:
         Indices upperIndices;
     };
 
-    using CentroidsMap = std::unordered_map<std::size_t, glm::dvec3>;
+    using CentroidsMap = std::map<std::size_t, glm::dvec3>;
 
     Shape const& m_shape;
     NodePtr m_root;
@@ -603,8 +603,8 @@ private:
             {
                 return true;
             }
-            nodeStack.push(currNode->m_lowerChild.get());
-            nodeStack.push(currNode->m_upperChild.get());
+            nodeStack.push(currNode->m_pLowerChild.get());
+            nodeStack.push(currNode->m_pUpperChild.get());
         }
         return false;
     }
