@@ -1022,10 +1022,6 @@ private:
     void Calculate();
 };
 
-glm::dvec3 CalculateCentroid(std::initializer_list<glm::dvec3> vectors);
-
-glm::dvec3 GetScalarProjection(glm::dvec3 const& toProject, glm::dvec3 const& projectOnto);
-
 /**
  * @brief Quickhull convex hull calculation algorithm
  * @tparam VerticesType STL compatible random access glm::dvec3 container

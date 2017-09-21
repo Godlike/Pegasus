@@ -487,13 +487,12 @@ private:
         for (std::size_t index : indices)
         {
             Face const& currFace = m_shape.faces[index];
-            centroids[index] = pegasus::math::CalculateCentroid(
-                {
-                    m_shape.vertices[currFace[0]],
-                    m_shape.vertices[currFace[1]],
-                    m_shape.vertices[currFace[2]]
-                }
-            );
+            std::array<glm::dvec3, 3> faceVertices = {{
+                m_shape.vertices[currFace[0]],
+                m_shape.vertices[currFace[1]],
+                m_shape.vertices[currFace[2]]
+            }};
+            centroids[index] = pegasus::math::CalculateExpectedValue(faceVertices.begin(), faceVertices.end());
         }
         return centroids;
     }

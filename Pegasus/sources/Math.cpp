@@ -197,22 +197,6 @@ void JacobiEigenvalue::Calculate()
     m_eigenvectors = S;
 }
 
-glm::dvec3 pegasus::math::CalculateCentroid(std::initializer_list<glm::dvec3> vectors)
-{
-    glm::dvec3 result(0, 0, 0);
-    for (glm::dvec3 vector : vectors)
-    {
-        result += vector;
-    }
-    result /= vectors.size();
-    return result;
-}
-
-glm::dvec3 pegasus::math::GetScalarProjection(glm::dvec3 const& toProject, glm::dvec3 const& projectOnto)
-{
-    return glm::dot(toProject, projectOnto) / glm::pow(glm::length(projectOnto), 2) * projectOnto;
-}
-
 HalfEdgeDataStructure::Face::Face(HalfEdge& halfEdge)
     : m_halfEdge(&halfEdge)
 {
