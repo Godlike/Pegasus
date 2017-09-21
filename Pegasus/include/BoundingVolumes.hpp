@@ -144,7 +144,7 @@ namespace hierarchy
 {
 
 /**
- * Extracts Box from AxisAlignedBoundingBox instance.
+ * @brief Extracts Box from AxisAlignedBoundingBox instance
  *
  * @param aabb AxisAlignedBoundingBox instance to extract volume from
  * @return extracted Box
@@ -155,7 +155,7 @@ inline Box GetSimpleShape(aabb::AxisAlignedBoundingBox const& aabb)
 }
 
 /**
- * Extracts Box from OrientedBoundingBox instance.
+ * @brief Extracts Box from OrientedBoundingBox instance
  *
  * @param obb OrientedBoundingBox instance to extract volume from
  * @return extracted Box
@@ -166,7 +166,7 @@ inline Box GetSimpleShape(obb::OrientedBoundingBox const& obb)
 }
 
 /**
- * Extracts Sphere from BoundingSphere instance.
+ * @brief Extracts Sphere from BoundingSphere instance
  *
  * @param sphere BoundingSphere instance to extract volume from
  * @return extracted Sphere
@@ -177,7 +177,9 @@ inline Sphere GetSimpleShape(sphere::BoundingSphere const& boundingSphere)
 }
 
 /**
- * General bounding volume hierarchy calculation class, builds a binary tree of bounding volumes.
+ * @brief General bounding volume hierarchy calculation class
+ *
+ * Builds a binary tree of bounding volumes.
  *
  * @tparam BoundingVolume bounding volume type to be used in hierarchy
  */
@@ -188,7 +190,7 @@ public:
     std::size_t static const MAX_NODE_SIZE = 5;
 
     /**
-     * BoundingVolumeHierarchy internal node data structure.
+     * @brief BoundingVolumeHierarchy internal node data structure
      *
      * Cannot be copied or moved. Can only be constructed inside BoundingVolumeHierarchy class.
      */
@@ -203,7 +205,7 @@ public:
         Node & operator=(Node &&) = delete;
 
         /**
-         * Gets a lower child of this node.
+         * @brief Gets a lower child of this node
          *
          * @return lower child
          */
@@ -213,7 +215,7 @@ public:
         }
 
         /**
-         * Gets an upper child of this node.
+         * @brief Gets an upper child of this node
          *
          * @return upper child
          */
@@ -223,7 +225,7 @@ public:
         }
 
         /**
-         * Checks if this node is a leaf, i.e. doesn't have any children.
+         * @brief Checks if this node is a leaf, i.e. doesn't have any children
          *
          * @return true if this node is a leaf, false otherwise
          */
@@ -240,8 +242,9 @@ public:
         bool m_isLeaf;
 
         /**
-         * Constructs a node out of volume. Children are initialized
-         * to nullptr, and the node is assumed to be a leaf.
+         * @brief Constructs a node out of volume
+         *
+         * Children are initialized to nullptr, and the node is assumed to be a leaf.
          *
          * @param volume
          */
@@ -258,7 +261,9 @@ public:
     using NodePtr = std::unique_ptr<Node>;
 
     /**
-     * Constructs BoundingVolumeHierarchy, using iterative depth-first traversal.
+     * @brief Constructs BoundingVolumeHierarchy
+     *
+     * Construction is non-recursive, using depth-first traversal.
      *
      * @param shape shape to construct volume hierarchy around
      * @param indices indices of faces of shape to use in algorithm
@@ -332,7 +337,7 @@ public:
     }
 
     /**
-     * Gets hierarchy's root.
+     * @brief Gets hierarchy's root
      *
      * @return unique_ptr to root
      */
@@ -342,7 +347,7 @@ public:
     }
 
     /**
-     * Tests volume hierarchy collision with a plane.
+     * @brief Tests volume hierarchy collision with a plane
      *
      * @param plane plane to test collision with
      * @return true if there exists a leaf node, whose volume intersects with a plane; false otherwise
@@ -353,7 +358,7 @@ public:
     }
 
     /**
-     * Tests volume hierarchy collision with a sphere.
+     * @brief Tests volume hierarchy collision with a sphere
      *
      * @param sphere sphere to test collision with
      * @return true if there exists a leaf node, whose volume intersects with a sphere; false otherwise
@@ -364,7 +369,7 @@ public:
     }
 
     /**
-     * Tests volume hierarchy collision with a box.
+     * @brief Tests volume hierarchy collision with a box
      *
      * @param box plane to test collision with
      * @return true if there exists a leaf node, whose volume intersects with a box; false otherwise
@@ -389,7 +394,7 @@ private:
     mutable SimpleShapeIntersectionDetector m_detector;
 
     /**
-     * Gets vertices, belonging to m_shape with given indices.
+     * @brief Gets vertices, belonging to m_shape with given indices
      *
      * @param indices indices of faces to extract vertices from
      * @return vertices of a shape
@@ -410,7 +415,7 @@ private:
     }
 
     /**
-     * Calculates an approximation of a vector, alongside which the shape has maximum length.
+     * @brief Calculates an approximation of a vector, alongside which the shape has maximum length
      *
      * @param vertices vertices of a shape
      * @return approximate maximum distance vector
@@ -452,8 +457,8 @@ private:
     }
 
     /**
-     * Calculates a vertice, which has minimal radius when projected onto
-     * a given maximum distance vector.
+     * @brief Calculates a vertice, which has minimal radius when projected onto
+     * a given maximum distance vector
      *
      * @param maxDistanceVector approximate maximum distance vector
      * @param vertices vertices of a shape
@@ -471,7 +476,7 @@ private:
     }
 
     /**
-     * Gets centroids of faces of the shape.
+     * @brief Gets centroids of faces of the shape
      *
      * @param indices indices of faces to use
      * @return map of indices to centroids
@@ -494,7 +499,8 @@ private:
     }
 
     /**
-     * Calculates indices of shapes for a lower child and an upper child.
+     * @brief Calculates indices of shapes for a lower child and an upper child
+     *
      * Finds a median centroid, using distance to minPlane,
      * then returning the closest half of vertices as lower child indices
      * and furthest half of vertices as upper child indices.
@@ -562,7 +568,7 @@ private:
     }
 
     /**
-     * Checks if shape in a node intersects with a given shape.
+     * @brief Checks if shape in a node intersects with a given shape
      *
      * @param node node to extract the shape from
      * @param shape shape to intersect node's shape with
@@ -575,7 +581,7 @@ private:
     }
 
     /**
-     * Checks if a given shape intersects with any of the hierarchy's leafs.
+     * @brief Checks if a given shape intersects with any of the hierarchy's leafs
      *
      * @param shape
      * @return
