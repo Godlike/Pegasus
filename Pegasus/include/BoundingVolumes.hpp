@@ -187,78 +187,8 @@ template <typename BoundingVolume>
 class BoundingVolumeHierarchy
 {
 public:
+
     std::uint8_t static const MAX_NODE_SIZE = 5;
-
-    /**
-     * @brief BoundingVolumeHierarchy internal node data structure
-     *
-     * Cannot be copied or moved. Can only be constructed inside BoundingVolumeHierarchy class.
-     */
-    class Node
-    {
-    public:
-        BoundingVolume const volume;
-
-        Node(Node const&) = delete;
-        Node(Node &&) = delete;
-        Node & operator=(Node const&) = delete;
-        Node & operator=(Node &&) = delete;
-
-        /**
-         * @brief Gets a lower child of this node
-         *
-         * @return lower child
-         */
-        std::unique_ptr<Node> const& GetLowerChild() const
-        {
-            return m_pLowerChild;
-        }
-
-        /**
-         * @brief Gets an upper child of this node
-         *
-         * @return upper child
-         */
-        std::unique_ptr<Node> const& GetUpperChild() const
-        {
-            return m_pUpperChild;
-        }
-
-        /**
-         * @brief Checks if this node is a leaf, i.e. doesn't have any children
-         *
-         * @return true if this node is a leaf, false otherwise
-         */
-        bool IsLeaf() const
-        {
-            return m_isLeaf;
-        }
-
-        ~Node() = default;
-
-    private:
-        mutable std::unique_ptr<Node> m_pLowerChild;
-        mutable std::unique_ptr<Node> m_pUpperChild;
-        bool m_isLeaf;
-
-        /**
-         * @brief Constructs a node out of volume
-         *
-         * Children are initialized to nullptr, and the node is assumed to be a leaf.
-         *
-         * @param volume
-         */
-        explicit Node(BoundingVolume && volume)
-            : volume(volume)
-            , m_pLowerChild(nullptr)
-            , m_pUpperChild(nullptr)
-            , m_isLeaf(true)
-        {}
-
-        friend class BoundingVolumeHierarchy;
-    };
-
-    using NodePtr = std::unique_ptr<Node>;
 
     /**
      * @brief Constructs BoundingVolumeHierarchy
@@ -337,16 +267,6 @@ public:
     }
 
     /**
-     * @brief Gets hierarchy's root
-     *
-     * @return unique_ptr to root
-     */
-    NodePtr const& GetRoot() const
-    {
-        return m_root;
-    }
-
-    /**
      * @brief Tests volume hierarchy collision with a plane
      *
      * @param plane plane to test collision with
@@ -381,12 +301,48 @@ public:
 
 private:
 
+    /**
+     * @brief BoundingVolumeHierarchy internal node data structure
+     *
+     * Cannot be copied or moved.
+     */
+    class Node
+    {
+    public:
+        BoundingVolume const volume;
+        mutable std::unique_ptr<Node> m_pLowerChild;
+        mutable std::unique_ptr<Node> m_pUpperChild;
+        bool m_isLeaf;
+
+        Node(Node const&) = delete;
+        Node(Node &&) = delete;
+        Node & operator=(Node const&) = delete;
+        Node & operator=(Node &&) = delete;
+
+        ~Node() = default;
+
+        /**
+         * @brief Constructs a node out of volume
+         *
+         * Children are initialized to nullptr, and the node is assumed to be a leaf.
+         *
+         * @param volume
+         */
+        explicit Node(BoundingVolume && volume)
+            : volume(volume)
+              , m_pLowerChild(nullptr)
+              , m_pUpperChild(nullptr)
+              , m_isLeaf(true)
+        {}
+    };
+
     struct SplitIndices
     {
         Indices lowerIndices;
         Indices upperIndices;
     };
 
+    using NodePtr = std::unique_ptr<Node>;
     using CentroidsMap = std::map<std::size_t, glm::dvec3>;
 
     Shape const& m_shape;
