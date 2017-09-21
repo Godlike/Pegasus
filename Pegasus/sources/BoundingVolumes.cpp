@@ -15,12 +15,6 @@ using namespace pegasus;
 using namespace geometry;
 using namespace volumes;
 
-volumes::Shape::Shape(volumes::Vertices const& vertices, volumes::Faces const& faces)
-    : vertices(vertices)
-    , faces(faces)
-{
-}
-
 glm::dvec3 volumes::CalculateMeanVertex(volumes::Shape const& shape, volumes::Indices const& indices)
 {
     glm::dvec3 sum{0, 0, 0};
