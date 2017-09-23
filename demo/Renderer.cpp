@@ -157,7 +157,7 @@ shader::Shader shader::CompileShader(GLenum type, const GLchar sources[1])
     if (!result.valid)
     {
         result.info.resize(512);
-        glGetShaderInfoLog(result.handle, result.info.size(), nullptr, &result.info.front());
+        glGetShaderInfoLog(result.handle, static_cast<GLsizei>(result.info.size()), nullptr, &result.info.front());
     }
 
     return result;
@@ -193,7 +193,7 @@ shader::Program shader::MakeProgram(Program::Handles shaders)
     if (!result.valid)
     {
         result.info.resize(512);
-        glGetProgramInfoLog(result.handle, result.info.size(), nullptr, &result.info.front());
+        glGetProgramInfoLog(result.handle, static_cast<GLsizei>(result.info.size()), nullptr, &result.info.front());
     }
 
     return result;
@@ -201,12 +201,15 @@ shader::Program shader::MakeProgram(Program::Handles shaders)
 
 Camera::Camera()
     : speed(0.2f)
-    , m_ratio(1)
-    , m_position(0, 0, 0)
-    , m_direction(1, 0, 0)
-    , m_up(0, 1, 0)
-    , m_view(1)
-    , m_projection(1)
+    , m_angle(45.0f)
+    , m_ratio(1.0f)
+    , m_near(0.1f)
+    , m_far(100.0f)
+    , m_position(0.0f, 0.0f, 0.0f)
+    , m_direction(1.0f, 0.0f, 0.0)
+    , m_up(0.0f, 1.0f, 0.0f)
+    , m_view(1.0f)
+    , m_projection(1.0f)
 {
     UpdateView();
     UpdateProjection();
@@ -268,7 +271,105 @@ void Camera::UpdateView()
 
 void Camera::UpdateProjection()
 {
-    m_projection = glm::perspective(glm::radians(90.0f), m_ratio, 0.1f, 100.0f);
+    m_projection = glm::perspective(glm::radians(m_angle), m_ratio, m_near, m_far);
+}
+
+Input& Input::GetInstance()
+{
+    static Input input;
+    return input;
+}
+
+void Input::InitializeContext(GLFWwindow* window)
+{
+    Input& input = GetInstance();
+    input.m_pWindow = window;
+
+    glfwSetWindowSizeCallback(input.m_pWindow, &Input::Resize);
+    glfwSetKeyCallback(input.m_pWindow, &Input::KeyButton);
+    glfwSetCursorPosCallback(input.m_pWindow, &Input::CursorMove);
+    glfwSetMouseButtonCallback(input.m_pWindow, &Input::MouseButton);
+}
+
+void Input::AddResizeCallback(std::function<void(GLFWwindow*, int, int)> callback)
+{
+    AddCallback(m_resizeCallbacks, callback);
+}
+
+void Input::RemoveResizeCallback(std::function<void(GLFWwindow*, int, int)> callback)
+{
+    RemoveCallback(m_resizeCallbacks, callback);
+}
+
+void Input::AddKeyButtonCallback(std::function<void(GLFWwindow*, int, int, int, int)> callback)
+{
+    AddCallback(m_keyButtonCallbacks, callback);
+}
+
+void Input::RemoveKeyButtonCallback(std::function<void(GLFWwindow*, int, int, int, int)> callback)
+{
+    RemoveCallback(m_keyButtonCallbacks, callback);
+}
+
+void Input::AddCursoreMoveCallback(std::function<void(GLFWwindow*, double, double)> callback)
+{
+    AddCallback(m_cursorMoveCallbacks, callback);
+}
+
+void Input::RemoveCursoreMoveCallback(std::function<void(GLFWwindow*, double, double)> callback)
+{
+    RemoveCallback(m_cursorMoveCallbacks, callback);
+}
+
+void Input::AddMouseButtonCallback(std::function<void(GLFWwindow*, int, int, int)> callback)
+{
+    AddCallback(m_mouseButtonCallbacks, callback);
+}
+
+void Input::RemoveMouseButtonCallback(std::function<void(GLFWwindow*, int, int, int)> callback)
+{
+    RemoveCallback(m_mouseButtonCallbacks, callback);
+}
+
+Input::Input()
+    : m_pWindow(nullptr)
+{
+}
+
+void Input::Resize(GLFWwindow* window, int width, int height)
+{
+    Input& input = GetInstance();
+    for (auto const& callback : input.m_resizeCallbacks)
+    {
+        callback(window, width, height);
+    }
+}
+
+void Input::KeyButton(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    Input& input = GetInstance();
+    for (auto const& callback : input.m_keyButtonCallbacks)
+    {
+        callback(window, key, scancode, action, mods);
+    }
+}
+
+void Input::CursorMove(GLFWwindow* window, double xpos, double ypos)
+{
+    Input& input = GetInstance();
+    for (auto const& callback : input.m_cursorMoveCallbacks)
+    {
+        callback(window, xpos, ypos);
+    }
+}
+
+void Input::MouseButton(GLFWwindow* window, int button, int action, int mods)
+{
+    Input& input = GetInstance();
+    for (auto const& callback : input.m_mouseButtonCallbacks)
+    {
+        callback(window, button, action, mods);
+    }
 }
 
 Renderer& Renderer::GetInstance()
@@ -291,11 +392,14 @@ void Renderer::RenderFrame()
 
     for (asset::Asset<mesh::Mesh>& mesh : m_meshes)
     {
+        glm::mat4 const viewProjection = m_camera.GetProjection() * m_camera.GetView();
+        glm::mat4 const modelViewProjection = viewProjection * mesh.data.model;
+
         glBindVertexArray(mesh.data.bufferData.vertexArrayObject);
-        glm::mat4 const mvp = m_camera.GetProjection() * m_camera.GetView() * mesh.data.model;
-        glUniformMatrix4fv(m_modelUniformHandle, 1, GL_FALSE, glm::value_ptr(mvp));
+        glUniformMatrix4fv(m_mvpUniformHandle, 1, GL_FALSE, glm::value_ptr(modelViewProjection));
+        glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(mesh.data.color));
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawElements(GL_TRIANGLES, mesh.data.indices.size(), GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
     }
 
     glfwSwapBuffers(m_window.pWindow);
@@ -328,6 +432,12 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
+    //Deinitialize inputs
+    Input& input = Input::GetInstance();
+    input.RemoveCursoreMoveCallback(&Renderer::CursorMove);
+    input.RemoveResizeCallback(&Renderer::Resize);
+    input.RemoveKeyButtonCallback(&Renderer::KeyButton);
+
     glfwTerminate();
 }
 
@@ -351,10 +461,12 @@ void Renderer::InitializeContext()
 
 void Renderer::InitializeCallbacks() const
 {
-    glfwSetWindowSizeCallback(m_window.pWindow, &Renderer::Resize);
-    glfwSetKeyCallback(m_window.pWindow, &Renderer::KeyButton);
-    glfwSetCursorPosCallback(m_window.pWindow, &Renderer::CursoreMove);
-    glfwSetMouseButtonCallback(m_window.pWindow, &Renderer::MouseButton);
+    Input& input = Input::GetInstance();
+    input.InitializeContext(m_window.pWindow);
+
+    input.AddCursoreMoveCallback(&Renderer::CursorMove);
+    input.AddResizeCallback(&Renderer::Resize);
+    input.AddKeyButtonCallback(&Renderer::KeyButton);
 }
 
 void Renderer::InitializeShaderProgram()
@@ -374,23 +486,25 @@ void Renderer::InitializeShaderProgram()
         vertexShader.handle, 0, 0, 0, fragmentShader.handle
     };
     m_program = shader::MakeProgram(shaders);
-    m_modelUniformHandle = glGetUniformLocation(m_program.handle, "model");
-    if (-1 == m_modelUniformHandle)
+    m_mvpUniformHandle = glGetUniformLocation(m_program.handle, "mvp");
+    m_colorUniformHandle = glGetUniformLocation(m_program.handle, "color");
+    if (-1 == m_mvpUniformHandle)
     {
         m_initialized = false;
     }
 }
 
-void Renderer::Resize(GLFWwindow* window, int width, int height)
+void Renderer::Resize(GLFWwindow* /*window*/, int width, int height)
 {
-    Renderer& renderer = GetInstance();
+    Window& window = GetInstance().m_window;
+    Camera& camera = GetInstance().m_camera;
 
-    renderer.m_window.windowHeight = height;
-    renderer.m_window.windowWidth = width;
-    glfwSetWindowSize(window, width, height);
-    glfwGetFramebufferSize(window, &renderer.m_window.frameBufferWidth, &renderer.m_window.frameBufferHeight);
-    glViewport(0, 0, renderer.m_window.frameBufferWidth, renderer.m_window.frameBufferHeight);
-    renderer.m_camera.SetRatio(float(renderer.m_window.frameBufferWidth) / float(renderer.m_window.frameBufferHeight));
+    window.windowHeight = height;
+    window.windowWidth = width;
+    glfwSetWindowSize(window.pWindow, width, height);
+    glfwGetFramebufferSize(window.pWindow, &window.frameBufferWidth, &window.frameBufferHeight);
+    glViewport(0, 0, window.frameBufferWidth, window.frameBufferHeight);
+    camera.SetRatio(float(window.frameBufferWidth) / float(window.frameBufferHeight));
 }
 
 void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -398,7 +512,7 @@ void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, 
     Camera& camera = GetInstance().m_camera;
     glm::vec3 const left = glm::normalize(glm::cross(camera.GetUp(), camera.GetDirection()));
     glm::vec3 const up = glm::normalize(glm::cross(camera.GetDirection(), left));
-    GLint const nextCursorMode = 
+    GLint const nextCursorMode =
         (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
             ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED;
 
@@ -447,18 +561,18 @@ void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 
-void Renderer::CursoreMove(GLFWwindow* window, double xpos, double ypos)
+void Renderer::CursorMove(GLFWwindow* window, double xpos, double ypos)
 {
     Camera& camera = GetInstance().m_camera;
 
-    static double lastX = 0;
-    static double lastY = 0;
+    static float lastX = 0;
+    static float lastY = 0;
 
-    float const sensitivity = 0.1;
-    float const xoffset = (xpos - lastX) * sensitivity;
-    float const yoffset = (lastY - ypos) * sensitivity;
-    lastX = xpos;
-    lastY = ypos;
+    float const sensitivity = 0.1f;
+    float const xoffset = (static_cast<float>(xpos) - lastX) * sensitivity;
+    float const yoffset = (lastY - static_cast<float>(ypos)) * sensitivity;
+    lastX = static_cast<float>(xpos);
+    lastY = static_cast<float>(ypos);
 
     static double yaw = 0;
     static double pitch = 0;
@@ -481,24 +595,7 @@ void Renderer::CursoreMove(GLFWwindow* window, double xpos, double ypos)
     camera.SetDirection(glm::normalize(direction));
 }
 
-void Renderer::MouseButton(GLFWwindow* window, int button, int action, int mods)
-{
-    Controls& controls = GetInstance().m_controls;
-
-    switch (button)
-    {
-        case GLFW_MOUSE_BUTTON_LEFT:
-            controls.leftMousePressed = GLFW_RELEASE != action;
-            break;
-        case GLFW_MOUSE_BUTTON_RIGHT:
-            controls.rightMousePressed = GLFW_RELEASE != action;
-            break;
-        default:
-            break;
-    }
-}
-
-primitive::Plane::Plane(Renderer& renderer, glm::mat4 model, glm::dvec3 normal, double distance)
+primitive::Plane::Plane(Renderer& renderer, glm::mat4 model, glm::dvec3 normal, double distance, glm::vec3 color)
     : m_isInitialized(true)
     , m_pRenderer(&renderer)
     , m_handle(m_pRenderer->MakeMesh())
@@ -509,6 +606,7 @@ primitive::Plane::Plane(Renderer& renderer, glm::mat4 model, glm::dvec3 normal, 
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
     mesh = mesh::CreatePlane(m_normal, m_distance, m_sideLength);
     mesh.model = model;
+    mesh.color = color;
 }
 
 primitive::Plane::Plane(Plane&& other) noexcept
@@ -574,6 +672,7 @@ primitive::Sphere::Sphere(Renderer& renderer, glm::mat4 model, double radius, gl
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
     mesh = mesh::CreateSphere(m_radius, 3);
     mesh.model = model;
+    mesh.color = color;
 }
 
 primitive::Sphere::Sphere(Sphere&& other) noexcept
@@ -631,6 +730,7 @@ primitive::Box::Box(Renderer& renderer, glm::mat4 model, Axes axes, glm::dvec3 c
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
     mesh = mesh::CreateBox(axes.i, axes.j, axes.k);
     mesh.model = model;
+    mesh.color = color;
 }
 
 primitive::Box::Box(Box&& other) noexcept

@@ -6,7 +6,7 @@
 #ifndef PEGASUS_RENDERER_HPP
 #define PEGASUS_RENDERER_HPP
 
-#include <glbinding/gl46ext/gl.h>
+#include <glbinding/gl44ext/gl.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glm/ext.hpp>
@@ -27,7 +27,8 @@ struct Mesh
 {
     std::vector<GLdouble> vertices;
     std::vector<GLuint> indices;
-    glm::mat4 model = glm::mat4();
+    glm::mat4 model = glm::mat4(1);
+    glm::vec3 color = glm::vec3(1, 0, 0);
 
     struct BufferData
     {
@@ -151,7 +152,10 @@ public:
     float speed;
 
 private:
+    float m_angle;
     float m_ratio;
+    float m_near;
+    float m_far;
     glm::vec3 m_position;
     glm::vec3 m_direction;
     glm::vec3 m_up;
@@ -163,15 +167,87 @@ private:
     void UpdateProjection();
 };
 
+class Input
+{
+public:
+    static Input& GetInstance();
+
+    static void InitializeContext(GLFWwindow* window);
+
+    void AddResizeCallback(std::function<void(GLFWwindow*, int, int)> callback);
+
+    void RemoveResizeCallback(std::function<void(GLFWwindow*, int, int)> callback);
+
+    void AddKeyButtonCallback(std::function<void(GLFWwindow*, int, int, int, int)> callback);
+
+    void RemoveKeyButtonCallback(std::function<void(GLFWwindow*, int, int, int, int)> callback);
+
+    void AddCursoreMoveCallback(std::function<void(GLFWwindow*, double, double)> callback);
+
+    void RemoveCursoreMoveCallback(std::function<void(GLFWwindow*, double, double)> callback);
+
+    void AddMouseButtonCallback(std::function<void(GLFWwindow*, int, int, int)> callback);
+
+    void RemoveMouseButtonCallback(std::function<void(GLFWwindow*, int, int, int)> callback);
+
+private:
+    template < typename CallbackType >
+    using Callback = std::function<CallbackType>;
+    template < typename CallbackType >
+    using CallbackVector = std::vector<Callback<CallbackType>>;
+
+    GLFWwindow* m_pWindow;
+    CallbackVector<void(GLFWwindow*, int, int)> m_resizeCallbacks;
+    CallbackVector<void(GLFWwindow*, int, int, int, int)> m_keyButtonCallbacks;
+    CallbackVector<void(GLFWwindow*, double, double)> m_cursorMoveCallbacks;
+    CallbackVector<void(GLFWwindow*, int, int, int)> m_mouseButtonCallbacks;
+
+    Input();
+
+    template < typename CallbackType >
+    static void AddCallback(CallbackVector<CallbackType>& container, Callback<CallbackType>& callback)
+    {
+        for(auto it = container.begin(); it != container.end(); ++it)
+        {
+            if (it->template target<CallbackType>() == callback.template target<CallbackType>())
+            {
+                return;
+            }
+        }
+        container.emplace_back(callback);
+    }
+
+    template < typename CallbackType >
+    static void RemoveCallback(CallbackVector<CallbackType>& container, Callback<CallbackType>& callback)
+    {
+        for(auto it = container.begin(); it != container.end(); ++it)
+        {
+            if (it->template target<CallbackType>() == callback.template target<CallbackType>())
+            {
+                container.erase(it);
+                return;
+            }
+        }
+    }
+
+    static void Resize(GLFWwindow* window, int width, int height);
+
+    static void KeyButton(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+    static void CursorMove(GLFWwindow* window, double xpos, double ypos);
+
+    static void MouseButton(GLFWwindow* window, int button, int action, int mods);
+};
+
 class Renderer
 {
 public:
-    static Renderer& GetInstance();
-
     Renderer(Renderer const&) = delete;
     Renderer& operator==(Renderer const&) = delete;
     Renderer(Renderer&&) = delete;
     Renderer& operator==(Renderer&&) = delete;
+
+    static Renderer& GetInstance();
 
     bool IsValid() const;
 
@@ -193,34 +269,31 @@ private:
         int frameBufferHeight;
     };
 
-    struct Controls
-    {
-        bool leftMousePressed = false;
-        bool rightMousePressed = false;
-    };
-
     bool m_initialized;
     Window m_window;
     Camera m_camera;
-    Controls m_controls;
     std::vector<asset::Asset<mesh::Mesh>> m_meshes;
 
     shader::Program m_program;
-    GLint m_modelUniformHandle;
-    GLchar const* m_pVertexShaderSources = R"(
+    GLint m_mvpUniformHandle;
+    GLint m_colorUniformHandle;
+    GLchar const* m_pVertexShaderSources =
+    R"(
         #version 440
 
         layout (location = 0) in vec3 aPos;
-        uniform mat4 model;
+        uniform vec3 color;
+        uniform mat4 mvp;
         out vec4 vsColorOut;
 
         void main()
         {
-            gl_Position = model * vec4(aPos, 1.0);
-            vsColorOut = vec4(1.0, 0.0, 0.0, 1.0);
+            gl_Position = mvp * vec4(aPos, 1.0);
+            vsColorOut = vec4(color, 1.0);
         }
     )";
-    GLchar const* m_pFragmentShaderSources = R"(
+    GLchar const* m_pFragmentShaderSources =
+    R"(
         #version 440
 
         in  vec4 vsColorOut;
@@ -244,14 +317,11 @@ private:
 
     void InitializeShaderProgram();
 
-
     static void Resize(GLFWwindow* window, int width, int height);
 
     static void KeyButton(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-    static void CursoreMove(GLFWwindow* window, double xpos, double ypos);
-
-    static void MouseButton(GLFWwindow* window, int button, int action, int mods);
+    static void CursorMove(GLFWwindow* window, double xpos, double ypos);
 };
 
 namespace primitive
@@ -259,7 +329,7 @@ namespace primitive
 class Plane
 {
 public:
-	Plane(Renderer& renderer, glm::mat4 model, glm::dvec3 normal, double distance);
+	Plane(Renderer& renderer, glm::mat4 model, glm::dvec3 normal, double distance, glm::vec3 color);
 
     Plane(Plane const&) = delete;
 
