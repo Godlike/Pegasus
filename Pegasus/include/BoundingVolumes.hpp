@@ -448,7 +448,7 @@ private:
                 m_shape.vertices[currFace[1]],
                 m_shape.vertices[currFace[2]]
             }};
-            centroids[index] = pegasus::math::CalculateExpectedValue(faceVertices.begin(), faceVertices.end());
+            centroids[index] = pegasus::math::CalculateMeanValue(faceVertices.begin(), faceVertices.end());
         }
         return centroids;
     }

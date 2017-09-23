@@ -710,7 +710,7 @@ private:
  * @return mean value
  */
 template <typename Iterator>
-decltype(auto) CalculateExpectedValue(Iterator begin, Iterator end)
+decltype(auto) CalculateMeanValue(Iterator begin, Iterator end)
 {
     auto E = *(begin++);
     uint32_t size = 1;
@@ -1403,7 +1403,7 @@ private:
     void CalculateInitialTetrahedron()
     {
         //Calculate covariance matrix and its eigenvectors
-        m_mean = CalculateExpectedValue(m_vertexBuffer.begin(), m_vertexBuffer.end());
+        m_mean = CalculateMeanValue(m_vertexBuffer.begin(), m_vertexBuffer.end());
         JacobiEigenvalue const eigenvalue(CalculateCovarianceMatrix(m_vertexBuffer.begin(), m_vertexBuffer.end(), m_mean));
         glm::dmat3 eigenvectorsNormalized = eigenvalue.GetEigenvectors();
         eigenvectorsNormalized = {
@@ -1482,7 +1482,7 @@ private:
     {
         if (m_vertexBuffer.size() == 4)
         {
-            m_mean = CalculateExpectedValue(m_vertexBuffer.begin(), m_vertexBuffer.end());
+            m_mean = CalculateMeanValue(m_vertexBuffer.begin(), m_vertexBuffer.end());
             m_convexHullVertices.resize(m_vertexBuffer.size());
             std::iota(m_convexHullVertices.begin(), m_convexHullVertices.end(), 0);
 
