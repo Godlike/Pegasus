@@ -950,8 +950,8 @@ VectorType CalculateOrthogonalVector(VectorType vector)
     {
         if (vector[i] != 0.0)
         {
-            result[3 - i - 1] = vector[i];
-            result[i] = -vector[3 - i - 1];
+            result[(1 + i) % 3] = vector[i];
+            result[i] = -vector[(1 + i) % 3];
         }
     }
     result = glm::normalize(result);

@@ -5,15 +5,19 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "pegasus/Particle.hpp"
+#include <pegasus/Particle.hpp>
 
 #include <limits>
 #include <stdexcept>
 
 pegasus::Particle::Particle()
-    : m_damping(1.0)
+    : m_position(0, 0, 0)
+    , m_velocity(0, 0, 0)
+    , m_acceleration(0, 0, 0)
+    , m_damping(1.0)
     , m_mass(1.0)
     , m_inverseMass(1.0)
+    , m_forceAccumulator(0, 0, 0)
 {
 }
 

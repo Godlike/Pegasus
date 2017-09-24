@@ -54,7 +54,7 @@ private:
 class ParticleContactGenerator
 {
 public:
-    PEGASUS_EXPORT virtual ~ParticleContactGenerator();
+    PEGASUS_EXPORT virtual ~ParticleContactGenerator() = default;
     PEGASUS_EXPORT virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const = 0;
 };
 
@@ -71,7 +71,7 @@ public:
 
     uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override
     {
-        uint32_t used = 0;
+        uint32_t const contactCount = static_cast<uint32_t>(contacts.size());
 
         for (RigidBody& body : m_rigidBodies)
         {
@@ -80,25 +80,24 @@ public:
                 continue;
             }
 
-            if (used > limit)
-            {
-                break;
-            }
-
             static geometry::SimpleShapeIntersectionDetector intersection;
 
-            if (intersection.CalculateIntersection(m_rigidBody.s.get(), body.s.get()) && ++used)
+            if (intersection.CalculateIntersection(m_rigidBody.s.get(), body.s.get()))
             {
                 glm::dvec3 const contactNormal = intersection.CalculateContactNormal(m_rigidBody.s.get(), body.s.get());
                 double const penetration = intersection.CalculatePenetration(m_rigidBody.s.get(), body.s.get());
                 contacts.emplace_back(m_rigidBody.p, &body.p, m_restitution, contactNormal, penetration);
+
+                if (contacts.size() == limit)
+                {
+                    break;
+                }
             }
         }
 
-        return used;
+        return static_cast<uint32_t>(contacts.size() - contactCount);
     }
 
-private:
     RigidBody& m_rigidBody;
     RigidBodies& m_rigidBodies;
     double const m_restitution;

@@ -45,7 +45,7 @@ void Deallocate(Mesh& mesh);
 
 Mesh Create(std::vector<GLdouble>&& vertices, std::vector<GLuint>&& indices);
 
-Mesh CreatePlane(glm::dvec3 normal, double distance, double length);
+Mesh CreatePlane(glm::dvec3 normal, double length);
 
 Mesh CreateSphere(double radius, uint32_t depth);
 
@@ -66,11 +66,12 @@ struct Asset
 template < typename T >
 Handle Make(std::vector<Asset<T>>& data)
 {
-    for (Asset<T>& asset : data)
+    for (size_t i = 0; i < data.size(); ++i)
     {
-        if (asset.id == 0)
+        if (data[i].id == 0)
         {
-            return asset.id;
+            data[i].id = static_cast<Handle>(i + 1);
+            return data[i].id;
         }
     }
 
@@ -192,37 +193,43 @@ public:
 
 private:
     template < typename CallbackType >
-    using Callback = std::function<CallbackType>;
-    template < typename CallbackType >
-    using CallbackVector = std::vector<Callback<CallbackType>>;
+    using FunctionVector = std::vector<std::function<CallbackType>>;
 
     GLFWwindow* m_pWindow;
-    CallbackVector<void(GLFWwindow*, int, int)> m_resizeCallbacks;
-    CallbackVector<void(GLFWwindow*, int, int, int, int)> m_keyButtonCallbacks;
-    CallbackVector<void(GLFWwindow*, double, double)> m_cursorMoveCallbacks;
-    CallbackVector<void(GLFWwindow*, int, int, int)> m_mouseButtonCallbacks;
+    FunctionVector<void(GLFWwindow*, int, int)> m_resizeCallbacks;
+    FunctionVector<void(GLFWwindow*, int, int, int, int)> m_keyButtonCallbacks;
+    FunctionVector<void(GLFWwindow*, double, double)> m_cursorMoveCallbacks;
+    FunctionVector<void(GLFWwindow*, int, int, int)> m_mouseButtonCallbacks;
 
     Input();
 
-    template < typename CallbackType >
-    static void AddCallback(CallbackVector<CallbackType>& container, Callback<CallbackType>& callback)
+    template < typename Ret, typename... Args >
+    static size_t GetAddress(std::function<Ret(Args...)> f)
     {
-        for(auto it = container.begin(); it != container.end(); ++it)
+        typedef Ret(FnType)(Args...);
+        FnType ** fnPointer = f.template target<FnType*>();
+        return reinterpret_cast<size_t>(*fnPointer);
+    }
+
+    template < typename Ret, typename... Args >
+    static void AddCallback(FunctionVector<Ret(Args...)>& container, std::function<Ret(Args...)> callback)
+    {
+        for(auto function : container)
         {
-            if (it->template target<CallbackType>() == callback.template target<CallbackType>())
+            if (GetAddress(function) == GetAddress(callback))
             {
                 return;
             }
         }
-        container.emplace_back(callback);
+        container.push_back(callback);
     }
 
-    template < typename CallbackType >
-    static void RemoveCallback(CallbackVector<CallbackType>& container, Callback<CallbackType>& callback)
+    template < typename Ret, typename... Args >
+    static void RemoveCallback(FunctionVector<Ret(Args...)>& container, std::function<Ret(Args...)> callback)
     {
         for(auto it = container.begin(); it != container.end(); ++it)
         {
-            if (it->template target<CallbackType>() == callback.template target<CallbackType>())
+            if (GetAddress(*it) == GetAddress(callback))
             {
                 container.erase(it);
                 return;
@@ -263,8 +270,8 @@ private:
     struct Window
     {
         GLFWwindow* pWindow;
-        int windowWidth = 600;
-        int windowHeight = 600;
+        int windowWidth = 800;
+        int windowHeight = 800;
         int frameBufferWidth;
         int frameBufferHeight;
     };
@@ -326,71 +333,47 @@ private:
 
 namespace primitive
 {
-class Plane
+class Primitive
 {
 public:
-	Plane(Renderer& renderer, glm::mat4 model, glm::dvec3 normal, double distance, glm::vec3 color);
+    Primitive(glm::mat4 model, glm::vec3 color);
 
-    Plane(Plane const&) = delete;
+    ~Primitive();
 
-    Plane& operator=(Plane const&) = delete;
+    void SetModel(glm::mat4 model) const;
 
-    Plane(Plane&& other) noexcept;
+    glm::mat4 GetModel() const;
 
-    Plane& operator=(Plane&& other) noexcept;
+protected:
+    bool m_initialized;
+    Renderer* m_pRenderer;
+    Handle m_meshHandle;
+};
 
-	~Plane();
-
-    friend void swap(Plane& lhs, Plane& rhs) noexcept;
+class Plane : public Primitive
+{
+public:
+	Plane(glm::mat4 model, glm::vec3 color, glm::dvec3 normal);
 
 	glm::dvec3 GetNormal() const;
 
-	double GetDistance() const;
-
-    void SetModel(glm::mat4 const& model) const;
-
-    glm::mat4 GetModel() const;
-
 private:
-    bool m_isInitialized;
-	Renderer* m_pRenderer;
-	Handle m_handle;
 	glm::dvec3 m_normal;
-	double m_distance;
 	double m_sideLength;
 };
 
-class Sphere
+class Sphere : public Primitive
 {
 public:
-    Sphere(Renderer& renderer, glm::mat4 model, double radius, glm::dvec3 color);
-
-    Sphere(Sphere const&) = delete;
-
-    Sphere& operator=(Sphere const&) = delete;
-
-    Sphere(Sphere&& other) noexcept;
-
-    Sphere& operator=(Sphere&& other) noexcept;
-
-    ~Sphere();
-
-    friend void swap(Sphere& lhs, Sphere& rhs) noexcept;
+    Sphere(glm::mat4 model, glm::dvec3 color, double radius);
 
     double GetRadius() const;
 
-    void SetModel(glm::mat4 const& model) const;
-
-    glm::mat4 GetModel() const;
-
 private:
-    bool m_isInitialized;
-    Renderer* m_pRenderer;
-    Handle m_handle;
     double m_radius;
 };
 
-class Box
+class Box : public Primitive
 {
 public:
     struct Axes
@@ -400,30 +383,11 @@ public:
         glm::dvec3 k;
     };
 
-    Box(Renderer& renderer, glm::mat4 model, Axes axes, glm::dvec3 color);
-
-    Box(Box const&) = delete;
-
-    Box& operator=(Box const&) = delete;
-
-    Box(Box&& other) noexcept;
-
-    Box& operator=(Box&& other) noexcept;
-
-    ~Box();
-
-    friend void swap(Box& lhs, Box& rhs) noexcept;
+    Box(glm::mat4 model, glm::dvec3 color, Axes axes);
 
     Axes GetAxes() const;
 
-    void SetModel(glm::mat4 const& model) const;
-
-    glm::mat4 GetModel() const;
-
 private:
-    bool m_isInitialized;
-    Renderer* m_pRenderer;
-    Handle m_handle;
     Axes m_axes;
 };
 } // namespace primitive

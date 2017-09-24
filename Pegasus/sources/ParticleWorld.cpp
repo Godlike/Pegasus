@@ -33,9 +33,9 @@ void pegasus::ParticleWorld::StartFrame() const
 
 void pegasus::ParticleWorld::RunPhysics(double duration)
 {
-    auto usedContacts = GenerateContacts();
+    uint32_t const usedContacts = GenerateContacts();
 
-    if (usedContacts)
+    if (0 != usedContacts)
     {
         if (m_calculateIterations)
         {

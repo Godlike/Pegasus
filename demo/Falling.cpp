@@ -33,11 +33,7 @@ class FallingDemo
 public:
     FallingDemo();
 
-   ~FallingDemo() = default;
-
     void InitGraphics();
-
-    const char* GetTitle();
 
     void Display();
 
@@ -742,7 +738,6 @@ void FallingDemo::InitGraphics()
     glClearColor(0.9f, 0.95f, 1.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
-    //SetView();
 
     solidBunnyGlListIndex = glGenLists(2);
     wiredBunnyGlListIndex = solidBunnyGlListIndex + 1;
@@ -758,11 +753,6 @@ void FallingDemo::InitGraphics()
     glNewList(pointsBunnyGlListIndex, GL_COMPILE);
     GeneratePointStanfordBunny();
     glEndList();
-}
-
-const char* FallingDemo::GetTitle()
-{
-    return "Pegasus Falling Demo";
 }
 
 void FallingDemo::Key(unsigned char key)

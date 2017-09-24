@@ -24,6 +24,7 @@ public:
 
     PEGASUS_EXPORT RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s);
 };
+using RigidBodies = std::list<RigidBody>;
 
 } // namespace pegasus
 #endif // PEGASUS_MECHANICS_HPP

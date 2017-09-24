@@ -47,19 +47,18 @@ mesh::Mesh mesh::Create(std::vector<GLdouble>&& vertices, std::vector<GLuint>&& 
     return mesh;
 }
 
-mesh::Mesh mesh::CreatePlane(glm::dvec3 normal, double distance, double length)
+mesh::Mesh mesh::CreatePlane(glm::dvec3 normal, double length)
 {
 	Mesh mesh;
 
     glm::dvec3 const i = math::CalculateOrthogonalVector(normal) * (length / 2.0);
     glm::dvec3 const j = glm::normalize(glm::cross(i, normal)) * (length / 2.0);
-    glm::dvec3 const k = normal * distance;
-
+    
 	mesh.vertices = {{
-        ( i + j + k).x, ( i + j + k).y, ( i + j + k).z,
-        (-i + j + k).x, (-i + j + k).y, (-i + j + k).z,
-        ( i - j + k).x, ( i - j + k).y, ( i - j + k).z,
-        (-i - j + k).x, (-i - j + k).y, (-i - j + k).z,
+        ( i + j).x, ( i + j).y, ( i + j).z,
+        (-i + j).x, (-i + j).y, (-i + j).z,
+        ( i - j).x, ( i - j).y, ( i - j).z,
+        (-i - j).x, (-i - j).y, (-i - j).z,
 	}};
 	mesh.indices = {{ 0, 1, 2, 1, 2, 3 }};
 	Allocate(mesh);
@@ -386,7 +385,7 @@ bool Renderer::IsValid() const
 void Renderer::RenderFrame()
 {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(m_program.handle);
 
@@ -398,6 +397,10 @@ void Renderer::RenderFrame()
         glBindVertexArray(mesh.data.bufferData.vertexArrayObject);
         glUniformMatrix4fv(m_mvpUniformHandle, 1, GL_FALSE, glm::value_ptr(modelViewProjection));
         glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(mesh.data.color));
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
+
+        glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(glm::vec3(1,1,1) - mesh.data.color));
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
     }
@@ -428,6 +431,9 @@ Renderer::Renderer()
     InitializeContext();
     InitializeCallbacks();
     InitializeShaderProgram();
+
+    m_camera.SetPosition(glm::vec3(-10, 0, 0));
+    m_camera.SetDirection(glm::normalize(-m_camera.GetPosition()));
 }
 
 Renderer::~Renderer()
@@ -456,6 +462,7 @@ void Renderer::InitializeContext()
     glfwMakeContextCurrent(m_window.pWindow);
     glfwGetFramebufferSize(m_window.pWindow, &m_window.frameBufferWidth, &m_window.frameBufferHeight);
     glbinding::Binding::initialize();
+    glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, m_window.frameBufferWidth, m_window.frameBufferHeight);
 }
 
@@ -548,9 +555,6 @@ void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, 
                 camera.SetPosition(camera.GetPosition() + (-up * camera.speed));
             }
             break;
-        case GLFW_KEY_R:
-            camera.SetDirection(glm::vec3(1, 0, 0));
-            break;
         case GLFW_KEY_C:
             if (action == GLFW_RELEASE) {
                 glfwSetInputMode(window, GLFW_CURSOR, nextCursorMode);
@@ -563,6 +567,11 @@ void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, 
 
 void Renderer::CursorMove(GLFWwindow* window, double xpos, double ypos)
 {
+    if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
+    {
+        return;
+    }
+
     Camera& camera = GetInstance().m_camera;
 
     static float lastX = 0;
@@ -595,50 +604,42 @@ void Renderer::CursorMove(GLFWwindow* window, double xpos, double ypos)
     camera.SetDirection(glm::normalize(direction));
 }
 
-primitive::Plane::Plane(Renderer& renderer, glm::mat4 model, glm::dvec3 normal, double distance, glm::vec3 color)
-    : m_isInitialized(true)
-    , m_pRenderer(&renderer)
-    , m_handle(m_pRenderer->MakeMesh())
-    , m_normal(normal)
-    , m_distance(distance)
-    , m_sideLength(1.0)
+primitive::Primitive::Primitive(glm::mat4 model, glm::vec3 color)
+    : m_initialized(true)
+    , m_pRenderer(&Renderer::GetInstance())
+    , m_meshHandle(m_pRenderer->MakeMesh())
 {
-    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
-    mesh = mesh::CreatePlane(m_normal, m_distance, m_sideLength);
-    mesh.model = model;
-    mesh.color = color;
+    m_pRenderer->GetMesh(m_meshHandle).model = model;
+    m_pRenderer->GetMesh(m_meshHandle).color = color;
 }
 
-primitive::Plane::Plane(Plane&& other) noexcept
+primitive::Primitive::~Primitive()
 {
-    *this = std::move(other);
-}
-
-primitive::Plane& primitive::Plane::operator=(Plane&& other) noexcept
-{
-    swap(*this, other);
-    other.m_isInitialized = false;
-    return *this;
-}
-
-primitive::Plane::~Plane()
-{
-    if (m_isInitialized)
+    if (m_initialized)
     {
-        mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
+        mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
         mesh::Delete(mesh);
-        m_pRenderer->RemoveMesh(m_handle);
+        m_pRenderer->RemoveMesh(m_meshHandle);
     }
 }
 
-void primitive::swap(Plane& lhs, Plane& rhs) noexcept
+void primitive::Primitive::SetModel(glm::mat4 model) const
 {
-    std::swap(lhs.m_isInitialized, rhs.m_isInitialized);
-    std::swap(lhs.m_pRenderer, rhs.m_pRenderer);
-    std::swap(lhs.m_handle, rhs.m_handle);
-    std::swap(lhs.m_normal, rhs.m_normal);
-    std::swap(lhs.m_distance, rhs.m_distance);
-    std::swap(lhs.m_sideLength, rhs.m_sideLength);
+    m_pRenderer->GetMesh(m_meshHandle).model = model;
+}
+
+glm::mat4 primitive::Primitive::GetModel() const
+{
+    return m_pRenderer->GetMesh(m_meshHandle).model;
+}
+
+primitive::Plane::Plane(glm::mat4 model, glm::vec3 color, glm::dvec3 normal)
+    : Primitive(model, color)
+    , m_normal(normal)
+    , m_sideLength(25.0)
+{
+    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
+    mesh = mesh::CreatePlane(m_normal, m_sideLength);
 }
 
 glm::dvec3 primitive::Plane::GetNormal() const
@@ -646,63 +647,12 @@ glm::dvec3 primitive::Plane::GetNormal() const
     return m_normal;
 }
 
-double primitive::Plane::GetDistance() const
-{
-    return m_distance;
-}
-
-void primitive::Plane::SetModel(glm::mat4 const& model) const
-{
-    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
-    mesh.model = model;
-}
-
-glm::mat4 primitive::Plane::GetModel() const
-{
-    mesh::Mesh const& mesh = m_pRenderer->GetMesh(m_handle);
-    return mesh.model;
-}
-
-primitive::Sphere::Sphere(Renderer& renderer, glm::mat4 model, double radius, glm::dvec3 color)
-    : m_isInitialized(true)
-    , m_pRenderer(&renderer)
-    , m_handle(m_pRenderer->MakeMesh())
+primitive::Sphere::Sphere(glm::mat4 model, glm::dvec3 color, double radius)
+    : Primitive(model, color)
     , m_radius(radius)
 {
-    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
+    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh = mesh::CreateSphere(m_radius, 3);
-    mesh.model = model;
-    mesh.color = color;
-}
-
-primitive::Sphere::Sphere(Sphere&& other) noexcept
-{
-    *this = std::move(other);
-}
-
-primitive::Sphere& primitive::Sphere::operator=(Sphere&& other) noexcept
-{
-    swap(*this, other);
-    other.m_isInitialized = false;
-    return *this;
-}
-
-primitive::Sphere::~Sphere()
-{
-    if (m_isInitialized)
-    {
-        mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
-        mesh::Delete(mesh);
-        m_pRenderer->RemoveMesh(m_handle);
-    }
-}
-
-void primitive::swap(Sphere& lhs, Sphere& rhs) noexcept
-{
-    std::swap(lhs.m_isInitialized, rhs.m_isInitialized);
-    std::swap(lhs.m_pRenderer, rhs.m_pRenderer);
-    std::swap(lhs.m_handle, rhs.m_handle);
-    std::swap(lhs.m_radius, rhs.m_radius);
 }
 
 double primitive::Sphere::GetRadius() const
@@ -710,72 +660,14 @@ double primitive::Sphere::GetRadius() const
     return m_radius;
 }
 
-void primitive::Sphere::SetModel(glm::mat4 const& model) const
+primitive::Box::Box(glm::mat4 model, glm::dvec3 color, Axes axes)
+    : Primitive(model, color)
 {
-    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
-    mesh.model = model;
-}
-
-glm::mat4 primitive::Sphere::GetModel() const
-{
-    mesh::Mesh const& mesh = m_pRenderer->GetMesh(m_handle);
-    return mesh.model;
-}
-
-primitive::Box::Box(Renderer& renderer, glm::mat4 model, Axes axes, glm::dvec3 color)
-    : m_isInitialized(true)
-    , m_pRenderer(&renderer)
-    , m_handle(m_pRenderer->MakeMesh())
-{
-    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
+    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh = mesh::CreateBox(axes.i, axes.j, axes.k);
-    mesh.model = model;
-    mesh.color = color;
-}
-
-primitive::Box::Box(Box&& other) noexcept
-{
-    *this = std::move(other);
-}
-
-primitive::Box& primitive::Box::operator=(Box&& other) noexcept
-{
-    swap(*this, other);
-    other.m_isInitialized = false;
-    return *this;
-}
-
-primitive::Box::~Box()
-{
-    if (m_isInitialized)
-    {
-        mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
-        mesh::Delete(mesh);
-        m_pRenderer->RemoveMesh(m_handle);
-    }
-}
-
-void primitive::swap(Box& lhs, Box& rhs) noexcept
-{
-    std::swap(lhs.m_isInitialized, rhs.m_isInitialized);
-    std::swap(lhs.m_pRenderer, rhs.m_pRenderer);
-    std::swap(lhs.m_handle, rhs.m_handle);
-    std::swap(lhs.m_axes, rhs.m_axes);
 }
 
 primitive::Box::Axes primitive::Box::GetAxes() const
 {
     return m_axes;
-}
-
-void primitive::Box::SetModel(glm::mat4 const& model) const
-{
-    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_handle);
-    mesh.model = model;
-}
-
-glm::mat4 primitive::Box::GetModel() const
-{
-	mesh::Mesh const& mesh = m_pRenderer->GetMesh(m_handle);
-	return mesh.model;
 }
