@@ -283,36 +283,59 @@ private:
 
     shader::Program m_program;
     GLint m_mvpUniformHandle;
+    GLint m_modelUniformHandle;
     GLint m_colorUniformHandle;
-    GLint m_lightUniformHandle; 
+    GLint m_lightUniformHandle;
+    GLint m_eyeUniformHandle;
     GLchar const* m_pVertexShaderSources =
     R"(
         #version 440
 
+        uniform mat4 model;
+        uniform mat4 mvp;
+
         layout (location = 0) in vec3 aPos;
         layout (location = 1) in vec3 aNormal;
-        uniform vec3 light;
-        uniform vec3 color;
-        uniform mat4 mvp;
-        out vec4 vsColorOut;
+
+        out vec3 fragPos;
+        out vec3 fragNormal;
 
         void main()
         {
             gl_Position = mvp * vec4(aPos, 1.0);
-            vec3 resultColor = color * acos(dot(aNormal, light) / (length(aNormal) * length(light)));
-            vsColorOut = vec4(resultColor, 1.0);
+            fragPos = vec3(model * vec4(aPos, 1.0));
+            fragNormal = aNormal;
         }
     )";
     GLchar const* m_pFragmentShaderSources =
     R"(
         #version 440
 
-        in  vec4 vsColorOut;
+        uniform vec3 eye;
+        uniform vec3 light;
+        uniform vec3 color;
+
+        in vec3 fragPos;
+        in vec3 fragNormal;
         out vec4 fragColor;
 
         void main()
         {
-            fragColor = vsColorOut;
+            vec3 lightColor = vec3(0.956, 1.000, 0.980);
+
+            float ambientStrength = 0.75;
+            vec3 ambient = ambientStrength * lightColor;
+
+            float diff = max(dot(fragNormal, light), 0.0);
+            vec3 diffuse = diff * lightColor;
+
+            float specularStrength = 0.5;
+            vec3 viewDir = normalize(eye - fragPos);
+            vec3 reflectDir = reflect(-light, fragNormal);
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16);
+            vec3 specular = specularStrength * spec * lightColor;
+
+            fragColor = vec4((ambient + diffuse + specular) * color, 1.0);
         }
     )";
 
@@ -357,13 +380,13 @@ protected:
 class Plane : public Primitive
 {
 public:
-	Plane(glm::mat4 model, glm::vec3 color, glm::dvec3 normal);
+    Plane(glm::mat4 model, glm::vec3 color, glm::dvec3 normal);
 
-	glm::dvec3 GetNormal() const;
+    glm::dvec3 GetNormal() const;
 
 private:
-	glm::dvec3 m_normal;
-	double m_sideLength;
+    glm::dvec3 m_normal;
+    double m_sideLength;
 };
 
 class Sphere : public Primitive

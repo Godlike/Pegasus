@@ -197,15 +197,17 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
         if (g_objects.size() < demo.maxParticles)
         {
             pegasus::Particle particle;
-            particle.SetPosition(std::rand() % 10 / 2., std::rand() % 10 / 2., std::rand() % 10 / 2.);
+            particle.SetPosition(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
             particle.SetVelocity(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
             
             static uint8_t isBox = false;
             isBox = !isBox;
             if (isBox)
-                g_objects.push_back(&demo.MakeBox(particle, {1,0,0}, {0,1,0}, {0,0,1}));
+                g_objects.push_back(&demo.MakeBox(
+                    particle, {rand() % 10 / 10. + 0.1,0,0}, {0,rand() % 10 / 10. + 0.1,0}, {0,0,rand() % 10 / 10. + 0.1}
+                ));
             else
-                g_objects.push_back(&demo.MakeSphere(particle, 1));
+                g_objects.push_back(&demo.MakeSphere(particle, rand() % 10 / 10. + 0.1));
         }
         break;
     case GLFW_KEY_R:

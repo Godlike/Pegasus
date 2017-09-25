@@ -13,7 +13,7 @@ using namespace render;
 
 void mesh::Allocate(Mesh& mesh)
 {
-	//Generate VBO and EBO
+    //Generate VBO and EBO
     glGenVertexArrays(1, &mesh.bufferData.vertexArrayObject);
     glGenBuffers(1, &mesh.bufferData.vertexBufferObject);
     glGenBuffers(1, &mesh.bufferData.elementBufferObject);
@@ -29,11 +29,11 @@ void mesh::Allocate(Mesh& mesh)
 
     //Initialize VBO arguments
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(GLdouble) * 6, 
+    glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(GLdouble) * 6,
         reinterpret_cast<void*>(sizeof(GLdouble) * 0));
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_DOUBLE, GL_FALSE, sizeof(GLdouble) * 6, 
+    glVertexAttribPointer(1, 3, GL_DOUBLE, GL_FALSE, sizeof(GLdouble) * 6,
         reinterpret_cast<void*>(sizeof(GLdouble) * 3));
 
     glBindVertexArray(0);
@@ -55,21 +55,21 @@ mesh::Mesh mesh::Create(std::vector<GLdouble>&& vertices, std::vector<GLuint>&& 
 
 mesh::Mesh mesh::CreatePlane(glm::dvec3 normal, double length)
 {
-	Mesh mesh;
+    Mesh mesh;
 
     glm::dvec3 const i = math::CalculateOrthogonalVector(normal) * (length / 2.0);
     glm::dvec3 const j = glm::normalize(glm::cross(i, normal)) * (length / 2.0);
-    
-	mesh.vertices = {{
+
+    mesh.vertices = {{
         ( i + j).x, ( i + j).y, ( i + j).z, normal.x, normal.y, normal.z,
         (-i + j).x, (-i + j).y, (-i + j).z, normal.x, normal.y, normal.z,
         ( i - j).x, ( i - j).y, ( i - j).z, normal.x, normal.y, normal.z,
         (-i - j).x, (-i - j).y, (-i - j).z, normal.x, normal.y, normal.z,
-	}};
-	mesh.indices = {{ 0, 1, 2, 1, 2, 3 }};
-	Allocate(mesh);
+    }};
+    mesh.indices = {{ 0, 1, 2, 1, 2, 3 }};
+    Allocate(mesh);
 
-	return mesh;
+    return mesh;
 }
 
 mesh::Mesh mesh::CreateSphere(double radius, uint32_t depth)
@@ -77,11 +77,11 @@ mesh::Mesh mesh::CreateSphere(double radius, uint32_t depth)
     //Initial hexahedron
     Mesh mesh;
     mesh.vertices = {{
-        0, 0, radius, 
-        0, radius, 0, 
-        radius, 0, 0, 
-        0, -radius, 0, 
-        -radius, 0, 0, 
+        0, 0, radius,
+        0, radius, 0,
+        radius, 0, 0,
+        0, -radius, 0,
+        -radius, 0, 0,
         0, 0, -radius,
     }};
     mesh.indices = {{
@@ -135,23 +135,53 @@ mesh::Mesh mesh::CreateSphere(double radius, uint32_t depth)
 mesh::Mesh mesh::CreateBox(glm::dvec3 i, glm::dvec3 j, glm::dvec3 k)
 {
     Mesh mesh;
+    glm::dvec3 iNormal = glm::normalize(i);
+    glm::dvec3 jNormal = glm::normalize(j);
+    glm::dvec3 kNormal = glm::normalize(k);
     mesh.vertices = {{
-        ( i + j + k).x, ( i + j + k).y, ( i + j + k).z, ( i + j + k).x, ( i + j + k).y, ( i + j + k).z,
-        (-i + j + k).x, (-i + j + k).y, (-i + j + k).z, (-i + j + k).x, (-i + j + k).y, (-i + j + k).z,
-        ( i - j + k).x, ( i - j + k).y, ( i - j + k).z, ( i - j + k).x, ( i - j + k).y, ( i - j + k).z,
-        (-i - j + k).x, (-i - j + k).y, (-i - j + k).z, (-i - j + k).x, (-i - j + k).y, (-i - j + k).z,
-        ( i + j - k).x, ( i + j - k).y, ( i + j - k).z, ( i + j - k).x, ( i + j - k).y, ( i + j - k).z,
-        (-i + j - k).x, (-i + j - k).y, (-i + j - k).z, (-i + j - k).x, (-i + j - k).y, (-i + j - k).z,
-        ( i - j - k).x, ( i - j - k).y, ( i - j - k).z, ( i - j - k).x, ( i - j - k).y, ( i - j - k).z,
-        (-i - j - k).x, (-i - j - k).y, (-i - j - k).z, (-i - j - k).x, (-i - j - k).y, (-i - j - k).z,
+        //top
+        ( i + j + k).x, ( i + j + k).y, ( i + j + k).z, kNormal.x, kNormal.y, kNormal.z,
+        (-i + j + k).x, (-i + j + k).y, (-i + j + k).z, kNormal.x, kNormal.y, kNormal.z,
+        ( i - j + k).x, ( i - j + k).y, ( i - j + k).z, kNormal.x, kNormal.y, kNormal.z,
+        (-i - j + k).x, (-i - j + k).y, (-i - j + k).z, kNormal.x, kNormal.y, kNormal.z,
+
+        //right
+        ( i + j + k).x, ( i + j + k).y, ( i + j + k).z, jNormal.x, jNormal.y, jNormal.z,
+        (-i + j + k).x, (-i + j + k).y, (-i + j + k).z, jNormal.x, jNormal.y, jNormal.z,
+        ( i + j - k).x, ( i + j - k).y, ( i + j - k).z, jNormal.x, jNormal.y, jNormal.z,
+        (-i + j - k).x, (-i + j - k).y, (-i + j - k).z, jNormal.x, jNormal.y, jNormal.z,
+
+        //left
+        ( i - j + k).x, ( i - j + k).y, ( i - j + k).z, -jNormal.x, -jNormal.y, -jNormal.z,
+        (-i - j + k).x, (-i - j + k).y, (-i - j + k).z, -jNormal.x, -jNormal.y, -jNormal.z,
+        ( i - j - k).x, ( i - j - k).y, ( i - j - k).z, -jNormal.x, -jNormal.y, -jNormal.z,
+        (-i - j - k).x, (-i - j - k).y, (-i - j - k).z, -jNormal.x, -jNormal.y, -jNormal.z,
+
+        //front
+        ( i + j + k).x, ( i + j + k).y, ( i + j + k).z, iNormal.x, iNormal.y, iNormal.z,
+        ( i - j + k).x, ( i - j + k).y, ( i - j + k).z, iNormal.x, iNormal.y, iNormal.z,
+        ( i + j - k).x, ( i + j - k).y, ( i + j - k).z, iNormal.x, iNormal.y, iNormal.z,
+        ( i - j - k).x, ( i - j - k).y, ( i - j - k).z, iNormal.x, iNormal.y, iNormal.z,
+
+        //back
+        (-i + j + k).x, (-i + j + k).y, (-i + j + k).z, -iNormal.x, -iNormal.y, -iNormal.z,
+        (-i - j + k).x, (-i - j + k).y, (-i - j + k).z, -iNormal.x, -iNormal.y, -iNormal.z,
+        (-i + j - k).x, (-i + j - k).y, (-i + j - k).z, -iNormal.x, -iNormal.y, -iNormal.z,
+        (-i - j - k).x, (-i - j - k).y, (-i - j - k).z, -iNormal.x, -iNormal.y, -iNormal.z,
+
+        //bottom
+        ( i + j - k).x, ( i + j - k).y, ( i + j - k).z, -kNormal.x, -kNormal.y, -kNormal.z,
+        (-i + j - k).x, (-i + j - k).y, (-i + j - k).z, -kNormal.x, -kNormal.y, -kNormal.z,
+        ( i - j - k).x, ( i - j - k).y, ( i - j - k).z, -kNormal.x, -kNormal.y, -kNormal.z,
+        (-i - j - k).x, (-i - j - k).y, (-i - j - k).z, -kNormal.x, -kNormal.y, -kNormal.z,
     }};
     mesh.indices = {{
-        1, 2, 0, 1, 2, 3,
-        1, 4, 0, 1, 4, 5,
-        2, 4, 0, 2, 4, 6,
-        1, 7, 3, 1, 7, 5,
-        2, 7, 3, 2, 7, 6,
-        4, 7, 5, 4, 7, 6,
+        0, 1, 2, 1, 2, 3,       //top
+        4, 5, 6, 5, 6, 7,       //right
+        8, 9, 10, 9, 10, 11,    //left
+        12, 13, 14, 13, 14, 15, //front
+        16, 17, 18, 17, 18, 19, //back
+        20, 21, 22, 21, 22, 23, //bottom
     }};
     Allocate(mesh);
 
@@ -224,10 +254,10 @@ shader::Program shader::MakeProgram(Program::Handles shaders)
 
 Camera::Camera()
     : speed(0.2f)
-    , m_angle(45.0f)
+    , m_angle(60.0f)
     , m_ratio(1.0f)
     , m_near(0.1f)
-    , m_far(100.0f)
+    , m_far(1000.0f)
     , m_position(0.0f, 0.0f, 0.0f)
     , m_direction(1.0f, 0.0f, 0.0)
     , m_up(0.0f, 1.0f, 0.0f)
@@ -416,13 +446,15 @@ void Renderer::RenderFrame()
     for (asset::Asset<mesh::Mesh>& mesh : m_meshes)
     {
         glBindVertexArray(mesh.data.bufferData.vertexArrayObject);
-        
+
         glm::mat4 const viewProjection = m_camera.GetProjection() * m_camera.GetView();
         glm::mat4 const modelViewProjection = viewProjection * mesh.data.model;
-        glm::vec3 const light{ -1, -1, -1 };
-
+        glm::vec3 const light{ glm::normalize(glm::vec3{ -0.5, 1.0, 0.2 }) };
+        
         glUniform3fv(m_lightUniformHandle, 1, glm::value_ptr(light));
         glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(mesh.data.color));
+        glUniform3fv(m_eyeUniformHandle, 1, glm::value_ptr(m_camera.GetPosition()));
+        glUniformMatrix4fv(m_modelUniformHandle, 1, GL_FALSE, glm::value_ptr(mesh.data.model));
         glUniformMatrix4fv(m_mvpUniformHandle, 1, GL_FALSE, glm::value_ptr(modelViewProjection));
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -460,8 +492,8 @@ Renderer::Renderer()
     InitializeCallbacks();
     InitializeShaderProgram();
 
-    m_camera.SetPosition(glm::vec3(-10, 0, 0));
-    m_camera.SetDirection(glm::normalize(-m_camera.GetPosition()));
+    m_camera.SetPosition(glm::vec3(1, 1, 1) * 15);
+    m_camera.SetDirection(glm::normalize(glm::dvec3{-1, -1, -1}));
 }
 
 Renderer::~Renderer()
@@ -522,11 +554,15 @@ void Renderer::InitializeShaderProgram()
     };
     m_program = shader::MakeProgram(shaders);
     m_mvpUniformHandle = glGetUniformLocation(m_program.handle, "mvp");
+    m_modelUniformHandle = glGetUniformLocation(m_program.handle, "model");
     m_colorUniformHandle = glGetUniformLocation(m_program.handle, "color");
     m_lightUniformHandle = glGetUniformLocation(m_program.handle, "light");
-    if (   -1 == m_mvpUniformHandle 
+    m_eyeUniformHandle = glGetUniformLocation(m_program.handle, "eye");
+    if (   -1 == m_mvpUniformHandle
+        || -1 == m_modelUniformHandle
         || -1 == m_colorUniformHandle
-        || -1 == m_lightUniformHandle)
+        || -1 == m_lightUniformHandle
+        || -1 == m_eyeUniformHandle)
     {
         m_initialized = false;
     }
@@ -549,7 +585,6 @@ void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, 
 {
     Camera& camera = GetInstance().m_camera;
     glm::vec3 const left = glm::normalize(glm::cross(camera.GetUp(), camera.GetDirection()));
-    glm::vec3 const up = glm::normalize(glm::cross(camera.GetDirection(), left));
     GLint const nextCursorMode =
         (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
             ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED;
@@ -578,12 +613,12 @@ void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, 
             break;
         case GLFW_KEY_SPACE:
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                camera.SetPosition(camera.GetPosition() + (up * camera.speed));
+                camera.SetPosition(camera.GetPosition() + (camera.GetUp() * camera.speed));
             }
             break;
         case GLFW_KEY_LEFT_SHIFT:
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                camera.SetPosition(camera.GetPosition() + (-up * camera.speed));
+                camera.SetPosition(camera.GetPosition() + (-camera.GetUp() * camera.speed));
             }
             break;
         case GLFW_KEY_C:
@@ -605,8 +640,8 @@ void Renderer::CursorMove(GLFWwindow* window, double xpos, double ypos)
 
     Camera& camera = GetInstance().m_camera;
 
-    static float lastX = 0;
-    static float lastY = 0;
+    static float lastX = static_cast<float>(xpos);
+    static float lastY = static_cast<float>(ypos);
 
     float const sensitivity = 0.1f;
     float const xoffset = (static_cast<float>(xpos) - lastX) * sensitivity;
@@ -664,7 +699,7 @@ glm::mat4 primitive::Primitive::GetModel() const
 
 primitive::Plane::Plane(glm::mat4 model, glm::vec3 color, glm::dvec3 normal)
     : m_normal(normal)
-    , m_sideLength(25.0)
+    , m_sideLength(35.0)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh = mesh::CreatePlane(m_normal, m_sideLength);
