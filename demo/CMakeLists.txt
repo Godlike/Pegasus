@@ -27,7 +27,6 @@ set(DEMO_HEADERS
 )
 set(DEMO_SOURCES
     Renderer.cpp
-    Falling.cpp
     Main.cpp
 )
 
