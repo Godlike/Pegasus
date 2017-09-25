@@ -57,10 +57,10 @@ public:
         m_objects.emplace_back(
             MakeRigidBody(particle, std::make_unique<geometry::Plane>(particle.GetPosition(), normal)),
             std::make_unique<render::primitive::Plane>(
-                glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(1, 0, 0), normal)
+                glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), normal)
         );
         m_particleContactGenerators.emplace_back(
-            std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.1)
+            std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.7)
         );
 
         return m_objects.back();
@@ -71,10 +71,10 @@ public:
         m_objects.emplace_back(
             MakeRigidBody(particle, std::make_unique<geometry::Sphere>(particle.GetPosition(), radius)),
             std::make_unique<render::primitive::Sphere>(
-                glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(1, 0, 0), radius)
+                glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), radius)
         );
         m_particleContactGenerators.emplace_back(
-            std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.1)
+            std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.7)
         );
 
         return m_objects.back();
@@ -86,12 +86,12 @@ public:
             MakeRigidBody(particle, std::make_unique<geometry::Box>(particle.GetPosition(), i, j, k)),
             std::make_unique<render::primitive::Box>(
                 glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())),
-                glm::vec3(1, 0, 0),
+                glm::vec3(0.439, 0.502, 0.565),
                 render::primitive::Box::Axes{i, j, k}
             )
         );
         m_particleContactGenerators.emplace_back(
-            std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.1)
+            std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.7)
         );
 
         return m_objects.back();
@@ -125,13 +125,14 @@ public:
         for (Object& obj : m_objects)
         {
             m_particleContactGenerators.emplace_back(
-                std::make_unique<ShapeContactGenerator<RigidBodies>>(*obj.body, m_rigidBodies, 0.1)
+                std::make_unique<ShapeContactGenerator<RigidBodies>>(*obj.body, m_rigidBodies, 0.7)
             );
         }
     }
 
+    uint32_t const maxParticles = 200;
+
 private:
-    uint32_t const m_maxParticles = 10;
     std::list<Object> m_objects;
     render::Renderer& m_pRenderer;
     ParticleWorld m_particleWorld;
@@ -146,8 +147,8 @@ private:
         , m_particleWorld(m_particles,
             m_particleForceRegistry,
             m_particleContactGenerators,
-            glm::pow2(m_maxParticles),
-            m_maxParticles)
+            glm::pow2(maxParticles),
+            maxParticles)
         , m_gravityForce(glm::dvec3{0, -9.8, 0})
     {
     }
@@ -186,15 +187,18 @@ std::list<pegasus::Demo::Object*> g_objects;
 
 void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    pegasus::Demo& demo = pegasus::Demo::GetInstance();
+    if (action == GLFW_PRESS)
+        return;
 
+    pegasus::Demo& demo = pegasus::Demo::GetInstance();
     switch (key)
     {
     case GLFW_KEY_M:
-        if (action == GLFW_RELEASE)
+        if (g_objects.size() < demo.maxParticles)
         {
             pegasus::Particle particle;
-            particle.SetPosition(0, 5, 0);
+            particle.SetPosition(std::rand() % 10 / 2., std::rand() % 10 / 2., std::rand() % 10 / 2.);
+            particle.SetVelocity(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
             
             static uint8_t isBox = false;
             isBox = !isBox;
@@ -205,7 +209,7 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
         }
         break;
     case GLFW_KEY_R:
-        if (g_objects.size() > 1 && action == GLFW_RELEASE) 
+        if (g_objects.size() > 1) 
         {
             demo.Remove(*g_objects.back());
             g_objects.pop_back();

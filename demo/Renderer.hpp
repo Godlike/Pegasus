@@ -284,11 +284,14 @@ private:
     shader::Program m_program;
     GLint m_mvpUniformHandle;
     GLint m_colorUniformHandle;
+    GLint m_lightUniformHandle; 
     GLchar const* m_pVertexShaderSources =
     R"(
         #version 440
 
         layout (location = 0) in vec3 aPos;
+        layout (location = 1) in vec3 aNormal;
+        uniform vec3 light;
         uniform vec3 color;
         uniform mat4 mvp;
         out vec4 vsColorOut;
@@ -296,7 +299,8 @@ private:
         void main()
         {
             gl_Position = mvp * vec4(aPos, 1.0);
-            vsColorOut = vec4(color, 1.0);
+            vec3 resultColor = color * acos(dot(aNormal, light) / (length(aNormal) * length(light)));
+            vsColorOut = vec4(resultColor, 1.0);
         }
     )";
     GLchar const* m_pFragmentShaderSources =
@@ -336,7 +340,7 @@ namespace primitive
 class Primitive
 {
 public:
-    Primitive(glm::mat4 model, glm::vec3 color);
+    Primitive();
 
     ~Primitive();
 

@@ -18,7 +18,7 @@ void mesh::Allocate(Mesh& mesh)
     glGenBuffers(1, &mesh.bufferData.vertexBufferObject);
     glGenBuffers(1, &mesh.bufferData.elementBufferObject);
 
-    //Initialize VBO and EBO
+    //Initialize VBO and EBO data
     glBindVertexArray(mesh.bufferData.vertexArrayObject);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh.bufferData.vertexBufferObject);
@@ -27,8 +27,14 @@ void mesh::Allocate(Mesh& mesh)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.bufferData.elementBufferObject);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * mesh.indices.size(), &mesh.indices.front(), GL_STATIC_DRAW);
 
+    //Initialize VBO arguments
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(GLdouble) * 3, nullptr);
+    glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(GLdouble) * 6, 
+        reinterpret_cast<void*>(sizeof(GLdouble) * 0));
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_DOUBLE, GL_FALSE, sizeof(GLdouble) * 6, 
+        reinterpret_cast<void*>(sizeof(GLdouble) * 3));
 
     glBindVertexArray(0);
 }
@@ -55,10 +61,10 @@ mesh::Mesh mesh::CreatePlane(glm::dvec3 normal, double length)
     glm::dvec3 const j = glm::normalize(glm::cross(i, normal)) * (length / 2.0);
     
 	mesh.vertices = {{
-        ( i + j).x, ( i + j).y, ( i + j).z,
-        (-i + j).x, (-i + j).y, (-i + j).z,
-        ( i - j).x, ( i - j).y, ( i - j).z,
-        (-i - j).x, (-i - j).y, (-i - j).z,
+        ( i + j).x, ( i + j).y, ( i + j).z, normal.x, normal.y, normal.z,
+        (-i + j).x, (-i + j).y, (-i + j).z, normal.x, normal.y, normal.z,
+        ( i - j).x, ( i - j).y, ( i - j).z, normal.x, normal.y, normal.z,
+        (-i - j).x, (-i - j).y, (-i - j).z, normal.x, normal.y, normal.z,
 	}};
 	mesh.indices = {{ 0, 1, 2, 1, 2, 3 }};
 	Allocate(mesh);
@@ -71,7 +77,12 @@ mesh::Mesh mesh::CreateSphere(double radius, uint32_t depth)
     //Initial hexahedron
     Mesh mesh;
     mesh.vertices = {{
-         0, 0, radius, 0, radius, 0, radius, 0, 0, 0, -radius, 0, -radius, 0, 0, 0, 0, -radius,
+        0, 0, radius, 
+        0, radius, 0, 
+        radius, 0, 0, 
+        0, -radius, 0, 
+        -radius, 0, 0, 
+        0, 0, -radius,
     }};
     mesh.indices = {{
         0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 1, 4,
@@ -103,6 +114,19 @@ mesh::Mesh mesh::CreateSphere(double radius, uint32_t depth)
             mesh.vertices.insert(mesh.vertices.end(), { ab.x, ab.y, ab.z, bc.x, bc.y, bc.z, ca.x, ca.y, ca.z });
         }
     }
+
+    //Insert normals
+    mesh.vertices.reserve(mesh.vertices.size() * 2);
+    for(size_t i = 0; i < mesh.vertices.size(); i+=6)
+    {
+        glm::dvec3 const normal = glm::normalize(glm::dvec3{
+            mesh.vertices[i+0], mesh.vertices[i+1], mesh.vertices[i+2]
+        });
+
+        mesh.vertices.insert(mesh.vertices.begin() + i + 3, normal.x);
+        mesh.vertices.insert(mesh.vertices.begin() + i + 4, normal.y);
+        mesh.vertices.insert(mesh.vertices.begin() + i + 5, normal.z);
+    }
     Allocate(mesh);
 
     return mesh;
@@ -112,14 +136,14 @@ mesh::Mesh mesh::CreateBox(glm::dvec3 i, glm::dvec3 j, glm::dvec3 k)
 {
     Mesh mesh;
     mesh.vertices = {{
-        ( i + j + k).x, ( i + j + k).y, ( i + j + k).z,
-        (-i + j + k).x, (-i + j + k).y, (-i + j + k).z,
-        ( i - j + k).x, ( i - j + k).y, ( i - j + k).z,
-        (-i - j + k).x, (-i - j + k).y, (-i - j + k).z,
-        ( i + j - k).x, ( i + j - k).y, ( i + j - k).z,
-        (-i + j - k).x, (-i + j - k).y, (-i + j - k).z,
-        ( i - j - k).x, ( i - j - k).y, ( i - j - k).z,
-        (-i - j - k).x, (-i - j - k).y, (-i - j - k).z,
+        ( i + j + k).x, ( i + j + k).y, ( i + j + k).z, ( i + j + k).x, ( i + j + k).y, ( i + j + k).z,
+        (-i + j + k).x, (-i + j + k).y, (-i + j + k).z, (-i + j + k).x, (-i + j + k).y, (-i + j + k).z,
+        ( i - j + k).x, ( i - j + k).y, ( i - j + k).z, ( i - j + k).x, ( i - j + k).y, ( i - j + k).z,
+        (-i - j + k).x, (-i - j + k).y, (-i - j + k).z, (-i - j + k).x, (-i - j + k).y, (-i - j + k).z,
+        ( i + j - k).x, ( i + j - k).y, ( i + j - k).z, ( i + j - k).x, ( i + j - k).y, ( i + j - k).z,
+        (-i + j - k).x, (-i + j - k).y, (-i + j - k).z, (-i + j - k).x, (-i + j - k).y, (-i + j - k).z,
+        ( i - j - k).x, ( i - j - k).y, ( i - j - k).z, ( i - j - k).x, ( i - j - k).y, ( i - j - k).z,
+        (-i - j - k).x, (-i - j - k).y, (-i - j - k).z, (-i - j - k).x, (-i - j - k).y, (-i - j - k).z,
     }};
     mesh.indices = {{
         1, 2, 0, 1, 2, 3,
@@ -391,16 +415,20 @@ void Renderer::RenderFrame()
 
     for (asset::Asset<mesh::Mesh>& mesh : m_meshes)
     {
+        glBindVertexArray(mesh.data.bufferData.vertexArrayObject);
+        
         glm::mat4 const viewProjection = m_camera.GetProjection() * m_camera.GetView();
         glm::mat4 const modelViewProjection = viewProjection * mesh.data.model;
+        glm::vec3 const light{ -1, -1, -1 };
 
-        glBindVertexArray(mesh.data.bufferData.vertexArrayObject);
-        glUniformMatrix4fv(m_mvpUniformHandle, 1, GL_FALSE, glm::value_ptr(modelViewProjection));
+        glUniform3fv(m_lightUniformHandle, 1, glm::value_ptr(light));
         glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(mesh.data.color));
+        glUniformMatrix4fv(m_mvpUniformHandle, 1, GL_FALSE, glm::value_ptr(modelViewProjection));
+
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
 
-        glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(glm::vec3(1,1,1) - mesh.data.color));
+        glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(glm::vec3(0.2,0.2,0.2)));
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
     }
@@ -495,7 +523,10 @@ void Renderer::InitializeShaderProgram()
     m_program = shader::MakeProgram(shaders);
     m_mvpUniformHandle = glGetUniformLocation(m_program.handle, "mvp");
     m_colorUniformHandle = glGetUniformLocation(m_program.handle, "color");
-    if (-1 == m_mvpUniformHandle)
+    m_lightUniformHandle = glGetUniformLocation(m_program.handle, "light");
+    if (   -1 == m_mvpUniformHandle 
+        || -1 == m_colorUniformHandle
+        || -1 == m_lightUniformHandle)
     {
         m_initialized = false;
     }
@@ -604,13 +635,11 @@ void Renderer::CursorMove(GLFWwindow* window, double xpos, double ypos)
     camera.SetDirection(glm::normalize(direction));
 }
 
-primitive::Primitive::Primitive(glm::mat4 model, glm::vec3 color)
+primitive::Primitive::Primitive()
     : m_initialized(true)
     , m_pRenderer(&Renderer::GetInstance())
     , m_meshHandle(m_pRenderer->MakeMesh())
 {
-    m_pRenderer->GetMesh(m_meshHandle).model = model;
-    m_pRenderer->GetMesh(m_meshHandle).color = color;
 }
 
 primitive::Primitive::~Primitive()
@@ -634,12 +663,13 @@ glm::mat4 primitive::Primitive::GetModel() const
 }
 
 primitive::Plane::Plane(glm::mat4 model, glm::vec3 color, glm::dvec3 normal)
-    : Primitive(model, color)
-    , m_normal(normal)
+    : m_normal(normal)
     , m_sideLength(25.0)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh = mesh::CreatePlane(m_normal, m_sideLength);
+    mesh.model = model;
+    mesh.color = color;
 }
 
 glm::dvec3 primitive::Plane::GetNormal() const
@@ -648,11 +678,12 @@ glm::dvec3 primitive::Plane::GetNormal() const
 }
 
 primitive::Sphere::Sphere(glm::mat4 model, glm::dvec3 color, double radius)
-    : Primitive(model, color)
-    , m_radius(radius)
+    : m_radius(radius)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh = mesh::CreateSphere(m_radius, 3);
+    mesh.model = model;
+    mesh.color = color;
 }
 
 double primitive::Sphere::GetRadius() const
@@ -661,10 +692,11 @@ double primitive::Sphere::GetRadius() const
 }
 
 primitive::Box::Box(glm::mat4 model, glm::dvec3 color, Axes axes)
-    : Primitive(model, color)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh = mesh::CreateBox(axes.i, axes.j, axes.k);
+    mesh.model = model;
+    mesh.color = color;
 }
 
 primitive::Box::Axes primitive::Box::GetAxes() const
