@@ -22,10 +22,12 @@ include_directories (
     ${PEGASUS_INCLUDE_DIR}
 )
 set(DEMO_HEADERS
+    Demo.hpp
     Renderer.hpp
     Bunny.hpp
 )
 set(DEMO_SOURCES
+    Demo.cpp
     Renderer.cpp
     Main.cpp
 )
