@@ -257,6 +257,18 @@ glm::dvec3 intersection::cso::Support(Box const& box, glm::dvec3 direction)
     return maxPoint;
 }
 
+glm::dvec3 intersection::cso::Support(ConvexHull const& convexHull, glm::dvec3 direction)
+{
+    return *std::max_element(
+        convexHull.vertices.begin(),
+        convexHull.vertices.end(),
+        [&direction](glm::dvec3 const& v1, glm::dvec3 const& v2) -> bool
+        {
+            return glm::dot(v1, direction) < glm::dot(v2, direction);
+        }
+    );
+}
+
 namespace
 {
 /**

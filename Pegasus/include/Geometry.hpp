@@ -346,6 +346,16 @@ glm::dvec3 Support(Sphere const& sphere, glm::dvec3 direction);
 glm::dvec3 Support(Box const& box, glm::dvec3 direction);
 
 /**
+ *  @brief  Calculates farthest vertex on the surface of the convex hull in given direction
+ *
+ *  @param  convexHull  convex hull object
+ *  @param  direction   normalized search vector
+ *
+ *  @return point on the surface
+ */
+glm::dvec3 Support(ConvexHull const& convexHull, glm::dvec3 direction);
+
+/**
  *  @brief  Calculates farthest vertex on the surface of the Configuration Space
  *          Object in given direction
  *
