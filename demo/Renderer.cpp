@@ -53,6 +53,21 @@ mesh::Mesh mesh::Create(std::vector<GLdouble>&& vertices, std::vector<GLuint>&& 
     return mesh;
 }
 
+mesh::Mesh mesh::CreateLineSegment(glm::vec3 start, glm::vec3 end)
+{
+    Mesh mesh;
+
+    mesh.vertices = {{
+        start.x, start.y, start.z, 0, 0, 0,
+        end.x, end.y, end.z, 0, 0, 0,
+        end.x, end.y, end.z, 0, 0, 0,
+    }};
+    mesh.indices = {{ 0, 1, 2}};
+    Allocate(mesh);
+
+    return mesh;
+}
+
 mesh::Mesh mesh::CreatePlane(glm::dvec3 normal, double length)
 {
     Mesh mesh;
@@ -695,6 +710,26 @@ void primitive::Primitive::SetModel(glm::mat4 model) const
 glm::mat4 primitive::Primitive::GetModel() const
 {
     return m_pRenderer->GetMesh(m_meshHandle).model;
+}
+
+primitive::LineSegment::LineSegment(glm::mat4 model, glm::vec3 color, glm::vec3 start, glm::vec3 end)
+    : m_start(start)
+    , m_end(end)
+{
+    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
+    mesh = mesh::CreateLineSegment(start, end);
+    mesh.color = color;
+    mesh.model = model;
+}
+
+glm::vec3 primitive::LineSegment::GetStart() const
+{
+    return m_start;
+}
+
+glm::vec3 primitive::LineSegment::GetEnd() const
+{
+    return m_end;
 }
 
 primitive::Plane::Plane(glm::mat4 model, glm::vec3 color, glm::dvec3 normal)

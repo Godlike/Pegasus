@@ -45,6 +45,8 @@ void Deallocate(Mesh& mesh);
 
 Mesh Create(std::vector<GLdouble>&& vertices, std::vector<GLuint>&& indices);
 
+Mesh CreateLineSegment(glm::vec3 start, glm::vec3 end);
+
 Mesh CreatePlane(glm::dvec3 normal, double length);
 
 Mesh CreateSphere(double radius, uint32_t depth);
@@ -375,6 +377,20 @@ protected:
     bool m_initialized;
     Renderer* m_pRenderer;
     Handle m_meshHandle;
+};
+
+class LineSegment : public Primitive
+{
+public:
+    LineSegment(glm::mat4 model, glm::vec3 color, glm::vec3 start, glm::vec3 end);
+
+    glm::vec3 GetStart() const;
+
+    glm::vec3 GetEnd() const;
+
+private:
+    glm::vec3 m_start;
+    glm::vec3 m_end;
 };
 
 class Plane : public Primitive

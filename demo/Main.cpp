@@ -19,8 +19,8 @@ class Demo
 public:
     struct Object
     {
-        Object(RigidBody& body, std::unique_ptr<render::primitive::Primitive>&& renderShape)
-            : body(&body)
+        Object(RigidBody* body, std::unique_ptr<render::primitive::Primitive>&& renderShape)
+            : body(body)
             , shape(std::move(renderShape))
         {
         }
@@ -52,10 +52,21 @@ public:
         std::this_thread::sleep_until(nextFrameTime);
     }
 
+    Object& MakeLine(Particle particle, glm::vec3 start, glm::vec3 end)
+    {
+        m_objects.emplace_back(
+            nullptr,
+            std::make_unique<render::primitive::LineSegment>(
+                glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), start, end)
+        );
+        
+        return m_objects.back();
+    }
+
     Object& MakePlane(Particle particle, glm::dvec3 normal)
     {
         m_objects.emplace_back(
-            MakeRigidBody(particle, std::make_unique<geometry::Plane>(particle.GetPosition(), normal)),
+            &MakeRigidBody(particle, std::make_unique<geometry::Plane>(particle.GetPosition(), normal)),
             std::make_unique<render::primitive::Plane>(
                 glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), normal)
         );
@@ -69,7 +80,7 @@ public:
     Object& MakeSphere(Particle particle, double radius)
     {
         m_objects.emplace_back(
-            MakeRigidBody(particle, std::make_unique<geometry::Sphere>(particle.GetPosition(), radius)),
+            &MakeRigidBody(particle, std::make_unique<geometry::Sphere>(particle.GetPosition(), radius)),
             std::make_unique<render::primitive::Sphere>(
                 glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), radius)
         );
@@ -83,7 +94,7 @@ public:
     Object& MakeBox(Particle particle, glm::vec3 i, glm::vec3 j, glm::vec3 k)
     {
         m_objects.emplace_back(
-            MakeRigidBody(particle, std::make_unique<geometry::Box>(particle.GetPosition(), i, j, k)),
+            &MakeRigidBody(particle, std::make_unique<geometry::Box>(particle.GetPosition(), i, j, k)),
             std::make_unique<render::primitive::Box>(
                 glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())),
                 glm::vec3(0.439, 0.502, 0.565),
@@ -99,21 +110,25 @@ public:
 
     void Remove(Object& object)
     {
-        Particle& particle = object.body->p;
-        m_particleForceRegistry.Remove(particle);
+        if (object.body != nullptr)
+        {
+            Particle& particle = object.body->p;
+            m_particleForceRegistry.Remove(particle);
 
-        for (auto it = m_rigidBodies.begin(); it != m_rigidBodies.end(); ++it) {
-            if (&it->p == &particle) {
-                m_rigidBodies.erase(it);
-                break;
+            for (auto it = m_rigidBodies.begin(); it != m_rigidBodies.end(); ++it) {
+                if (&it->p == &particle) {
+                    m_rigidBodies.erase(it);
+                    break;
+                }
+            }
+            for (auto it = m_particles.begin(); it != m_particles.end(); ++it) {
+                if (&*it == &particle) {
+                    m_particles.erase(it);
+                    break;
+                }
             }
         }
-        for (auto it = m_particles.begin(); it != m_particles.end(); ++it) {
-            if (&*it == &particle) {
-                m_particles.erase(it);
-                break;
-            }
-        }
+
         for (auto it = m_objects.begin(); it != m_objects.end(); ++it) {
             if (&*it == &object) {
                 m_objects.erase(it);
@@ -124,9 +139,12 @@ public:
         m_particleContactGenerators.clear();
         for (Object& obj : m_objects)
         {
-            m_particleContactGenerators.emplace_back(
-                std::make_unique<ShapeContactGenerator<RigidBodies>>(*obj.body, m_rigidBodies, 0.7)
-            );
+            if (obj.body != nullptr)
+            {
+                m_particleContactGenerators.emplace_back(
+                    std::make_unique<ShapeContactGenerator<RigidBodies>>(*obj.body, m_rigidBodies, 0.7)
+                );
+            }
         }
     }
 
@@ -161,9 +179,12 @@ private:
         //Update positions
         for (Object& object : m_objects)
         {
-            object.body->s->centerOfMass = object.body->p.GetPosition();
-            glm::mat4 const model = glm::translate(glm::mat4(1), glm::vec3(object.body->s->centerOfMass));
-            object.shape->SetModel(model);
+            if (object.body != nullptr)
+            {
+                object.body->s->centerOfMass = object.body->p.GetPosition();
+                glm::mat4 const model = glm::translate(glm::mat4(1), glm::vec3(object.body->s->centerOfMass));
+                object.shape->SetModel(model);
+            }
         }
     }
 
@@ -233,6 +254,10 @@ int main(int argc, char** argv)
     plane.SetPosition(0, -10, 0);
     plane.SetInverseMass(0);
     g_objects.push_back(&demo.MakePlane(plane, glm::vec3(0, 1, 0)));
+
+    pegasus::Particle line;
+    line.SetPosition(0, -10, 0);
+    g_objects.push_back(&demo.MakeLine(line, line.GetPosition(), glm::vec3(0, 10, 0)));
 
     while (demo.IsValid())
     {
