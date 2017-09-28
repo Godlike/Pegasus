@@ -169,6 +169,24 @@ public:
     Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);
 };
 
+/** Convex hull storage class */
+class ConvexHull : public Shape
+{
+public:
+    using Vertices = std::vector<glm::dvec3>;
+
+    Vertices const vertices;
+
+    ConvexHull() = delete;
+
+    /**
+     * @brief Given convex hull vertices, constructs ConvexHull object.
+     *
+     * @param _vertices vertices of a convex hull
+     */
+    explicit ConvexHull(std::vector<glm::dvec3> const& _vertices);
+};
+
 namespace intersection
 {
 /** Stores ray factors for Ray collisions */

@@ -1243,12 +1243,36 @@ public:
     }
 
     /**
-     * @brief Returns convex hull vertices
-     * @return convex hull vertices
+     * @brief Returns convex hull vertices indices.
+     * 'Calculate' must be called before calling this method.
+     *
+     * @return convex hull vertices indices
      */
-    std::list<size_t> const& GetVertices() const
+    std::list<size_t> const& GetVerticesIndices() const
     {
         return m_convexHullVertices;
+    }
+
+    /**
+     * @brief Returns convex hull vertices indices.
+     * 'Calculate' must be called before calling this method.
+     *
+     * @return convex hull vertices
+     */
+    std::vector<glm::dvec3> GetVertices() const
+    {
+        std::vector<glm::dvec3> vertices;
+        vertices.resize(m_convexHullVertices.size());
+        std::transform(
+            m_convexHullVertices.begin(),
+            m_convexHullVertices.end(),
+            std::back_inserter(vertices),
+            [this](std::size_t verticeIndex) -> glm::dvec3
+            {
+                return this->m_vertexBuffer[verticeIndex];
+            }
+        );
+        return vertices;
     }
 
 private:

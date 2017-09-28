@@ -321,7 +321,7 @@ void FallingDemo::AddBoundingVolumes()
     //CV
     cv = std::make_unique<ConvexHull>(vertices);
     cv->Calculate();
-    cvVertices = cv->GetVertices();
+    cvVertices = cv->GetVerticesIndices();
     cvFaces = cv->GetFaces();
 
     //AABB

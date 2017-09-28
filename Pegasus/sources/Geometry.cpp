@@ -135,6 +135,12 @@ Box::Box(
 {
 }
 
+ConvexHull::ConvexHull(std::vector<glm::dvec3> const& _vertices)
+    : Shape(pegasus::math::CalculateMeanValue(_vertices.begin(), _vertices.end()))
+    , vertices(_vertices)
+{
+}
+
 bool intersection::CheckRaySphereIntersection(
     glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
 )
