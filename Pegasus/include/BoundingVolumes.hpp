@@ -216,12 +216,13 @@ public:
 
             if (currIndices.size() < MAX_NODE_SIZE)
             {
-                currNode->m_pLowerChild.reset();
-                currNode->m_pUpperChild.reset();
+                currNode->pLowerChild.reset();
+                currNode->pUpperChild.reset();
+                currNode->pInternalIndices.reset(new Indices(std::move(currIndices)));
                 continue;
             }
 
-            currNode->m_isLeaf = false;
+            currNode->isLeaf = false;
 
             Vertices currVertices = GetShapeVertices(currIndices);
             glm::dvec3 maxDistanceVector = GetMaximumDistanceDirectionApprox(currVertices);
@@ -234,12 +235,12 @@ public:
             BoundingVolume lowerVolume(m_shape, splitIndices.lowerIndices);
             BoundingVolume upperVolume(m_shape, splitIndices.upperIndices);
 
-            currNode->m_pLowerChild = NodePtr(new Node(std::move(lowerVolume)));
-            currNode->m_pUpperChild = NodePtr(new Node(std::move(upperVolume)));
+            currNode->pLowerChild = NodePtr(new Node(std::move(lowerVolume)));
+            currNode->pUpperChild = NodePtr(new Node(std::move(upperVolume)));
 
-            nodeStack.push(currNode->m_pLowerChild.get());
+            nodeStack.push(currNode->pLowerChild.get());
             indicesStack.push(std::move(splitIndices.lowerIndices));
-            nodeStack.push(currNode->m_pUpperChild.get());
+            nodeStack.push(currNode->pUpperChild.get());
             indicesStack.push(std::move(splitIndices.upperIndices));
         }
     }
@@ -252,14 +253,14 @@ public:
         while (!nodeStack.empty())
         {
             NodePtr& currNode = nodeStack.top();
-            if (currNode->m_pLowerChild.get() != nullptr)
+            if (currNode->pLowerChild.get() != nullptr)
             {
-                nodeStack.push(NodePtr(currNode->m_pLowerChild.release()));
+                nodeStack.push(NodePtr(currNode->pLowerChild.release()));
                 continue;
             }
-            if (currNode->m_pUpperChild.get() != nullptr)
+            if (currNode->pUpperChild.get() != nullptr)
             {
-                nodeStack.push(NodePtr(currNode->m_pUpperChild.release()));
+                nodeStack.push(NodePtr(currNode->pUpperChild.release()));
                 continue;
             }
             nodeStack.pop();
@@ -310,9 +311,10 @@ private:
     {
     public:
         BoundingVolume const volume;
-        mutable std::unique_ptr<Node> m_pLowerChild;
-        mutable std::unique_ptr<Node> m_pUpperChild;
-        bool m_isLeaf;
+        std::unique_ptr<Node> pLowerChild;
+        std::unique_ptr<Node> pUpperChild;
+        bool isLeaf;
+        std::unique_ptr<Indices> pInternalIndices;
 
         Node(Node const&) = delete;
         Node(Node &&) = delete;
@@ -330,9 +332,10 @@ private:
          */
         explicit Node(BoundingVolume && volume)
             : volume(volume)
-              , m_pLowerChild(nullptr)
-              , m_pUpperChild(nullptr)
-              , m_isLeaf(true)
+            , pLowerChild(nullptr)
+            , pUpperChild(nullptr)
+            , isLeaf(true)
+            , pInternalIndices(nullptr)
         {}
     };
 
@@ -448,7 +451,7 @@ private:
                 m_shape.vertices[currFace[1]],
                 m_shape.vertices[currFace[2]]
             }};
-            centroids[index] = pegasus::math::CalculateMeanValue(faceVertices.begin(), faceVertices.end());
+            centroids[index] = math::CalculateMeanValue(faceVertices.begin(), faceVertices.end());
         }
         return centroids;
     }
@@ -554,12 +557,12 @@ private:
             {
                 continue;
             }
-            if (currNode->m_isLeaf)
+            if (currNode->isLeaf)
             {
                 return true;
             }
-            nodeStack.push(currNode->m_pLowerChild.get());
-            nodeStack.push(currNode->m_pUpperChild.get());
+            nodeStack.push(currNode->pLowerChild.get());
+            nodeStack.push(currNode->pUpperChild.get());
         }
         return false;
     }
