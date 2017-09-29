@@ -272,9 +272,9 @@ public:
      * @param plane plane to test collision with
      * @return true if there exists a leaf node, whose volume intersects with a plane; false otherwise
      */
-    bool Collide(Plane const* plane) const
+    bool CalculateIntersection(Plane const * plane) const
     {
-        return GenericCollide(plane);
+        return GenericCalculateIntersection(plane);
     }
 
     /**
@@ -283,9 +283,9 @@ public:
      * @param sphere sphere to test collision with
      * @return true if there exists a leaf node, whose volume intersects with a sphere; false otherwise
      */
-    bool Collide(Sphere const* sphere) const
+    bool CalculateIntersection(Sphere const * sphere) const
     {
-        return GenericCollide(sphere);
+        return GenericCalculateIntersection(sphere);
     }
 
     /**
@@ -294,9 +294,9 @@ public:
      * @param box plane to test collision with
      * @return true if there exists a leaf node, whose volume intersects with a box; false otherwise
      */
-    bool Collide(Box const* box) const
+    bool CalculateIntersection(Box const * box) const
     {
-        return GenericCollide(box);
+        return GenericCalculateIntersection(box);
     }
 
 private:
@@ -541,7 +541,7 @@ private:
      * @param shape
      * @return
      */
-    bool GenericCollide(SimpleShape const* shape) const
+    bool GenericCalculateIntersection(SimpleShape const * shape) const
     {
         std::stack<Node*> nodeStack;
         nodeStack.push(m_root.get());

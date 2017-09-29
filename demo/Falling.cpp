@@ -315,8 +315,8 @@ void FallingDemo::AddBoundingVolumes()
     );
     AddBox(lilShapeInObb.centerOfMass, lilShapeInObb.iAxis, lilShapeInObb.jAxis, lilShapeInObb.kAxis);
     AddBox(lilShapeOutObb.centerOfMass, lilShapeOutObb.iAxis, lilShapeOutObb.jAxis, lilShapeOutObb.kAxis);
-    assert(bvhObb->Collide(&lilShapeInObb));
-    assert(!bvhObb->Collide(&lilShapeOutObb));
+    assert(bvhObb->CalculateIntersection(&lilShapeInObb));
+    assert(!bvhObb->CalculateIntersection(&lilShapeOutObb));
 
     //CV
     cv = std::make_unique<ConvexHull>(vertices);
@@ -347,8 +347,8 @@ void FallingDemo::AddBoundingVolumes()
     );
     AddBox(lilShapeInAabb.centerOfMass, lilShapeInAabb.iAxis, lilShapeInAabb.jAxis, lilShapeInAabb.kAxis);
     AddBox(lilShapeOutAabb.centerOfMass, lilShapeOutAabb.iAxis, lilShapeOutAabb.jAxis, lilShapeOutAabb.kAxis);
-    assert(bvhAabb->Collide(&lilShapeInAabb));
-    assert(!bvhAabb->Collide(&lilShapeOutAabb));
+    assert(bvhAabb->CalculateIntersection(&lilShapeInAabb));
+    assert(!bvhAabb->CalculateIntersection(&lilShapeOutAabb));
 
     //BS
     std::for_each(vertices.begin(), vertices.end(), [&](auto& v)
