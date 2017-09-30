@@ -300,6 +300,16 @@ public:
         return GenericCalculateIntersection(box);
     }
 
+    template <typename SupportShape>
+    glm::dvec3 CalculateContactNormal(SupportShape const& shape) const
+    {
+        ConvexHull ch = CalculateIntersectionConvexHull(shape);
+        intersection::gjk::Simplex simplex;
+        intersection::gjk::CalculateIntersection(simplex, shape, ch);
+        auto contactManifold = intersection::epa::CalculateContactManifold(ch, shape, simplex);
+        return contactManifold.contactNormal;
+    }
+
 private:
 
     /**
@@ -565,6 +575,37 @@ private:
             nodeStack.push(currNode->pUpperChild.get());
         }
         return false;
+    }
+
+    ConvexHull CalculateIntersectionConvexHull(SimpleShape const& shape) const
+    {
+        std::stack<Node*> nodeStack;
+        nodeStack.push(m_root.get());
+
+        std::vector<glm::dvec3> intersectingVertices;
+        while (!nodeStack.empty())
+        {
+            Node* currNode = nodeStack.top();
+            nodeStack.pop();
+            if (!CollideNode(currNode, &shape))
+            {
+                continue;
+            }
+            if (currNode->isLeaf)
+            {
+                Vertices currVertices = GetShapeVertices(*currNode->pInternalIndices);
+                intersectingVertices.insert(intersectingVertices.end(), currVertices.begin(), currVertices.end());
+                continue;
+            }
+            nodeStack.push(currNode->pLowerChild.get());
+            nodeStack.push(currNode->pUpperChild.get());
+        }
+
+        std::cout << intersectingVertices.size() << "\n";
+
+        math::QuickhullConvexHull<std::vector<glm::dvec3>> quickhullConvexHull(intersectingVertices);
+        quickhullConvexHull.Calculate();
+        return ConvexHull(quickhullConvexHull.GetVertices());
     }
 };
 } // namespace hierarchy
