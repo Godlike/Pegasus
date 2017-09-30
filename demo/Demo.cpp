@@ -6,6 +6,9 @@
 
 #include <demo/Demo.hpp>
 
+#include <chrono>
+#include <thread>
+
 using namespace pegasus;
 
 Demo& Demo::GetInstance()
@@ -77,9 +80,7 @@ Demo::Object& Demo::MakeBox(Particle particle, glm::vec3 i, glm::vec3 j, glm::ve
         std::make_unique<render::primitive::Box>(
             glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())),
             glm::vec3(0.439, 0.502, 0.565),
-            render::primitive::Box::Axes{
-                i, j, k
-            }
+            render::primitive::Box::Axes{i, j, k}
         )
     );
     m_particleContactGenerators.emplace_back(
@@ -148,9 +149,7 @@ Demo::Demo()
         m_particleContactGenerators,
         glm::pow2(maxParticles),
         maxParticles)
-    , m_gravityForce(glm::dvec3{
-        0, -9.8, 0
-    })
+    , m_gravityForce(glm::dvec3{0, -9.8, 0})
 {
 }
 

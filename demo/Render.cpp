@@ -4,7 +4,7 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include <pegasus/Math.hpp>
-#include <demo/Renderer.hpp>
+#include <demo/Render.hpp>
 
 #include <glbinding/Binding.h>
 
@@ -62,7 +62,7 @@ mesh::Mesh mesh::CreateLineSegment(glm::vec3 start, glm::vec3 end)
         end.x, end.y, end.z, 0, 0, 0,
         end.x, end.y, end.z, 0, 0, 0,
     }};
-    mesh.indices = {{ 0, 1, 2}};
+    mesh.indices = {{ 0, 1, 2 }};
     Allocate(mesh);
 
     return mesh;
@@ -268,8 +268,7 @@ shader::Program shader::MakeProgram(Program::Handles shaders)
 }
 
 Camera::Camera()
-    : speed(0.2f)
-    , m_angle(60.0f)
+    : m_angle(60.0f)
     , m_ratio(1.0f)
     , m_near(0.1f)
     , m_far(1000.0f)
@@ -465,7 +464,7 @@ void Renderer::RenderFrame()
         glm::mat4 const viewProjection = m_camera.GetProjection() * m_camera.GetView();
         glm::mat4 const modelViewProjection = viewProjection * mesh.data.model;
         glm::vec3 const light{ glm::normalize(glm::vec3{ -0.5, 1.0, 0.2 }) };
-        
+
         glUniform3fv(m_lightUniformHandle, 1, glm::value_ptr(light));
         glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(mesh.data.color));
         glUniform3fv(m_eyeUniformHandle, 1, glm::value_ptr(m_camera.GetPosition()));
@@ -608,32 +607,32 @@ void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, 
     {
         case GLFW_KEY_W:
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                camera.SetPosition(camera.GetPosition() + (camera.GetDirection() * camera.speed));
+                camera.SetPosition(camera.GetPosition() + (camera.GetDirection() * 0.2f));
             }
             break;
         case GLFW_KEY_S:
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                camera.SetPosition(camera.GetPosition() + (-camera.GetDirection() * camera.speed));
+                camera.SetPosition(camera.GetPosition() + (-camera.GetDirection() * 0.2f));
             }
             break;
         case GLFW_KEY_D:
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                camera.SetPosition(camera.GetPosition() + (-left * camera.speed));
+                camera.SetPosition(camera.GetPosition() + (-left * 0.2f));
             }
             break;
         case GLFW_KEY_A:
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                camera.SetPosition(camera.GetPosition() + (left * camera.speed));
+                camera.SetPosition(camera.GetPosition() + (left * 0.2f));
             }
             break;
         case GLFW_KEY_SPACE:
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                camera.SetPosition(camera.GetPosition() + (camera.GetUp() * camera.speed));
+                camera.SetPosition(camera.GetPosition() + (camera.GetUp() * 0.2f));
             }
             break;
         case GLFW_KEY_LEFT_SHIFT:
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                camera.SetPosition(camera.GetPosition() + (-camera.GetUp() * camera.speed));
+                camera.SetPosition(camera.GetPosition() + (-camera.GetUp() * 0.2f));
             }
             break;
         case GLFW_KEY_C:
@@ -732,7 +731,7 @@ glm::vec3 primitive::LineSegment::GetEnd() const
     return m_end;
 }
 
-primitive::Plane::Plane(glm::mat4 model, glm::vec3 color, glm::dvec3 normal)
+primitive::Plane::Plane(glm::mat4 model, glm::vec3 color, glm::vec3 normal)
     : m_normal(normal)
     , m_sideLength(35.0)
 {
@@ -742,12 +741,12 @@ primitive::Plane::Plane(glm::mat4 model, glm::vec3 color, glm::dvec3 normal)
     mesh.color = color;
 }
 
-glm::dvec3 primitive::Plane::GetNormal() const
+glm::vec3 primitive::Plane::GetNormal() const
 {
     return m_normal;
 }
 
-primitive::Sphere::Sphere(glm::mat4 model, glm::dvec3 color, double radius)
+primitive::Sphere::Sphere(glm::mat4 model, glm::vec3 color, double radius)
     : m_radius(radius)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
@@ -761,7 +760,7 @@ double primitive::Sphere::GetRadius() const
     return m_radius;
 }
 
-primitive::Box::Box(glm::mat4 model, glm::dvec3 color, Axes axes)
+primitive::Box::Box(glm::mat4 model, glm::vec3 color, Axes axes)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh = mesh::CreateBox(axes.i, axes.j, axes.k);

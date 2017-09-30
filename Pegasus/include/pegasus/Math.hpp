@@ -941,6 +941,12 @@ void CalculateDotProductForeach(
     }
 }
 
+/**
+ * @brief Calculates arbitrary orthonormal vector to the given one
+ * @tparam VectorType glm vector of size 3
+ * @param vector of interest
+ * @return orthonormal vector to the vector of interest
+ */
 template < typename VectorType >
 VectorType CalculateOrthogonalVector(VectorType vector)
 {

@@ -23,12 +23,12 @@ include_directories (
 )
 set(DEMO_HEADERS
     Demo.hpp
-    Renderer.hpp
+    Render.hpp
     Bunny.hpp
 )
 set(DEMO_SOURCES
     Demo.cpp
-    Renderer.cpp
+    Render.cpp
     Main.cpp
 )
 

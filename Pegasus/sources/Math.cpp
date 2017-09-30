@@ -367,7 +367,7 @@ void HalfEdgeDataStructure::IntializeHalfEdge(
 {
     m_halfEdgePointerIteratorMap[&*he] = he;
 
-    auto twinIterator = m_halfEdgeVerticesIteratorMap.find({vertexIndexFrom, vertexIndexTo});
+    auto const twinIterator = m_halfEdgeVerticesIteratorMap.find({vertexIndexFrom, vertexIndexTo});
     HalfEdge* twin = nullptr;
     if (twinIterator == m_halfEdgeVerticesIteratorMap.end())
     {
