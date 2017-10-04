@@ -6,7 +6,7 @@
 #ifndef PEGASUS_RENDER_HPP
 #define PEGASUS_RENDER_HPP
 
-#include <demo/gl.hpp>
+#include <demo/Gl.hpp>
 #include <glm/ext.hpp>
 #include <vector>
 
