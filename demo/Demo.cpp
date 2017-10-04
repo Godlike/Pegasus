@@ -38,8 +38,9 @@ Demo::Object& Demo::MakeLine(Particle particle, glm::vec3 start, glm::vec3 end)
 {
     m_objects.emplace_back(
         nullptr,
-        std::make_unique<render::primitive::LineSegment>(
-            glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), start, end)
+        new render::primitive::LineSegment(
+            glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), start, end
+        )
     );
 
     return m_objects.back();
@@ -49,8 +50,9 @@ Demo::Object& Demo::MakePlane(Particle particle, glm::dvec3 normal)
 {
     m_objects.emplace_back(
         &MakeRigidBody(particle, std::make_unique<geometry::Plane>(particle.GetPosition(), normal)),
-        std::make_unique<render::primitive::Plane>(
-            glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), normal)
+        new render::primitive::Plane(
+            glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), normal
+        )
     );
     m_particleContactGenerators.emplace_back(
         std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.7)
@@ -63,8 +65,9 @@ Demo::Object& Demo::MakeSphere(Particle particle, double radius)
 {
     m_objects.emplace_back(
         &MakeRigidBody(particle, std::make_unique<geometry::Sphere>(particle.GetPosition(), radius)),
-        std::make_unique<render::primitive::Sphere>(
-            glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), radius)
+        new render::primitive::Sphere(
+            glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())), glm::vec3(0.439, 0.502, 0.565), radius
+        )
     );
     m_particleContactGenerators.emplace_back(
         std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.7)
@@ -77,7 +80,7 @@ Demo::Object& Demo::MakeBox(Particle particle, glm::vec3 i, glm::vec3 j, glm::ve
 {
     m_objects.emplace_back(
         &MakeRigidBody(particle, std::make_unique<geometry::Box>(particle.GetPosition(), i, j, k)),
-        std::make_unique<render::primitive::Box>(
+        new render::primitive::Box(
             glm::translate(glm::mat4(1), glm::vec3(particle.GetPosition())),
             glm::vec3(0.439, 0.502, 0.565),
             render::primitive::Box::Axes{i, j, k}
@@ -138,9 +141,9 @@ void Demo::Remove(Object& object)
     }
 }
 
-Demo::Object::Object(RigidBody* body, std::unique_ptr<render::primitive::Primitive>&& renderShape)
+Demo::Object::Object(RigidBody* body, render::primitive::Primitive* shape)
     : body(body)
-    , shape(std::move(renderShape))
+    , shape(shape)
 {
 }
 

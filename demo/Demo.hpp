@@ -102,9 +102,16 @@ public:
      */
     struct Object
     {
-        Object(RigidBody* body, std::unique_ptr<render::primitive::Primitive>&& renderShape);
+        /**
+         * @brief Constructs Object instance
+         *
+         * @note Assumes ownership of @p shape
+         * @param[in] body physical world body
+         * @param[in] shape render scene shape
+         */
+        Object(RigidBody* body, render::primitive::Primitive* shape);
 
-        //! Physical body
+        //! Physical data
         RigidBody* body;
 
         //! Render data
