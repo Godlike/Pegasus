@@ -97,6 +97,16 @@ void Demo::Remove(Object& object)
         Particle& particle = object.body->p;
         m_particleForceRegistry.Remove(particle);
 
+        //Remove contact generator
+        m_particleContactGenerators.erase(
+            std::find_if(m_particleContactGenerators.begin(), m_particleContactGenerators.end(),
+                [&object](auto& generator) -> bool
+                {
+                    return (object.body == &dynamic_cast<ShapeContactGenerator<RigidBodies>*>(generator.get())->rigidBody);
+                })
+        );
+
+        //Remove RB
         for (auto it = m_rigidBodies.begin(); it != m_rigidBodies.end(); ++it)
         {
             if (&it->p == &particle)
@@ -105,6 +115,8 @@ void Demo::Remove(Object& object)
                 break;
             }
         }
+
+        //Remove Particle
         for (auto it = m_particles.begin(); it != m_particles.end(); ++it)
         {
             if (&*it == &particle)
@@ -115,23 +127,13 @@ void Demo::Remove(Object& object)
         }
     }
 
+    //Remove object
     for (auto it = m_objects.begin(); it != m_objects.end(); ++it)
     {
         if (&*it == &object)
         {
             m_objects.erase(it);
             break;
-        }
-    }
-
-    m_particleContactGenerators.clear();
-    for (Object& obj : m_objects)
-    {
-        if (obj.body != nullptr)
-        {
-            m_particleContactGenerators.emplace_back(
-                std::make_unique<ShapeContactGenerator<RigidBodies>>(*obj.body, m_rigidBodies, 0.7)
-            );
         }
     }
 }

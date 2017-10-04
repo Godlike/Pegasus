@@ -12,7 +12,7 @@
 namespace pegasus
 {
 /**
- * @brief Represents a singletone instance of the Demo
+ * @brief Represents a singleton instance of the Demo
  */
 class Demo
 {
@@ -20,54 +20,71 @@ public:
     struct Object;
 
     /**
-     * @brief Returns a reference to the singletone Demo instance
+     * @brief Returns a reference to the singleton Demo instance
      * @return Demo object reference
      */
     static Demo& GetInstance();
 
     /**
      * @brief Checks if the window is not closed and render is initialized
-     * @return @c true if initialize, @c false otherwise
+     * @return @c true if initialized, @c false otherwise
      */
     bool IsValid() const;
 
     /**
-     * @brief Computes and renders frame
+     * @brief Updates frame
+     *
+     * Runs physics calculations, renders new frame and swaps buffers
      */
     void RunFrame();
 
     /**
-     * @brief Makes physical and render instance of the line and returns it
+     * @brief Creates an object describing a line
+     *
+     * The object contains only render-related part and is not registered in the physics world
+     *
      * @param[in] particle physical data
-     * @param[in] start first point of the line
-     * @param[in] end last point of the line
-     * @return created object reference
+     * @param[in] start line start
+     * @param[in] end line end
+     * @return a newly created Object
      */
     Object& MakeLine(Particle particle, glm::vec3 start, glm::vec3 end);
 
     /**
-     * @brief Makes physical and render instance of the plane and returns it
+     * @brief Creates an object describing a plane
+     *
+     * Particle::centerOfMass is used as the position of the object,
+     * both physical and graphical
+     *
      * @param[in] particle physical data
      * @param[in] normal normal of the vector
-     * @return created object references
+     * @return a newly created Object
      */
     Object& MakePlane(Particle particle, glm::dvec3 normal);
 
     /**
-     * @brief Makes physical and render instance of the sphere and returns it
+     * @brief Creates an object describing a sphere
+     *
+     * Particle::centerOfMass is used as the position of the object,
+     * both physical and graphical
+     *
      * @param[in] particle physical data
      * @param[in] radius radius of the sphere
-     * @return created object reference
+     * @return a newly created Object
      */
     Object& MakeSphere(Particle particle, double radius);
 
     /**
-     * @brief Makes physical and render instance of the bo and returns it
+     * @brief Creates an object describing a box
+     *
+     * Particle::centerOfMass is used as the position of the object,
+     * both physical and graphical
+     *
      * @param[in] particle physical data
      * @param[in] i orthogonal basis vector of the box base
      * @param[in] j orthogonal basis vector of the box base
      * @param[in] k orthogonal basis vector of the box base
-     * @return created object refernce
+     * @return a newly created Object
      */
     Object& MakeBox(Particle particle, glm::vec3 i, glm::vec3 j, glm::vec3 k);
 
@@ -107,21 +124,26 @@ private:
     Demo();
 
     /**
-     * @brief Runs physics calculations with given duration and updates the internal states
+     * @brief Runs physics calculations with given duration
      * @param duration duration of the physical frame
      */
     void ComputeFrame(double duration);
 
     /**
-     * @brief Renders frame and updates frame buffer
+     * @brief Redraws the scene
+     *
+     * Rerenders the frame and updates current frame buffer
      */
     void RenderFrame() const;
 
     /**
-     * @brief Makes rigid body updates internal structures and returns reference to it
+     * @brief Makes rigid body
+     *
+     * Makes rigid body updates internal structures
+     *
      * @param[in] particle physical data
-     * @param[in] shape a pointer to the collision geometry shape
-     * @return reference to the created rigid body
+     * @param[in] shape collision geometry shape
+     * @return a newly created RigidBody
      */
     RigidBody& MakeRigidBody(Particle particle, std::unique_ptr<geometry::SimpleShape>&& shape);
 };

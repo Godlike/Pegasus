@@ -47,13 +47,13 @@ struct Mesh
 
 /**
  * @brief Copies mesh data to the GPU memory and updates mesh with its handles
- * @param[in,out] mesh holds vertex data and opengl handles
+ * @param[in,out] mesh holds vertex data and OpenGL handles
  */
 void Allocate(Mesh& mesh);
 
 /**
  * @brief Removes given mesh from the GPU memory and updates its handles
- * @param[in,out] mesh holds vertex data and opengl handles
+ * @param[in,out] mesh holds vertex data and OpenGL handles
  */
 void Deallocate(Mesh& mesh);
 
@@ -105,75 +105,10 @@ Mesh CreateBox(glm::dvec3 i, glm::dvec3 j, glm::dvec3 k);
 void Delete(Mesh& mesh);
 } // namespace mesh
 
-namespace asset
-{
-/**
- * @brief Represents a unit of storage with id
- * @tparam T storage data type
- */
-template < typename T >
-struct Asset
-{
-    Handle id;
-    T data;
-};
-
-/**
- * @brief Finds first available or creates new element for the given asset vector and returns its handle
- * @tparam T storage data type
- * @param[in] data reference to the vector of assets
- * @return hande to the free element
- */
-template < typename T >
-Handle Make(std::vector<Asset<T>>& data)
-{
-    for (size_t i = 0; i < data.size(); ++i)
-    {
-        if (data[i].id == 0)
-        {
-            data[i].id = static_cast<Handle>(i + 1);
-            return data[i].id;
-        }
-    }
-
-    data.resize(data.size() + 1);
-    data.back().id = static_cast<Handle>(data.size());
-    return data.back().id;
-}
-
-/**
- * @brief Return reference to the data assigned to the given vector
- *
- * @attention Reference might be invalidated after the push to the given vector
- *
- * @tparam T storage data type
- * @param[in] data assets vector
- * @param[in] id handle of the data
- * @return reference to the data
- */
-template < typename T >
-T& Get(std::vector<Asset<T>>& data, Handle id)
-{
-    return data[id - 1].data;
-}
-
-/**
- * @brief Marks element as free
- * @tparam T storage data type
- * @param[in] data vector of assets
- * @param[in] id handle to the element
- */
-template < typename T >
-void Remove(std::vector<Asset<T>>& data, Handle id)
-{
-    data[id - 1].id = 0;
-}
-} // namespace asset
-
 namespace shader
 {
 /**
- * @brief Stores shader program handles, its state and error messages
+ * @brief Stores shader's program data
  */
 struct Shader
 {
@@ -184,10 +119,10 @@ struct Shader
 };
 
 /**
- * @brief Compiles shader of the given type and returns its handle
- * @param[in] type opengl shader type
- * @param[in] sources source code pointer
- * @return shaders handle data
+ * @brief Compiles shader
+ * @param[in] type OpenGL shader type
+ * @param[in] sources shader's source code
+ * @return shader handle
  */
 Shader CompileShader(GLenum type, GLchar const sources[1]);
 
@@ -198,7 +133,7 @@ Shader CompileShader(GLenum type, GLchar const sources[1]);
 void DeleteShader(Shader const& shader);
 
 /**
- * @brief Stores opengl shader program handles and linked shaders handles
+ * @brief Stores OpenGL shader program data
  */
 struct Program
 {
@@ -221,7 +156,7 @@ struct Program
 };
 
 /**
- * @brief Create progrma instance, links given shaders to it and return it
+ * @brief Creates program and links given @p shaders to it
  * @param shaders handles to the shaders
  * @return shader program handle data
  */
@@ -241,7 +176,7 @@ public:
 
     /**
      * @brief Sets aspect ration of the screen
-     * @param ratio width devided by height
+     * @param ratio width Creates an object describing ad by height
      */
     void SetRatio(float ratio);
 
@@ -276,7 +211,7 @@ public:
     glm::vec3 GetDirection() const;
 
     /**
-     * @brief Returns camer verticla axis vector
+     * @brief Returns camera vertical axis vector
      * @return normalized unit vector
      */
     glm::vec3 GetUp() const;
@@ -289,7 +224,7 @@ public:
 
     /**
      * @brief Returns calculated projection matrix
-     * @return transformation of the space into the given frustrum
+     * @return transformation of the space into the camera frustrum
      */
     glm::mat4 GetProjection() const;
 
@@ -316,30 +251,28 @@ private:
 };
 
 /**
- * @brief Singletone class to handle input events
+ * @brief Singleton class for handling input events
  */
 class Input
 {
 public:
     /**
-     * @brief Returns a reference to the singletone instance of the class
+     * @brief Returns a reference to the singleton instance of the class
      * @return reference to the instance
      */
     static Input& GetInstance();
 
     /**
      * @brief Initializes input with the given contex
-     * @param[in] window pointer to the glfw window for which callbacks are set
+     * @param[in] window callbacks context pointer
      */
     static void InitializeContext(GLFWwindow* window);
 
     /**
-     * @brief Push additional callback for the Resize event
-     *
-     * @attention the callback must be c-style function
+     * @brief Pushes additional callback for the Resize event
      * @param callback function object containing the pointer to the callback function
      */
-    void AddResizeCallback(std::function<void(GLFWwindow*, int, int)> callback);
+    void AddResizeCallback(void(*callback)(GLFWwindow*, int, int));
 
     /**
      * @brief Removes given callback function from the Resize event call list
@@ -347,15 +280,13 @@ public:
      * @attention the callback must be c-style
      * @param callback pointer to the callback function to be removed
      */
-    void RemoveResizeCallback(std::function<void(GLFWwindow*, int, int)> callback);
+    void RemoveResizeCallback(void(*callback)(GLFWwindow*, int, int));
 
     /**
-     * @brief Push additional callback for the KeyButton event
-     *
-     * @attention the callback must be c-style function
+     * @brief Pushes additional callback for the KeyButton event
      * @param callback function object containing the pointer to the callback function
      */
-    void AddKeyButtonCallback(std::function<void(GLFWwindow*, int, int, int, int)> callback);
+    void AddKeyButtonCallback(void(*callback)(GLFWwindow*, int, int, int, int));
 
     /**
      * @brief Removes given callback function from the KeyButton event call list
@@ -363,31 +294,27 @@ public:
      * @attention the callback must be c-style
      * @param callback pointer to the callback function to be removed
      */
-    void RemoveKeyButtonCallback(std::function<void(GLFWwindow*, int, int, int, int)> callback);
+    void RemoveKeyButtonCallback(void(*callback)(GLFWwindow*, int, int, int, int));
 
     /**
-     * @brief Push additional callback for the CursoreMove event
-     *
-     * @attention the callback must be c-style function
+     * @brief Pushes additional callback for the CursorMove event
      * @param callback function object containing the pointer to the callback function
      */
-    void AddCursoreMoveCallback(std::function<void(GLFWwindow*, double, double)> callback);
+    void AddCursorMoveCallback(void(*callback)(GLFWwindow*, double, double));
 
     /**
-     * @brief Removes given callback function from the CursoreMove event call list
+     * @brief Removes given callback function from the CursorMove event call list
      *
      * @attention the callback must be c-style
      * @param callback pointer to the callback function to be removed
      */
-    void RemoveCursoreMoveCallback(std::function<void(GLFWwindow*, double, double)> callback);
+    void RemoveCursorMoveCallback(void(*callback)(GLFWwindow*, double, double));
 
     /**
-     * @brief Push additional callback for the MouseButton event
-     *
-     * @attention the callback must be c-style function
+     * @brief Pushes additional callback for the MouseButton event
      * @param callback function object containing the pointer to the callback function
      */
-    void AddMouseButtonCallback(std::function<void(GLFWwindow*, int, int, int)> callback);
+    void AddMouseButtonCallback(void(*callback)(GLFWwindow*, int, int, int));
 
     /**
      * @brief Removes given callback function from the MouseButton event call list
@@ -395,17 +322,14 @@ public:
      * @attention the callback must be c-style
      * @param callback pointer to the callback function to be removed
      */
-    void RemoveMouseButtonCallback(std::function<void(GLFWwindow*, int, int, int)> callback);
+    void RemoveMouseButtonCallback(void(*callback)(GLFWwindow*, int, int, int));
 
 private:
-    template < typename CallbackType >
-    using FunctionVector = std::vector<std::function<CallbackType>>;
-
     GLFWwindow* m_pWindow;
-    FunctionVector<void(GLFWwindow*, int, int)> m_resizeCallbacks;
-    FunctionVector<void(GLFWwindow*, int, int, int, int)> m_keyButtonCallbacks;
-    FunctionVector<void(GLFWwindow*, double, double)> m_cursorMoveCallbacks;
-    FunctionVector<void(GLFWwindow*, int, int, int)> m_mouseButtonCallbacks;
+    std::vector<void(*)(GLFWwindow*, int, int)> m_resizeCallbacks;
+    std::vector<void(*)(GLFWwindow*, int, int, int, int)> m_keyButtonCallbacks;
+    std::vector<void(*)(GLFWwindow*, double, double)> m_cursorMoveCallbacks;
+    std::vector<void(*)(GLFWwindow*, int, int, int)> m_mouseButtonCallbacks;
 
     /**
      * @brief Constructs default initialized instance of the callback system
@@ -413,33 +337,18 @@ private:
     Input();
 
     /**
-     * @brief Returns address of the c-style function stored in the function object
-     * @tparam Ret return type of the function
-     * @tparam Args argument's types of the function
-     * @param f function object
-     * @return address
-     */
-    template < typename Ret, typename... Args >
-    static size_t GetAddress(std::function<Ret(Args...)> f)
-    {
-        typedef Ret(FnType)(Args...);
-        FnType ** fnPointer = f.template target<FnType*>();
-        return reinterpret_cast<size_t>(*fnPointer);
-    }
-
-    /**
      * @brief Pushes new callback to the given function vector
      * @tparam Ret return type of the function
-     * @tparam Args argument's types of the function
+     * @tparam Args arguments type of the function
      * @param container vector of the function objects
      * @param callback new callback
      */
     template < typename Ret, typename... Args >
-    static void AddCallback(FunctionVector<Ret(Args...)>& container, std::function<Ret(Args...)> callback)
+    static void AddCallback(std::vector<Ret(*)(Args...)>& container, Ret(*callback)(Args...))
     {
-        for(auto function : container)
+        for(Ret(*f)(Args...) : container)
         {
-            if (GetAddress(function) == GetAddress(callback))
+            if (f == callback)
             {
                 return;
             }
@@ -450,16 +359,16 @@ private:
     /**
      * @brief Removes a callback from the container if is in it
      * @tparam Ret return type of the function
-     * @tparam Args argument's types of the function
+     * @tparam Args arguments type of the function
      * @param container container of the function objects
      * @param callback callback to be deleted
      */
     template < typename Ret, typename... Args >
-    static void RemoveCallback(FunctionVector<Ret(Args...)>& container, std::function<Ret(Args...)> callback)
+    static void RemoveCallback(std::vector<Ret(*)(Args...)>& container, Ret(*callback)(Args...))
     {
         for(auto it = container.begin(); it != container.end(); ++it)
         {
-            if (GetAddress(*it) == GetAddress(callback))
+            if (*it == callback)
             {
                 container.erase(it);
                 return;
@@ -469,7 +378,7 @@ private:
 
     /**
      * @brief Initial callback Resize that calls all user provided callbacks
-     * @param[in] window glfw window pointer for the callback
+     * @param[in] window GLFW window pointer for the callback
      * @param[in] width new width of the screen
      * @param[in] height new height of the screen
      */
@@ -477,7 +386,7 @@ private:
 
     /**
      * @brief Initial KeyButton callback that calls all user provided callbacks
-     * @param[in] window glfw window pointer for the callback
+     * @param[in] window GLFW window pointer for the callback
      * @param[in] key button id
      * @param[in] scancode
      * @param[in] action action type
@@ -487,7 +396,7 @@ private:
 
     /**
      * @brief Initial callback CursorMove that calls all user provided callbacks
-     * @param[in] window glfw window pointer for the callback
+     * @param[in] window GLFW window pointer for the callback
      * @param[in] xpos new mouse x screen coordinate
      * @param[in] ypos new mouse y screen coordinate
      */
@@ -495,7 +404,7 @@ private:
 
     /**
      * @brief Initial MouseButton callback that calls all user provided callbacks
-     * @param[in] window glfw window pointer for the callback
+     * @param[in] window GLFW window pointer for the callback
      * @param[in] button button id
      * @param[in] action action type
      * @param[in] mods
@@ -504,7 +413,7 @@ private:
 };
 
 /**
- * @brief Represent singletone instance of the renderer
+ * @brief Represent singleton instance of the renderer
  */
 class Renderer
 {
@@ -515,7 +424,7 @@ public:
     Renderer& operator==(Renderer&&) = delete;
 
     /**
-     * @brief Returns instance of the singletone rederer
+     * @brief Returns instance of the singleton rederer
      *
      * @attention First time must be called from the main thread
      * @return reference to the renderer
@@ -534,7 +443,7 @@ public:
     void RenderFrame();
 
     /**
-     * @brief Finds free or creates new mesh and returns it's handle
+     * @brief Finds free or creates new mesh
      * @return handle of the mesh
      */
     Handle MakeMesh();
@@ -554,7 +463,7 @@ public:
 
 private:
     /**
-     * @brief Stores glfw window handler and window related information
+     * @brief Stores GLFW window handler and window related information
      */
     struct Window
     {
@@ -565,10 +474,21 @@ private:
         int frameBufferHeight;
     };
 
+    /**
+     * @brief Represents a unit of storage with id
+     * @tparam T storage data type
+     */
+    template < typename T >
+    struct Asset
+    {
+        Handle id;
+        T data;
+    };
+
     bool m_initialized;
     Window m_window;
     Camera m_camera;
-    std::vector<asset::Asset<mesh::Mesh>> m_meshes;
+    std::vector<Asset<mesh::Mesh>> m_meshes;
 
     shader::Program m_program;
     GLint m_mvpUniformHandle;
@@ -634,22 +554,25 @@ private:
      */
     Renderer();
 
+    /**
+     * @brief Deinitialized GLFW
+     */
     ~Renderer();
 
     /**
-     * @brief Initializes glfw library
+     * @brief Initializes GLFW library
      * @attention must be called from the main thread
      */
     void InitializeGlfw();
 
     /**
-     * @brief Initializes glfw context
+     * @brief Initializes GLFW context
      * @attention must be called from the main thread
      */
     void InitializeContext();
 
     /**
-     * @brief Initializes glfw callbacks
+     * @brief Initializes GLFW callbacks
      * @attention must be called from the main thread
      */
     void InitializeCallbacks() const;
@@ -660,8 +583,62 @@ private:
     void InitializeShaderProgram();
 
     /**
+     * @brief Returns a handle for @p T data
+     *
+     * Searches for an empty handle in @p data. If there are no empty handles, creates a new one.
+     *
+     * @tparam T storage data type
+     * @param[in,out] data reference to the vector of assets
+     * @return handle to the free element
+     */
+    template < typename T >
+    Handle MakeAsset(std::vector<Asset<T>>& data)
+    {
+        for (size_t i = 0; i < data.size(); ++i)
+        {
+            if (data[i].id == 0)
+            {
+                data[i].id = static_cast<Handle>(i + 1);
+                return data[i].id;
+            }
+        }
+
+        data.resize(data.size() + 1);
+        data.back().id = static_cast<Handle>(data.size());
+        return data.back().id;
+    }
+
+    /**
+     * @brief Return reference to the data assigned to the given vector
+     *
+     * @attention Reference might be invalidated after the push to the given vector
+     *
+     * @tparam T storage data type
+     * @param[in] data assets vector
+     * @param[in] id handle of the data
+     * @return reference to the data
+     */
+    template < typename T >
+    T& GetAsset(std::vector<Asset<T>>& data, Handle id)
+    {
+        return data[id - 1].data;
+    }
+
+    /**
+     * @brief Marks element as free
+     * @tparam T storage data type
+     * @param[in,out] data vector of assets
+     * @param[in] id handle to the element
+     */
+    template < typename T >
+    void RemoveAsset(std::vector<Asset<T>>& data, Handle id)
+    {
+        data[id - 1].id = 0;
+    }
+
+    /**
      * @brief Resize callback function
-     * @param[in] window poiter to the current glfw context window
+     * @param[in] window poiter to the current GLFW context window
      * @param[in] width new width of the window
      * @param[in] height
      */
@@ -669,7 +646,7 @@ private:
 
     /**
      * @brief KeyButton callback function
-     * @param[in] window poiter to the current glfw context window
+     * @param[in] window poiter to the current GLFW context window
      * @param[in] key button id
      * @param[in] scancode
      * @param[in] action action type
@@ -679,7 +656,7 @@ private:
 
     /**
      * @brief CursorMove callback function
-     * @param[in] window poiter to the current glfw context window
+     * @param[in] window poiter to the current GLFW context window
      * @param[in] xpos new mouse x value in the window coordinates
      * @param[in] ypos new mouse y value in the window coordinates
      */
@@ -757,7 +734,7 @@ private:
 class Plane : public Primitive
 {
 public:
-    /** Returns sphere ratius
+    /**
      * @brief Creates new plane in the renderer
      * @param model stores local to world space mesh transformation
      * @param color primitive's color in the float rgb format

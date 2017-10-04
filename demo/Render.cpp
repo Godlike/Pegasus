@@ -57,12 +57,12 @@ mesh::Mesh mesh::CreateLineSegment(glm::vec3 start, glm::vec3 end)
 {
     Mesh mesh;
 
-    mesh.vertices = {{
+    mesh.vertices = {
         start.x, start.y, start.z, 0, 0, 0,
         end.x, end.y, end.z, 0, 0, 0,
         end.x, end.y, end.z, 0, 0, 0,
-    }};
-    mesh.indices = {{ 0, 1, 2 }};
+    };
+    mesh.indices = { 0, 1, 2 };
     Allocate(mesh);
 
     return mesh;
@@ -75,13 +75,13 @@ mesh::Mesh mesh::CreatePlane(glm::dvec3 normal, double length)
     glm::dvec3 const i = math::CalculateOrthogonalVector(normal) * (length / 2.0);
     glm::dvec3 const j = glm::normalize(glm::cross(i, normal)) * (length / 2.0);
 
-    mesh.vertices = {{
+    mesh.vertices = {
         ( i + j).x, ( i + j).y, ( i + j).z, normal.x, normal.y, normal.z,
         (-i + j).x, (-i + j).y, (-i + j).z, normal.x, normal.y, normal.z,
         ( i - j).x, ( i - j).y, ( i - j).z, normal.x, normal.y, normal.z,
         (-i - j).x, (-i - j).y, (-i - j).z, normal.x, normal.y, normal.z,
-    }};
-    mesh.indices = {{ 0, 1, 2, 1, 2, 3 }};
+    };
+    mesh.indices = { 0, 1, 2, 1, 2, 3 };
     Allocate(mesh);
 
     return mesh;
@@ -91,20 +91,20 @@ mesh::Mesh mesh::CreateSphere(double radius, uint32_t depth)
 {
     //Initial hexahedron
     Mesh mesh;
-    mesh.vertices = {{
+    mesh.vertices = {
         0, 0, radius,
         0, radius, 0,
         radius, 0, 0,
         0, -radius, 0,
         -radius, 0, 0,
         0, 0, -radius,
-    }};
-    mesh.indices = {{
+    };
+    mesh.indices = {
         0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 1, 4,
         1, 2, 5, 2, 3, 5, 3, 4, 5, 1, 4, 5,
-    }};
+    };
 
-    //Subdevide
+    //Subdivide
     for(uint32_t i = 0; i < depth; ++i)
     {
         for (int64_t j = mesh.indices.size() - 3; j >= 0; j-=3)
@@ -113,9 +113,9 @@ mesh::Mesh mesh::CreateSphere(double radius, uint32_t depth)
             glm::dvec3 const a(mesh.vertices[indices[0]*3],mesh.vertices[indices[0]*3+1], mesh.vertices[indices[0]*3+2]);
             glm::dvec3 const b(mesh.vertices[indices[1]*3],mesh.vertices[indices[1]*3+1], mesh.vertices[indices[1]*3+2]);
             glm::dvec3 const c(mesh.vertices[indices[2]*3],mesh.vertices[indices[2]*3+1], mesh.vertices[indices[2]*3+2]);
-            glm::dvec3 const ab = glm::normalize((a + b) / 2.0) * radius;
-            glm::dvec3 const bc = glm::normalize((b + c) / 2.0) * radius;
-            glm::dvec3 const ca = glm::normalize((c + a) / 2.0) * radius;
+            glm::dvec3 const ab = glm::normalize(a + b) * radius;
+            glm::dvec3 const bc = glm::normalize(b + c) * radius;
+            glm::dvec3 const ca = glm::normalize(c + a) * radius;
 
             GLuint const index = static_cast<GLuint>(mesh.vertices.size()) / 3 - 1;
             mesh.indices.insert(mesh.indices.end(), {
@@ -153,7 +153,7 @@ mesh::Mesh mesh::CreateBox(glm::dvec3 i, glm::dvec3 j, glm::dvec3 k)
     glm::dvec3 iNormal = glm::normalize(i);
     glm::dvec3 jNormal = glm::normalize(j);
     glm::dvec3 kNormal = glm::normalize(k);
-    mesh.vertices = {{
+    mesh.vertices = {
         //top
         ( i + j + k).x, ( i + j + k).y, ( i + j + k).z, kNormal.x, kNormal.y, kNormal.z,
         (-i + j + k).x, (-i + j + k).y, (-i + j + k).z, kNormal.x, kNormal.y, kNormal.z,
@@ -189,15 +189,15 @@ mesh::Mesh mesh::CreateBox(glm::dvec3 i, glm::dvec3 j, glm::dvec3 k)
         (-i + j - k).x, (-i + j - k).y, (-i + j - k).z, -kNormal.x, -kNormal.y, -kNormal.z,
         ( i - j - k).x, ( i - j - k).y, ( i - j - k).z, -kNormal.x, -kNormal.y, -kNormal.z,
         (-i - j - k).x, (-i - j - k).y, (-i - j - k).z, -kNormal.x, -kNormal.y, -kNormal.z,
-    }};
-    mesh.indices = {{
+    };
+    mesh.indices = {
         0, 1, 2, 1, 2, 3,       //top
         4, 5, 6, 5, 6, 7,       //right
         8, 9, 10, 9, 10, 11,    //left
         12, 13, 14, 13, 14, 15, //front
         16, 17, 18, 17, 18, 19, //back
         20, 21, 22, 21, 22, 23, //bottom
-    }};
+    };
     Allocate(mesh);
 
     return mesh;
@@ -218,9 +218,9 @@ shader::Shader shader::CompileShader(GLenum type, const GLchar sources[1])
     glShaderSource(result.handle, 1, &sources, nullptr);
     glCompileShader(result.handle);
 
-    GLint succes = 0;
-    glGetShaderiv(result.handle, GL_COMPILE_STATUS, &succes);
-    result.valid = static_cast<bool>(succes);
+    GLint success = 0;
+    glGetShaderiv(result.handle, GL_COMPILE_STATUS, &success);
+    result.valid = static_cast<bool>(success);
 
     if (!result.valid)
     {
@@ -254,9 +254,9 @@ shader::Program shader::MakeProgram(Program::Handles shaders)
 
     glLinkProgram(result.handle);
 
-    GLint succes = 0;
-    glGetProgramiv(result.handle, GL_LINK_STATUS, &succes);
-    result.valid = static_cast<bool>(succes);
+    GLint success = 0;
+    glGetProgramiv(result.handle, GL_LINK_STATUS, &success);
+    result.valid = static_cast<bool>(success);
 
     if (!result.valid)
     {
@@ -358,42 +358,42 @@ void Input::InitializeContext(GLFWwindow* window)
     glfwSetMouseButtonCallback(input.m_pWindow, &Input::MouseButton);
 }
 
-void Input::AddResizeCallback(std::function<void(GLFWwindow*, int, int)> callback)
+void Input::AddResizeCallback(void(*callback)(GLFWwindow*, int, int))
 {
     AddCallback(m_resizeCallbacks, callback);
 }
 
-void Input::RemoveResizeCallback(std::function<void(GLFWwindow*, int, int)> callback)
+void Input::RemoveResizeCallback(void(*callback)(GLFWwindow*, int, int))
 {
     RemoveCallback(m_resizeCallbacks, callback);
 }
 
-void Input::AddKeyButtonCallback(std::function<void(GLFWwindow*, int, int, int, int)> callback)
+void Input::AddKeyButtonCallback(void(*callback)(GLFWwindow*, int, int, int, int))
 {
     AddCallback(m_keyButtonCallbacks, callback);
 }
 
-void Input::RemoveKeyButtonCallback(std::function<void(GLFWwindow*, int, int, int, int)> callback)
+void Input::RemoveKeyButtonCallback(void(*callback)(GLFWwindow*, int, int, int, int))
 {
     RemoveCallback(m_keyButtonCallbacks, callback);
 }
 
-void Input::AddCursoreMoveCallback(std::function<void(GLFWwindow*, double, double)> callback)
+void Input::AddCursorMoveCallback(void(*callback)(GLFWwindow*, double, double))
 {
     AddCallback(m_cursorMoveCallbacks, callback);
 }
 
-void Input::RemoveCursoreMoveCallback(std::function<void(GLFWwindow*, double, double)> callback)
+void Input::RemoveCursorMoveCallback(void(*callback)(GLFWwindow*, double, double))
 {
     RemoveCallback(m_cursorMoveCallbacks, callback);
 }
 
-void Input::AddMouseButtonCallback(std::function<void(GLFWwindow*, int, int, int)> callback)
+void Input::AddMouseButtonCallback(void(*callback)(GLFWwindow*, int, int, int))
 {
     AddCallback(m_mouseButtonCallbacks, callback);
 }
 
-void Input::RemoveMouseButtonCallback(std::function<void(GLFWwindow*, int, int, int)> callback)
+void Input::RemoveMouseButtonCallback(void(*callback)(GLFWwindow*, int, int, int))
 {
     RemoveCallback(m_mouseButtonCallbacks, callback);
 }
@@ -457,7 +457,7 @@ void Renderer::RenderFrame()
 
     glUseProgram(m_program.handle);
 
-    for (asset::Asset<mesh::Mesh>& mesh : m_meshes)
+    for (Asset<mesh::Mesh>& mesh : m_meshes)
     {
         glBindVertexArray(mesh.data.bufferData.vertexArrayObject);
 
@@ -485,17 +485,17 @@ void Renderer::RenderFrame()
 
 Handle Renderer::MakeMesh()
 {
-    return asset::Make(m_meshes);
+    return MakeAsset(m_meshes);
 }
 
 mesh::Mesh& Renderer::GetMesh(Handle id)
 {
-    return asset::Get(m_meshes, id);
+    return GetAsset(m_meshes, id);
 }
 
 void Renderer::RemoveMesh(Handle id)
 {
-    asset::Remove(m_meshes, id);
+    RemoveAsset(m_meshes, id);
 }
 
 Renderer::Renderer()
@@ -514,7 +514,7 @@ Renderer::~Renderer()
 {
     //Deinitialize inputs
     Input& input = Input::GetInstance();
-    input.RemoveCursoreMoveCallback(&Renderer::CursorMove);
+    input.RemoveCursorMoveCallback(&Renderer::CursorMove);
     input.RemoveResizeCallback(&Renderer::Resize);
     input.RemoveKeyButtonCallback(&Renderer::KeyButton);
 
@@ -545,7 +545,7 @@ void Renderer::InitializeCallbacks() const
     Input& input = Input::GetInstance();
     input.InitializeContext(m_window.pWindow);
 
-    input.AddCursoreMoveCallback(&Renderer::CursorMove);
+    input.AddCursorMoveCallback(&Renderer::CursorMove);
     input.AddResizeCallback(&Renderer::Resize);
     input.AddKeyButtonCallback(&Renderer::KeyButton);
 }
@@ -685,20 +685,16 @@ void Renderer::CursorMove(GLFWwindow* window, double xpos, double ypos)
 }
 
 primitive::Primitive::Primitive()
-    : m_initialized(true)
-    , m_pRenderer(&Renderer::GetInstance())
+    : m_pRenderer(&Renderer::GetInstance())
     , m_meshHandle(m_pRenderer->MakeMesh())
 {
 }
 
 primitive::Primitive::~Primitive()
 {
-    if (m_initialized)
-    {
-        mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
-        mesh::Delete(mesh);
-        m_pRenderer->RemoveMesh(m_meshHandle);
-    }
+    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
+    mesh::Delete(mesh);
+    m_pRenderer->RemoveMesh(m_meshHandle);
 }
 
 void primitive::Primitive::SetModel(glm::mat4 model) const

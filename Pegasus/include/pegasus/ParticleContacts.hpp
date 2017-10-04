@@ -63,9 +63,9 @@ class ShapeContactGenerator : public ParticleContactGenerator
 {
 public:
     ShapeContactGenerator(RigidBody& rBody, RigidBodies& rBodies, double restitution)
-        : m_rigidBody(rBody)
-        , m_rigidBodies(rBodies)
-        , m_restitution(restitution)
+        : rigidBody(rBody)
+        , rigidBodies(rBodies)
+        , restitution(restitution)
     {
     }
 
@@ -73,20 +73,20 @@ public:
     {
         uint32_t const contactCount = static_cast<uint32_t>(contacts.size());
 
-        for (RigidBody& body : m_rigidBodies)
+        for (RigidBody& body : rigidBodies)
         {
-            if (&body == &m_rigidBody)
+            if (&body == &rigidBody)
             {
                 continue;
             }
 
             static geometry::SimpleShapeIntersectionDetector intersection;
 
-            if (intersection.CalculateIntersection(m_rigidBody.s.get(), body.s.get()))
+            if (intersection.CalculateIntersection(rigidBody.s.get(), body.s.get()))
             {
-                glm::dvec3 const contactNormal = intersection.CalculateContactNormal(m_rigidBody.s.get(), body.s.get());
-                double const penetration = intersection.CalculatePenetration(m_rigidBody.s.get(), body.s.get());
-                contacts.emplace_back(m_rigidBody.p, &body.p, m_restitution, contactNormal, penetration);
+                glm::dvec3 const contactNormal = intersection.CalculateContactNormal(rigidBody.s.get(), body.s.get());
+                double const penetration = intersection.CalculatePenetration(rigidBody.s.get(), body.s.get());
+                contacts.emplace_back(rigidBody.p, &body.p, restitution, contactNormal, penetration);
 
                 if (contacts.size() == limit)
                 {
@@ -98,9 +98,9 @@ public:
         return static_cast<uint32_t>(contacts.size() - contactCount);
     }
 
-    RigidBody& m_rigidBody;
-    RigidBodies& m_rigidBodies;
-    double const m_restitution;
+    RigidBody& rigidBody;
+    RigidBodies& rigidBodies;
+    double const restitution;
 };
 } // namespace pegasus
 
