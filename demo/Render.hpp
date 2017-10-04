@@ -6,14 +6,9 @@
 #ifndef PEGASUS_RENDER_HPP
 #define PEGASUS_RENDER_HPP
 
-#include <glbinding/gl44ext/gl.h>
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#include <demo/gl.hpp>
 #include <glm/ext.hpp>
-
 #include <vector>
-
-using namespace gl;
 
 namespace pegasus
 {
@@ -691,7 +686,6 @@ public:
     glm::mat4 GetModel() const;
 
 protected:
-    bool m_initialized;
     Renderer* m_pRenderer;
     Handle m_meshHandle;
 };

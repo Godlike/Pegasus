@@ -6,8 +6,6 @@
 #include <pegasus/Math.hpp>
 #include <demo/Render.hpp>
 
-#include <glbinding/Binding.h>
-
 using namespace pegasus;
 using namespace render;
 
