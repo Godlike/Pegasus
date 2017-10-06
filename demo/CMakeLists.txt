@@ -6,19 +6,15 @@ cmake_minimum_required (VERSION 3.1)
 
 project(PegasusDemo)
 
-#FreeGLUT
-include(GlutConfig)
-add_subdirectory(${GLUT_SOURCE_DIR} ${GLUT_BINARY_DIR})
-include_directories(${GLUT_INCLUDE_DIR})
+#GLBINDING
+include(GlbindingConfig)
+add_subdirectory(${GLBINDING_SOURCE_DIR} ${GLBINDING_BINARY_DIR})
+include_directories(${GLBINDING_INCLUDE_DIR})
 
-#OpenGL
-find_package(OpenGL REQUIRED)
-include_directories(${OpenGL_INCLUDE_DIRS})
-link_directories(${OpenGL_LIBRARY_DIRS})
-add_definitions(${OpenGL_DEFINITIONS})
-if(NOT OPENGL_FOUND)
-    message(ERROR " OPENGL not found!")
-endif(NOT OPENGL_FOUND)
+#GLFW
+include(GlfwConfig)
+add_subdirectory(${GLFW_SOURCE_DIR} ${GLFW_BINARY_DIR})
+include_directories(${GLFW_INCLUDE_DIR})
 
 #Target
 include(PegasusConfig)
@@ -26,15 +22,13 @@ include_directories (
     ${PEGASUS_INCLUDE_DIR}
 )
 set(DEMO_HEADERS
-    Application.hpp
-    Timing.hpp
-    OglHeaders.hpp
+    Demo.hpp
+    Render.hpp
     Bunny.hpp
 )
 set(DEMO_SOURCES
-    Application.cpp
-    Timing.cpp
-    Falling.cpp
+    Demo.cpp
+    Render.cpp
     Main.cpp
 )
 
@@ -44,6 +38,7 @@ add_executable (${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME}
     ${OPENGL_LIBRARIES}
-    ${GLUT_LIBRARIES}
+    ${GLBINDING_LIB}
+    ${GLFW_LIB}
     ${PEGASUS_LIB}
 )

@@ -1,88 +1,68 @@
 /*
-* Copyright (c) Icosagon 2003. All Rights Reserved.
-*
-* This software is distributed under licence. Use of this software
-* implies agreement with all terms and conditions of the accompanying
-* software licence.
+* Copyright (C) 2017 by Godlike
+* This code is licensed under the MIT license (MIT)
+* (http://opensource.org/licenses/MIT)
 */
 
-#include "demo/Application.hpp"
-#include "demo/OglHeaders.hpp"
-#include "demo/Timing.hpp"
+#include "demo/Demo.hpp"
 
-extern Application* GetApplication();
+std::list<pegasus::Demo::Object*> g_objects;
 
-Application* g_application;
-
-void createWindow(const char* title)
+void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    glutSetOption(GLUT_MULTISAMPLE, 8);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_MULTISAMPLE);
-    glutInitWindowSize(1366, 768);
-    glutInitWindowPosition(200, 200);
-    glutCreateWindow(title);
-}
+    if (action == GLFW_PRESS)
+        return;
 
-void update()
-{
-    TimingData::Get().Update();
-    g_application->Update();
-}
+    pegasus::Demo& demo = pegasus::Demo::GetInstance();
+    switch (key)
+    {
+    case GLFW_KEY_M:
+        if (g_objects.size() < demo.maxParticles)
+        {
+            pegasus::Particle particle;
+            particle.SetPosition(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
+            particle.SetVelocity(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
 
-void display()
-{
-    g_application->Display();
-
-    // Update the displayed content.
-    glFlush();
-    glutSwapBuffers();
-}
-
-void mouse(int button, int state, int x, int y)
-{
-    g_application->Mouse(button, state, x, y);
-}
-
-void reshape(int width, int height)
-{
-    g_application->Resize(width, height);
-}
-
-void keyboard(unsigned char key, int x, int y)
-{
-    // Note we omit passing on the x and y: they are rarely needed.
-    g_application->Key(key);
-}
-
-void motion(int x, int y)
-{
-    g_application->MouseDrag(x, y);
+            static uint8_t isBox = false;
+            isBox = !isBox;
+            if (isBox)
+                g_objects.push_back(&demo.MakeBox(
+                    particle, {rand() % 10 / 10. + 0.1,0,0}, {0,rand() % 10 / 10. + 0.1,0}, {0,0,rand() % 10 / 10. + 0.1}
+                ));
+            else
+                g_objects.push_back(&demo.MakeSphere(particle, rand() % 10 / 10. + 0.1));
+        }
+        break;
+    case GLFW_KEY_R:
+        if (g_objects.size() > 1)
+        {
+            demo.Remove(*g_objects.back());
+            g_objects.pop_back();
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 int main(int argc, char** argv)
 {
-    // Set up GLUT and the timers
-    glutInit(&argc, argv);
-    TimingData::Init();
+    pegasus::Demo& demo = pegasus::Demo::GetInstance();
 
-    // Create the application and its window
-    g_application = GetApplication();
-    createWindow(g_application->GetTitle());
+    pegasus::render::Input& input = pegasus::render::Input::GetInstance();
+    input.AddKeyButtonCallback(KeyButtonCallback);
 
-    // Set up the appropriate handler functions
-    glutReshapeFunc(reshape);
-    glutKeyboardFunc(keyboard);
-    glutDisplayFunc(display);
-    glutIdleFunc(update);
-    glutMouseFunc(mouse);
-    glutMotionFunc(motion);
+    pegasus::Particle plane;
+    plane.SetPosition(0, -10, 0);
+    plane.SetInverseMass(0);
+    g_objects.push_back(&demo.MakePlane(plane, glm::vec3(0, 1, 0)));
 
-    // Run the application
-    g_application->InitGraphics();
-    glutMainLoop();
+    pegasus::Particle line;
+    line.SetPosition(0, -10, 0);
+    g_objects.push_back(&demo.MakeLine(line, line.GetPosition(), glm::vec3(0, 10, 0)));
 
-    // Clean up the application
-    g_application->Deinit();
-    delete g_application;
-    TimingData::Deinit();
+    while (demo.IsValid())
+    {
+        demo.RunFrame();
+    }
 }

@@ -147,7 +147,3 @@ void pegasus::ParticleContactResolver::ResolveContacts(ParticleContacts& contact
         maxSepVelocityContact.Resolve(duration);
     }
 }
-
-pegasus::ParticleContactGenerator::~ParticleContactGenerator()
-{
-}

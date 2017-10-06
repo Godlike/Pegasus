@@ -942,6 +942,29 @@ void CalculateDotProductForeach(
 }
 
 /**
+ * @brief Calculates arbitrary orthonormal vector to the given one
+ * @tparam VectorType glm vector of size 3
+ * @param vector of interest
+ * @return orthonormal vector to the vector of interest
+ */
+template < typename VectorType >
+VectorType CalculateOrthogonalVector(VectorType vector)
+{
+    VectorType result;
+
+    for (uint8_t i = 0; i < result.length(); ++i)
+    {
+        if (vector[i] != 0.0)
+        {
+            result[(1 + i) % 3] = vector[i];
+            result[i] = -vector[(1 + i) % 3];
+        }
+    }
+
+    return glm::normalize(result);;
+}
+
+/**
  * @brief Calculates distance between a point and line segment
  * @param[in] lineStart start of the line segment
  * @param[in] lineEnd end of the line segment
