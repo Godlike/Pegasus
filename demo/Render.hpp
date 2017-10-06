@@ -389,7 +389,7 @@ public:
     Renderer& operator==(Renderer&&) = delete;
 
     /**
-     * @brief Returns instance of the singleton rednerer
+     * @brief Returns instance of the singleton renderer
      *
      * @attention First time must be called from the main thread
      * @return reference to the renderer
