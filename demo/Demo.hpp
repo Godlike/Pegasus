@@ -6,14 +6,12 @@
 #ifndef PEGASUS_DEMO_HPP
 #define PEGASUS_DEMO_HPP
 
+#include "demo/Render.hpp"
 #include <pegasus/ParticleWorld.hpp>
-#include <demo/Render.hpp>
 
 namespace pegasus
 {
-/**
- * @brief Represents a singleton instance of the Demo
- */
+/** Represents a singleton instance of the Demo */
 class Demo
 {
 public:
@@ -145,9 +143,6 @@ private:
 
     /**
      * @brief Makes rigid body
-     *
-     * Makes rigid body updates internal structures
-     *
      * @param[in] particle physical data
      * @param[in] shape collision geometry shape
      * @return a newly created RigidBody

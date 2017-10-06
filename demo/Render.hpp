@@ -3,10 +3,10 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#ifndef PEGASUS_RENDER_HPP
-#define PEGASUS_RENDER_HPP
+#ifndef PEGASUS_DEMO_RENDER_HPP
+#define PEGASUS_DEMO_RENDER_HPP
 
-#include <demo/Gl.hpp>
+#include "demo/Gl.hpp"
 #include <glm/ext.hpp>
 #include <vector>
 
@@ -18,9 +18,7 @@ using Handle = uint32_t;
 
 namespace mesh
 {
-/**
- * @brief Stores mesh data and GPU OpenGL handle information
- */
+/** Stores mesh data and GPU OpenGL handle information */
 struct Mesh
 {
     std::vector<GLdouble> vertices;
@@ -28,9 +26,7 @@ struct Mesh
     glm::mat4 model = glm::mat4(1);
     glm::vec3 color = glm::vec3(1, 0, 0);
 
-    /**
-     * @brief Stores OpenGL vertex array and vertex buffer handles
-     */
+    /** Stores OpenGL vertex array and vertex buffer handles */
     struct BufferData
     {
         GLuint vertexArrayObject = 0;
@@ -102,9 +98,7 @@ void Delete(Mesh& mesh);
 
 namespace shader
 {
-/**
- * @brief Stores shader's program data
- */
+/** Stores shader's program data */
 struct Shader
 {
     GLuint handle;
@@ -127,14 +121,10 @@ Shader CompileShader(GLenum type, GLchar const sources[1]);
  */
 void DeleteShader(Shader const& shader);
 
-/**
- * @brief Stores OpenGL shader program data
- */
+/** Stores OpenGL shader program data */
 struct Program
 {
-    /**
-     * @brief Stores compiled shader handles
-     */
+    /** Stores compiled shader handles */
     struct Handles
     {
         GLuint vertexShader = 0;
@@ -158,15 +148,11 @@ struct Program
 Program MakeProgram(Program::Handles shaders);
 } // namespace shader
 
-/**
- * @brief Stores data to generate view projection matrices
- */
+/** Stores data to generate view projection matrices */
 class Camera
 {
 public:
-    /**
-     * @brief Construct default initialized camera
-     */
+    /** Construct default initialized camera */
     Camera();
 
     /**
@@ -234,20 +220,14 @@ private:
     glm::mat4 m_view;
     glm::mat4 m_projection;
 
-    /**
-     * @brief Recalculates view matrix
-     */
+    /** Recalculates view matrix */
     void UpdateView();
 
-    /**
-     * @brief Recalculates projection matrix
-     */
+    /** Recalculates projection matrix */
     void UpdateProjection();
 };
 
-/**
- * @brief Singleton class for handling input events
- */
+/** Singleton class for handling input events */
 class Input
 {
 public:
@@ -271,8 +251,6 @@ public:
 
     /**
      * @brief Removes given callback function from the Resize event call list
-     *
-     * @attention the callback must be c-style
      * @param callback pointer to the callback function to be removed
      */
     void RemoveResizeCallback(void(*callback)(GLFWwindow*, int, int));
@@ -285,8 +263,6 @@ public:
 
     /**
      * @brief Removes given callback function from the KeyButton event call list
-     *
-     * @attention the callback must be c-style
      * @param callback pointer to the callback function to be removed
      */
     void RemoveKeyButtonCallback(void(*callback)(GLFWwindow*, int, int, int, int));
@@ -299,8 +275,6 @@ public:
 
     /**
      * @brief Removes given callback function from the CursorMove event call list
-     *
-     * @attention the callback must be c-style
      * @param callback pointer to the callback function to be removed
      */
     void RemoveCursorMoveCallback(void(*callback)(GLFWwindow*, double, double));
@@ -313,8 +287,6 @@ public:
 
     /**
      * @brief Removes given callback function from the MouseButton event call list
-     *
-     * @attention the callback must be c-style
      * @param callback pointer to the callback function to be removed
      */
     void RemoveMouseButtonCallback(void(*callback)(GLFWwindow*, int, int, int));
@@ -352,7 +324,7 @@ private:
     }
 
     /**
-     * @brief Removes a callback from the container if is in it
+     * @brief Removes given callback from callback containe
      * @tparam Ret return type of the function
      * @tparam Args arguments type of the function
      * @param container container of the function objects
@@ -372,7 +344,7 @@ private:
     }
 
     /**
-     * @brief Initial callback Resize that calls all user provided callbacks
+     * @brief Initial resize callback that calls user provided resize callbacks
      * @param[in] window GLFW window pointer for the callback
      * @param[in] width new width of the screen
      * @param[in] height new height of the screen
@@ -380,7 +352,7 @@ private:
     static void Resize(GLFWwindow* window, int width, int height);
 
     /**
-     * @brief Initial KeyButton callback that calls all user provided callbacks
+     * @brief Initial keybutton callback that calls user provided keybutton callbacks
      * @param[in] window GLFW window pointer for the callback
      * @param[in] key button id
      * @param[in] scancode
@@ -390,7 +362,7 @@ private:
     static void KeyButton(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     /**
-     * @brief Initial callback CursorMove that calls all user provided callbacks
+     * @brief Initial cursormove callback that calls user provided cursormove callbacks
      * @param[in] window GLFW window pointer for the callback
      * @param[in] xpos new mouse x screen coordinate
      * @param[in] ypos new mouse y screen coordinate
@@ -398,7 +370,7 @@ private:
     static void CursorMove(GLFWwindow* window, double xpos, double ypos);
 
     /**
-     * @brief Initial MouseButton callback that calls all user provided callbacks
+     * @brief Initial mousebutton callback that calls user provided mousebutton callbacks
      * @param[in] window GLFW window pointer for the callback
      * @param[in] button button id
      * @param[in] action action type
@@ -407,9 +379,7 @@ private:
     static void MouseButton(GLFWwindow* window, int button, int action, int mods);
 };
 
-/**
- * @brief Represent singleton instance of the renderer
- */
+/** Represent singleton instance of the renderer */
 class Renderer
 {
 public:
@@ -419,7 +389,7 @@ public:
     Renderer& operator==(Renderer&&) = delete;
 
     /**
-     * @brief Returns instance of the singleton rederer
+     * @brief Returns instance of the singleton rednerer
      *
      * @attention First time must be called from the main thread
      * @return reference to the renderer
@@ -457,9 +427,7 @@ public:
     void RemoveMesh(Handle id);
 
 private:
-    /**
-     * @brief Stores GLFW window handler and window related information
-     */
+    /** Stores GLFW window handler and window related information */
     struct Window
     {
         GLFWwindow* pWindow;
@@ -660,17 +628,14 @@ private:
 
 namespace primitive
 {
-/**
- * @brief Hight level primitive initialization class for the render
- */
+/** Hight level primitive initialization class for the render */
 class Primitive
 {
 public:
-    /**
-     * @brief Allocates space for the mesh data in the renderer
-     */
+    /** Allocates memory for the mesh data in the renderer */
     Primitive();
 
+    /** Deallocates mesh memory */
     ~Primitive();
 
     /**
@@ -690,9 +655,7 @@ protected:
     Handle m_meshHandle;
 };
 
-/**
- * @brief Line segment mesh data container
- */
+/** Line segment mesh data container */
 class LineSegment : public Primitive
 {
 public:
@@ -722,9 +685,7 @@ private:
     glm::vec3 m_end;
 };
 
-/**
- * @brief Plane mesh data container
- */
+/** Plane mesh data container */
 class Plane : public Primitive
 {
 public:
@@ -747,9 +708,7 @@ private:
     double m_sideLength;
 };
 
-/**
- * @brief ICO sphere mesh data container
- */
+/** ICO sphere mesh data container */
 class Sphere : public Primitive
 {
 public:
@@ -771,15 +730,11 @@ private:
     double m_radius;
 };
 
-/**
- * @brief Box mesh data container
- */
+/** Box mesh data container */
 class Box : public Primitive
 {
 public:
-    /**
-     * @brief Stores orthogonal basis axes of the box
-     */
+    /** Stores orthogonal basis axes of the box */
     struct Axes
     {
         glm::vec3 i;
@@ -809,4 +764,4 @@ private:
 } // namespace render
 } // namesapce pegasus
 
-#endif // PEGASUS_RENDER_HPP
+#endif // PEGASUS_DEMO_RENDER_HPP

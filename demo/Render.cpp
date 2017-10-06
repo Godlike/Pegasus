@@ -3,8 +3,8 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
+#include "demo/Render.hpp"
 #include <pegasus/Math.hpp>
-#include <demo/Render.hpp>
 
 using namespace pegasus;
 using namespace render;
@@ -504,7 +504,7 @@ Renderer::Renderer()
     InitializeCallbacks();
     InitializeShaderProgram();
 
-    m_camera.SetPosition(glm::vec3(1, 1, 1) * 15);
+    m_camera.SetPosition(glm::vec3(1, 1, 1) * 15.f);
     m_camera.SetDirection(glm::normalize(glm::dvec3{-1, -1, -1}));
 }
 

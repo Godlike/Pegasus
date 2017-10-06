@@ -960,9 +960,8 @@ VectorType CalculateOrthogonalVector(VectorType vector)
             result[i] = -vector[(1 + i) % 3];
         }
     }
-    result = glm::normalize(result);
 
-    return result;
+    return glm::normalize(result);;
 }
 
 /**

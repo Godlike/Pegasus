@@ -4,7 +4,7 @@
 * (http://opensource.org/licenses/MIT)
 */
 
-#include <demo/Demo.hpp>
+#include "demo/Demo.hpp"
 
 std::list<pegasus::Demo::Object*> g_objects;
 
