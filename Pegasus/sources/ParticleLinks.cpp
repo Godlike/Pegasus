@@ -5,9 +5,9 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "pegasus/ParticleLinks.hpp"
+#include <pegasus/ParticleLinks.hpp>
 
-pegasus::ParticleLink::ParticleLink(Particle& a, Particle& b)
+pegasus::ParticleLink::ParticleLink(integration::Body& a, integration::Body& b)
     : m_aParticle(a)
     , m_bParticle(b)
 {
@@ -15,13 +15,13 @@ pegasus::ParticleLink::ParticleLink(Particle& a, Particle& b)
 
 double pegasus::ParticleLink::CurrentLength() const
 {
-    auto const relativePos = m_aParticle.GetPosition() - m_bParticle.GetPosition();
+    auto const relativePos = m_aParticle.linearMotion.position - m_bParticle.linearMotion.position;
     return glm::length(relativePos);
 }
 
 pegasus::ParticleCabel::ParticleCabel(
-    Particle& a,
-    Particle& b,
+    integration::Body& a,
+    integration::Body& b,
     double maxLength,
     double restutuition)
     : ParticleLink(a, b)
@@ -40,13 +40,13 @@ pegasus::ParticleCabel::AddContact(ParticleContacts& contacts, uint32_t limit) c
         return 0;
     }
 
-    glm::dvec3 const normal = glm::normalize(m_bParticle.GetPosition() - m_aParticle.GetPosition());
+    glm::dvec3 const normal = glm::normalize(m_bParticle.linearMotion.position - m_aParticle.linearMotion.position);
 
     contacts.emplace_back(m_aParticle, &m_bParticle, m_restitution, normal, length - m_maxLength);
     return 1;
 }
 
-pegasus::ParticleRod::ParticleRod(Particle& a, Particle& b, double length)
+pegasus::ParticleRod::ParticleRod(integration::Body& a, integration::Body& b, double length)
     : ParticleLink(a, b)
     , m_length(length)
 {
@@ -62,7 +62,7 @@ pegasus::ParticleRod::AddContact(ParticleContacts& contacts, uint32_t limit) con
         return 0;
     }
 
-    glm::dvec3 const normal = glm::normalize(m_bParticle.GetPosition() - m_aParticle.GetPosition());
+    glm::dvec3 const normal = glm::normalize(m_bParticle.linearMotion.position - m_aParticle.linearMotion.position);
 
     contacts.emplace_back(m_aParticle, &m_bParticle, 0.0,
                           (currentLen > m_length ? normal : normal * -1.0),

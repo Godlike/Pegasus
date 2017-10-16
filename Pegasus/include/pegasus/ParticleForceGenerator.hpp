@@ -8,7 +8,7 @@
 #ifndef PEGASUS_PARTICLE_FORCE_GENERATOR_HPP
 #define PEGASUS_PARTICLE_FORCE_GENERATOR_HPP
 
-#include "pegasus/Particle.hpp"
+#include <pegasus/Integration.hpp>
 
 #include <glm/glm.hpp>
 
@@ -24,27 +24,27 @@ public:
     {
     }
 
-    PEGASUS_EXPORT virtual void UpdateForce(Particle& p) = 0;
+    PEGASUS_EXPORT virtual void UpdateForce(integration::Body& p) = 0;
 };
 
 class ParticleForceRegistry
 {
 public:
-    PEGASUS_EXPORT void Add(Particle& p, ParticleForceGenerator& pfg);
-    PEGASUS_EXPORT void Remove(Particle& p);
-    PEGASUS_EXPORT void Remove(Particle& p, ParticleForceGenerator& pfg);
+    PEGASUS_EXPORT void Add(integration::Body& p, ParticleForceGenerator& pfg);
+    PEGASUS_EXPORT void Remove(integration::Body& p);
+    PEGASUS_EXPORT void Remove(integration::Body& p, ParticleForceGenerator& pfg);
     PEGASUS_EXPORT void Clear();
     PEGASUS_EXPORT void UpdateForces();
 
 private:
-    std::map<Particle*, std::set<ParticleForceGenerator*>> mRegistrations;
+    std::map<integration::Body*, std::set<ParticleForceGenerator*>> mRegistrations;
 };
 
 class ParticleGravity : public ParticleForceGenerator
 {
 public:
     PEGASUS_EXPORT explicit ParticleGravity(glm::dvec3 const& g);
-    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
 
 private:
     glm::dvec3 const m_gravity;
@@ -54,7 +54,7 @@ class ParticleDrag : public ParticleForceGenerator
 {
 public:
     PEGASUS_EXPORT ParticleDrag(double k1, double k2);
-    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
 
 private:
     double const m_k1;
@@ -64,11 +64,11 @@ private:
 class ParticleSpring : public ParticleForceGenerator
 {
 public:
-    PEGASUS_EXPORT ParticleSpring(Particle& other, double springConstant, double restLength);
-    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT ParticleSpring(integration::Body& other, double springConstant, double restLength);
+    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
 
 private:
-    Particle& m_other;
+    integration::Body& m_other;
     double const m_springConstant;
     double const m_restLength;
 };
@@ -77,7 +77,7 @@ class ParticleAnchoredSpring : public ParticleForceGenerator
 {
 public:
     PEGASUS_EXPORT ParticleAnchoredSpring(glm::dvec3 const& anchor, double springConstant, double restLength);
-    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
 
 private:
     glm::dvec3 const m_anchor;
@@ -88,11 +88,11 @@ private:
 class ParticleBungee : public ParticleForceGenerator
 {
 public:
-    PEGASUS_EXPORT ParticleBungee(Particle& other, double springConstant, double restLength);
-    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT ParticleBungee(integration::Body& other, double springConstant, double restLength);
+    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
 
 private:
-    Particle& m_other;
+    integration::Body& m_other;
     double const m_springConstant;
     double const m_restLength;
 };
@@ -102,7 +102,7 @@ class ParticleBuoyancy : public ParticleForceGenerator
 public:
     PEGASUS_EXPORT ParticleBuoyancy(double maxDepth, double volume,
         double waterWight, double liquidDensity);
-    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
 
 private:
     double const m_maxDepth;
@@ -115,8 +115,8 @@ class ParticleFakeSpring : public ParticleForceGenerator
 {
 public:
     PEGASUS_EXPORT ParticleFakeSpring(glm::dvec3 const& anchor, double springConstant, double damping);
-    PEGASUS_EXPORT void UpdateForce(Particle& p, double duration) const;
-    PEGASUS_EXPORT void UpdateForce(Particle& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::Body& p, double duration) const;
+    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
 
 private:
     glm::dvec3 const m_anchor;
@@ -150,7 +150,7 @@ public:
     {
     }
 
-    void UpdateForce(Particle& particle) override
+    void UpdateForce(integration::Body& particle) override
     {
         unsigned int joinCount = 0;
 
@@ -160,7 +160,7 @@ public:
                 continue;
 
             // Work out the separation distance
-            glm::dvec3 separation = currentParticle.GetPosition() - particle.GetPosition();
+            glm::dvec3 separation = currentParticle.linearMotion.position - particle.linearMotion.position;
             separation.z = 0.0f;
             double distance = glm::length(separation);
 
@@ -168,21 +168,22 @@ public:
             {
                 // Use a repulsion force.
                 distance = 1.0f - distance / m_minNaturalDistance;
-                particle.AddForce(glm::normalize(separation) * (1.0f - distance) * m_maxRepulsion * -1.0);
+                particle.linearMotion.force = integration::IntegrateForce(
+                    particle.linearMotion.force, glm::normalize(separation) * (1.0f - distance) * m_maxRepulsion * -1.0);
                 ++joinCount;
             }
             else if (distance > m_maxNaturalDistance && distance < m_maxDistance)
             {
                 // Use an attraction force.
                 distance = (distance - m_maxNaturalDistance) / (m_maxDistance - m_maxNaturalDistance);
-                particle.AddForce(glm::normalize(separation) * distance * m_maxAttraction);
+                particle.linearMotion.force = integration::IntegrateForce(
+                    particle.linearMotion.force, glm::normalize(separation) * distance * m_maxAttraction);
                 ++joinCount;
             }
         }
 
         // If the particle is the head, and we've got a join count, then float it.
-        if (&particle == &(*m_particles.begin())
-            && joinCount > 0 && m_maxFloat > 0)
+        if (&particle == &(*m_particles.begin()) && joinCount > 0 && m_maxFloat > 0)
         {
             auto force = (static_cast<double>(joinCount) / static_cast<double>(m_maxFloat)) * m_floatHead;
             if (force > m_floatHead)
@@ -190,7 +191,8 @@ public:
                 force = m_floatHead;
             }
 
-            particle.AddForce(glm::dvec3(0, force, 0));
+            particle.linearMotion.force = integration::IntegrateForce(
+                particle.linearMotion.force, glm::dvec3(0, force, 0));
         }
     }
 

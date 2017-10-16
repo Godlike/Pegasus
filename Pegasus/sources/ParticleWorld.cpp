@@ -27,7 +27,7 @@ void pegasus::ParticleWorld::StartFrame() const
 {
     for (auto& p : m_particles)
     {
-        p.ClearForceAccumulator();
+        p.linearMotion.force = glm::dvec3(0);
     }
 }
 
@@ -70,6 +70,6 @@ void pegasus::ParticleWorld::Integrate(double duration) const
 {
     for (auto& p : m_particles)
     {
-        p.Integrate(duration);
+        integration::Integrate(p.material, p.linearMotion, duration);
     }
 }

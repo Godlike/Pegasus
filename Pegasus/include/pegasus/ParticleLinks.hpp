@@ -8,28 +8,28 @@
 #ifndef PEGASUS_PARTICLE_LINKS_HPP
 #define PEGASUS_PARTICLE_LINKS_HPP
 
-#include "pegasus/Particle.hpp"
-#include "pegasus/ParticleContacts.hpp"
+#include <pegasus/Integration.hpp>
+#include <pegasus/ParticleContacts.hpp>
 
 namespace pegasus
 {
 class ParticleLink : public ParticleContactGenerator
 {
 public:
-    ParticleLink(Particle& a, Particle& b);
+    ParticleLink(integration::Body& a, integration::Body& b);
 
     virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override = 0;
     double CurrentLength() const;
 
 protected:
-    Particle& m_aParticle;
-    Particle& m_bParticle;
+    integration::Body& m_aParticle;
+    integration::Body& m_bParticle;
 };
 
 class ParticleCabel : public ParticleLink
 {
 public:
-    ParticleCabel(Particle& a, Particle& b, double maxLength, double restutuition);
+    ParticleCabel(integration::Body& a, integration::Body& b, double maxLength, double restutuition);
 
     virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override;
 
@@ -41,7 +41,7 @@ private:
 class ParticleRod : public ParticleLink
 {
 public:
-    ParticleRod(Particle& a, Particle& b, double length);
+    ParticleRod(integration::Body& a, integration::Body& b, double length);
 
     virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override;
 

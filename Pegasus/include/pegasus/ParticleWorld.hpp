@@ -8,7 +8,7 @@
 #ifndef PEGASUS_PARTICLE_WORLD_HPP
 #define PEGASUS_PARTICLE_WORLD_HPP
 
-#include <pegasus/Particle.hpp>
+#include <pegasus/Integration.hpp>
 #include <pegasus/ParticleContacts.hpp>
 #include <pegasus/ParticleForceGenerator.hpp>
 
@@ -21,7 +21,7 @@
 namespace pegasus
 {
 using ParticleContactGenerators = std::list<std::unique_ptr<ParticleContactGenerator>>;
-using Particles = std::list<Particle>;
+using Particles = std::list<integration::Body>;
 
 class ParticleWorld
 {

@@ -19,18 +19,18 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
     case GLFW_KEY_M:
         if (g_objects.size() < demo.maxParticles)
         {
-            pegasus::Particle particle;
-            particle.SetPosition(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
-            particle.SetVelocity(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
+            pegasus::integration::Body body;
+            body.linearMotion.position = glm::dvec3(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
+            body.linearMotion.velocity = glm::dvec3(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
 
             static uint8_t isBox = false;
             isBox = !isBox;
             if (isBox)
                 g_objects.push_back(&demo.MakeBox(
-                    particle, {rand() % 10 / 10. + 0.1,0,0}, {0,rand() % 10 / 10. + 0.1,0}, {0,0,rand() % 10 / 10. + 0.1}
+                    body, {rand() % 10 / 10. + 0.1,0,0}, {0,rand() % 10 / 10. + 0.1,0}, {0,0,rand() % 10 / 10. + 0.1}
                 ));
             else
-                g_objects.push_back(&demo.MakeSphere(particle, rand() % 10 / 10. + 0.1));
+                g_objects.push_back(&demo.MakeSphere(body, rand() % 10 / 10. + 0.1));
         }
         break;
     case GLFW_KEY_R:
@@ -52,14 +52,14 @@ int main(int argc, char** argv)
     pegasus::render::Input& input = pegasus::render::Input::GetInstance();
     input.AddKeyButtonCallback(KeyButtonCallback);
 
-    pegasus::Particle plane;
-    plane.SetPosition(0, -10, 0);
-    plane.SetInverseMass(0);
+    pegasus::integration::Body plane;
+    plane.linearMotion.position = glm::dvec3(0, -10, 0);
+    plane.material.inverseMass = pegasus::integration::Material::s_infiniteMass;
     g_objects.push_back(&demo.MakePlane(plane, glm::vec3(0, 1, 0)));
 
-    pegasus::Particle line;
-    line.SetPosition(0, -10, 0);
-    g_objects.push_back(&demo.MakeLine(line, line.GetPosition(), glm::vec3(0, 10, 0)));
+    pegasus::integration::Body line;
+    line.linearMotion.position = glm::dvec3(0, -10, 0);
+    g_objects.push_back(&demo.MakeLine(line, line.linearMotion.position, glm::vec3(0, 10, 0)));
 
     while (demo.IsValid())
     {

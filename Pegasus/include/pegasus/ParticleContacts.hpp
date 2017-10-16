@@ -10,7 +10,7 @@
 
 #include <pegasus/Geometry.hpp>
 #include <pegasus/Mechanics.hpp>
-#include <pegasus/Particle.hpp>
+#include <pegasus/Integration.hpp>
 
 #include <pegasus/SharedMacros.hpp>
 
@@ -21,14 +21,14 @@ namespace pegasus
 class ParticleContact
 {
 public:
-    PEGASUS_EXPORT ParticleContact(Particle& a, Particle* b,
+    PEGASUS_EXPORT ParticleContact(integration::Body& a, integration::Body* b,
                     double restitution, glm::dvec3 const& contactNormal, double penetration);
     PEGASUS_EXPORT void Resolve(double duration) const;
     PEGASUS_EXPORT double CalculateSeparatingVelocity() const;
 
 private:
-    Particle* m_pParticleA;
-    Particle* m_pParticleB;
+    integration::Body* m_pBodyA;
+    integration::Body* m_pBodyB;
     double m_restitution;
     glm::dvec3 m_contactNormal;
     double m_penetration;
@@ -82,11 +82,11 @@ public:
 
             static geometry::SimpleShapeIntersectionDetector intersection;
 
-            if (intersection.CalculateIntersection(rigidBody.s.get(), body.s.get()))
+            if (intersection.CalculateIntersection(rigidBody.shape.get(), body.shape.get()))
             {
-                glm::dvec3 const contactNormal = intersection.CalculateContactNormal(rigidBody.s.get(), body.s.get());
-                double const penetration = intersection.CalculatePenetration(rigidBody.s.get(), body.s.get());
-                contacts.emplace_back(rigidBody.p, &body.p, restitution, contactNormal, penetration);
+                glm::dvec3 const contactNormal = intersection.CalculateContactNormal(rigidBody.shape.get(), body.shape.get());
+                double const penetration = intersection.CalculatePenetration(rigidBody.shape.get(), body.shape.get());
+                contacts.emplace_back(rigidBody.pointMass, &body.pointMass, restitution, contactNormal, penetration);
 
                 if (contacts.size() == limit)
                 {

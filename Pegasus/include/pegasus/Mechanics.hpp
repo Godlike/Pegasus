@@ -7,7 +7,7 @@
 #define PEGASUS_MECHANICS_HPP
 
 #include <pegasus/Geometry.hpp>
-#include <pegasus/Particle.hpp>
+#include <pegasus/Integration.hpp>
 
 #include <pegasus/SharedMacros.hpp>
 
@@ -19,10 +19,10 @@ namespace pegasus
 class RigidBody
 {
 public:
-    Particle & p;
-    std::unique_ptr<geometry::SimpleShape> const s;
+    integration::Body& pointMass;
+    std::unique_ptr<geometry::SimpleShape> const shape;
 
-    PEGASUS_EXPORT RigidBody(Particle & p, std::unique_ptr<geometry::SimpleShape> && s);
+    PEGASUS_EXPORT RigidBody(integration::Body& body, std::unique_ptr<geometry::SimpleShape>&& shape);
 };
 using RigidBodies = std::list<RigidBody>;
 

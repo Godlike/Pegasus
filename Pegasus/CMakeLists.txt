@@ -25,7 +25,7 @@ include_directories(
 message(STATUS "Version: ${PEGASUS_VERSION}")
 
 set(PEGASUS_HEADERS
-    include/pegasus/Particle.hpp
+    include/pegasus/Integration.hpp
     include/pegasus/ParticleForceGenerator.hpp
     include/pegasus/ParticleContacts.hpp
     include/pegasus/ParticleLinks.hpp
@@ -36,7 +36,7 @@ set(PEGASUS_HEADERS
     include/pegasus/BoundingVolumes.hpp
 )
 set(PEGASUS_SOURCES
-    sources/Particle.cpp
+    sources/Integration.cpp
     sources/ParticleForceGenerator.cpp
     sources/ParticleContacts.cpp
     sources/ParticleLinks.cpp

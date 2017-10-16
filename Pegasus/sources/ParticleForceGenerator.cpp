@@ -5,12 +5,12 @@
 * implies agreement with all terms and conditions of the accompanying
 * software licence.
 */
-#include "pegasus/ParticleForceGenerator.hpp"
+#include <pegasus/ParticleForceGenerator.hpp>
 
 #include <cmath>
 
 void pegasus::ParticleForceRegistry::Add(
-    Particle& p, ParticleForceGenerator& pfg)
+    integration::Body& p, ParticleForceGenerator& pfg)
 {
     auto particle = mRegistrations.find(&p);
     if (particle != mRegistrations.end())
@@ -24,7 +24,7 @@ void pegasus::ParticleForceRegistry::Add(
     }
 }
 
-void pegasus::ParticleForceRegistry::Remove(Particle& p)
+void pegasus::ParticleForceRegistry::Remove(integration::Body& p)
 {
     auto entry = mRegistrations.find(&p);
     if (entry != mRegistrations.end())
@@ -34,7 +34,7 @@ void pegasus::ParticleForceRegistry::Remove(Particle& p)
 }
 
 void pegasus::ParticleForceRegistry::Remove(
-    Particle& p, ParticleForceGenerator& pfg)
+    integration::Body& p, ParticleForceGenerator& pfg)
 {
     auto entry = mRegistrations.find(&p);
     if (entry != mRegistrations.end())
@@ -65,14 +65,12 @@ pegasus::ParticleGravity::ParticleGravity(glm::dvec3 const& g)
 {
 }
 
-void pegasus::ParticleGravity::UpdateForce(Particle& p)
+void pegasus::ParticleGravity::UpdateForce(integration::Body& p)
 {
-    if (!p.HasFiniteMass())
+    if (integration::FiniteMass(p.material.inverseMass))
     {
-        return;
+        p.linearMotion.force = integration::IntegrateForce(p.linearMotion.force, m_gravity * p.material.mass);
     }
-
-    p.AddForce(m_gravity * p.GetMass());
 }
 
 pegasus::ParticleDrag::ParticleDrag(double k1, double k2)
@@ -81,34 +79,34 @@ pegasus::ParticleDrag::ParticleDrag(double k1, double k2)
 {
 }
 
-void pegasus::ParticleDrag::UpdateForce(Particle& p)
+void pegasus::ParticleDrag::UpdateForce(integration::Body& p)
 {
-    glm::dvec3 force = p.GetVelocity();
+    glm::dvec3 force = p.linearMotion.velocity;
 
     double dragCoeff = glm::length(force);
     dragCoeff = m_k1 * dragCoeff + m_k2 * dragCoeff * dragCoeff;
 
     force = glm::normalize(force) * -dragCoeff;
-    p.AddForce(force);
+    p.linearMotion.force = integration::IntegrateForce(p.linearMotion.force, force);
 }
 
 pegasus::ParticleSpring::ParticleSpring(
-    Particle& other, double springConstant, double restLength)
+    integration::Body& other, double springConstant, double restLength)
     : m_other(other)
     , m_springConstant(springConstant)
     , m_restLength(restLength)
 {
 }
 
-void pegasus::ParticleSpring::UpdateForce(Particle& p)
+void pegasus::ParticleSpring::UpdateForce(integration::Body& p)
 {
-    glm::dvec3 force = p.GetPosition();
-    force -= m_other.GetPosition();
+    glm::dvec3 force = p.linearMotion.position;
+    force -= m_other.linearMotion.position;
 
     auto const magnitude = m_springConstant * std::fabs(glm::length(force) - m_restLength);
 
     force = glm::normalize(force) * -magnitude;
-    p.AddForce(force);
+    p.linearMotion.force = integration::IntegrateForce(p.linearMotion.force, force);
 }
 
 pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
@@ -119,28 +117,28 @@ pegasus::ParticleAnchoredSpring::ParticleAnchoredSpring(
 {
 }
 
-void pegasus::ParticleAnchoredSpring::UpdateForce(Particle& p)
+void pegasus::ParticleAnchoredSpring::UpdateForce(integration::Body& p)
 {
-    glm::dvec3 force = p.GetPosition();
+    glm::dvec3 force = p.linearMotion.position;
     force -= m_anchor;
 
     auto const magnitude = m_springConstant * std::fabs(glm::length(force) - m_restLength);
 
     force = glm::normalize(force) * -magnitude;
-    p.AddForce(force);
+    p.linearMotion.force = integration::IntegrateForce(p.linearMotion.force, force);
 }
 
-pegasus::ParticleBungee::ParticleBungee(Particle& other, double springConstant, double restLength)
+pegasus::ParticleBungee::ParticleBungee(integration::Body& other, double springConstant, double restLength)
     : m_other(other)
     , m_springConstant(springConstant)
     , m_restLength(restLength)
 {
 }
 
-void pegasus::ParticleBungee::UpdateForce(Particle& p)
+void pegasus::ParticleBungee::UpdateForce(integration::Body& p)
 {
-    glm::dvec3 force = p.GetPosition();
-    force -= m_other.GetPosition();
+    glm::dvec3 force = p.linearMotion.position;
+    force -= m_other.linearMotion.position;
 
     double magnitude = glm::length(force);
     if (magnitude <= m_restLength)
@@ -151,7 +149,7 @@ void pegasus::ParticleBungee::UpdateForce(Particle& p)
     magnitude = m_springConstant * (magnitude - m_restLength);
 
     force = glm::normalize(force) * -magnitude;
-    p.AddForce(force);
+    p.linearMotion.force = integration::IntegrateForce(p.linearMotion.force, force);
 }
 
 pegasus::ParticleBuoyancy::ParticleBuoyancy(
@@ -163,9 +161,9 @@ pegasus::ParticleBuoyancy::ParticleBuoyancy(
 {
 }
 
-void pegasus::ParticleBuoyancy::UpdateForce(Particle& p)
+void pegasus::ParticleBuoyancy::UpdateForce(integration::Body& p)
 {
-    double const depth = p.GetPosition().y;
+    double const depth = p.linearMotion.position.y;
 
     if (depth >= m_waterHeight + m_maxDepth)
     {
@@ -182,7 +180,7 @@ void pegasus::ParticleBuoyancy::UpdateForce(Particle& p)
         force.y = m_liquidDensity * m_volume * (depth - m_maxDepth - m_waterHeight) / 2.0f * m_maxDepth;
     }
 
-    p.AddForce(force);
+    p.linearMotion.force = integration::IntegrateForce(p.linearMotion.force, force);
 }
 
 pegasus::ParticleFakeSpring::ParticleFakeSpring(
@@ -194,28 +192,26 @@ pegasus::ParticleFakeSpring::ParticleFakeSpring(
 {
 }
 
-void pegasus::ParticleFakeSpring::UpdateForce(Particle& p, double duration) const
+void pegasus::ParticleFakeSpring::UpdateForce(integration::Body& p, double duration) const
 {
-    if (!p.HasFiniteMass())
+    if (integration::FiniteMass(p.material.inverseMass))
     {
-        return;
+        glm::dvec3 const position = p.linearMotion.position - m_anchor;
+        double const gamma = 0.5f * std::sqrt(4 * m_springConstant - m_damping * m_damping);
+
+        if (gamma == 0.0f)
+            return;
+
+        auto const c = position * (m_damping / (2.0f * gamma)) + p.linearMotion.velocity * (1.0f / gamma);
+        auto target = position * std::cos(gamma * duration) + c * sin(gamma * duration);
+        target *= std::exp(-0.5f * duration * m_damping);
+
+        auto const accel = (target - position) * (1.0f / duration * duration) - p.linearMotion.velocity * duration;
+        p.linearMotion.force = integration::IntegrateForce(p.linearMotion.force, accel * p.material.mass);
     }
-
-    glm::dvec3 const position = p.GetPosition() - m_anchor;
-    double const gamma = 0.5f * std::sqrt(4 * m_springConstant - m_damping * m_damping);
-
-    if (gamma == 0.0f)
-        return;
-
-    auto const c = position * (m_damping / (2.0f * gamma)) + p.GetVelocity() * (1.0f / gamma);
-    auto target = position * std::cos(gamma * duration) + c * sin(gamma * duration);
-    target *= std::exp(-0.5f * duration * m_damping);
-
-    auto const accel = (target - position) * (1.0f / duration * duration) - p.GetVelocity() * duration;
-    p.AddForce(accel * p.GetMass());
 }
 
-void pegasus::ParticleFakeSpring::UpdateForce(Particle& p)
+void pegasus::ParticleFakeSpring::UpdateForce(integration::Body& p)
 {
     UpdateForce(p, m_duration);
 }

@@ -8,13 +8,13 @@
 #include "pegasus/ParticleContacts.hpp"
 
 pegasus::ParticleContact::ParticleContact(
-    Particle& a,
-    Particle* b,
+    integration::Body& a,
+    integration::Body* b,
     double restitution,
     glm::dvec3 const& contactNormal,
     double penetration)
-    : m_pParticleA(&a)
-    , m_pParticleB(b)
+    : m_pBodyA(&a)
+    , m_pBodyB(b)
     , m_restitution(restitution)
     , m_contactNormal(contactNormal)
     , m_penetration(penetration)
@@ -34,10 +34,10 @@ void pegasus::ParticleContact::Resolve(double duration) const
 
 double pegasus::ParticleContact::CalculateSeparatingVelocity() const
 {
-    glm::dvec3 relativeVelocity = m_pParticleA->GetVelocity();
-    if (m_pParticleB)
+    glm::dvec3 relativeVelocity = m_pBodyA->linearMotion.velocity;
+    if (m_pBodyB)
     {
-        relativeVelocity -= m_pParticleB->GetVelocity();
+        relativeVelocity -= m_pBodyB->linearMotion.velocity;
     }
 
     return glm::dot(relativeVelocity, m_contactNormal);
@@ -52,10 +52,10 @@ void pegasus::ParticleContact::ResolveVelocity(double duration) const
     }
 
     auto newSepVelocity = -separatingVelocity * m_restitution;
-    auto accCausedVelocity = m_pParticleA->GetAcceleration();
-    if (m_pParticleB)
+    auto accCausedVelocity = m_pBodyA->linearMotion.acceleration;
+    if (m_pBodyB)
     {
-        accCausedVelocity -= m_pParticleB->GetAcceleration();
+        accCausedVelocity -= m_pBodyB->linearMotion.acceleration;
     }
     auto const accCausedSepVelocity = glm::dot(accCausedVelocity, m_contactNormal * duration);
     if (accCausedSepVelocity < 0)
@@ -69,10 +69,10 @@ void pegasus::ParticleContact::ResolveVelocity(double duration) const
     }
     auto const deltaVelocity = newSepVelocity - separatingVelocity;
 
-    auto totalInverseMass = m_pParticleA->GetInverseMass();
-    if (m_pParticleB)
+    auto totalInverseMass = m_pBodyA->material.inverseMass;
+    if (m_pBodyB)
     {
-        totalInverseMass += m_pParticleB->GetInverseMass();
+        totalInverseMass += m_pBodyB->material.inverseMass;
     }
 
     if (totalInverseMass <= 0)
@@ -83,10 +83,10 @@ void pegasus::ParticleContact::ResolveVelocity(double duration) const
     auto const impulse = deltaVelocity / totalInverseMass;
     auto const impulsePerIMass = m_contactNormal * impulse;
 
-    m_pParticleA->SetVelocity(m_pParticleA->GetVelocity() + impulsePerIMass * m_pParticleA->GetInverseMass());
-    if (m_pParticleB)
+    m_pBodyA->linearMotion.velocity = m_pBodyA->linearMotion.velocity + impulsePerIMass * m_pBodyA->material.inverseMass;
+    if (m_pBodyB)
     {
-        m_pParticleB->SetVelocity(m_pParticleB->GetVelocity() + impulsePerIMass * -m_pParticleB->GetInverseMass());
+        m_pBodyB->linearMotion.velocity = m_pBodyB->linearMotion.velocity + impulsePerIMass * -m_pBodyB->material.inverseMass;
     }
 }
 
@@ -97,10 +97,10 @@ void pegasus::ParticleContact::ResolveInterpenetration() const
         return;
     }
 
-    double totalInverseMass = m_pParticleA->GetInverseMass();
-    if (m_pParticleB)
+    double totalInverseMass = m_pBodyA->material.inverseMass;
+    if (m_pBodyB)
     {
-        totalInverseMass += m_pParticleB->GetInverseMass();
+        totalInverseMass += m_pBodyB->material.inverseMass;
     }
 
     if (totalInverseMass <= 0)
@@ -109,13 +109,13 @@ void pegasus::ParticleContact::ResolveInterpenetration() const
     }
 
     glm::dvec3 const movePerIMass = m_contactNormal * (m_penetration / totalInverseMass);
-    m_pParticleA->SetPosition(m_pParticleA->GetPosition() + movePerIMass * m_pParticleA->GetInverseMass());
-    m_pParticleA->AddForce(movePerIMass * -1.0);
+    m_pBodyA->linearMotion.position += movePerIMass * m_pBodyA->material.inverseMass;
+    m_pBodyA->linearMotion.force = integration::IntegrateForce(m_pBodyA->linearMotion.force, movePerIMass * -1.0);
 
-    if (m_pParticleB)
+    if (m_pBodyB)
     {
-        m_pParticleB->SetPosition(m_pParticleB->GetPosition() - movePerIMass * m_pParticleB->GetInverseMass());
-        m_pParticleB->AddForce(movePerIMass * -1.0);
+        m_pBodyB->linearMotion.position -= movePerIMass * m_pBodyB->material.inverseMass;
+        m_pBodyB->linearMotion.force = integration::IntegrateForce(m_pBodyB->linearMotion.force, movePerIMass * -1.0);
     }
 }
 
