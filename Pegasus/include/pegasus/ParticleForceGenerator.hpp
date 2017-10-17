@@ -24,27 +24,27 @@ public:
     {
     }
 
-    PEGASUS_EXPORT virtual void UpdateForce(integration::Body& p) = 0;
+    PEGASUS_EXPORT virtual void UpdateForce(integration::DynamicBody& p) = 0;
 };
 
 class ParticleForceRegistry
 {
 public:
-    PEGASUS_EXPORT void Add(integration::Body& p, ParticleForceGenerator& pfg);
-    PEGASUS_EXPORT void Remove(integration::Body& p);
-    PEGASUS_EXPORT void Remove(integration::Body& p, ParticleForceGenerator& pfg);
+    PEGASUS_EXPORT void Add(integration::DynamicBody& p, ParticleForceGenerator& pfg);
+    PEGASUS_EXPORT void Remove(integration::DynamicBody& p);
+    PEGASUS_EXPORT void Remove(integration::DynamicBody& p, ParticleForceGenerator& pfg);
     PEGASUS_EXPORT void Clear();
     PEGASUS_EXPORT void UpdateForces();
 
 private:
-    std::map<integration::Body*, std::set<ParticleForceGenerator*>> mRegistrations;
+    std::map<integration::DynamicBody*, std::set<ParticleForceGenerator*>> mRegistrations;
 };
 
 class ParticleGravity : public ParticleForceGenerator
 {
 public:
     PEGASUS_EXPORT explicit ParticleGravity(glm::dvec3 const& g);
-    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::DynamicBody& p) override;
 
 private:
     glm::dvec3 const m_gravity;
@@ -54,7 +54,7 @@ class ParticleDrag : public ParticleForceGenerator
 {
 public:
     PEGASUS_EXPORT ParticleDrag(double k1, double k2);
-    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::DynamicBody& p) override;
 
 private:
     double const m_k1;
@@ -64,11 +64,11 @@ private:
 class ParticleSpring : public ParticleForceGenerator
 {
 public:
-    PEGASUS_EXPORT ParticleSpring(integration::Body& other, double springConstant, double restLength);
-    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
+    PEGASUS_EXPORT ParticleSpring(integration::DynamicBody& other, double springConstant, double restLength);
+    PEGASUS_EXPORT void UpdateForce(integration::DynamicBody& p) override;
 
 private:
-    integration::Body& m_other;
+    integration::DynamicBody& m_other;
     double const m_springConstant;
     double const m_restLength;
 };
@@ -77,7 +77,7 @@ class ParticleAnchoredSpring : public ParticleForceGenerator
 {
 public:
     PEGASUS_EXPORT ParticleAnchoredSpring(glm::dvec3 const& anchor, double springConstant, double restLength);
-    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::DynamicBody& p) override;
 
 private:
     glm::dvec3 const m_anchor;
@@ -88,11 +88,11 @@ private:
 class ParticleBungee : public ParticleForceGenerator
 {
 public:
-    PEGASUS_EXPORT ParticleBungee(integration::Body& other, double springConstant, double restLength);
-    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
+    PEGASUS_EXPORT ParticleBungee(integration::DynamicBody& other, double springConstant, double restLength);
+    PEGASUS_EXPORT void UpdateForce(integration::DynamicBody& p) override;
 
 private:
-    integration::Body& m_other;
+    integration::DynamicBody& m_other;
     double const m_springConstant;
     double const m_restLength;
 };
@@ -102,7 +102,7 @@ class ParticleBuoyancy : public ParticleForceGenerator
 public:
     PEGASUS_EXPORT ParticleBuoyancy(double maxDepth, double volume,
         double waterWight, double liquidDensity);
-    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::DynamicBody& p) override;
 
 private:
     double const m_maxDepth;
@@ -115,8 +115,8 @@ class ParticleFakeSpring : public ParticleForceGenerator
 {
 public:
     PEGASUS_EXPORT ParticleFakeSpring(glm::dvec3 const& anchor, double springConstant, double damping);
-    PEGASUS_EXPORT void UpdateForce(integration::Body& p, double duration) const;
-    PEGASUS_EXPORT void UpdateForce(integration::Body& p) override;
+    PEGASUS_EXPORT void UpdateForce(integration::DynamicBody& p, double duration) const;
+    PEGASUS_EXPORT void UpdateForce(integration::DynamicBody& p) override;
 
 private:
     glm::dvec3 const m_anchor;
@@ -150,7 +150,7 @@ public:
     {
     }
 
-    void UpdateForce(integration::Body& particle) override
+    void UpdateForce(integration::DynamicBody& particle) override
     {
         unsigned int joinCount = 0;
 

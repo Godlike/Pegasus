@@ -16,20 +16,20 @@ namespace pegasus
 class ParticleLink : public ParticleContactGenerator
 {
 public:
-    ParticleLink(integration::Body& a, integration::Body& b);
+    ParticleLink(integration::DynamicBody& a, integration::DynamicBody& b);
 
     virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override = 0;
     double CurrentLength() const;
 
 protected:
-    integration::Body& m_aParticle;
-    integration::Body& m_bParticle;
+    integration::DynamicBody& m_aParticle;
+    integration::DynamicBody& m_bParticle;
 };
 
 class ParticleCabel : public ParticleLink
 {
 public:
-    ParticleCabel(integration::Body& a, integration::Body& b, double maxLength, double restutuition);
+    ParticleCabel(integration::DynamicBody& a, integration::DynamicBody& b, double maxLength, double restutuition);
 
     virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override;
 
@@ -41,7 +41,7 @@ private:
 class ParticleRod : public ParticleLink
 {
 public:
-    ParticleRod(integration::Body& a, integration::Body& b, double length);
+    ParticleRod(integration::DynamicBody& a, integration::DynamicBody& b, double length);
 
     virtual uint32_t AddContact(ParticleContacts& contacts, uint32_t limit) const override;
 

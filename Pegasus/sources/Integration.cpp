@@ -10,12 +10,9 @@ using namespace integration;
 
 Material::Material()
     : mass(1)
-    , inverseMass(1)
     , damping(1)
 {
 }
-
-const double Material::s_infiniteMass = 0.0;
 
 LinearMotion::LinearMotion()
     : position(0, 0, 0)
@@ -25,15 +22,15 @@ LinearMotion::LinearMotion()
 {
 }
 
-Body::Body()
+StaticBody::StaticBody()
     : material()
-    , linearMotion()
 {
 }
 
-bool integration::FiniteMass(double inverseMass)
+DynamicBody::DynamicBody()
+    : StaticBody()
+    , linearMotion()
 {
-    return inverseMass != Material::s_infiniteMass;
 }
 
 glm::dvec3 integration::IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
@@ -48,9 +45,9 @@ glm::dvec3 IntegratePosition(glm::dvec3 position, glm::dvec3 velocity, double du
     return position + velocity * duration;
 }
 
-glm::dvec3 IntegrateAcceleration(glm::dvec3 acceleration, glm::dvec3 force, double inverseMass)
+glm::dvec3 IntegrateAcceleration(glm::dvec3 acceleration, glm::dvec3 force, double mass)
 {
-    return acceleration + force * inverseMass;
+    return acceleration + force / mass;
 }
 
 glm::dvec3 IntegrateVelocity(glm::dvec3 velocity, glm::dvec3 acceleration, double duration)
@@ -62,16 +59,23 @@ glm::dvec3 IntegrateDamping(glm::dvec3 velocity, double damping, double duration
 {
     return velocity * glm::pow(damping, duration);
 }
+
+void Integrate(Material& material, LinearMotion& linearMotion, double duration)
+{
+    glm::dvec3 const resultingAcceleration = ::IntegrateAcceleration(linearMotion.acceleration, linearMotion.force, material.mass);
+    linearMotion.position = ::IntegratePosition(linearMotion.position, linearMotion.velocity, duration);
+    linearMotion.velocity = ::IntegrateVelocity(linearMotion.velocity, resultingAcceleration, duration);
+    linearMotion.velocity = ::IntegrateDamping(linearMotion.velocity, material.damping, duration);
+    linearMotion.force = glm::dvec3(0);
+}
 } // namespace ::
 
-void integration::Integrate(Material& material, LinearMotion& linearMotion, double duration)
+void integration::Integrate(DynamicBody& body, double duration)
+{   
+    ::Integrate(body.material, body.linearMotion, duration);
+}
+
+void integration::Integrate(KinematicBody& body, double duration)
 {
-    if (FiniteMass(material.inverseMass))
-    {
-        glm::dvec3 const resultingAcceleration = ::IntegrateAcceleration(linearMotion.acceleration, linearMotion.force, material.inverseMass);
-        linearMotion.position = ::IntegratePosition(linearMotion.position, linearMotion.velocity, duration);
-        linearMotion.velocity = ::IntegrateVelocity(linearMotion.velocity, resultingAcceleration, duration);
-        linearMotion.velocity = ::IntegrateDamping(linearMotion.velocity, material.damping, duration);
-        linearMotion.force = glm::dvec3(0);
-    }
+    ::Integrate(body.material, body.linearMotion, duration);
 }

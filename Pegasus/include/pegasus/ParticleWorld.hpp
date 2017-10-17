@@ -21,7 +21,7 @@
 namespace pegasus
 {
 using ParticleContactGenerators = std::list<std::unique_ptr<ParticleContactGenerator>>;
-using Particles = std::list<integration::Body>;
+using Particles = std::list<integration::DynamicBody>;
 
 class ParticleWorld
 {

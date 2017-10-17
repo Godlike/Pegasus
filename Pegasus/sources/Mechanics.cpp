@@ -7,7 +7,7 @@
 
 using namespace pegasus;
 
-RigidBody::RigidBody(integration::Body& pointMass, std::unique_ptr<geometry::SimpleShape>&& shape)
+RigidBody::RigidBody(integration::DynamicBody& pointMass, std::unique_ptr<geometry::SimpleShape>&& shape)
     : pointMass(pointMass)
     , shape(std::move(shape))
 {

@@ -19,7 +19,7 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
     case GLFW_KEY_M:
         if (g_objects.size() < demo.maxParticles)
         {
-            pegasus::integration::Body body;
+            pegasus::integration::DynamicBody body;
             body.linearMotion.position = glm::dvec3(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
             body.linearMotion.velocity = glm::dvec3(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
 
@@ -52,12 +52,11 @@ int main(int argc, char** argv)
     pegasus::render::Input& input = pegasus::render::Input::GetInstance();
     input.AddKeyButtonCallback(KeyButtonCallback);
 
-    pegasus::integration::Body plane;
+    pegasus::integration::DynamicBody plane;
     plane.linearMotion.position = glm::dvec3(0, -10, 0);
-    plane.material.inverseMass = pegasus::integration::Material::s_infiniteMass;
     g_objects.push_back(&demo.MakePlane(plane, glm::vec3(0, 1, 0)));
 
-    pegasus::integration::Body line;
+    pegasus::integration::DynamicBody line;
     line.linearMotion.position = glm::dvec3(0, -10, 0);
     g_objects.push_back(&demo.MakeLine(line, line.linearMotion.position, glm::vec3(0, 10, 0)));
 

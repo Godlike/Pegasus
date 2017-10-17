@@ -34,7 +34,7 @@ void Demo::RunFrame()
     std::this_thread::sleep_until(nextFrameTime);
 }
 
-Demo::Object& Demo::MakeLine(integration::Body body, glm::vec3 start, glm::vec3 end)
+Demo::Object& Demo::MakeLine(integration::DynamicBody body, glm::vec3 start, glm::vec3 end)
 {
     m_objects.emplace_back(
         nullptr,
@@ -46,7 +46,7 @@ Demo::Object& Demo::MakeLine(integration::Body body, glm::vec3 start, glm::vec3 
     return m_objects.back();
 }
 
-Demo::Object& Demo::MakePlane(integration::Body body, glm::dvec3 normal)
+Demo::Object& Demo::MakePlane(integration::DynamicBody body, glm::dvec3 normal)
 {
     m_objects.emplace_back(
         &MakeRigidBody(body, std::make_unique<geometry::Plane>(body.linearMotion.position, normal)),
@@ -61,7 +61,7 @@ Demo::Object& Demo::MakePlane(integration::Body body, glm::dvec3 normal)
     return m_objects.back();
 }
 
-Demo::Object& Demo::MakeSphere(integration::Body body, double radius)
+Demo::Object& Demo::MakeSphere(integration::DynamicBody body, double radius)
 {
     m_objects.emplace_back(
         &MakeRigidBody(body, std::make_unique<geometry::Sphere>(body.linearMotion.position, radius)),
@@ -76,7 +76,7 @@ Demo::Object& Demo::MakeSphere(integration::Body body, double radius)
     return m_objects.back();
 }
 
-Demo::Object& Demo::MakeBox(integration::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k)
+Demo::Object& Demo::MakeBox(integration::DynamicBody body, glm::vec3 i, glm::vec3 j, glm::vec3 k)
 {
     m_objects.emplace_back(
         &MakeRigidBody(body, std::make_unique<geometry::Box>(body.linearMotion.position, i, j, k)),
@@ -97,7 +97,7 @@ void Demo::Remove(Object& object)
 {
     if (object.body != nullptr)
     {
-        integration::Body& body = object.body->pointMass;
+        integration::DynamicBody& body = object.body->pointMass;
         m_particleForceRegistry.Remove(body);
 
         //Remove contact generator
@@ -119,7 +119,7 @@ void Demo::Remove(Object& object)
             }
         }
 
-        //Remove integration::Body
+        //Remove integration::DynamicBody
         for (auto it = m_particles.begin(); it != m_particles.end(); ++it)
         {
             if (&*it == &body)
@@ -180,7 +180,7 @@ void Demo::RenderFrame() const
     m_pRenderer.RenderFrame();
 }
 
-RigidBody& Demo::MakeRigidBody(integration::Body body, std::unique_ptr<geometry::SimpleShape>&& shape)
+RigidBody& Demo::MakeRigidBody(integration::DynamicBody body, std::unique_ptr<geometry::SimpleShape>&& shape)
 {
     m_particles.push_back(body);
     m_particleForceRegistry.Add(m_particles.back(), m_gravityForce);

@@ -68,8 +68,8 @@ uint32_t pegasus::ParticleWorld::GenerateContacts()
 
 void pegasus::ParticleWorld::Integrate(double duration) const
 {
-    for (auto& p : m_particles)
+    for (auto& body : m_particles)
     {
-        integration::Integrate(p.material, p.linearMotion, duration);
+        integration::Integrate(body, duration);
     }
 }

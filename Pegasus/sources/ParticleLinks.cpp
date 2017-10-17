@@ -7,7 +7,7 @@
 */
 #include <pegasus/ParticleLinks.hpp>
 
-pegasus::ParticleLink::ParticleLink(integration::Body& a, integration::Body& b)
+pegasus::ParticleLink::ParticleLink(integration::DynamicBody& a, integration::DynamicBody& b)
     : m_aParticle(a)
     , m_bParticle(b)
 {
@@ -20,8 +20,8 @@ double pegasus::ParticleLink::CurrentLength() const
 }
 
 pegasus::ParticleCabel::ParticleCabel(
-    integration::Body& a,
-    integration::Body& b,
+    integration::DynamicBody& a,
+    integration::DynamicBody& b,
     double maxLength,
     double restutuition)
     : ParticleLink(a, b)
@@ -46,7 +46,7 @@ pegasus::ParticleCabel::AddContact(ParticleContacts& contacts, uint32_t limit) c
     return 1;
 }
 
-pegasus::ParticleRod::ParticleRod(integration::Body& a, integration::Body& b, double length)
+pegasus::ParticleRod::ParticleRod(integration::DynamicBody& a, integration::DynamicBody& b, double length)
     : ParticleLink(a, b)
     , m_length(length)
 {

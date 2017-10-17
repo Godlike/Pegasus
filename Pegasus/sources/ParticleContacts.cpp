@@ -8,8 +8,8 @@
 #include "pegasus/ParticleContacts.hpp"
 
 pegasus::ParticleContact::ParticleContact(
-    integration::Body& a,
-    integration::Body* b,
+    integration::DynamicBody& a,
+    integration::DynamicBody* b,
     double restitution,
     glm::dvec3 const& contactNormal,
     double penetration)
@@ -69,10 +69,10 @@ void pegasus::ParticleContact::ResolveVelocity(double duration) const
     }
     auto const deltaVelocity = newSepVelocity - separatingVelocity;
 
-    auto totalInverseMass = m_pBodyA->material.inverseMass;
+    double totalInverseMass = 1.0 / m_pBodyA->material.mass;
     if (m_pBodyB)
     {
-        totalInverseMass += m_pBodyB->material.inverseMass;
+        totalInverseMass += 1.0 / m_pBodyB->material.mass;
     }
 
     if (totalInverseMass <= 0)
@@ -83,10 +83,10 @@ void pegasus::ParticleContact::ResolveVelocity(double duration) const
     auto const impulse = deltaVelocity / totalInverseMass;
     auto const impulsePerIMass = m_contactNormal * impulse;
 
-    m_pBodyA->linearMotion.velocity = m_pBodyA->linearMotion.velocity + impulsePerIMass * m_pBodyA->material.inverseMass;
+    m_pBodyA->linearMotion.velocity = m_pBodyA->linearMotion.velocity + impulsePerIMass / m_pBodyA->material.mass;
     if (m_pBodyB)
     {
-        m_pBodyB->linearMotion.velocity = m_pBodyB->linearMotion.velocity + impulsePerIMass * -m_pBodyB->material.inverseMass;
+        m_pBodyB->linearMotion.velocity = m_pBodyB->linearMotion.velocity + impulsePerIMass / -m_pBodyB->material.mass;
     }
 }
 
@@ -97,10 +97,10 @@ void pegasus::ParticleContact::ResolveInterpenetration() const
         return;
     }
 
-    double totalInverseMass = m_pBodyA->material.inverseMass;
+    double totalInverseMass = 1.0 / m_pBodyA->material.mass;
     if (m_pBodyB)
     {
-        totalInverseMass += m_pBodyB->material.inverseMass;
+        totalInverseMass += 1.0 / m_pBodyB->material.mass;
     }
 
     if (totalInverseMass <= 0)
@@ -109,12 +109,12 @@ void pegasus::ParticleContact::ResolveInterpenetration() const
     }
 
     glm::dvec3 const movePerIMass = m_contactNormal * (m_penetration / totalInverseMass);
-    m_pBodyA->linearMotion.position += movePerIMass * m_pBodyA->material.inverseMass;
+    m_pBodyA->linearMotion.position += movePerIMass / m_pBodyA->material.mass;
     m_pBodyA->linearMotion.force = integration::IntegrateForce(m_pBodyA->linearMotion.force, movePerIMass * -1.0);
 
     if (m_pBodyB)
     {
-        m_pBodyB->linearMotion.position -= movePerIMass * m_pBodyB->material.inverseMass;
+        m_pBodyB->linearMotion.position -= movePerIMass / m_pBodyB->material.mass;
         m_pBodyB->linearMotion.force = integration::IntegrateForce(m_pBodyB->linearMotion.force, movePerIMass * -1.0);
     }
 }

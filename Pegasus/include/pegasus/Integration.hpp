@@ -18,10 +18,7 @@ struct Material
 {
     PEGASUS_EXPORT Material();
 
-    static double const s_infiniteMass;
-
     double mass;
-    double inverseMass;
     double damping;
 };
 
@@ -35,22 +32,33 @@ struct LinearMotion
     glm::dvec3 force;
 };
 
-struct Body
+struct StaticBody
 {
-    PEGASUS_EXPORT Body();
+    PEGASUS_EXPORT StaticBody();
 
     Material material;
+};
+
+struct DynamicBody : StaticBody
+{
+    PEGASUS_EXPORT DynamicBody();
+
     LinearMotion linearMotion;
 };
 
-PEGASUS_EXPORT
-bool FiniteMass(double inverseMass);
+struct KinematicBody : DynamicBody
+{
+};
 
 PEGASUS_EXPORT
 glm::dvec3 IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce);
 
 PEGASUS_EXPORT
-void Integrate(Material& material, LinearMotion& linearMotion, double duration);
+void Integrate(DynamicBody& body, double duration);
+
+PEGASUS_EXPORT
+void Integrate (KinematicBody& body, double duration);
+
 } // namespace integration
 } // namespace pegasus
 

@@ -19,10 +19,10 @@ namespace pegasus
 class RigidBody
 {
 public:
-    integration::Body& pointMass;
+    integration::DynamicBody& pointMass;
     std::unique_ptr<geometry::SimpleShape> const shape;
 
-    PEGASUS_EXPORT RigidBody(integration::Body& body, std::unique_ptr<geometry::SimpleShape>&& shape);
+    PEGASUS_EXPORT RigidBody(integration::DynamicBody& body, std::unique_ptr<geometry::SimpleShape>&& shape);
 };
 using RigidBodies = std::list<RigidBody>;
 

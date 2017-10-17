@@ -46,36 +46,36 @@ public:
      * @param[in] end line end
      * @return a newly created Object
      */
-    Object& MakeLine(integration::Body body, glm::vec3 start, glm::vec3 end);
+    Object& MakeLine(integration::DynamicBody body, glm::vec3 start, glm::vec3 end);
 
     /**
      * @brief Creates an object describing a plane
      *
-     * integration::Body::linearMotion::position is used as the position of the object,
+     * integration::DynamicBody::linearMotion::position is used as the position of the object,
      * both physical and graphical
      *
      * @param[in] body physical data
      * @param[in] normal normal of the vector
      * @return a newly created Object
      */
-    Object& MakePlane(integration::Body body, glm::dvec3 normal);
+    Object& MakePlane(integration::DynamicBody body, glm::dvec3 normal);
 
     /**
      * @brief Creates an object describing a sphere
      *
-     * integration::Body::linearMotion::position is used as the position of the object,
+     * integration::DynamicBody::linearMotion::position is used as the position of the object,
      * both physical and graphical
      *
      * @param[in] body physical data
      * @param[in] radius radius of the sphere
      * @return a newly created Object
      */
-    Object& MakeSphere(integration::Body body, double radius);
+    Object& MakeSphere(integration::DynamicBody body, double radius);
 
     /**
      * @brief Creates an object describing a box
      *
-     * integration::Body::linearMotion::position is used as the position of the object,
+     * integration::DynamicBody::linearMotion::position is used as the position of the object,
      * both physical and graphical
      *
      * @param[in] body physical data
@@ -84,7 +84,7 @@ public:
      * @param[in] k orthogonal basis vector of the box base
      * @return a newly created Object
      */
-    Object& MakeBox(integration::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k);
+    Object& MakeBox(integration::DynamicBody body, glm::vec3 i, glm::vec3 j, glm::vec3 k);
 
     /**
      * @brief Removes object from the demo
@@ -147,7 +147,7 @@ private:
      * @param[in] shape collision geometry shape
      * @return a newly created RigidBody
      */
-    RigidBody& MakeRigidBody(integration::Body body, std::unique_ptr<geometry::SimpleShape>&& shape);
+    RigidBody& MakeRigidBody(integration::DynamicBody body, std::unique_ptr<geometry::SimpleShape>&& shape);
 };
 } // namespace pegasus
 

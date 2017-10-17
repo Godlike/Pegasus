@@ -21,14 +21,14 @@ namespace pegasus
 class ParticleContact
 {
 public:
-    PEGASUS_EXPORT ParticleContact(integration::Body& a, integration::Body* b,
+    PEGASUS_EXPORT ParticleContact(integration::DynamicBody& a, integration::DynamicBody* b,
                     double restitution, glm::dvec3 const& contactNormal, double penetration);
     PEGASUS_EXPORT void Resolve(double duration) const;
     PEGASUS_EXPORT double CalculateSeparatingVelocity() const;
 
 private:
-    integration::Body* m_pBodyA;
-    integration::Body* m_pBodyB;
+    integration::DynamicBody* m_pBodyA;
+    integration::DynamicBody* m_pBodyB;
     double m_restitution;
     glm::dvec3 m_contactNormal;
     double m_penetration;
