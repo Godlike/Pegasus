@@ -19,7 +19,7 @@ Demo& Demo::GetInstance()
 
 bool Demo::IsValid() const
 {
-    return m_pRenderer.IsValid();
+    return m_renderer.IsValid();
 }
 
 void Demo::RunFrame()
@@ -34,106 +34,138 @@ void Demo::RunFrame()
     std::this_thread::sleep_until(nextFrameTime);
 }
 
-Demo::Object& Demo::MakeLine(integration::DynamicBody body, glm::vec3 start, glm::vec3 end)
+Demo::Object& Demo::MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3 end)
 {
-    m_objects.emplace_back(
-        nullptr,
-        new render::primitive::LineSegment(
-            glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), start, end
-        )
+    render::primitive::Primitive* shape = new render::primitive::LineSegment(
+        glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), start, end
     );
 
-    return m_objects.back();
+    m_staticObjects.emplace_back(shape);
+    m_objects.emplace_back(&m_staticObjects.back());
+
+    return *m_objects.back();
 }
 
-Demo::Object& Demo::MakePlane(integration::DynamicBody body, glm::dvec3 normal)
+Demo::Object& Demo::MakePlane(mechanics::Body body, glm::dvec3 normal, BodyType type)
 {
-    m_objects.emplace_back(
-        &MakeRigidBody(body, std::make_unique<geometry::Plane>(body.linearMotion.position, normal)),
-        new render::primitive::Plane(
-            glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), normal
-        )
-    );
-    m_particleContactGenerators.emplace_back(
-        std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.7)
+    MakeRigidBody(body, std::make_unique<geometry::Plane>(body.linearMotion.position, normal), type);
+    render::primitive::Primitive* shape = new render::primitive::Plane(
+        glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), normal
     );
 
-    return m_objects.back();
+    if (type == BodyType::STATIC) {
+        m_staticObjects.emplace_back(shape, &m_scene.staticObjects, m_scene.staticObjects.size() - 1);
+        m_objects.emplace_back(&m_staticObjects.back());
+    } else if (type == BodyType::DYNAMIC) {
+        m_dynamicObjects.emplace_back(shape, &m_scene.dynamicObjects, m_scene.dynamicObjects.size() - 1);
+        m_objects.emplace_back(&m_dynamicObjects.back());
+    }
+    
+    return *m_objects.back();
 }
 
-Demo::Object& Demo::MakeSphere(integration::DynamicBody body, double radius)
+Demo::Object& Demo::MakeSphere(mechanics::Body body, double radius, BodyType type)
 {
-    m_objects.emplace_back(
-        &MakeRigidBody(body, std::make_unique<geometry::Sphere>(body.linearMotion.position, radius)),
-        new render::primitive::Sphere(
-            glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), radius
-        )
-    );
-    m_particleContactGenerators.emplace_back(
-        std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.7)
+    MakeRigidBody(body, std::make_unique<geometry::Sphere>(body.linearMotion.position, radius), type);
+    render::primitive::Primitive* shape = new render::primitive::Sphere(
+        glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), radius
     );
 
-    return m_objects.back();
+    if (type == BodyType::STATIC) {
+        m_staticObjects.emplace_back(shape, &m_scene.staticObjects, m_scene.staticObjects.size() - 1);
+        m_objects.emplace_back(&m_staticObjects.back());
+    }
+    else if (type == BodyType::DYNAMIC) {
+        m_dynamicObjects.emplace_back(shape, &m_scene.dynamicObjects, m_scene.dynamicObjects.size() - 1);
+        m_objects.emplace_back(&m_dynamicObjects.back());
+    }
+
+    return *m_objects.back();
 }
 
-Demo::Object& Demo::MakeBox(integration::DynamicBody body, glm::vec3 i, glm::vec3 j, glm::vec3 k)
+Demo::Object& Demo::MakeBox(mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, BodyType type)
 {
-    m_objects.emplace_back(
-        &MakeRigidBody(body, std::make_unique<geometry::Box>(body.linearMotion.position, i, j, k)),
-        new render::primitive::Box(
-            glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)),
-            glm::vec3(0.439, 0.502, 0.565),
-            render::primitive::Box::Axes{i, j, k}
-        )
-    );
-    m_particleContactGenerators.emplace_back(
-        std::make_unique<ShapeContactGenerator<RigidBodies>>(*m_objects.back().body, m_rigidBodies, 0.7)
+    MakeRigidBody(body, std::make_unique<geometry::Box>(body.linearMotion.position, i, j, k), type);
+    render::primitive::Primitive* shape = new render::primitive::Box(
+        glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)),
+        glm::vec3(0.439, 0.502, 0.565),
+        render::primitive::Box::Axes{i, j, k}
     );
 
-    return m_objects.back();
+    if (type == BodyType::STATIC) {
+        m_staticObjects.emplace_back(shape, &m_scene.staticObjects, m_scene.staticObjects.size() - 1);
+        m_objects.emplace_back(&m_staticObjects.back());
+    }
+    else if (type == BodyType::DYNAMIC) {
+        m_dynamicObjects.emplace_back(shape, &m_scene.dynamicObjects, m_scene.dynamicObjects.size() - 1);
+        m_objects.emplace_back(&m_dynamicObjects.back());
+    }
+
+    return *m_objects.back();
 }
 
 void Demo::Remove(Object& object)
 {
-    if (object.body != nullptr)
+    if (object.GetObject() != nullptr)
     {
-        integration::DynamicBody& body = object.body->pointMass;
-        m_particleForceRegistry.Remove(body);
+        mechanics::Body* body = object.GetObject()->body;
+        m_scene.particleForceRegistry.Remove(*body);
 
-        //Remove contact generator
-        m_particleContactGenerators.erase(
-            std::find_if(m_particleContactGenerators.begin(), m_particleContactGenerators.end(),
-                [&object](auto& generator) -> bool
-                {
-                    return (object.body == &dynamic_cast<ShapeContactGenerator<RigidBodies>*>(generator.get())->rigidBody);
-                })
-        );
-
-        //Remove RB
-        for (auto it = m_rigidBodies.begin(); it != m_rigidBodies.end(); ++it)
+        //Remove body
+        for (auto it = m_scene.bodies.begin(); it != m_scene.bodies.end(); ++it)
         {
-            if (&it->pointMass == &body)
+            if (&*it == body)
             {
-                m_rigidBodies.erase(it);
+                m_scene.bodies.erase(it);
                 break;
             }
         }
 
-        //Remove integration::DynamicBody
-        for (auto it = m_particles.begin(); it != m_particles.end(); ++it)
+        //Remove static object
+        for (auto it = m_scene.staticObjects.begin(); it != m_scene.staticObjects.end(); ++it)
         {
-            if (&*it == &body)
+            if (it->body == body)
             {
-                m_particles.erase(it);
+                m_scene.staticObjects.erase(it);
                 break;
             }
+        }
+
+        //Remove dynamic object
+        for (auto it = m_scene.dynamicObjects.begin(); it != m_scene.dynamicObjects.end(); ++it)
+        {
+            if (it->body == body)
+            {
+                m_scene.dynamicObjects.erase(it);
+                break;
+            }
+        }
+    }
+
+    //Remove static object
+    for (auto it = m_staticObjects.begin(); it != m_staticObjects.end(); ++it)
+    {
+        if (&*it == &object)
+        {
+            m_staticObjects.erase(it);
+            break;
+        }
+    }
+
+    //Remove dynamic object
+    for (auto it = m_dynamicObjects.begin(); it != m_dynamicObjects.end(); ++it)
+    {
+        if (&*it == &object)
+        {
+            m_dynamicObjects.erase(it);
+            break;
         }
     }
 
     //Remove object
     for (auto it = m_objects.begin(); it != m_objects.end(); ++it)
     {
-        if (&*it == &object)
+        if (*it == &object)
         {
             m_objects.erase(it);
             break;
@@ -141,50 +173,51 @@ void Demo::Remove(Object& object)
     }
 }
 
-Demo::Object::Object(RigidBody* body, render::primitive::Primitive* shape)
-    : body(body)
-    , shape(shape)
+Demo::Object::Object(render::primitive::Primitive* shape)
+    : shape(shape)
 {
 }
 
 Demo::Demo()
-    : m_pRenderer(render::Renderer::GetInstance())
-    , m_particleWorld(m_particles,
-        m_particleForceRegistry,
-        m_particleContactGenerators,
-        glm::pow2(maxParticles),
-        maxParticles)
+    : m_renderer(render::Renderer::GetInstance())
     , m_gravityForce(glm::dvec3{0, -9.8, 0})
 {
 }
 
 void Demo::ComputeFrame(double duration)
 {
-    m_particleWorld.StartFrame();
-    m_particleWorld.RunPhysics(duration);
+    m_scene.ComputeFrame(duration);
 
     //Update positions
-    for (Object& object : m_objects)
+    for (Object* object : m_objects)
     {
-        if (object.body != nullptr)
+        if (object->GetObject() != nullptr)
         {
-            object.body->shape->centerOfMass = object.body->pointMass.linearMotion.position;
-            glm::mat4 const model = glm::translate(glm::mat4(1), glm::vec3(object.body->shape->centerOfMass));
-            object.shape->SetModel(model);
+            object->GetObject()->shape->centerOfMass = object->GetObject()->body->linearMotion.position;
+            glm::mat4 const model = glm::translate(glm::mat4(1), glm::vec3(object->GetObject()->shape->centerOfMass));
+            object->shape->SetModel(model);
         }
     }
 }
 
 void Demo::RenderFrame() const
 {
-    m_pRenderer.RenderFrame();
+    m_renderer.RenderFrame();
 }
 
-RigidBody& Demo::MakeRigidBody(integration::DynamicBody body, std::unique_ptr<geometry::SimpleShape>&& shape)
+void Demo::MakeRigidBody(
+        mechanics::Body body, std::unique_ptr<geometry::SimpleShape>&& shape, BodyType type
+    )
 {
-    m_particles.push_back(body);
-    m_particleForceRegistry.Add(m_particles.back(), m_gravityForce);
-    m_rigidBodies.emplace_back(m_particles.back(), std::move(shape));
+    m_scene.bodies.push_back(body);
+    m_scene.particleForceRegistry.Add(m_scene.bodies.back(), m_gravityForce);
 
-    return m_rigidBodies.back();
+    if (type == BodyType::STATIC)
+    {
+        m_scene.staticObjects.emplace_back(m_scene.bodies.back(), std::move(shape));
+    }
+    else if (type == BodyType::DYNAMIC)
+    {
+        m_scene.dynamicObjects.emplace_back(m_scene.bodies.back(), std::move(shape));
+    }
 }

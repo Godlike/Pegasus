@@ -7,7 +7,7 @@
 #define PEGASUS_DEMO_HPP
 
 #include "demo/Render.hpp"
-#include <pegasus/ParticleWorld.hpp>
+#include <pegasus/Scene.hpp>
 
 namespace pegasus
 {
@@ -16,6 +16,11 @@ class Demo
 {
 public:
     struct Object;
+    enum class BodyType : uint8_t
+    {
+        STATIC,
+        DYNAMIC
+    };
 
     /**
      * @brief Returns a reference to the singleton Demo instance
@@ -46,36 +51,36 @@ public:
      * @param[in] end line end
      * @return a newly created Object
      */
-    Object& MakeLine(integration::DynamicBody body, glm::vec3 start, glm::vec3 end);
+    Object& MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3 end);
 
     /**
      * @brief Creates an object describing a plane
      *
-     * integration::DynamicBody::linearMotion::position is used as the position of the object,
+     * Body::linearMotion::position is used as the position of the object,
      * both physical and graphical
      *
      * @param[in] body physical data
      * @param[in] normal normal of the vector
      * @return a newly created Object
      */
-    Object& MakePlane(integration::DynamicBody body, glm::dvec3 normal);
+    Object& MakePlane(mechanics::Body body, glm::dvec3 normal, BodyType type = BodyType::DYNAMIC);
 
     /**
      * @brief Creates an object describing a sphere
      *
-     * integration::DynamicBody::linearMotion::position is used as the position of the object,
+     * Body::linearMotion::position is used as the position of the object,
      * both physical and graphical
      *
      * @param[in] body physical data
      * @param[in] radius radius of the sphere
      * @return a newly created Object
      */
-    Object& MakeSphere(integration::DynamicBody body, double radius);
+    Object& MakeSphere(mechanics::Body body, double radius, BodyType type = BodyType::DYNAMIC);
 
     /**
      * @brief Creates an object describing a box
      *
-     * integration::DynamicBody::linearMotion::position is used as the position of the object,
+     * Body::linearMotion::position is used as the position of the object,
      * both physical and graphical
      *
      * @param[in] body physical data
@@ -84,7 +89,7 @@ public:
      * @param[in] k orthogonal basis vector of the box base
      * @return a newly created Object
      */
-    Object& MakeBox(integration::DynamicBody body, glm::vec3 i, glm::vec3 j, glm::vec3 k);
+    Object& MakeBox(mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, BodyType type = BodyType::DYNAMIC);
 
     /**
      * @brief Removes object from the demo
@@ -104,26 +109,75 @@ public:
          * @brief Constructs Object instance
          *
          * @note Assumes ownership of @p shape
-         * @param[in] body physical world body
          * @param[in] shape render scene shape
          */
-        Object(RigidBody* body, render::primitive::Primitive* shape);
+        Object(render::primitive::Primitive* shape);
+
+        virtual ~Object() = default;
 
         //! Physical data
-        RigidBody* body;
-
+        virtual mechanics::Object* GetObject() = 0;
+        
         //! Render data
         std::unique_ptr<render::primitive::Primitive> shape;
     };
 
+    struct StaticObject : Object
+    {
+    public:
+        StaticObject(render::primitive::Primitive* shape, std::vector<mechanics::StaticObject>* objects = nullptr, size_t index = 0)
+            : Object(shape)
+            , m_pStaticObjects(objects)
+            , m_index(index)
+        {
+        }
+
+        mechanics::Object* GetObject() override
+        {
+            if (m_pStaticObjects != nullptr)
+            {
+                return &m_pStaticObjects->at(m_index);
+            }
+
+            return nullptr;
+        }
+
+    private:
+        std::vector<mechanics::StaticObject>* m_pStaticObjects;
+        size_t m_index;
+    };
+
+    struct DynamicObject : Object
+    {
+    public:
+        DynamicObject(render::primitive::Primitive* shape, std::vector<mechanics::DynamicObject>* objects = nullptr, size_t index = 0)
+            : Object(shape)
+            , m_pDynamicObjects(objects)
+            , m_index(index)
+        {
+        }
+
+        mechanics::Object* GetObject() override
+        {
+            if (m_pDynamicObjects != nullptr)
+            {
+                return &m_pDynamicObjects->at(m_index);
+            }
+
+            return nullptr;
+        }
+
+    private:
+        std::vector<mechanics::DynamicObject>* m_pDynamicObjects;
+        size_t m_index;
+    };
+
 private:
-    std::list<Object> m_objects;
-    render::Renderer& m_pRenderer;
-    ParticleWorld m_particleWorld;
-    Particles m_particles;
-    RigidBodies m_rigidBodies;
-    ParticleContactGenerators m_particleContactGenerators;
-    ParticleForceRegistry m_particleForceRegistry;
+    std::list<StaticObject> m_staticObjects;
+    std::list<DynamicObject> m_dynamicObjects;
+    std::vector<Object*> m_objects;
+    render::Renderer& m_renderer;
+    Scene m_scene;
     ParticleGravity m_gravityForce;
 
     Demo();
@@ -147,7 +201,9 @@ private:
      * @param[in] shape collision geometry shape
      * @return a newly created RigidBody
      */
-    RigidBody& MakeRigidBody(integration::DynamicBody body, std::unique_ptr<geometry::SimpleShape>&& shape);
+    void MakeRigidBody(
+        mechanics::Body body, std::unique_ptr<geometry::SimpleShape>&& shape, BodyType type
+    );
 };
 } // namespace pegasus
 

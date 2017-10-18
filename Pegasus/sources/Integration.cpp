@@ -6,48 +6,17 @@
 #include <pegasus/Integration.hpp>
 
 using namespace pegasus;
-using namespace integration;
 
-Material::Material()
-    : mass(1)
-    , damping(1)
-{
-}
-
-LinearMotion::LinearMotion()
-    : position(0, 0, 0)
-    , velocity(0, 0, 0)
-    , acceleration(0, 0, 0)
-    , force(0, 0, 0)
-{
-}
-
-StaticBody::StaticBody()
-    : material()
-{
-}
-
-DynamicBody::DynamicBody()
-    : StaticBody()
-    , linearMotion()
-{
-}
-
-glm::dvec3 integration::IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
-{
-    return accumulatedForce + appliedForce;
-}
-
-namespace 
+namespace
 {
 glm::dvec3 IntegratePosition(glm::dvec3 position, glm::dvec3 velocity, double duration)
 {
     return position + velocity * duration;
 }
 
-glm::dvec3 IntegrateAcceleration(glm::dvec3 acceleration, glm::dvec3 force, double mass)
+glm::dvec3 IntegrateAcceleration(glm::dvec3 acceleration, glm::dvec3 force, double inverseMass)
 {
-    return acceleration + force / mass;
+    return acceleration + force * inverseMass;
 }
 
 glm::dvec3 IntegrateVelocity(glm::dvec3 velocity, glm::dvec3 acceleration, double duration)
@@ -60,9 +29,9 @@ glm::dvec3 IntegrateDamping(glm::dvec3 velocity, double damping, double duration
     return velocity * glm::pow(damping, duration);
 }
 
-void Integrate(Material& material, LinearMotion& linearMotion, double duration)
+void IntegrateLinearMotion(mechanics::Material& material, mechanics::LinearMotion& linearMotion, double duration)
 {
-    glm::dvec3 const resultingAcceleration = ::IntegrateAcceleration(linearMotion.acceleration, linearMotion.force, material.mass);
+    glm::dvec3 const resultingAcceleration = ::IntegrateAcceleration(linearMotion.acceleration, linearMotion.force, material.GetInverseMass());
     linearMotion.position = ::IntegratePosition(linearMotion.position, linearMotion.velocity, duration);
     linearMotion.velocity = ::IntegrateVelocity(linearMotion.velocity, resultingAcceleration, duration);
     linearMotion.velocity = ::IntegrateDamping(linearMotion.velocity, material.damping, duration);
@@ -70,12 +39,12 @@ void Integrate(Material& material, LinearMotion& linearMotion, double duration)
 }
 } // namespace ::
 
-void integration::Integrate(DynamicBody& body, double duration)
-{   
-    ::Integrate(body.material, body.linearMotion, duration);
+glm::dvec3 pegasus::IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
+{
+    return accumulatedForce + appliedForce;
 }
 
-void integration::Integrate(KinematicBody& body, double duration)
+void pegasus::Integrate(mechanics::Body& body, double duration)
 {
-    ::Integrate(body.material, body.linearMotion, duration);
+    ::IntegrateLinearMotion(body.material, body.linearMotion, duration);
 }

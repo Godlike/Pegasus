@@ -25,26 +25,24 @@ include_directories(
 message(STATUS "Version: ${PEGASUS_VERSION}")
 
 set(PEGASUS_HEADERS
-    include/pegasus/Integration.hpp
-    include/pegasus/ParticleForceGenerator.hpp
-    include/pegasus/ParticleContacts.hpp
-    include/pegasus/ParticleLinks.hpp
-    include/pegasus/ParticleWorld.hpp
-    include/pegasus/Geometry.hpp
-    include/pegasus/Mechanics.hpp
     include/pegasus/Math.hpp
+    include/pegasus/Object.hpp
+    include/pegasus/Integration.hpp
+    include/pegasus/Collision.hpp
+    include/pegasus/ParticleForceGenerator.hpp
+    include/pegasus/Scene.hpp
     include/pegasus/BoundingVolumes.hpp
+    include/pegasus/Geometry.hpp
 )
 set(PEGASUS_SOURCES
-    sources/Integration.cpp
-    sources/ParticleForceGenerator.cpp
-    sources/ParticleContacts.cpp
-    sources/ParticleLinks.cpp
-    sources/ParticleWorld.cpp
-    sources/Geometry.cpp
-    sources/Mechanics.cpp
     sources/Math.cpp
+    sources/Object.cpp
+    sources/Integration.cpp
+    sources/Collision.cpp
+    sources/ParticleForceGenerator.cpp
+    sources/Scene.cpp
     sources/BoundingVolumes.cpp
+    sources/Geometry.cpp
 )
 
 set(PEGASUS_EXTRA)
