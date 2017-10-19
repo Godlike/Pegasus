@@ -98,7 +98,7 @@ public:
     void Remove(Object& object);
 
     //! Maximum number of particles in the demo
-    uint32_t const maxParticles = 200;
+    uint32_t const maxParticles = 500;
 
     /**
      * @brief Represents an instance of the render and physical objects
@@ -178,7 +178,7 @@ private:
     std::vector<Object*> m_objects;
     render::Renderer& m_renderer;
     Scene m_scene;
-    ParticleGravity m_gravityForce;
+    force::StaticField m_gravityForce;
 
     Demo();
 

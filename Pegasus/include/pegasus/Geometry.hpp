@@ -44,7 +44,7 @@ public:
  */
 class SimpleShape : public Shape
 {
-public:
+public:    
     enum class Type : uint8_t
     {
         RAY,

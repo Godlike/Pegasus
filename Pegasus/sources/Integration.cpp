@@ -6,6 +6,7 @@
 #include <pegasus/Integration.hpp>
 
 using namespace pegasus;
+using namespace integration;
 
 namespace
 {
@@ -39,12 +40,12 @@ void IntegrateLinearMotion(mechanics::Material& material, mechanics::LinearMotio
 }
 } // namespace ::
 
-glm::dvec3 pegasus::IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
+glm::dvec3 integration::IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
 {
     return accumulatedForce + appliedForce;
 }
 
-void pegasus::Integrate(mechanics::Body& body, double duration)
+void integration::Integrate(mechanics::Body& body, double duration)
 {
     ::IntegrateLinearMotion(body.material, body.linearMotion, duration);
 }

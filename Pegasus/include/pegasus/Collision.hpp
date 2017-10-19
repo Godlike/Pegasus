@@ -113,7 +113,7 @@ class Resolver
 {
 public:
     uint32_t iterationsUsed;
-    uint32_t iterations = 100;
+    uint32_t iterations = 10000;
 
     void Resolve(std::vector<Contact>& contacts, double duration);
 

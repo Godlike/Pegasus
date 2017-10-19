@@ -29,7 +29,7 @@ set(PEGASUS_HEADERS
     include/pegasus/Object.hpp
     include/pegasus/Integration.hpp
     include/pegasus/Collision.hpp
-    include/pegasus/ParticleForceGenerator.hpp
+    include/pegasus/Force.hpp
     include/pegasus/Scene.hpp
     include/pegasus/BoundingVolumes.hpp
     include/pegasus/Geometry.hpp
@@ -39,7 +39,7 @@ set(PEGASUS_SOURCES
     sources/Object.cpp
     sources/Integration.cpp
     sources/Collision.cpp
-    sources/ParticleForceGenerator.cpp
+    sources/Force.cpp
     sources/Scene.cpp
     sources/BoundingVolumes.cpp
     sources/Geometry.cpp

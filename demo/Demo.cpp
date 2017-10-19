@@ -109,7 +109,7 @@ void Demo::Remove(Object& object)
     if (object.GetObject() != nullptr)
     {
         mechanics::Body* body = object.GetObject()->body;
-        m_scene.particleForceRegistry.Remove(*body);
+        m_scene.forceRegistry.Remove(*body);
 
         //Remove body
         for (auto it = m_scene.bodies.begin(); it != m_scene.bodies.end(); ++it)
@@ -210,7 +210,7 @@ void Demo::MakeRigidBody(
     )
 {
     m_scene.bodies.push_back(body);
-    m_scene.particleForceRegistry.Add(m_scene.bodies.back(), m_gravityForce);
+    m_scene.forceRegistry.Add(m_scene.bodies.back(), m_gravityForce);
 
     if (type == BodyType::STATIC)
     {
