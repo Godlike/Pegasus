@@ -52,20 +52,3 @@ mechanics::Body::Body()
     , linearMotion()
 {
 }
-
-mechanics::Object::Object(Body& body, std::unique_ptr<geometry::SimpleShape>&& shape)
-	: body(&body)
-	, shape(std::move(shape))
-{
-}
-
-mechanics::StaticObject::StaticObject(Body& body, std::unique_ptr<geometry::SimpleShape>&& shape)
-    : Object(body, std::move(shape))
-{
-    body.material.SetInverseMass(0);
-}
-
-mechanics::DynamicObject::DynamicObject(Body& body, std::unique_ptr<geometry::SimpleShape>&& shape)
-    : Object(body, std::move(shape))
-{
-}

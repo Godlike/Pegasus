@@ -10,6 +10,37 @@
 using namespace pegasus;
 using namespace collision;
 
+Contact::Contact(mechanics::Body& aBody, mechanics::Body& bBody, Manifold manifold, double restitution)
+    : aBody(&aBody)
+    , bBody(&bBody)
+    , manifold(manifold)
+    , restitution(restitution)
+{
+}
+
+std::vector<std::vector<Contact>> Detector::Detect()
+{
+    return {
+        Detect<scene::DynamicBody, geometry::Plane>(),
+        Detect<scene::DynamicBody, geometry::Plane, scene::DynamicBody, geometry::Sphere>(),
+        Detect<scene::DynamicBody, geometry::Plane, scene::DynamicBody, geometry::Box>(),
+        Detect<scene::DynamicBody, geometry::Plane, scene::StaticBody, geometry::Plane>(),
+        Detect<scene::DynamicBody, geometry::Plane, scene::StaticBody, geometry::Sphere>(),
+        Detect<scene::DynamicBody, geometry::Plane, scene::StaticBody, geometry::Box>(),
+
+        Detect<scene::DynamicBody, geometry::Sphere>(),
+        Detect<scene::DynamicBody, geometry::Sphere, scene::DynamicBody, geometry::Box>(),
+        Detect<scene::DynamicBody, geometry::Sphere, scene::StaticBody, geometry::Plane>(),
+        Detect<scene::DynamicBody, geometry::Sphere, scene::StaticBody, geometry::Sphere>(),
+        Detect<scene::DynamicBody, geometry::Sphere, scene::StaticBody, geometry::Box>(),
+
+        Detect<scene::DynamicBody, geometry::Box>(),
+        Detect<scene::DynamicBody, geometry::Box, scene::StaticBody, geometry::Plane>(),
+        Detect<scene::DynamicBody, geometry::Box, scene::StaticBody, geometry::Sphere>(),
+        Detect<scene::DynamicBody, geometry::Box, scene::StaticBody, geometry::Box>(),
+    };
+}
+
 bool Detector::Intersect(geometry::SimpleShape const* aShape, geometry::SimpleShape const* bShape)
 {
     return s_simpleShapeDetector.CalculateIntersection(aShape, bShape);
@@ -27,29 +58,29 @@ Contact::Manifold Detector::CalculateContactManifold(geometry::SimpleShape const
     return manifold;
 }
 
-void Resolver::Resolve(std::vector<Contact>& contacts, double duration)
+void Resolver::Resolve(std::vector<std::vector<Contact>>& contacts, double duration)
 {
-    std::sort(contacts.begin(), contacts.end(),
-        [](Contact const& a, Contact const& b) -> bool
+    for (std::vector<Contact>& contact : contacts)
     {
-        return CalculateTotalSeparationSpeed(a) < CalculateTotalSeparationSpeed(b);
-    });
+        std::sort(contact.begin(), contact.end(),
+            [](Contact const& a, Contact const& b) -> bool
+        {
+            return CalculateTotalSeparationSpeed(a) < CalculateTotalSeparationSpeed(b);
+        });
 
-    iterationsUsed = 0;
-    while (iterationsUsed++ < iterations && !contacts.empty())
-    {
-        Resolve(contacts.back(), duration);
-        contacts.pop_back();
+        iterationsUsed = 0;
+        while (iterationsUsed++ < iterations && !contact.empty())
+        {
+            Resolve(contact.back(), duration);
+            contact.pop_back();
+        }
     }
 }
 
 double Resolver::CalculateTotalSeparationSpeed(Contact contact)
 {
-    mechanics::Body& aBody = *reinterpret_cast<mechanics::Object*>(contact.aObject)->body;
-    mechanics::Body& bBody = *reinterpret_cast<mechanics::Object*>(contact.bObject)->body;
-
     //Calculate initial separation velocity
-    glm::dvec3 const relativeVelocity = aBody.linearMotion.velocity - bBody.linearMotion.velocity;
+    glm::dvec3 const relativeVelocity = contact.aBody->linearMotion.velocity - contact.bBody->linearMotion.velocity;
     double const separationSpeed = glm::dot(relativeVelocity, contact.manifold.normal);
 
     return separationSpeed;
@@ -57,12 +88,9 @@ double Resolver::CalculateTotalSeparationSpeed(Contact contact)
 
 double Resolver::CalculatePureSeparationSpeed(Contact contact, double separationSpeed, double duration)
 {
-    mechanics::Body& aBody = *reinterpret_cast<mechanics::Object*>(contact.aObject)->body;
-    mechanics::Body& bBody = *reinterpret_cast<mechanics::Object*>(contact.bObject)->body;
-
     //Decompose acceleration caused separation velocity component
     double newSeparationSpeed = -separationSpeed * contact.restitution;
-    glm::dvec3 const accelerationCausedVelocity = aBody.linearMotion.acceleration - bBody.linearMotion.acceleration;
+    glm::dvec3 const accelerationCausedVelocity = contact.aBody->linearMotion.acceleration - contact.bBody->linearMotion.acceleration;
     double const accelerationCausedSeparationSpeed = glm::dot(accelerationCausedVelocity,
         contact.manifold.normal * duration);
     if (accelerationCausedSeparationSpeed < 0.0)
@@ -89,11 +117,8 @@ double Resolver::CalculateSeparationSpeed(Contact contact, double duration)
 
 glm::dvec3 Resolver::CalculateTotalImpulse(Contact contact, double duration)
 {
-    mechanics::Body& aBody = *reinterpret_cast<mechanics::Object*>(contact.aObject)->body;
-    mechanics::Body& bBody = *reinterpret_cast<mechanics::Object*>(contact.bObject)->body;
-
     double const separationSpeed = CalculateSeparationSpeed(contact, duration);
-    double const totalInverseMass = aBody.material.GetInverseMass() + bBody.material.GetInverseMass();
+    double const totalInverseMass = contact.aBody->material.GetInverseMass() + contact.bBody->material.GetInverseMass();
     double const impulse = separationSpeed / totalInverseMass;
     glm::dvec3 const totalImpulse = contact.manifold.normal * impulse;
 
@@ -102,28 +127,22 @@ glm::dvec3 Resolver::CalculateTotalImpulse(Contact contact, double duration)
 
 void Resolver::ResolveVelocity(Contact contact, double duration)
 {
-    mechanics::Body& aBody = *reinterpret_cast<mechanics::Object*>(contact.aObject)->body;
-    mechanics::Body& bBody = *reinterpret_cast<mechanics::Object*>(contact.bObject)->body;
-
     glm::dvec3 const totalImpulse = CalculateTotalImpulse(contact, duration);
 
-    aBody.linearMotion.velocity = aBody.linearMotion.velocity + totalImpulse * aBody.material.GetInverseMass();
-    bBody.linearMotion.velocity = bBody.linearMotion.velocity + totalImpulse * -bBody.material.GetInverseMass();
+    contact.aBody->linearMotion.velocity = contact.aBody->linearMotion.velocity + totalImpulse * contact.aBody->material.GetInverseMass();
+    contact.bBody->linearMotion.velocity = contact.bBody->linearMotion.velocity + totalImpulse * -contact.bBody->material.GetInverseMass();
 }
 
 void Resolver::ResolveInterpenetration(Contact contact)
 {
-    mechanics::Body& aBody = *reinterpret_cast<mechanics::Object*>(contact.aObject)->body;
-    mechanics::Body& bBody = *reinterpret_cast<mechanics::Object*>(contact.bObject)->body;
-
-    double const totalInverseMass = aBody.material.GetInverseMass() + bBody.material.GetInverseMass();
+    double const totalInverseMass = contact.aBody->material.GetInverseMass() + contact.bBody->material.GetInverseMass();
     glm::dvec3 const movePerIMass = contact.manifold.normal * (contact.manifold.penetration / totalInverseMass);
 
-    aBody.linearMotion.position += movePerIMass * aBody.material.GetInverseMass();
-    aBody.linearMotion.force = integration::IntegrateForce(aBody.linearMotion.force, movePerIMass * -1.0);
+    contact.aBody->linearMotion.position += movePerIMass * contact.aBody->material.GetInverseMass();
+    contact.aBody->linearMotion.force = integration::IntegrateForce(contact.aBody->linearMotion.force, movePerIMass * -1.0);
 
-    bBody.linearMotion.position -= movePerIMass * bBody.material.GetInverseMass();
-    bBody.linearMotion.force = integration::IntegrateForce(bBody.linearMotion.force, movePerIMass * -1.0);
+    contact.bBody->linearMotion.position -= movePerIMass * contact.bBody->material.GetInverseMass();
+    contact.bBody->linearMotion.force = integration::IntegrateForce(contact.bBody->linearMotion.force, movePerIMass * -1.0);
 }
 
 void Resolver::Resolve(Contact contact, double duration)

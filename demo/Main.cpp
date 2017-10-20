@@ -27,10 +27,10 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
             isBox = !isBox;
             if (isBox)
                 g_objects.push_back(&demo.MakeBox(
-                    body, 
-                    {rand() % 10 / 10. + 0.1,0,0}, 
-                    {0,rand() % 10 / 10. + 0.1,0}, 
-                    {0,0,rand() % 10 / 10. + 0.1}, 
+                    body,
+                    {rand() % 10 / 10. + 0.1,0,0},
+                    {0,rand() % 10 / 10. + 0.1,0},
+                    {0,0,rand() % 10 / 10. + 0.1},
                     pegasus::scene::Primitive::Type::DYNAMIC
                 ));
             else

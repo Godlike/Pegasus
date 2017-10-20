@@ -110,7 +110,7 @@ public:
 
         //! Physics data
         std::unique_ptr<scene::Primitive> physicalPrimitive;
-        
+
         //! Render data
         std::unique_ptr<render::Primitive> renderPrimitive;
     };

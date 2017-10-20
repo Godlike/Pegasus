@@ -9,8 +9,6 @@
 #include <pegasus/Geometry.hpp>
 #include <pegasus/SharedMacros.hpp>
 
-#include <memory>
-
 namespace pegasus
 {
 namespace mechanics

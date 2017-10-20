@@ -10,6 +10,35 @@
 using namespace pegasus;
 using namespace scene;
 
+RigidBody::RigidBody(Handle body, Handle shape)
+    : body(body)
+    , shape(shape)
+{
+}
+
+AssetManager& AssetManager::GetInstance()
+{
+    static AssetManager am;
+    return am;
+}
+
+std::vector<Asset<mechanics::Body>>& AssetManager::GetBodies()
+{
+    return m_bodies;
+}
+
+StaticBody::StaticBody(Handle body, Handle shape)
+    : RigidBody(body, shape)
+{
+    static AssetManager& am = AssetManager::GetInstance();
+    am.GetAsset(am.GetBodies(), body).material.SetInverseMass(0);
+}
+
+DynamicBody::DynamicBody(Handle body, Handle shape)
+    : RigidBody(body, shape)
+{
+}
+
 Scene& Scene::GetInstance()
 {
     static Scene scene;
@@ -25,72 +54,55 @@ void Scene::ComputeFrame(double duration)
     Integrate(duration);
 }
 
-Handle Scene::MakeBody()
+Handle Scene::MakeBody() const
 {
-    return MakeAsset(m_bodies);
+    return m_assets.MakeAsset(m_assets.GetBodies());
 }
 
-mechanics::Body& Scene::GetBody(Handle handle)
+Scene::Scene()
+    : m_assets(AssetManager::GetInstance())
 {
-    return GetAsset(m_bodies, handle);
 }
 
-void Scene::RemoveBody(Handle handle)
+mechanics::Body& Scene::GetBody(Handle handle) const
 {
-    RemoveAsset(m_bodies, handle);
+    return m_assets.GetAsset(m_assets.GetBodies(), handle);
 }
 
-inline void Scene::ResolveCollisions(double duration)
+void Scene::RemoveBody(Handle handle) const
+{
+    m_assets.RemoveAsset(m_assets.GetBodies(), handle);
+}
+
+void Scene::ResolveCollisions(double duration)
 {
     static collision::Detector detector;
-    std::vector<std::vector<collision::Contact>> contacts({
-    	detector.Detect(m_dynamicPlanes),
-    	detector.Detect(m_dynamicPlanes, m_dynamicSpheres),
-    	detector.Detect(m_dynamicPlanes, m_dynamicBoxes),
-    	detector.Detect(m_dynamicPlanes, m_staticPlanes),
-    	detector.Detect(m_dynamicPlanes, m_staticSpheres),
-    	detector.Detect(m_dynamicPlanes, m_staticBoxes),
-    	detector.Detect(m_dynamicSpheres),
-    	detector.Detect(m_dynamicSpheres, m_dynamicPlanes),
-    	detector.Detect(m_dynamicSpheres, m_dynamicBoxes),
-    	detector.Detect(m_dynamicSpheres, m_staticPlanes),
-    	detector.Detect(m_dynamicSpheres, m_staticSpheres),
-    	detector.Detect(m_dynamicSpheres, m_staticBoxes),
-    	detector.Detect(m_dynamicBoxes),
-    	detector.Detect(m_dynamicBoxes, m_dynamicPlanes),
-    	detector.Detect(m_dynamicBoxes, m_dynamicSpheres),
-    	detector.Detect(m_dynamicBoxes, m_staticPlanes),
-		detector.Detect(m_dynamicBoxes, m_staticSpheres),
-		detector.Detect(m_dynamicBoxes, m_staticBoxes),
-    });
+    std::vector<std::vector<collision::Contact>> contacts = detector.Detect();
 
     static collision::Resolver resolver;
-    for (auto& c : contacts)
-    {
-    	resolver.Resolve(c, duration);
-    }
+    resolver.Resolve(contacts, duration);
 }
 
-inline void Scene::ApplyForces()
+void Scene::ApplyForces()
 {
     //Clear previously applied forces
-    for (Asset<mechanics::Body>& asset : m_bodies)
+    for (Asset<mechanics::Body>& asset : m_assets.GetBodies())
     {
         asset.data.linearMotion.force = glm::dvec3(0);
     }
 
     //Reapply forces
-    ApplyForce(m_staticFieldForceBindings);
-    ApplyForce(m_dragForceBindings);
-    ApplyForce(m_springForceBindings);
-    ApplyForce(m_anchoredSpringForceBindings);
-    ApplyForce(m_bungeeForceBindings);
-    ApplyForce(m_buoyancyForceBindings);
+    ApplyForce<force::StaticField>();
+    ApplyForce<force::Drag>();
+    ApplyForce<force::Spring>();
+    ApplyForce<force::AnchoredSpring>();
+    ApplyForce<force::Bungee>();
+    ApplyForce<force::Buoyancy>();
 }
 
-inline void Scene::Integrate(double duration)
+void Scene::Integrate(double duration)
 {
-    for (Asset<mechanics::Body>& asset : m_bodies)
+    for (Asset<mechanics::Body>& asset : m_assets.GetBodies())
     {
         if (asset.id != 0)
         {
@@ -98,33 +110,82 @@ inline void Scene::Integrate(double duration)
         }
     }
 
-    for (Asset<RigidBody>& asset : m_dynamicPlanes)
-    {
-        if (asset.id != 0)
-        {
-            mechanics::Body& body = GetBody(asset.data.body);
-            geometry::Plane& plane = GetShape<geometry::Plane>(asset.data.shape);
-            plane.centerOfMass = body.linearMotion.position;
-        }
-    }
+    UpdateShapes<DynamicBody, geometry::Plane>();
+    UpdateShapes<DynamicBody, geometry::Sphere>();
+    UpdateShapes<DynamicBody, geometry::Box>();
+}
 
-    for (Asset<RigidBody>& asset : m_dynamicSpheres)
-    {
-        if (asset.id != 0)
-        {
-            mechanics::Body& body = GetBody(asset.data.body);
-            geometry::Sphere& sphere = GetShape<geometry::Sphere>(asset.data.shape);
-            sphere.centerOfMass = body.linearMotion.position;
-        }
-    }
+Primitive::~Primitive()
+{
+    m_scene->RemoveBody(m_body);
+}
 
-    for (Asset<RigidBody>& asset : m_dynamicBoxes)
-    {
-        if (asset.id != 0)
-        {
-            mechanics::Body& body = GetBody(asset.data.body);
-            geometry::Box& box = GetShape<geometry::Box>(asset.data.shape);
-            box.centerOfMass = body.linearMotion.position;
-        }
-    }
+mechanics::Body& Primitive::GetBody() const
+{
+    return m_scene->GetBody(m_body);
+}
+
+Primitive::Primitive(Type type, mechanics::Body body)
+    : m_scene(&Scene::GetInstance())
+    , m_type(type)
+{
+    m_body = m_scene->MakeBody();
+    m_scene->GetBody(m_body) = body;
+}
+
+Plane::Plane(Type type, mechanics::Body body, geometry::Plane plane)
+    : Primitive(type, body)
+{
+    m_shape = m_scene->MakeShape<geometry::Plane>();
+    m_scene->GetShape<geometry::Plane>(m_shape) = plane;
+    MakeObject<geometry::Plane>();
+}
+
+Plane::~Plane()
+{
+    m_scene->RemoveShape<geometry::Plane>(m_shape);
+    RemoveObject<geometry::Plane>();
+}
+
+geometry::Plane& Plane::GetShape() const
+{
+    return m_scene->GetShape<geometry::Plane>(m_shape);
+}
+
+Sphere::Sphere(Type type, mechanics::Body body, geometry::Sphere sphere)
+    : Primitive(type, body)
+{
+    m_shape = m_scene->MakeShape<geometry::Sphere>();
+    m_scene->GetShape<geometry::Sphere>(m_shape) = sphere;
+    MakeObject<geometry::Sphere>();
+}
+
+Sphere::~Sphere()
+{
+    m_scene->RemoveShape<geometry::Sphere>(m_shape);
+    RemoveObject<geometry::Sphere>();
+}
+
+geometry::Sphere& Sphere::GetShape() const
+{
+    return m_scene->GetShape<geometry::Sphere>(m_shape);
+}
+
+Box::Box(Type type, mechanics::Body body, geometry::Box box)
+    : Primitive(type, body)
+{
+    m_shape = m_scene->MakeShape<geometry::Box>();
+    m_scene->GetShape<geometry::Box>(m_shape) = box;
+    MakeObject<geometry::Box>();
+}
+
+Box::~Box()
+{
+    m_scene->RemoveShape<geometry::Box>(m_shape);
+    RemoveObject<geometry::Box>();
+}
+
+geometry::Box& Box::GetShape() const
+{
+    return m_scene->GetShape<geometry::Box>(m_shape);
 }

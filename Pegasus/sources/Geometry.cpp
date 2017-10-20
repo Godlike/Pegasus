@@ -457,7 +457,7 @@ bool intersection::gjk::SimplexContainsOrigin(Simplex const& simplex)
     {
         return ::LineSegmentContainsOrigin(simplex.vertices[0], simplex.vertices[1]);
     }
-    
+
     if (simplex.size == 3)
     {
         return ::TriangleContainsOrigin(simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]);
@@ -472,7 +472,7 @@ glm::dvec3 intersection::gjk::NearestSimplex(Simplex& simplex)
     {
         return ::NearestSimplexLineSegment(simplex);
     }
-    
+
     if (3 == simplex.size)
     {
         return ::NearestSimplexTriangle(simplex);
