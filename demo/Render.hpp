@@ -626,8 +626,6 @@ private:
     static void CursorMove(GLFWwindow* window, double xpos, double ypos);
 };
 
-namespace primitive
-{
 /** Hight level primitive initialization class for the render */
 class Primitive
 {
@@ -759,7 +757,6 @@ public:
 private:
     Axes m_axes;
 };
-} // namespace primitive
 
 } // namespace render
 } // namesapce pegasus

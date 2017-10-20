@@ -120,10 +120,10 @@ void Resolver::ResolveInterpenetration(Contact contact)
     glm::dvec3 const movePerIMass = contact.manifold.normal * (contact.manifold.penetration / totalInverseMass);
 
     aBody.linearMotion.position += movePerIMass * aBody.material.GetInverseMass();
-    aBody.linearMotion.force = IntegrateForce(aBody.linearMotion.force, movePerIMass * -1.0);
+    aBody.linearMotion.force = integration::IntegrateForce(aBody.linearMotion.force, movePerIMass * -1.0);
 
     bBody.linearMotion.position -= movePerIMass * bBody.material.GetInverseMass();
-    bBody.linearMotion.force = IntegrateForce(bBody.linearMotion.force, movePerIMass * -1.0);
+    bBody.linearMotion.force = integration::IntegrateForce(bBody.linearMotion.force, movePerIMass * -1.0);
 }
 
 void Resolver::Resolve(Contact contact, double duration)

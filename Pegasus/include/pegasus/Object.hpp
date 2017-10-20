@@ -51,24 +51,6 @@ struct Body
     Material material;
     LinearMotion linearMotion;
 };
-
-struct Object
-{
-	PEGASUS_EXPORT Object(Body& body, std::unique_ptr<geometry::SimpleShape>&& shape);
-
-	Body* body;
-	std::unique_ptr<geometry::SimpleShape> shape;
-};
-
-struct StaticObject : Object
-{
-	PEGASUS_EXPORT StaticObject(Body& body, std::unique_ptr<geometry::SimpleShape>&& shape);
-};
-
-struct DynamicObject : Object
-{
-	PEGASUS_EXPORT DynamicObject(Body& body, std::unique_ptr<geometry::SimpleShape>&& shape);
-};
 } // namespace mechanics
 } // namespace pegasus
 #endif // PEGASUS_OBJECT_HPP

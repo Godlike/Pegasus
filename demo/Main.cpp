@@ -6,7 +6,7 @@
 
 #include "demo/Demo.hpp"
 
-std::list<pegasus::Demo::Object*> g_objects;
+std::list<pegasus::Demo::Primitive*> g_objects;
 
 void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -27,10 +27,16 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
             isBox = !isBox;
             if (isBox)
                 g_objects.push_back(&demo.MakeBox(
-                    body, {rand() % 10 / 10. + 0.1,0,0}, {0,rand() % 10 / 10. + 0.1,0}, {0,0,rand() % 10 / 10. + 0.1}
+                    body, 
+                    {rand() % 10 / 10. + 0.1,0,0}, 
+                    {0,rand() % 10 / 10. + 0.1,0}, 
+                    {0,0,rand() % 10 / 10. + 0.1}, 
+                    pegasus::scene::Primitive::Type::DYNAMIC
                 ));
             else
-                g_objects.push_back(&demo.MakeSphere(body, rand() % 10 / 10. + 0.1));
+                g_objects.push_back(&demo.MakeSphere(
+                    body, rand() % 10 / 10. + 0.1, pegasus::scene::Primitive::Type::DYNAMIC
+                ));
         }
         break;
     case GLFW_KEY_R:
@@ -54,7 +60,7 @@ int main(int argc, char** argv)
 
     pegasus::mechanics::Body plane;
     plane.linearMotion.position = glm::dvec3(0, -10, 0);
-    g_objects.push_back(&demo.MakePlane(plane, glm::vec3(0, 1, 0), pegasus::Demo::BodyType::STATIC));
+    g_objects.push_back(&demo.MakePlane(plane, glm::vec3(0, 1, 0), pegasus::scene::Primitive::Type::STATIC));
 
     pegasus::mechanics::Body line;
     line.linearMotion.position = glm::dvec3(0, -10, 0);

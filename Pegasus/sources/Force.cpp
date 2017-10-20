@@ -87,7 +87,7 @@ glm::dvec3 Bungee::CalculateForce(mechanics::Body& body) const
     double magnitude = glm::length(force);
     if (magnitude <= m_restLength)
     {
-        return;
+        return glm::dvec3();
     }
 
     magnitude = m_springConstant * (magnitude - m_restLength);
@@ -111,7 +111,7 @@ glm::dvec3 Buoyancy::CalculateForce(mechanics::Body& body) const
 
     if (depth >= m_waterHeight + m_maxDepth)
     {
-        return;
+        return glm::dvec3();
     }
 
     glm::dvec3 force;

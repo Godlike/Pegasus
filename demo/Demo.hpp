@@ -15,12 +15,7 @@ namespace pegasus
 class Demo
 {
 public:
-    struct Object;
-    enum class BodyType : uint8_t
-    {
-        STATIC,
-        DYNAMIC
-    };
+    struct Primitive;
 
     /**
      * @brief Returns a reference to the singleton Demo instance
@@ -51,7 +46,7 @@ public:
      * @param[in] end line end
      * @return a newly created Object
      */
-    Object& MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3 end);
+    Primitive& MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3 end);
 
     /**
      * @brief Creates an object describing a plane
@@ -63,7 +58,7 @@ public:
      * @param[in] normal normal of the vector
      * @return a newly created Object
      */
-    Object& MakePlane(mechanics::Body body, glm::dvec3 normal, BodyType type = BodyType::DYNAMIC);
+    Primitive& MakePlane(mechanics::Body body, glm::dvec3 normal, scene::Primitive::Type type);
 
     /**
      * @brief Creates an object describing a sphere
@@ -75,7 +70,7 @@ public:
      * @param[in] radius radius of the sphere
      * @return a newly created Object
      */
-    Object& MakeSphere(mechanics::Body body, double radius, BodyType type = BodyType::DYNAMIC);
+    Primitive& MakeSphere(mechanics::Body body, double radius, scene::Primitive::Type type);
 
     /**
      * @brief Creates an object describing a box
@@ -89,13 +84,13 @@ public:
      * @param[in] k orthogonal basis vector of the box base
      * @return a newly created Object
      */
-    Object& MakeBox(mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, BodyType type = BodyType::DYNAMIC);
+    Primitive& MakeBox(mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, scene::Primitive::Type type);
 
     /**
      * @brief Removes object from the demo
      * @param[in] object reference to the object to be deleted
      */
-    void Remove(Object& object);
+    void Remove(Primitive& object);
 
     //! Maximum number of particles in the demo
     uint32_t const maxParticles = 500;
@@ -103,81 +98,27 @@ public:
     /**
      * @brief Represents an instance of the render and physical objects
      */
-    struct Object
+    struct Primitive
     {
         /**
-         * @brief Constructs Object instance
+         * @brief Constructs Primitive instance
          *
          * @note Assumes ownership of @p shape
          * @param[in] shape render scene shape
          */
-        Object(render::primitive::Primitive* shape);
+        Primitive(scene::Primitive* body, render::Primitive* shape);
 
-        virtual ~Object() = default;
-
-        //! Physical data
-        virtual mechanics::Object* GetObject() = 0;
+        //! Physics data
+        std::unique_ptr<scene::Primitive> physicalPrimitive;
         
         //! Render data
-        std::unique_ptr<render::primitive::Primitive> shape;
-    };
-
-    struct StaticObject : Object
-    {
-    public:
-        StaticObject(render::primitive::Primitive* shape, std::vector<mechanics::StaticObject>* objects = nullptr, size_t index = 0)
-            : Object(shape)
-            , m_pStaticObjects(objects)
-            , m_index(index)
-        {
-        }
-
-        mechanics::Object* GetObject() override
-        {
-            if (m_pStaticObjects != nullptr)
-            {
-                return &m_pStaticObjects->at(m_index);
-            }
-
-            return nullptr;
-        }
-
-    private:
-        std::vector<mechanics::StaticObject>* m_pStaticObjects;
-        size_t m_index;
-    };
-
-    struct DynamicObject : Object
-    {
-    public:
-        DynamicObject(render::primitive::Primitive* shape, std::vector<mechanics::DynamicObject>* objects = nullptr, size_t index = 0)
-            : Object(shape)
-            , m_pDynamicObjects(objects)
-            , m_index(index)
-        {
-        }
-
-        mechanics::Object* GetObject() override
-        {
-            if (m_pDynamicObjects != nullptr)
-            {
-                return &m_pDynamicObjects->at(m_index);
-            }
-
-            return nullptr;
-        }
-
-    private:
-        std::vector<mechanics::DynamicObject>* m_pDynamicObjects;
-        size_t m_index;
+        std::unique_ptr<render::Primitive> renderPrimitive;
     };
 
 private:
-    std::list<StaticObject> m_staticObjects;
-    std::list<DynamicObject> m_dynamicObjects;
-    std::vector<Object*> m_objects;
+    std::list<Primitive> m_primitives;
+    scene::Scene& m_scene;
     render::Renderer& m_renderer;
-    Scene m_scene;
     force::StaticField m_gravityForce;
 
     Demo();
@@ -194,16 +135,6 @@ private:
      * Rerenders the frame and updates current frame buffer
      */
     void RenderFrame() const;
-
-    /**
-     * @brief Makes rigid body
-     * @param[in] body physical data
-     * @param[in] shape collision geometry shape
-     * @return a newly created RigidBody
-     */
-    void MakeRigidBody(
-        mechanics::Body body, std::unique_ptr<geometry::SimpleShape>&& shape, BodyType type
-    );
 };
 } // namespace pegasus
 

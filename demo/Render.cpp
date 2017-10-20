@@ -682,30 +682,30 @@ void Renderer::CursorMove(GLFWwindow* window, double xpos, double ypos)
     camera.SetDirection(glm::normalize(direction));
 }
 
-primitive::Primitive::Primitive()
+Primitive::Primitive()
     : m_pRenderer(&Renderer::GetInstance())
     , m_meshHandle(m_pRenderer->MakeMesh())
 {
 }
 
-primitive::Primitive::~Primitive()
+Primitive::~Primitive()
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh::Delete(mesh);
     m_pRenderer->RemoveMesh(m_meshHandle);
 }
 
-void primitive::Primitive::SetModel(glm::mat4 model) const
+void Primitive::SetModel(glm::mat4 model) const
 {
     m_pRenderer->GetMesh(m_meshHandle).model = model;
 }
 
-glm::mat4 primitive::Primitive::GetModel() const
+glm::mat4 Primitive::GetModel() const
 {
     return m_pRenderer->GetMesh(m_meshHandle).model;
 }
 
-primitive::LineSegment::LineSegment(glm::mat4 model, glm::vec3 color, glm::vec3 start, glm::vec3 end)
+LineSegment::LineSegment(glm::mat4 model, glm::vec3 color, glm::vec3 start, glm::vec3 end)
     : m_start(start)
     , m_end(end)
 {
@@ -715,17 +715,17 @@ primitive::LineSegment::LineSegment(glm::mat4 model, glm::vec3 color, glm::vec3 
     mesh.model = model;
 }
 
-glm::vec3 primitive::LineSegment::GetStart() const
+glm::vec3 LineSegment::GetStart() const
 {
     return m_start;
 }
 
-glm::vec3 primitive::LineSegment::GetEnd() const
+glm::vec3 LineSegment::GetEnd() const
 {
     return m_end;
 }
 
-primitive::Plane::Plane(glm::mat4 model, glm::vec3 color, glm::vec3 normal)
+Plane::Plane(glm::mat4 model, glm::vec3 color, glm::vec3 normal)
     : m_normal(normal)
     , m_sideLength(35.0)
 {
@@ -735,12 +735,12 @@ primitive::Plane::Plane(glm::mat4 model, glm::vec3 color, glm::vec3 normal)
     mesh.color = color;
 }
 
-glm::vec3 primitive::Plane::GetNormal() const
+glm::vec3 Plane::GetNormal() const
 {
     return m_normal;
 }
 
-primitive::Sphere::Sphere(glm::mat4 model, glm::vec3 color, double radius)
+Sphere::Sphere(glm::mat4 model, glm::vec3 color, double radius)
     : m_radius(radius)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
@@ -749,12 +749,12 @@ primitive::Sphere::Sphere(glm::mat4 model, glm::vec3 color, double radius)
     mesh.color = color;
 }
 
-double primitive::Sphere::GetRadius() const
+double Sphere::GetRadius() const
 {
     return m_radius;
 }
 
-primitive::Box::Box(glm::mat4 model, glm::vec3 color, Axes axes)
+Box::Box(glm::mat4 model, glm::vec3 color, Axes axes)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh = mesh::CreateBox(axes.i, axes.j, axes.k);
@@ -762,7 +762,7 @@ primitive::Box::Box(glm::mat4 model, glm::vec3 color, Axes axes)
     mesh.color = color;
 }
 
-primitive::Box::Axes primitive::Box::GetAxes() const
+Box::Axes Box::GetAxes() const
 {
     return m_axes;
 }
