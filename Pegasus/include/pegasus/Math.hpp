@@ -816,7 +816,7 @@ void FindExtremalVertices(
     std::array<Iterator, 3>& minimaVertices, std::array<Iterator, 3>& maximaVertices
 )
 {
-    glm::dvec3 maximaProjections{std::numeric_limits<double>::min()};
+    glm::dvec3 maximaProjections{std::numeric_limits<double>::lowest()};
     glm::dvec3 minimaProjections{std::numeric_limits<double>::max()};
 
     for (; begin != end; ++begin)
