@@ -334,7 +334,7 @@ public:
     template < typename Shape >
     void RemoveShape(Handle handle) const
     {
-        m_assetManager->RemoveAsset(m_assetManager->GetShapes<geometry::Box>(), handle);
+        m_assetManager->RemoveAsset(m_assetManager->GetShapes<Shape>(), handle);
     }
 
 
@@ -540,8 +540,16 @@ public:
     geometry::Box& GetShape() const;
 };
 
+class ForceBase : public SceneObject
+{
+public:
+    virtual void Bind(Primitive& primitive) = 0;
+
+    virtual void Unbind(Primitive& primitive) = 0;
+};
+
 template < typename ForceType >
-class Force : SceneObject
+class Force : public ForceBase
 {
 public:
     Force(ForceType force)
@@ -570,13 +578,13 @@ public:
         return m_pScene->GetForce<ForceType>(m_forceHandle);
     }
 
-    void Bind(Primitive& primitive)
+    void Bind(Primitive& primitive) override
     {
         Handle const body = primitive.GetBodyHandle();
         m_bodyForceBinds[body] = m_pScene->BindForce<ForceType>(body, m_forceHandle);
     }
 
-    void Unbind(Primitive& primitive)
+    void Unbind(Primitive& primitive) override
     {
         Handle const body = primitive.GetBodyHandle();
         m_pScene->UnbindForce<ForceType>(m_bodyForceBinds[body]);
@@ -586,6 +594,62 @@ private:
     std::unordered_map<Handle, Handle> m_bodyForceBinds;
     Handle m_forceHandle;
     ForceType m_force;
+};
+
+class PrimitiveGroup
+{
+public:
+    void BindForce(ForceBase& force)
+    {
+        m_forces.push_back(&force);
+
+        for (Primitive* primitive : m_primitives)
+        {
+            force.Bind(*primitive);
+        }
+    }
+
+    void UnbindForce(ForceBase& force)
+    {
+        for (Primitive* primitive : m_primitives)
+        {
+            force.Unbind(*primitive);
+        }
+
+        m_forces.erase(
+            std::remove_if(m_forces.begin(), m_forces.end(),
+                [&force](ForceBase* f) { return &force == f; }),
+            m_forces.end()
+        );
+    }
+
+    void BindPrimitive(Primitive& primitive)
+    {
+        m_primitives.push_back(&primitive);
+
+        for (ForceBase* force : m_forces)
+        {
+            force->Bind(primitive);
+        }
+    }
+
+    void UnbindPrimitive(Primitive& primitive)
+    {
+        for (ForceBase* force : m_forces)
+        {
+            force->Unbind(primitive);
+        }
+
+        m_primitives.erase(
+            std::remove_if(m_primitives.begin(), m_primitives.end(),
+                [&primitive](Primitive* p) { return p == &primitive; }),
+            m_primitives.end()
+        );
+    }
+
+private:
+    std::vector<ForceBase*> m_forces;
+    std::vector<Primitive*> m_primitives;
 };
 
 } // namespace scene

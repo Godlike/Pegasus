@@ -88,13 +88,7 @@ Demo::Primitive& Demo::MakeBox(
 
 void Demo::Remove(Primitive& primitive)
 {
-    for(auto it = m_primitives.begin(); it != m_primitives.end(); ++it)
-    {
-        if (&*it == &primitive)
-        {
-            m_primitives.erase(it);
-        }
-    }
+    m_primitives.remove_if([&primitive](Primitive& p) { return &primitive == &p; });
 }
 
 Demo::Primitive::Primitive(scene::Primitive* body, render::Primitive* shape)

@@ -93,7 +93,7 @@ public:
     void Remove(Primitive& object);
 
     //! Maximum number of particles in the demo
-    uint32_t const maxParticles = 500;
+    uint32_t const maxParticles = 100;
 
     /**
      * @brief Represents an instance of the render and physical objects
@@ -103,8 +103,9 @@ public:
         /**
          * @brief Constructs Primitive instance
          *
-         * @note Assumes ownership of @p shape
-         * @param[in] shape render scene shape
+         * @note Assumes ownership of @p shape and @p body
+         * @param[in] body physical scene object instance
+         * @param[in] shape render scene object instance
          */
         Primitive(scene::Primitive* body, render::Primitive* shape);
 

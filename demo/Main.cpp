@@ -17,7 +17,7 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
     switch (key)
     {
     case GLFW_KEY_M:
-        if (g_objects.size() < demo.maxParticles)
+        while (g_objects.size() < demo.maxParticles)
         {
             pegasus::mechanics::Body body;
             body.linearMotion.position = glm::dvec3(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
@@ -39,8 +39,8 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
                 ));
         }
         break;
-    case GLFW_KEY_R:
-        if (g_objects.size() > 1)
+    case GLFW_KEY_R:    
+        while (g_objects.size() > 1)
         {
             demo.Remove(*g_objects.back());
             g_objects.pop_back();
