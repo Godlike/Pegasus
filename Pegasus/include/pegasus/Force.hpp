@@ -17,6 +17,7 @@ namespace force
 class StaticField
 {
 public:
+    PEGASUS_EXPORT StaticField() = default;
     PEGASUS_EXPORT explicit StaticField(glm::dvec3 const& g);
     PEGASUS_EXPORT glm::dvec3 CalculateForce(mechanics::Body& body) const;
 
@@ -27,6 +28,7 @@ private:
 class Drag
 {
 public:
+    PEGASUS_EXPORT Drag() = default;
     PEGASUS_EXPORT Drag(double k1, double k2);
     PEGASUS_EXPORT glm::dvec3 CalculateForce(mechanics::Body& body) const;
 
@@ -38,6 +40,7 @@ private:
 class Spring
 {
 public:
+    PEGASUS_EXPORT Spring() = default;
     PEGASUS_EXPORT Spring(mechanics::Body& other, double springConstant, double restLength);
     PEGASUS_EXPORT glm::dvec3 CalculateForce(mechanics::Body& body) const;
 
@@ -50,6 +53,7 @@ private:
 class AnchoredSpring
 {
 public:
+    PEGASUS_EXPORT AnchoredSpring() = default;
     PEGASUS_EXPORT AnchoredSpring(glm::dvec3 const& anchor, double springConstant, double restLength);
     PEGASUS_EXPORT glm::dvec3 CalculateForce(mechanics::Body& body) const;
 
@@ -62,6 +66,7 @@ private:
 class Bungee
 {
 public:
+    PEGASUS_EXPORT Bungee() = default;
     PEGASUS_EXPORT Bungee(mechanics::Body& other, double springConstant, double restLength);
     PEGASUS_EXPORT glm::dvec3 CalculateForce(mechanics::Body& body) const;
 
@@ -74,6 +79,7 @@ private:
 class Buoyancy
 {
 public:
+    PEGASUS_EXPORT Buoyancy() = default;
     PEGASUS_EXPORT Buoyancy(double maxDepth, double volume, double waterWight, double liquidDensity);
     PEGASUS_EXPORT glm::dvec3 CalculateForce(mechanics::Body& body) const;
 

@@ -116,10 +116,10 @@ public:
     };
 
 private:
-    std::list<Primitive> m_primitives;
     scene::Scene& m_scene;
     render::Renderer& m_renderer;
-    force::StaticField m_gravityForce;
+    std::list<Primitive> m_primitives;
+    std::unique_ptr<scene::Force<force::StaticField>> m_pGravityForce;
 
     Demo();
 

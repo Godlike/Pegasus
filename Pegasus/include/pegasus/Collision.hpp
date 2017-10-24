@@ -35,6 +35,8 @@ struct Contact
 class Detector
 {
 public:
+    Detector(scene::AssetManager& assetManager);
+
     std::vector<std::vector<Contact>> Detect();
 
 private:
@@ -47,6 +49,7 @@ private:
         }
     };
 
+    scene::AssetManager* m_assetManager = nullptr;
     static geometry::SimpleShapeIntersectionDetector s_simpleShapeDetector;
 
     static bool Intersect(
@@ -60,18 +63,16 @@ private:
     template < typename Object, typename Shape >
     std::vector<Contact> Detect()
     {
-        static scene::AssetManager& assets = scene::AssetManager::GetInstance();
-
         std::vector<Contact> contacts;
         std::unordered_set<std::pair<Shape*, Shape*>, ObjectHasher> registeredContacts;
-        std::vector<scene::Asset<scene::RigidBody>>& objects = assets.GetObjects<Object, Shape>();
+        std::vector<scene::Asset<scene::RigidBody>>& objects = m_assetManager->GetObjects<Object, Shape>();
 
         for (scene::Asset<scene::RigidBody> aObject : objects)
         {
             for (scene::Asset<scene::RigidBody> bObject : objects)
             {
-                Shape* aShape = &assets.GetAsset(assets.GetShapes<Shape>(), aObject.data.shape);
-                Shape* bShape = &assets.GetAsset(assets.GetShapes<Shape>(), bObject.data.shape);
+                Shape* aShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<Shape>(), aObject.data.shape);
+                Shape* bShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<Shape>(), bObject.data.shape);
                 std::pair<Shape*, Shape*> const key = std::make_pair(aShape, bShape);
 
                 if (aShape != bShape
@@ -79,8 +80,8 @@ private:
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
                     contacts.emplace_back(
-                        std::ref(assets.GetAsset(assets.GetBodies(), aObject.data.body)),
-                        std::ref(assets.GetAsset(assets.GetBodies(), bObject.data.body)),
+                        std::ref(m_assetManager->GetAsset(m_assetManager->GetBodies(), aObject.data.body)),
+                        std::ref(m_assetManager->GetAsset(m_assetManager->GetBodies(), bObject.data.body)),
                         CalculateContactManifold(aShape, bShape),
                         0.75
                     );
@@ -95,27 +96,25 @@ private:
     template < typename ObjectA, typename ShapeA, typename ObjectB, typename ShapeB >
     std::vector<Contact> Detect()
     {
-        static scene::AssetManager& assets = scene::AssetManager::GetInstance();
-
         std::vector<Contact> contacts;
         std::unordered_set<std::pair<ShapeA*, ShapeB*>, ObjectHasher> registeredContacts;
-        std::vector<scene::Asset<scene::RigidBody>>& aObjects = assets.GetObjects<ObjectA, ShapeA>();
-        std::vector<scene::Asset<scene::RigidBody>>& bObjects = assets.GetObjects<ObjectB, ShapeB>();
+        std::vector<scene::Asset<scene::RigidBody>>& aObjects = m_assetManager->GetObjects<ObjectA, ShapeA>();
+        std::vector<scene::Asset<scene::RigidBody>>& bObjects = m_assetManager->GetObjects<ObjectB, ShapeB>();
 
         for (scene::Asset<scene::RigidBody> aObject : aObjects)
         {
             for (scene::Asset<scene::RigidBody> bObject : bObjects)
             {
-                ShapeA* aShape = &assets.GetAsset(assets.GetShapes<ShapeA>(), aObject.data.shape);
-                ShapeB* bShape = &assets.GetAsset(assets.GetShapes<ShapeB>(), bObject.data.shape);
+                ShapeA* aShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeA>(), aObject.data.shape);
+                ShapeB* bShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeB>(), bObject.data.shape);
                 std::pair<ShapeA*, ShapeB*> const key = std::make_pair(aShape, bShape);
 
                 if (Intersect(aShape, bShape)
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
                     contacts.emplace_back(
-                        std::ref(assets.GetAsset(assets.GetBodies(), aObject.data.body)),
-                        std::ref(assets.GetAsset(assets.GetBodies(), bObject.data.body)),
+                        std::ref(m_assetManager->GetAsset(m_assetManager->GetBodies(), aObject.data.body)),
+                        std::ref(m_assetManager->GetAsset(m_assetManager->GetBodies(), bObject.data.body)),
                         CalculateContactManifold(aShape, bShape),
                         0.75
                     );

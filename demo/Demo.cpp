@@ -37,7 +37,9 @@ void Demo::RunFrame()
 Demo::Primitive& Demo::MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3 end)
 {
     render::Primitive* shape = new render::LineSegment(
-        glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), start, end
+        glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), 
+        glm::vec3(0.439, 0.502, 0.565), 
+        start, end
     );
     m_primitives.emplace_back(nullptr, shape);
 
@@ -51,6 +53,7 @@ Demo::Primitive& Demo::MakePlane(mechanics::Body body, glm::dvec3 normal, scene:
         glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), normal
     );
     m_primitives.emplace_back(object, shape);
+    m_pGravityForce->Bind(*object);
 
     return m_primitives.back();
 }
@@ -62,11 +65,14 @@ Demo::Primitive& Demo::MakeSphere(mechanics::Body body, double radius, scene::Pr
         glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), radius
     );
     m_primitives.emplace_back(object, shape);
+    m_pGravityForce->Bind(*object);
 
     return m_primitives.back();
 }
 
-Demo::Primitive& Demo::MakeBox(mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, scene::Primitive::Type type)
+Demo::Primitive& Demo::MakeBox(
+        mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, scene::Primitive::Type type
+    )
 {
     scene::Primitive* object = new scene::Box(type, body, geometry::Box(body.linearMotion.position, i, j, k));
     render::Primitive* shape = new render::Box(
@@ -75,6 +81,7 @@ Demo::Primitive& Demo::MakeBox(mechanics::Body body, glm::vec3 i, glm::vec3 j, g
         render::Box::Axes{i, j, k}
     );
     m_primitives.emplace_back(object, shape);
+    m_pGravityForce->Bind(*object);
 
     return m_primitives.back();
 }
@@ -99,8 +106,9 @@ Demo::Primitive::Primitive(scene::Primitive* body, render::Primitive* shape)
 Demo::Demo()
     : m_scene(scene::Scene::GetInstance())
     , m_renderer(render::Renderer::GetInstance())
-    , m_gravityForce(glm::dvec3{0, -9.8, 0})
 {
+    m_scene.Initialize(scene::AssetManager::GetInstance());
+    m_pGravityForce = std::make_unique<scene::Force<force::StaticField>>(force::StaticField(glm::dvec3{ 0, -9.8, 0 }));
 }
 
 void Demo::ComputeFrame(double duration)

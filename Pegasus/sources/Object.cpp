@@ -26,7 +26,7 @@ void mechanics::Material::SetMass(double mass)
 void mechanics::Material::SetInverseMass(double inverseMass)
 {
     m_inverseMass = inverseMass;
-    m_mass = (inverseMass == 0.0) ? std::numeric_limits<double>::max() : (1.0 / inverseMass);
+    m_mass = (inverseMass == 0.0) ? 0.0 : (1.0 / inverseMass);
 }
 
 double mechanics::Material::GetMass() const

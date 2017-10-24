@@ -11,6 +11,7 @@
 #include <pegasus/SharedMacros.hpp>
 
 #include <vector>
+#include <unordered_map>
 
 namespace pegasus
 {
@@ -41,8 +42,8 @@ struct RigidBody
 
 struct ForceBind
 {
-    Handle force;
     Handle body;
+    Handle force;
 };
 
 class AssetManager
@@ -184,7 +185,6 @@ inline std::vector<Asset<geometry::Box>>& AssetManager::GetShapes<geometry::Box>
     return m_boxes;
 }
 
-
 template <>
 inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, geometry::Plane>()
 {
@@ -258,7 +258,6 @@ inline std::vector<Asset<force::Buoyancy>>& AssetManager::GetForces<force::Buoya
     return m_buoyancyForces;
 }
 
-
 template <>
 inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::StaticField>()
 {
@@ -302,40 +301,40 @@ public:
     static Scene& GetInstance();
 
     PEGASUS_EXPORT
+    void Initialize(AssetManager& assetManager);
+
+    PEGASUS_EXPORT
     void ComputeFrame(double duration);
 
 
     PEGASUS_EXPORT
-
     inline Handle MakeBody() const;
 
     PEGASUS_EXPORT
-
     inline mechanics::Body& GetBody(Handle handle) const;
 
     PEGASUS_EXPORT
-
     inline void RemoveBody(Handle handle) const;
 
     PEGASUS_EXPORT
     template < typename Shape >
     Handle MakeShape() const
     {
-        return m_assets.MakeAsset(m_assets.GetShapes<Shape>());
+        return m_assetManager->MakeAsset(m_assetManager->GetShapes<Shape>());
     }
 
     PEGASUS_EXPORT
     template < typename Shape >
     Shape& GetShape(Handle handle)
     {
-        return m_assets.GetAsset(m_assets.GetShapes<Shape>(), handle);
+        return m_assetManager->GetAsset(m_assetManager->GetShapes<Shape>(), handle);
     }
 
     PEGASUS_EXPORT
     template < typename Shape >
     void RemoveShape(Handle handle) const
     {
-        m_assets.RemoveAsset(m_assets.GetShapes<geometry::Box>(), handle);
+        m_assetManager->RemoveAsset(m_assetManager->GetShapes<geometry::Box>(), handle);
     }
 
 
@@ -343,8 +342,8 @@ public:
     template < typename Object, typename Shape >
     Handle MakeObject(Handle body, Handle shape) const
     {
-        Handle const id = m_assets.MakeAsset<RigidBody>(m_assets.GetObjects<Object, Shape>());
-        m_assets.GetAsset<RigidBody>(m_assets.GetObjects<Object, Shape>(), id) = static_cast<RigidBody>(Object(body, shape));
+        Handle const id = m_assetManager->MakeAsset<RigidBody>(m_assetManager->GetObjects<Object, Shape>());
+        m_assetManager->GetAsset<RigidBody>(m_assetManager->GetObjects<Object, Shape>(), id) = static_cast<RigidBody>(Object(body, shape));
         return id;
     }
 
@@ -352,7 +351,7 @@ public:
     template < typename Object, typename Shape >
     void RemoveObject(Handle handle) const
     {
-        m_assets.RemoveAsset(m_assets.GetObjects<Object, Shape>(), handle);
+        m_assetManager->RemoveAsset(m_assetManager->GetObjects<Object, Shape>(), handle);
     }
 
 
@@ -360,21 +359,21 @@ public:
     template < typename Force >
     Handle MakeForce() const
     {
-        return m_assets.MakeAsset(m_assets.GetForces<Force>());
+        return m_assetManager->MakeAsset(m_assetManager->GetForces<Force>());
     }
 
     PEGASUS_EXPORT
     template < typename Force >
     Force& GetForce(Handle handle)
     {
-        return m_assets.GetAsset(m_assets.GetForces<Force>(), handle);
+        return m_assetManager->GetAsset(m_assetManager->GetForces<Force>(), handle);
     }
 
     PEGASUS_EXPORT
     template < typename Force >
     void RemoveForce(Handle handle) const
     {
-        m_assets.RemoveAsset(m_assets.GetForces<Force>(), handle);
+        m_assetManager->RemoveAsset(m_assetManager->GetForces<Force>(), handle);
     }
 
 
@@ -382,8 +381,8 @@ public:
     template < typename Force >
     Handle BindForce(Handle body, Handle force) const
     {
-        Handle const id = m_assets.MakeAsset(m_assets.GetForceBinds<Force>());
-        m_assets.GetAsset(m_assets.GetForceBinds<Force>(), id) = { body, force };
+        Handle const id = m_assetManager->MakeAsset(m_assetManager->GetForceBinds<Force>());
+        m_assetManager->GetAsset(m_assetManager->GetForceBinds<Force>(), id) = { body, force };
         return id;
     }
 
@@ -391,18 +390,18 @@ public:
     template < typename Force >
     void UnbindForce(Handle handle) const
     {
-        m_assets.RemoveAsset(m_assets.GetForceBinds<Force>(), handle);
+        m_assetManager->RemoveAsset(m_assetManager->GetForceBinds<Force>(), handle);
     }
 
 private:
-    AssetManager& m_assets;
+    AssetManager* m_assetManager;
 
-    Scene();
+    Scene() = default;
 
     template < typename Force >
     void ApplyForce()
     {
-        for (Asset<ForceBind>& asset : m_assets.GetForceBinds<Force>())
+        for (Asset<ForceBind>& asset : m_assetManager->GetForceBinds<Force>())
         {
             if (asset.id != 0)
             {
@@ -416,7 +415,7 @@ private:
     template < typename Object, typename Shape >
     void UpdateShapes()
     {
-        for (Asset<RigidBody>& asset : m_assets.GetObjects<Object, Shape>())
+        for (Asset<RigidBody>& asset : m_assetManager->GetObjects<Object, Shape>())
         {
             if (asset.id != 0)
             {
@@ -427,15 +426,29 @@ private:
         }
     }
 
-    static inline void ResolveCollisions(double duration);
+    void ResolveCollisions(double duration) const;
 
-    inline void ApplyForces();
+    void ApplyForces();
 
-    inline void Integrate(double duration);
+    void Integrate(double duration);
 };
 
 
-class Primitive
+class SceneObject
+{
+public:
+    SceneObject()
+        : m_pScene(&Scene::GetInstance())
+    {
+    }
+
+    virtual ~SceneObject() = default;
+
+protected:
+    Scene* m_pScene = nullptr;
+};
+
+class Primitive : public SceneObject
 {
 public:
     enum class Type : uint8_t
@@ -446,14 +459,21 @@ public:
 
     virtual ~Primitive();
 
-    mechanics::Body& GetBody() const;
+    void SetBody(mechanics::Body body) const;
+
+    mechanics::Body GetBody() const;
+
+    Handle GetBodyHandle() const;
+
+    Handle GetShapeHandle() const;
+
+    Handle GetObjectHandle() const;
 
 protected:
-    Scene* m_scene = nullptr;
     Type m_type = Type::DYNAMIC;
-    Handle m_body = 0;
-    Handle m_shape = 0;
-    Handle m_object = 0;
+    Handle m_bodyHandle = 0;
+    Handle m_shapeHandle = 0;
+    Handle m_objectHandle = 0;
 
     Primitive(Type type, mechanics::Body body);
 
@@ -463,10 +483,10 @@ protected:
         switch (m_type)
         {
             case Type::DYNAMIC:
-                m_object = m_scene->MakeObject<DynamicBody, Shape>(m_body, m_shape);
+                m_objectHandle = m_pScene->MakeObject<DynamicBody, Shape>(m_bodyHandle, m_shapeHandle);
                 break;
             case Type::STATIC:
-                m_object = m_scene->MakeObject<StaticBody, Shape>(m_body, m_shape);
+                m_objectHandle = m_pScene->MakeObject<StaticBody, Shape>(m_bodyHandle, m_shapeHandle);
                 break;
             default:
                 break;
@@ -479,10 +499,10 @@ protected:
         switch (m_type)
         {
         case Type::DYNAMIC:
-            m_scene->RemoveObject<DynamicBody, Shape>(m_object);
+            m_pScene->RemoveObject<DynamicBody, Shape>(m_objectHandle);
             break;
         case Type::STATIC:
-            m_scene->RemoveObject<StaticBody, Shape>(m_object);
+            m_pScene->RemoveObject<StaticBody, Shape>(m_objectHandle);
             break;
         default:
             break;
@@ -518,6 +538,54 @@ public:
     virtual ~Box();
 
     geometry::Box& GetShape() const;
+};
+
+template < typename ForceType >
+class Force : SceneObject
+{
+public:
+    Force(ForceType force)
+        : m_force(force)
+    {
+        SetForce(force);
+    }
+
+    virtual ~Force()
+    {
+        for (std::pair<Handle, Handle> bind : m_bodyForceBinds)
+        {
+            m_pScene->UnbindForce<ForceType>(bind.second);
+        }
+        m_pScene->RemoveForce<ForceType>(m_forceHandle);
+    }
+
+    void SetForce(ForceType force)
+    {
+        m_forceHandle = m_pScene->MakeForce<ForceType>();
+        m_pScene->GetForce<ForceType>(m_forceHandle) = force;   
+    }
+
+    ForceType GetForce() const
+    {
+        return m_pScene->GetForce<ForceType>(m_forceHandle);
+    }
+
+    void Bind(Primitive& primitive)
+    {
+        Handle const body = primitive.GetBodyHandle();
+        m_bodyForceBinds[body] = m_pScene->BindForce<ForceType>(body, m_forceHandle);
+    }
+
+    void Unbind(Primitive& primitive)
+    {
+        Handle const body = primitive.GetBodyHandle();
+        m_pScene->UnbindForce<ForceType>(m_bodyForceBinds[body]);
+    }
+
+private:
+    std::unordered_map<Handle, Handle> m_bodyForceBinds;
+    Handle m_forceHandle;
+    ForceType m_force;
 };
 
 } // namespace scene

@@ -18,6 +18,11 @@ Contact::Contact(mechanics::Body& aBody, mechanics::Body& bBody, Manifold manifo
 {
 }
 
+Detector::Detector(scene::AssetManager& assetManager)
+    : m_assetManager(&assetManager)
+{
+}
+
 std::vector<std::vector<Contact>> Detector::Detect()
 {
     return {
