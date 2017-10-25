@@ -12,42 +12,72 @@
 
 #include <vector>
 #include <set>
-#include <array>
 
 namespace pegasus
 {
 namespace geometry
 {
-namespace volumes
+namespace volume
 {
-using Vertices = std::vector<glm::dvec3>;
-using Indices  = std::set<std::size_t>;
-using Face     = std::array<std::size_t, 3>;
-using Faces    = std::vector<Face>;
-
-struct Shape
+/**
+ * @brief Represents an instance of mesh data
+ */
+struct Mesh
 {
-    PEGASUS_EXPORT Shape(volumes::Vertices const& vertices, volumes::Faces const& indices);
+    /**
+     * @brief Constructs mesh data object
+     * @param vertices vertex buffer data
+     * @param indices index buffer data
+     */
+    PEGASUS_EXPORT Mesh(std::vector<glm::dvec3> const& vertices, std::vector<glm::u64vec3> const& indices);
 
-    Vertices const& vertices;
-    Faces const& indices;
+    std::vector<glm::dvec3> const& vertices;
+    std::vector<glm::u64vec3> const& indices;
 };
 
+/**
+ * @brief Calculates average value of a vertex for the given set of indices
+ * @param mesh vertex and index data
+ * @param indices set of indices for calculation
+ * @return average vertex value
+ */
 PEGASUS_EXPORT glm::dvec3 CalculateMeanVertex(
-    volumes::Shape const& shape, volumes::Indices const& indices
+    volume::Mesh const& mesh, std::set<std::size_t> const& indices
 );
+
+/**
+ * @brief Calculates covariance matrix for the given set of vertices
+ * @param mesh vertex and index data
+ * @param indices set of indices for calculation
+ * @param mean average vertex value for the given set
+ * @return covariance matrix
+ */
 PEGASUS_EXPORT glm::dmat3 CalculateCovarianceMatrix(
-    volumes::Shape const& shape, volumes::Indices const& indices, glm::dvec3 const& mean
+    volume::Mesh const& mesh, std::set<std::size_t> const& indices, glm::dvec3 const& mean
 );
+
+/**
+ * @brief Calculates extremal vertices for the given set in the given directions
+ * @param basis direction vectors
+ * @param mesh vertex and index data
+ * @param indices set of indices for calculation
+ * @return extremal vertices
+ */
 PEGASUS_EXPORT glm::dmat3 CalculateExtremalVertices(
-    glm::dmat3 const& eigenVectors, volumes::Shape const& shape, volumes::Indices const& indices
+    glm::dmat3 const& basis, volume::Mesh const& mesh, std::set<std::size_t> const& indices
 );
 
 namespace obb
 {
+/**
+ * @brief Oriented bounding box calculation algorithm
+ */
 class OrientedBoundingBox
 {
 public:
+    /**
+     * @brief Stores calculation data
+     */
     struct Box
     {
         glm::dvec3 mean;
@@ -58,22 +88,38 @@ public:
         glm::dmat3 boxAxes;
     };
 
-    PEGASUS_EXPORT OrientedBoundingBox(Shape const& shape, Indices const& indices);
-    PEGASUS_EXPORT geometry::Box GetBox() const;
+    /**
+     * @brief Constructs OBB for the given set of vertices in the given mesh
+     * @param mesh vertex and index data
+     * @param indices set of indices for calculation
+     */
+    PEGASUS_EXPORT OrientedBoundingBox(Mesh const& mesh, std::set<std::size_t> const& indices);
+
+    /**
+     * @brief Returns pre-calculated OBB shape
+     * @return obb shape
+     */
+    PEGASUS_EXPORT geometry::Box GetVolume() const;
 
 private:
     geometry::Box m_boxShape;
     Box m_box;
-    Shape const& m_shape;
-    Indices const& m_indices;
+    Mesh const& m_shape;
+    std::set<std::size_t> const& m_indices;
 };
 } // namespace obb
 
 namespace aabb
 {
+/**
+ * @brief Axis aligned bounding box calculation algorithm
+ */
 class AxisAlignedBoundingBox
 {
 public:
+    /**
+     * @brief Stores representations of AABB
+     */
     struct Box
     {
         glm::dvec3 xMin;
@@ -88,26 +134,58 @@ public:
         glm::dvec3 zAxis;
     };
 
-    PEGASUS_EXPORT AxisAlignedBoundingBox(Shape const& shape, Indices const& indices);
-    PEGASUS_EXPORT geometry::Box GetBox() const;
+    /**
+     * @brief Constructs AABB for the given set of vertices in the given mesh
+     * @param mesh vertex and index data
+     * @param indices set of indices for calculation
+     */
+    PEGASUS_EXPORT AxisAlignedBoundingBox(Mesh const& mesh, std::set<std::size_t> const& indices);
+
+    /**
+     * @brief Returns pre-calculated AABB shape
+     * @return aabb shape
+     */
+    PEGASUS_EXPORT geometry::Box GetVolume() const;
 
 private:
     geometry::Box m_boxShape;
     Box m_box;
-    Shape const& m_shape;
-    Indices const& m_indices;
+    Mesh const& m_shape;
+    std::set<std::size_t> const& m_indices;
 
-    static void CalculateExtremalVetices(Shape const& shape, Indices const& indices, Box& box);
+    /**
+     * @brief Calculates extremal vertices from the given set along the x,y and z axes
+     * @param[in] mesh vertex and index data
+     * @param[in] indices set of indices for calculation
+     * @param[out] box aabb data
+     */
+    static void CalculateExtremalVetices(Mesh const& mesh, std::set<std::size_t> const& indices, Box& box);
+
+    /**
+     * @brief Calculates average box vertex
+     * @param[out] box aabb data
+     */
     static void CalculateMean(Box& box);
+
+    /**
+     * @brief Creates shape representation of AABB
+     * @param[in,out] box aabb data
+     */
     void CreateBox(Box& box);
 };
 } // namespace aabb
 
 namespace sphere
 {
+/**
+ * @brief Bounding sphere calculation algorithm
+ */
 class BoundingSphere
 {
 public:
+    /**
+     * @brief Stores representation of Boudning sphere
+     */
     struct Sphere
     {
         glm::dvec3 mean;
@@ -117,21 +195,56 @@ public:
         glm::dmat3 eigenVectorsNormalized;
     };
 
-    PEGASUS_EXPORT BoundingSphere(Shape const& shape, Indices const& indices);
-    PEGASUS_EXPORT geometry::Sphere GetSphere() const;
+    /**
+     * @brief Calculates bounding sphere for the given set of vertices in the given mesh
+     *
+     * The implementation of the algorithm accounts for the dispersion and density of the
+     * vertex data by calculating covariance matrix and refining initial sphere in the direction
+     * of the maximum spread.
+     * @param mesh vertex and index data
+     * @param indices set of indices for calculation
+     */
+    PEGASUS_EXPORT BoundingSphere(Mesh const& mesh, std::set<std::size_t> const& indices);
+
+    /**
+    * @brief Returns pre-calculated Bounding sphere shape
+    * @return bounding sphere shape
+    */
+    PEGASUS_EXPORT geometry::Sphere GetVolume() const;
 
 private:
     geometry::Sphere m_sphereShape;
     Sphere m_sphere;
-    Shape const& m_shape;
-    Indices const& m_indices;
+    Mesh const& m_shape;
+    std::set<std::size_t> const& m_indices;
 
-    static geometry::Sphere CalculateBoundingSphere(
+    /**
+     * @brief Calculates initial bounding sphere
+     *
+     * @note: This method requires calculation of the covariance matrix
+     * for the given set of vertices in order to construct initial guess more efficiently.
+     * @param[in] eigenVectors eigenvetors of the covariance matrix
+     * @param[in] eigenValues eigenvalues of the covariance matrix
+     * @param[in] mesh vertex and index data
+     * @param[in] indices set of indices for calculation
+     * @return bounding sphere shape
+     */
+    static geometry::Sphere CalculateInitialBoundingSphere(
         glm::dmat3 const& eigenVectors, glm::dvec3 const& eigenValues,
-        Shape const& shape, Indices const& indices
+        Mesh const& mesh, std::set<std::size_t> const& indices
     );
+
+    /**
+     * @brief Iterativly refince sphere
+     *
+     * Refining happens by accounting for the points that are outside of the current bounding sphere
+     * @param[in] sphere initial sphere shape
+     * @param[in] mesh vertex and index data
+     * @param[in] indices set of indices for calculation
+     * @return bounding sphere shape
+     */
     static geometry::Sphere RefineSphere(
-        geometry::Sphere const& sphere, Shape const& shape, Indices const& indices
+        geometry::Sphere const& sphere, Mesh const& mesh, std::set<std::size_t> const& indices
     );
 };
 } // namespace sphere
