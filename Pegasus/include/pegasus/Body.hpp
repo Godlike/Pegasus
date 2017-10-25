@@ -13,27 +13,54 @@ namespace pegasus
 {
 namespace mechanics
 {
+/**
+ * @brief Represents a point mass physical body
+ */
 struct Body
 {
+    /**
+     * @brief Stores material properties of the body
+     */
     struct Material
     {
         PEGASUS_EXPORT Material();
 
+        /**
+         * @brief Sets mass of the body
+         * @param mass mass
+         */
         PEGASUS_EXPORT void SetMass(double mass);
 
+        /**
+         * @brief Sets inverse mass of the body
+         * @param inverseMass one divided by mass
+         */
         PEGASUS_EXPORT void SetInverseMass(double inverseMass);
 
+        /**
+         * @brief Returns mass of the body
+         * @return mass of the body
+         */
         PEGASUS_EXPORT double GetMass() const;
 
+        /**
+         * @brief Returns inverse mass of the body
+         * @return inverse mass
+         */
         PEGASUS_EXPORT double GetInverseMass() const;
 
+        //!Body motion bumping factor
         double damping;
 
     private:
         double m_mass;
+        //!Is used to represent a body with an infinite mass by setting this value to 0
         double m_inverseMass;
     };
 
+    /**
+     * @brief Stores linear motion data
+     */
     struct LinearMotion
     {
         PEGASUS_EXPORT LinearMotion();
