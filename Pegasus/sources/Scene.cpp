@@ -95,7 +95,6 @@ void Scene::ApplyForces()
     ApplyForce<force::StaticField>();
     ApplyForce<force::Drag>();
     ApplyForce<force::Spring>();
-    ApplyForce<force::AnchoredSpring>();
     ApplyForce<force::Bungee>();
     ApplyForce<force::Buoyancy>();
 }

@@ -142,7 +142,6 @@ private:
     std::vector<Asset<force::StaticField>> m_staticFieldForces;
     std::vector<Asset<force::Drag>> m_dragForces;
     std::vector<Asset<force::Spring>> m_springForces;
-    std::vector<Asset<force::AnchoredSpring>> m_anchoredSpringForces;
     std::vector<Asset<force::Bungee>> m_bungeeForces;
     std::vector<Asset<force::Buoyancy>> m_buoyancyForces;
 
@@ -240,12 +239,6 @@ inline std::vector<Asset<force::Spring>>& AssetManager::GetForces<force::Spring>
 }
 
 template <>
-inline std::vector<Asset<force::AnchoredSpring>>& AssetManager::GetForces<force::AnchoredSpring>()
-{
-    return m_anchoredSpringForces;
-}
-
-template <>
 inline std::vector<Asset<force::Bungee>>& AssetManager::GetForces<force::Bungee>()
 {
     return m_bungeeForces;
@@ -273,12 +266,6 @@ template <>
 inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::Spring>()
 {
     return m_springForceBindings;
-}
-
-template <>
-inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::AnchoredSpring>()
-{
-    return m_anchoredSpringForceBindings;
 }
 
 template <>
