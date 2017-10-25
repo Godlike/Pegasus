@@ -8,7 +8,8 @@
 #ifndef PEGASUS_FORCE_HPP
 #define PEGASUS_FORCE_HPP
 
-#include <pegasus/Object.hpp>
+#include <pegasus/SharedMacros.hpp>
+#include <pegasus/Body.hpp>
 
 namespace pegasus
 {

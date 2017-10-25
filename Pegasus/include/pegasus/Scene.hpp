@@ -6,12 +6,14 @@
 #ifndef PEGASUS_SCENE_HPP
 #define PEGASUS_SCENE_HPP
 
-#include <pegasus/Object.hpp>
-#include <pegasus/Force.hpp>
 #include <pegasus/SharedMacros.hpp>
+#include <pegasus/Body.hpp>
+#include <pegasus/Force.hpp>
+#include <geometry/Shape.hpp>
 
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 
 namespace pegasus
 {
@@ -36,14 +38,14 @@ struct RigidBody
 
     RigidBody(Handle body, Handle shape);
 
-    Handle body;
-    Handle shape;
+    Handle body = 0;
+    Handle shape = 0;
 };
 
 struct ForceBind
 {
-    Handle body;
-    Handle force;
+    Handle body = 0;
+    Handle force = 0;
 };
 
 class AssetManager
@@ -155,7 +157,6 @@ private:
     AssetManager() = default;
 };
 
-
 struct StaticBody : RigidBody
 {
     StaticBody(Handle body, Handle shape);
@@ -165,7 +166,6 @@ struct DynamicBody : RigidBody
 {
     DynamicBody(Handle body, Handle shape);
 };
-
 
 template <>
 inline std::vector<Asset<geometry::Plane>>& AssetManager::GetShapes<geometry::Plane>()
@@ -220,7 +220,6 @@ inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, geom
 {
     return m_dynamicBoxes;
 }
-
 
 template <>
 inline std::vector<Asset<force::StaticField>>& AssetManager::GetForces<force::StaticField>()
@@ -405,8 +404,8 @@ private:
         {
             if (asset.id != 0)
             {
-                auto& force = GetForce<Force>(asset.data.force);
-                auto& body = GetBody(asset.data.body);
+                Force& force = GetForce<Force>(asset.data.force);
+                mechanics::Body& body = GetBody(asset.data.body);
                 body.linearMotion.force += force.CalculateForce(body);
             }
         }

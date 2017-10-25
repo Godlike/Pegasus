@@ -6,9 +6,9 @@
 #ifndef PEGASUS_BOUNDING_VOLUMES_HPP
 #define PEGASUS_BOUNDING_VOLUMES_HPP
 
-#include <pegasus/Geometry.hpp>
-
 #include <pegasus/SharedMacros.hpp>
+#include <geometry/Shape.hpp>
+#include <geometry/Geometry.hpp>
 
 #include <vector>
 #include <set>

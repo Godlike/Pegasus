@@ -4,7 +4,7 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include "demo/Render.hpp"
-#include <pegasus/Math.hpp>
+#include <math/Math.hpp>
 
 using namespace pegasus;
 using namespace render;

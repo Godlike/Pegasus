@@ -3,18 +3,18 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include <pegasus/Object.hpp>
+#include <pegasus/Body.hpp>
 
 using namespace pegasus;
 
-mechanics::Material::Material()
+mechanics::Body::Material::Material()
     : damping(1)
     , m_mass(1)
     , m_inverseMass(1)
 {
 }
 
-void mechanics::Material::SetMass(double mass)
+void mechanics::Body::Material::SetMass(double mass)
 {
     if (mass > 0)
     {
@@ -23,23 +23,23 @@ void mechanics::Material::SetMass(double mass)
     }
 }
 
-void mechanics::Material::SetInverseMass(double inverseMass)
+void mechanics::Body::Material::SetInverseMass(double inverseMass)
 {
     m_inverseMass = inverseMass;
     m_mass = (inverseMass == 0.0) ? 0.0 : (1.0 / inverseMass);
 }
 
-double mechanics::Material::GetMass() const
+double mechanics::Body::Material::GetMass() const
 {
     return m_mass;
 }
 
-double mechanics::Material::GetInverseMass() const
+double mechanics::Body::Material::GetInverseMass() const
 {
     return m_inverseMass;
 }
 
-mechanics::LinearMotion::LinearMotion()
+mechanics::Body::LinearMotion::LinearMotion()
     : position(0, 0, 0)
     , velocity(0, 0, 0)
     , acceleration(0, 0, 0)

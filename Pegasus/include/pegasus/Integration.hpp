@@ -6,8 +6,8 @@
 #ifndef PEGASUS_INTEGRATION_HPP
 #define PEGASUS_INTEGRATION_HPP
 
-#include <pegasus/Object.hpp>
 #include <pegasus/SharedMacros.hpp>
+#include <pegasus/Body.hpp>
 
 namespace pegasus
 {

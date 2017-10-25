@@ -8,6 +8,8 @@
 
 #include "demo/Render.hpp"
 #include <pegasus/Scene.hpp>
+#include <list>
+#include <memory>
 
 namespace pegasus
 {

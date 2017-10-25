@@ -3,12 +3,13 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "pegasus/BoundingVolumes.hpp"
-#include "pegasus/Math.hpp"
+#include <geometry/BoundingVolume.hpp>
+#include <math/JacobiEigenvalue.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 
+#include <algorithm>
 #include <functional>
 
 using namespace pegasus;

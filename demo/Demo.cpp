@@ -5,7 +5,9 @@
 */
 
 #include "demo/Demo.hpp"
+#include <geometry/Shape.hpp>
 
+#include <glm/glm.hpp>
 #include <chrono>
 #include <thread>
 

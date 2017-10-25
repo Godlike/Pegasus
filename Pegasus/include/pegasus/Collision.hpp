@@ -7,7 +7,8 @@
 #define PEGASUS_COLLISION_HPP
 
 #include <pegasus/Scene.hpp>
-#include <pegasus/Geometry.hpp>
+#include <geometry/SimpleShapeIntersectionDetector.hpp>
+#include <unordered_set>
 
 namespace pegasus
 {

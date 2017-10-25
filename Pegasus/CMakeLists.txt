@@ -25,24 +25,45 @@ include_directories(
 message(STATUS "Version: ${PEGASUS_VERSION}")
 
 set(PEGASUS_HEADERS
-    include/pegasus/Math.hpp
-    include/pegasus/Object.hpp
+    include/math/Math.hpp
+    include/math/HalfEdgeDataStructure.hpp
+    include/math/FloatingPoint.hpp
+    include/math/HyperPlane.hpp
+    include/math/JacobiEigenvalue.hpp
+    include/math/QuickhullConvexHull.hpp
+
+    include/geometry/Geometry.hpp
+    include/geometry/Shape.hpp
+    include/geometry/ConfigurationSpaceObject.hpp
+    include/geometry/GilbertJohnsonKeerthi.hpp
+    include/geometry/ExpandingPolytopeAlgorithm.hpp
+    include/geometry/SimpleShapeIntersectionDetector.hpp
+    include/geometry/BoundingVolume.hpp
+
+    include/pegasus/Body.hpp
+    include/pegasus/Force.hpp
     include/pegasus/Integration.hpp
     include/pegasus/Collision.hpp
-    include/pegasus/Force.hpp
     include/pegasus/Scene.hpp
-    include/pegasus/BoundingVolumes.hpp
-    include/pegasus/Geometry.hpp
 )
 set(PEGASUS_SOURCES
-    sources/Math.cpp
-    sources/Object.cpp
+    sources/math/Math.cpp
+    sources/math/HalfEdgeDataStructure.cpp
+    sources/math/HyperPlane.cpp
+    sources/math/JacobiEigenvalue.cpp
+
+    sources/geometry/Geometry.cpp
+    sources/geometry/Shape.cpp
+    sources/geometry/ConfigurationSpaceObject.cpp
+    sources/geometry/GilbertJohnsonKeerthi.cpp
+    sources/geometry/SimpleShapeIntersectionDetector.cpp
+    sources/geometry/BoundingVolume.cpp
+
+    sources/Body.cpp
+    sources/Force.cpp
     sources/Integration.cpp
     sources/Collision.cpp
-    sources/Force.cpp
     sources/Scene.cpp
-    sources/BoundingVolumes.cpp
-    sources/Geometry.cpp
 )
 
 set(PEGASUS_EXTRA)

@@ -5,6 +5,7 @@
 */
 
 #include "demo/Demo.hpp"
+#include <list>
 
 std::list<pegasus::Demo::Primitive*> g_objects;
 

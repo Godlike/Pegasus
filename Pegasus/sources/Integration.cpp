@@ -30,7 +30,7 @@ glm::dvec3 IntegrateDamping(glm::dvec3 velocity, double damping, double duration
     return velocity * glm::pow(damping, duration);
 }
 
-void IntegrateLinearMotion(mechanics::Material& material, mechanics::LinearMotion& linearMotion, double duration)
+void IntegrateBody(mechanics::Body::Material& material, mechanics::Body::LinearMotion& linearMotion, double duration)
 {
     glm::dvec3 const resultingAcceleration = ::IntegrateAcceleration(linearMotion.acceleration, linearMotion.force, material.GetInverseMass());
     linearMotion.position = ::IntegratePosition(linearMotion.position, linearMotion.velocity, duration);
@@ -47,5 +47,5 @@ glm::dvec3 integration::IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 a
 
 void integration::Integrate(mechanics::Body& body, double duration)
 {
-    ::IntegrateLinearMotion(body.material, body.linearMotion, duration);
+    ::IntegrateBody(body.material, body.linearMotion, duration);
 }
