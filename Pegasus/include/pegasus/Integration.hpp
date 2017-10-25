@@ -13,11 +13,20 @@ namespace pegasus
 {
 namespace integration
 {
-PEGASUS_EXPORT
-glm::dvec3 IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce);
+/**
+ * @brief Calculates total force acting on the body
+ * @param accumulatedForce current total force
+ * @param appliedForce applied force
+ * @return total force
+ */
+PEGASUS_EXPORT glm::dvec3 IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce);
 
-PEGASUS_EXPORT
-void Integrate(mechanics::Body& body, double duration);
+/**
+ * @brief Calculates integrated body position
+ * @param[in,out] body point mass data
+ * @param[in] duration delta time
+ */
+PEGASUS_EXPORT void Integrate(mechanics::Body& body, double duration);
 } // namespace integration
 } // namespace pegasus
 
