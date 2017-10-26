@@ -22,16 +22,8 @@ namespace scene
 using Handle = uint32_t;
 
 /**
-* @brief Represents a unit of storage with id
-* @tparam T storage data type
-*/
-template < typename T >
-struct Asset
-{
-    Handle id;
-    T data;
-};
-
+ * @brief Stores handles to the physical body and collision geometry
+ */
 struct RigidBody
 {
     RigidBody() = default;
@@ -42,15 +34,52 @@ struct RigidBody
     Handle shape = 0;
 };
 
+/**
+ * @brief Represents a body with an infinite mass
+ */
+struct StaticBody : RigidBody
+{
+    StaticBody(Handle body, Handle shape);
+};
+
+/**
+ * @brief Represetns a body with a finite mass
+ */
+struct DynamicBody : RigidBody
+{
+    DynamicBody(Handle body, Handle shape);
+};
+
+/**
+ * @brief Stores handles to a physical body and a binded force
+ */
 struct ForceBind
 {
     Handle body = 0;
     Handle force = 0;
 };
 
+/**
+* @brief Represents a unit of storage with id
+* @tparam T storage data type
+*/
+template < typename T >
+struct Asset
+{
+    Handle id;
+    T data;
+};
+
+/**
+ * @brief Singleton class stores scent's assets
+ */
 class AssetManager
 {
 public:
+    /**
+     * @brief Returns the instance of the asset manager
+     * @return asset manager
+     */
     static AssetManager& GetInstance();
 
     /**
@@ -107,17 +136,42 @@ public:
         data[id - 1].id = 0;
     }
 
+    /**
+     * @brief Returns body buffer
+     * @return physical body buffer
+     */
     std::vector<Asset<mechanics::Body>>& GetBodies();
 
+    /**
+     * @brief Returns @t Shape buffer
+     * @tparam Shape collision geometry shape type
+     * @return shape buffer
+     */
     template < typename Shape >
     std::vector<Asset<Shape>>& GetShapes();
 
+    /**
+     * @brief Returns rigid body buffer
+     * @tparam Object body type
+     * @tparam Shape collision geometry shape type
+     * @return rigid body buffer
+     */
     template < typename Object, typename Shape >
     std::vector<Asset<RigidBody>>& GetObjects();
 
+    /**
+     * @brief Return @t Force buffer
+     * @tparam Force force type
+     * @return force buffer
+     */
     template < typename Force >
     std::vector<Asset<Force>>& GetForces();
 
+    /**
+     * @brief Returns body force bind buffer
+     * @tparam Force force type
+     * @return body force bind buffer
+     */
     template < typename Force >
     std::vector<Asset<ForceBind>>& GetForceBinds();
 
@@ -154,16 +208,6 @@ private:
     std::vector<Asset<ForceBind>> m_buoyancyForceBindings;
 
     AssetManager() = default;
-};
-
-struct StaticBody : RigidBody
-{
-    StaticBody(Handle body, Handle shape);
-};
-
-struct DynamicBody : RigidBody
-{
-    DynamicBody(Handle body, Handle shape);
 };
 
 template <>
@@ -280,52 +324,92 @@ inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::Buoyanc
     return m_buoyancyForceBindings;
 }
 
+/**
+ * @brief Signleton physical world simulation class
+ */
 class Scene
 {
 public:
-    PEGASUS_EXPORT
-    static Scene& GetInstance();
+    /**
+    * @brief Returns singleton instance of the scene
+    * @return scene instance
+    */
+    PEGASUS_EXPORT static Scene& GetInstance();
 
-    PEGASUS_EXPORT
-    void Initialize(AssetManager& assetManager);
+    /**
+     * @brief Performs scene initialization
+     * @param assetManager scene asset holder
+     */
+    PEGASUS_EXPORT void Initialize(AssetManager& assetManager);
 
-    PEGASUS_EXPORT
-    void ComputeFrame(double duration);
+    /**
+     * @brief Runs physical simulation with the given duration
+     * @param duration duration of the integration in seconds
+     */
+    PEGASUS_EXPORT void ComputeFrame(double duration);
 
+    /**
+     * @brief Makes new body instance and returns its handle
+     * @return new body handle
+     */
+    PEGASUS_EXPORT inline Handle MakeBody() const;
 
-    PEGASUS_EXPORT
-    inline Handle MakeBody() const;
+    /**
+     * @brief Returns instance of the body assigned to the given handle
+     * @param handle body handle
+     * @return body instance
+     */
+    PEGASUS_EXPORT inline mechanics::Body& GetBody(Handle handle) const;
 
-    PEGASUS_EXPORT
-    inline mechanics::Body& GetBody(Handle handle) const;
+    /**
+     * @brief Removes instance of the body assigned to the given handle
+     * @param handle body handle
+     */
+    PEGASUS_EXPORT inline void RemoveBody(Handle handle) const;
 
-    PEGASUS_EXPORT
-    inline void RemoveBody(Handle handle) const;
-
-    PEGASUS_EXPORT
-    template < typename Shape >
+    /**
+     * @brief Makes new shape instance and returns its handle
+     * @tparam Shape collision geometry shape type
+     * @return shape handle
+     */
+    PEGASUS_EXPORT template < typename Shape >
     Handle MakeShape() const
     {
         return m_assetManager->MakeAsset(m_assetManager->GetShapes<Shape>());
     }
 
-    PEGASUS_EXPORT
-    template < typename Shape >
+    /**
+     * @brief Returns instance of the shape assigned to the given handle
+     * @tparam Shape collision geometry shape type
+     * @param handle shape handle
+     * @return shape instance
+     */
+    PEGASUS_EXPORT template < typename Shape >
     Shape& GetShape(Handle handle)
     {
         return m_assetManager->GetAsset(m_assetManager->GetShapes<Shape>(), handle);
     }
 
-    PEGASUS_EXPORT
-    template < typename Shape >
+    /**
+     * @brief Removes instance of the shape assigned to the given handle
+     * @tparam Shape collision geometry shape type
+     * @param handle shape handle
+     */
+    PEGASUS_EXPORT template < typename Shape >
     void RemoveShape(Handle handle) const
     {
         m_assetManager->RemoveAsset(m_assetManager->GetShapes<Shape>(), handle);
     }
 
-
-    PEGASUS_EXPORT
-    template < typename Object, typename Shape >
+    /**
+     * @brief Makes rigid body from a shape and a point mass
+     * @tparam Object body type
+     * @tparam Shape collision geometry shape type
+     * @param body point mass handle
+     * @param shape shape handle
+     * @return rigid body handle
+     */
+    PEGASUS_EXPORT template < typename Object, typename Shape >
     Handle MakeObject(Handle body, Handle shape) const
     {
         Handle const id = m_assetManager->MakeAsset<RigidBody>(m_assetManager->GetObjects<Object, Shape>());
@@ -333,38 +417,60 @@ public:
         return id;
     }
 
-    PEGASUS_EXPORT
-    template < typename Object, typename Shape >
+    /**
+     * @brief Removes instance of the rigid body assigned to the given handle
+     * @tparam Object body type 
+     * @tparam Shape collision geometry shape type
+     * @param handle rigid body handle
+     */
+    PEGASUS_EXPORT template < typename Object, typename Shape >
     void RemoveObject(Handle handle) const
     {
         m_assetManager->RemoveAsset(m_assetManager->GetObjects<Object, Shape>(), handle);
     }
 
-
-    PEGASUS_EXPORT
-    template < typename Force >
+    /**
+     * @brief Makes new instance of the force
+     * @tparam Force force type
+     * @return force handle
+     */
+    PEGASUS_EXPORT template < typename Force >
     Handle MakeForce() const
     {
         return m_assetManager->MakeAsset(m_assetManager->GetForces<Force>());
     }
 
-    PEGASUS_EXPORT
-    template < typename Force >
+    /**
+     * @brief Returns an instance of the force assigned to the given handle
+     * @tparam Force force type
+     * @param handle force handle
+     * @return force instance
+     */
+    PEGASUS_EXPORT template < typename Force >
     Force& GetForce(Handle handle)
     {
         return m_assetManager->GetAsset(m_assetManager->GetForces<Force>(), handle);
     }
 
-    PEGASUS_EXPORT
-    template < typename Force >
+    /**
+     * @brief Remove instance of the force assigned to the given handle
+     * @tparam Force force type
+     * @param handle force handle
+     */
+    PEGASUS_EXPORT template < typename Force >
     void RemoveForce(Handle handle) const
     {
         m_assetManager->RemoveAsset(m_assetManager->GetForces<Force>(), handle);
     }
 
-
-    PEGASUS_EXPORT
-    template < typename Force >
+    /**
+     * @brief Makes force body bind and returns its handle
+     * @tparam Force force type
+     * @param body body handle
+     * @param force force handle
+     * @return bind handle
+     */
+    PEGASUS_EXPORT template < typename Force >
     Handle BindForce(Handle body, Handle force) const
     {
         Handle const id = m_assetManager->MakeAsset(m_assetManager->GetForceBinds<Force>());
@@ -372,8 +478,12 @@ public:
         return id;
     }
 
-    PEGASUS_EXPORT
-    template < typename Force >
+    /**
+     * @brief Removes force body bind assigned to the given handle
+     * @tparam Force force type
+     * @param handle bind handle
+     */
+    PEGASUS_EXPORT template < typename Force >
     void UnbindForce(Handle handle) const
     {
         m_assetManager->RemoveAsset(m_assetManager->GetForceBinds<Force>(), handle);
@@ -384,6 +494,10 @@ private:
 
     Scene() = default;
 
+    /**
+     * @brief Calculates force applied to the binded bodies
+     * @tparam Force force type
+     */
     template < typename Force >
     void ApplyForce()
     {
@@ -398,6 +512,11 @@ private:
         }
     }
 
+    /**
+     * @brief Syncronizes collision geometry and point mass positions
+     * @tparam Object body type
+     * @tparam Shape collision geometry shape type
+     */
     template < typename Object, typename Shape >
     void UpdateShapes()
     {
@@ -412,14 +531,28 @@ private:
         }
     }
 
+    /**
+     * @brief Resolves registered collisions
+     * @param duration delta time of the frame
+     */
     void ResolveCollisions(double duration) const;
 
+    /**
+     * @brief Applies all registered forces to the bodies
+     */
     void ApplyForces();
 
+    /**
+     * @brief Updates physical properties of the bodies within given duration
+     * @param duration delta time of the frame
+     */
     void Integrate(double duration);
 };
 
 
+/**
+ * @brief Generic scene object that stores reference to the scene singleton
+ */
 class SceneObject
 {
 public:
@@ -434,6 +567,9 @@ protected:
     Scene* m_pScene = nullptr;
 };
 
+/**
+ * @brief Generic primitive type, stores geometric and physical handles to the body
+ */
 class Primitive : public SceneObject
 {
 public:
@@ -443,16 +579,39 @@ public:
         DYNAMIC
     };
 
+    /**
+     * @brief Releases body handle
+     */
     virtual ~Primitive();
 
+    /**
+     * @brief Sets body data
+     * @param body physical data
+     */
     void SetBody(mechanics::Body body) const;
 
+    /**
+     * @brief Returns body data
+     * @return body data
+     */
     mechanics::Body GetBody() const;
 
+    /**
+     * @brief Returns scene handle to the body
+     * @return body handle
+     */
     Handle GetBodyHandle() const;
 
+    /**
+     * @brief Returns scene handle to the shape
+     * @return shape handle
+     */
     Handle GetShapeHandle() const;
 
+    /**
+     * @brief Return scene rigid body handle
+     * @return rigid body handle
+     */
     Handle GetObjectHandle() const;
 
 protected:
@@ -461,8 +620,17 @@ protected:
     Handle m_shapeHandle = 0;
     Handle m_objectHandle = 0;
 
+    /**
+     * @brief Allocates body in the scene and initializes
+     * @param type body type
+     * @param body body data
+     */
     Primitive(Type type, mechanics::Body body);
 
+    /**
+     * @brief Makes new scene primitive 
+     * @tparam Shape collision geometry shape type
+     */
     template < typename Shape >
     void MakeObject()
     {
@@ -479,6 +647,10 @@ protected:
         }
     }
 
+    /**
+     * @brief Removes scene primitive
+     * @tparam Shape collision gometry shape type
+     */
     template < typename Shape >
     void RemoveObject() const
     {
@@ -496,81 +668,167 @@ protected:
     }
 };
 
+/**
+ * @brief Stores plane geometry shape physical data
+ */
 class Plane : public Primitive
 {
 public:
+    /**
+     * @brief Makes new scene plane object
+     * @param type primitive body type
+     * @param body body data
+     * @param plane plane data
+     */
     Plane(Type type, mechanics::Body body, geometry::Plane plane);
 
+    /**
+     * @brief Releases shape handle and object handle
+     */
     virtual ~Plane();
 
+    /**
+     * @brief Returns reference to the plane instance
+     * @return shape instance
+     */
     geometry::Plane& GetShape() const;
 };
 
+/**
+* @brief Stores sphere geometry shape physical data
+*/
 class Sphere : public Primitive
 {
 public:
+    /**
+     * @brief Makes new scene sphere body
+     * @param type primitive body type
+     * @param body body data
+     * @param sphere sphere data
+     */
     Sphere(Type type, mechanics::Body body, geometry::Sphere sphere);
 
+    /**
+     * @brief Releases shape handle and body handle
+     */
     virtual ~Sphere();
 
+    /**
+     * @brief Return reference to the sphere instance
+     * @return sphere instance
+     */
     geometry::Sphere& GetShape() const;
 };
 
+/**
+* @brief Stores box geometry shape physical data
+*/
 class Box : public Primitive
 {
 public:
+    /**
+     * @brief Makes new scene box primitive
+     * @param type body type
+     * @param body body data
+     * @param box box data
+     */
     Box(Type type, mechanics::Body body, geometry::Box box);
 
+    /**
+     * @brief Releases shape handle and object handle
+     */
     virtual ~Box();
 
+    /**
+     * @brief Returns reference to the box instance
+     * @return box shape
+     */
     geometry::Box& GetShape() const;
 };
 
+/**
+ * @brief Defines force bind interface
+ */
 class ForceBase : public SceneObject
 {
 public:
-    virtual void Bind(Primitive& primitive) = 0;
+    /**
+     * @brief Binds primitive's body to the force
+     * @param[in] primitive body to be bind
+     */
+    virtual void Bind(Primitive const& primitive) = 0;
 
-    virtual void Unbind(Primitive& primitive) = 0;
+    /**
+     * @brief Unbinds primitive's body from the force
+     * @param[in] primitive body to be unbind
+     */
+    virtual void Unbind(Primitive const& primitive) = 0;
 };
 
+/**
+ * @brief Stores force data
+ * @tparam ForceType force type
+ */
 template < typename ForceType >
 class Force : public ForceBase
 {
 public:
+    /**
+     * @brief Allocates new force in the scene and initializes it
+     * @param force force data
+     */
     Force(ForceType force)
         : m_force(force)
     {
+        m_forceHandle = m_pScene->MakeForce<ForceType>();
         SetForce(force);
     }
 
+    /**
+     * @brief Undinds all bodies and releases force handle
+     */
     virtual ~Force()
     {
-        for (std::pair<Handle, Handle> bind : m_bodyForceBinds)
+        for (std::pair<Handle, Handle> const bind : m_bodyForceBinds)
         {
             m_pScene->UnbindForce<ForceType>(bind.second);
         }
         m_pScene->RemoveForce<ForceType>(m_forceHandle);
     }
 
+    /**
+     * @brief Sets force data
+     * @param force force data
+     */
     void SetForce(ForceType force)
     {
-        m_forceHandle = m_pScene->MakeForce<ForceType>();
-        m_pScene->GetForce<ForceType>(m_forceHandle) = force;   
+        m_pScene->GetForce<ForceType>(m_forceHandle) = force;
     }
 
+    /**
+     * @brief Returns force data
+     * @return force data
+     */
     ForceType GetForce() const
     {
         return m_pScene->GetForce<ForceType>(m_forceHandle);
     }
 
-    void Bind(Primitive& primitive) override
+    /**
+     * @brief Bind force to the given body
+     * @param primitive body to be bind
+     */
+    void Bind(Primitive const& primitive) override
     {
         Handle const body = primitive.GetBodyHandle();
         m_bodyForceBinds[body] = m_pScene->BindForce<ForceType>(body, m_forceHandle);
     }
 
-    void Unbind(Primitive& primitive) override
+    /**
+     * @brief Unbinds force from the body and releases bind handle
+     * @param primitive body to be unbind
+     */
+    void Unbind(Primitive const& primitive) override
     {
         Handle const body = primitive.GetBodyHandle();
         m_pScene->UnbindForce<ForceType>(m_bodyForceBinds[body]);
@@ -582,9 +840,16 @@ private:
     ForceType m_force;
 };
 
+/**
+ * @brief Allows multiple similar force bindings
+ */
 class PrimitiveGroup
 {
 public:
+    /**
+     * @brief Adds force pointer to the group and binds the force to all group's bodies
+     * @param force force to bind
+     */
     void BindForce(ForceBase& force)
     {
         m_forces.push_back(&force);
@@ -595,6 +860,9 @@ public:
         }
     }
 
+    /**
+     * @brief Removes force from the group and unbind all bodies
+     */
     void UnbindForce(ForceBase& force)
     {
         for (Primitive* primitive : m_primitives)
@@ -609,6 +877,10 @@ public:
         );
     }
 
+    /**
+     * @brief Adds primitive pointer to the group and binds all group's forces to it
+     * @param primitive primitive to bind
+     */
     void BindPrimitive(Primitive& primitive)
     {
         m_primitives.push_back(&primitive);
@@ -619,6 +891,10 @@ public:
         }
     }
 
+    /**
+     * @brief Removes body from the group and unbinds all group's forces from it
+     * @param primitive primitive to unbind
+     */
     void UnbindPrimitive(Primitive& primitive)
     {
         for (ForceBase* force : m_forces)
