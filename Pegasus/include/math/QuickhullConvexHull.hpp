@@ -191,7 +191,7 @@ public:
     /**
      *  @brief  Adds vertex to the current convex hull if it's outside
      *
-     *  Does nothing if vertex is positioned inside conver hull
+     *  Does nothing if vertex is positioned inside convex hull
      *
      *  @param  index   index of a point to be added to the convex hull
      *

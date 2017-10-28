@@ -35,7 +35,7 @@ bool LineSegmentContainsOrigin(glm::dvec3 const& lineStart, glm::dvec3 const& li
 *  @param  b   triangle vertex
 *  @param  c   triangle vertex
 *
-*  @return @c true if triangle contains the origin, @c false othewise
+*  @return @c true if triangle contains the origin, @c false otherwise
 */
 bool TriangleContainsOrigin(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c)
 {
@@ -95,7 +95,7 @@ glm::dvec3 NearestSimplexLineSegment(intersection::gjk::Simplex& simplex)
 *
 *  Given simplex may be reduced down to size 1 as a result of this method.
 *
-*  @param[in,out]  simplex triange simplex
+*  @param[in,out]  simplex triangle simplex
 *
 *  @return new search direction
 */

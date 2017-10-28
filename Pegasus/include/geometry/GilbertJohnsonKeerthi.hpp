@@ -70,7 +70,7 @@ glm::dvec3 NearestSimplex(Simplex& simplex);
 bool DoSimplex(gjk::Simplex& simplex, glm::dvec3& direction);
 
 /**
-*  @brief  Ñalculates a tetrahedron from the CSO such that it contains the origin
+*  @brief  Calculates a tetrahedron from the CSO such that it contains the origin
 *
 *  If simplex contains origin then there is intersection between given shapes
 *

@@ -54,7 +54,7 @@ private:
      * @brief Finds maximal absolute value off diagonal matrix element and sets its indices
      * @param[in] mat matrix to search
      * @param[out] i max element row index
-     * @param[out] j max element columnt index
+     * @param[out] j max element column index
      */
     static void FindMaxNormOffDiagonal(glm::dmat3 const& mat, uint8_t& i, uint8_t& j);
 

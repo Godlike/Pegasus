@@ -67,11 +67,11 @@ void HalfEdgeDataStructure::MakeFace(uint64_t a, uint64_t b, uint64_t c)
         }};
 
         //Allocate face
-        auto backFaceIterator = m_facesList.emplace(m_facesList.end(), *newHalfEdges.back());
+        auto const backFaceIterator = m_facesList.emplace(m_facesList.end(), *newHalfEdges.back());
         m_faceIteratorMap[&*backFaceIterator] = backFaceIterator;
         m_faceVerticesIteratorMap[faceVerticesKey] = backFaceIterator;
 
-        //Init half edges
+        //Initialize half edges
         IntializeHalfEdge(newHalfEdges[0], &*newHalfEdges[1], &*newHalfEdges[2], &*backFaceIterator, a, b);
         IntializeHalfEdge(newHalfEdges[1], &*newHalfEdges[2], &*newHalfEdges[0], &*backFaceIterator, b, c);
         IntializeHalfEdge(newHalfEdges[2], &*newHalfEdges[0], &*newHalfEdges[1], &*backFaceIterator, c, a);

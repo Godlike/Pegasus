@@ -93,7 +93,7 @@ Iterator FindExtremalVertex(Iterator begin, Iterator end, HyperPlane const& hype
 
 /**
  * @brief Finds farthest point above given hyperplane and returns its index
- * @tparam Iterator forwars iterator
+ * @tparam Iterator forward iterator
  * @param[in] begin start of the range
  * @param[in] end end of the range
  * @param[in] hyperPlane hyperplane

@@ -186,7 +186,7 @@ public:
 
 private:
     /**
-     * @brief Calcualtes total separation speed of the contact
+     * @brief Calculates total separation speed of the contact
      * @param contact contact information
      * @return speed meters per second
      */
@@ -225,7 +225,7 @@ private:
     static void ResolveVelocity(Contact contact, double duration);
 
     /**
-     * @brief Updated poisitions of the bodies in the contact
+     * @brief Updated positions of the bodies in the contact
      * @param contact contact information
      */
     static void ResolveInterpenetration(Contact contact);

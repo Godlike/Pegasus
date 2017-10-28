@@ -41,7 +41,7 @@ glm::dvec3 Support(Box const& box, glm::dvec3 direction);
 *          Object in given direction
 *
 *  Configuration Space Object (aka Minkowski Difference and Minkowski
-*  Configuration Object) is a cartesian product of two sets of points, where
+*  Configuration Object) is a Cartesian product of two sets of points, where
 *  each element in one of the sets is multiplied by -1.
 *
 *  @tparam ShapeA      any shape type for which gjk::Support is overloaded

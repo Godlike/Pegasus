@@ -510,7 +510,7 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-    //Deinitialize inputs
+    //De initialize inputs
     Input& input = Input::GetInstance();
     input.RemoveCursorMoveCallback(&Renderer::CursorMove);
     input.RemoveResizeCallback(&Renderer::Resize);

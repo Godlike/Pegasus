@@ -26,7 +26,7 @@ glm::dvec3 IntegratePosition(glm::dvec3 position, glm::dvec3 velocity, double du
  * @brief Recalculates acceleration of the body
  * @param acceleration currant acceleration
  * @param force total force acting on the body
- * @param inverseMass one devided by mass
+ * @param inverseMass one divided by mass
  * @return new acceleration
  */
 glm::dvec3 IntegrateAcceleration(glm::dvec3 acceleration, glm::dvec3 force, double inverseMass)
@@ -35,7 +35,7 @@ glm::dvec3 IntegrateAcceleration(glm::dvec3 acceleration, glm::dvec3 force, doub
 }
 
 /**
- * @brief Recalculates veloctity of the body
+ * @brief Recalculates velocity of the body
  * @param velocity current velocity
  * @param acceleration current acceleration
  * @param duration delta time

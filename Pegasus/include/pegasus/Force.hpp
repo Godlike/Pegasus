@@ -93,8 +93,8 @@ public:
     PEGASUS_EXPORT Spring(glm::dvec3 anchor, double springConstant, double restLength);
 
     /**
-     * @brief Calculates current spring force acring on the body
-     * @param body body attached to the othe end of the spring
+     * @brief Calculates current spring force acting on the body
+     * @param body body attached to the other end of the spring
      * @return force acting on the body
      */
     PEGASUS_EXPORT glm::dvec3 CalculateForce(mechanics::Body const& body) const;
@@ -116,7 +116,7 @@ public:
     /**
      * @brief Constructs instance of the bungee force
      *
-     * Acts as a linear spring when body-achor distnace is greater than rest length.
+     * Acts as a linear spring when body-anchor distance is greater than rest length.
      * Does not apply any force otherwise.
      * @param anchor anchor point of the bungee
      * @param springConstant spring constant
@@ -126,7 +126,7 @@ public:
 
     /**
      * @brief Calculates bungee force
-     * @param body attached to the bugee
+     * @param body attached to the bungee
      * @return force vector
      */
     PEGASUS_EXPORT glm::dvec3 CalculateForce(mechanics::Body const& body) const;
@@ -150,7 +150,7 @@ public:
      * @param maxDepth depth of the reservoir
      * @param volume volume of the reservoir
      * @param waterWight reservoir water weight
-     * @param liquidDensity desncity of the liquid in the reservoir
+     * @param liquidDensity density of the liquid in the reservoir
      */
     PEGASUS_EXPORT Buoyancy(double maxDepth, double volume, double waterWight, double liquidDensity);
 

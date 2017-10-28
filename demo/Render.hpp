@@ -174,7 +174,7 @@ public:
     void SetDirection(glm::vec3 direction);
 
     /**
-     * @brief Sets vertical axis of the camera to be used in the view matrix calulation
+     * @brief Sets vertical axis of the camera to be used in the view matrix calculation
      * @param up normalized unit vector
      */
     void SetUp(glm::vec3 up);
@@ -205,7 +205,7 @@ public:
 
     /**
      * @brief Returns calculated projection matrix
-     * @return transformation of the space into the camera frustrum
+     * @return transformation of the space into the camera frustum
      */
     glm::mat4 GetProjection() const;
 
@@ -238,7 +238,7 @@ public:
     static Input& GetInstance();
 
     /**
-     * @brief Initializes input with the given contex
+     * @brief Initializes input with the given context
      * @param[in] window callbacks context pointer
      */
     static void InitializeContext(GLFWwindow* window);
@@ -324,7 +324,7 @@ private:
     }
 
     /**
-     * @brief Removes given callback from callback containe
+     * @brief Removes given callback from callback container
      * @tparam Ret return type of the function
      * @tparam Args arguments type of the function
      * @param container container of the function objects
@@ -398,7 +398,7 @@ public:
 
     /**
      * @brief Checks if the renderer is in the valid state
-     * @return @c true if rederer is intialized and the window is opened, @c false otherwise
+     * @return @c true if renderer is initialized and the window is opened, @c false otherwise
      */
     bool IsValid() const;
 
@@ -512,13 +512,13 @@ private:
     )";
 
     /**
-     * @brief Construct default intialized render instance
+     * @brief Construct default initialized render instance
      * @attention must be called from the main thread
      */
     Renderer();
 
     /**
-     * @brief Deinitialized GLFW
+     * @brief De initializes GLFW
      */
     ~Renderer();
 
@@ -601,7 +601,7 @@ private:
 
     /**
      * @brief Resize callback function
-     * @param[in] window poiter to the current GLFW context window
+     * @param[in] window pointer to the current GLFW context window
      * @param[in] width new width of the window
      * @param[in] height
      */
@@ -609,7 +609,7 @@ private:
 
     /**
      * @brief KeyButton callback function
-     * @param[in] window poiter to the current GLFW context window
+     * @param[in] window pointer to the current GLFW context window
      * @param[in] key button id
      * @param[in] scancode
      * @param[in] action action type
@@ -619,7 +619,7 @@ private:
 
     /**
      * @brief CursorMove callback function
-     * @param[in] window poiter to the current GLFW context window
+     * @param[in] window pointer to the current GLFW context window
      * @param[in] xpos new mouse x value in the window coordinates
      * @param[in] ypos new mouse y value in the window coordinates
      */
@@ -759,6 +759,6 @@ private:
 };
 
 } // namespace render
-} // namesapce pegasus
+} // namespace pegasus
 
 #endif // PEGASUS_DEMO_RENDER_HPP

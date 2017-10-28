@@ -43,7 +43,7 @@ struct StaticBody : RigidBody
 };
 
 /**
- * @brief Represetns a body with a finite mass
+ * @brief Represents a body with a finite mass
  */
 struct DynamicBody : RigidBody
 {
@@ -325,7 +325,7 @@ inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::Buoyanc
 }
 
 /**
- * @brief Signleton physical world simulation class
+ * @brief Singleton physical world simulation class
  */
 class Scene
 {
@@ -344,7 +344,7 @@ public:
 
     /**
      * @brief Runs physical simulation with the given duration
-     * @param duration duration of the integration in seconds
+     * @param duration delta time of the integration in seconds
      */
     PEGASUS_EXPORT void ComputeFrame(double duration);
 
@@ -406,8 +406,8 @@ public:
      * @tparam Object body type
      * @tparam Shape collision geometry shape type
      * @param body point mass handle
-     * @param shape shape handle
-     * @return rigid body handle
+     * @param shape handle of the shape
+     * @return handle of the rigid body 
      */
     PEGASUS_EXPORT template < typename Object, typename Shape >
     Handle MakeObject(Handle body, Handle shape) const
@@ -431,7 +431,7 @@ public:
 
     /**
      * @brief Makes new instance of the force
-     * @tparam Force force type
+     * @tparam Force type of the force 
      * @return force handle
      */
     PEGASUS_EXPORT template < typename Force >
@@ -442,7 +442,7 @@ public:
 
     /**
      * @brief Returns an instance of the force assigned to the given handle
-     * @tparam Force force type
+     * @tparam Force type of the force 
      * @param handle force handle
      * @return force instance
      */
@@ -454,7 +454,7 @@ public:
 
     /**
      * @brief Remove instance of the force assigned to the given handle
-     * @tparam Force force type
+     * @tparam Force type of the force 
      * @param handle force handle
      */
     PEGASUS_EXPORT template < typename Force >
@@ -465,9 +465,9 @@ public:
 
     /**
      * @brief Makes force body bind and returns its handle
-     * @tparam Force force type
-     * @param body body handle
-     * @param force force handle
+     * @tparam Force type of the force 
+     * @param body handle of the body 
+     * @param force handle of the force 
      * @return bind handle
      */
     PEGASUS_EXPORT template < typename Force >
@@ -480,7 +480,7 @@ public:
 
     /**
      * @brief Removes force body bind assigned to the given handle
-     * @tparam Force force type
+     * @tparam Force type of the force 
      * @param handle bind handle
      */
     PEGASUS_EXPORT template < typename Force >
@@ -496,7 +496,7 @@ private:
 
     /**
      * @brief Calculates force applied to the binded bodies
-     * @tparam Force force type
+     * @tparam Force type of the force 
      */
     template < typename Force >
     void ApplyForce()
@@ -513,7 +513,7 @@ private:
     }
 
     /**
-     * @brief Syncronizes collision geometry and point mass positions
+     * @brief Synchronizes collision geometry and point mass positions
      * @tparam Object body type
      * @tparam Shape collision geometry shape type
      */
@@ -623,7 +623,7 @@ protected:
     /**
      * @brief Allocates body in the scene and initializes
      * @param type body type
-     * @param body body data
+     * @param body data
      */
     Primitive(Type type, mechanics::Body body);
 
@@ -649,7 +649,7 @@ protected:
 
     /**
      * @brief Removes scene primitive
-     * @tparam Shape collision gometry shape type
+     * @tparam Shape collision geometry shape type
      */
     template < typename Shape >
     void RemoveObject() const
@@ -677,8 +677,8 @@ public:
     /**
      * @brief Makes new scene plane object
      * @param type primitive body type
-     * @param body body data
-     * @param plane plane data
+     * @param body physical body data
+     * @param plane shape data
      */
     Plane(Type type, mechanics::Body body, geometry::Plane plane);
 
@@ -703,8 +703,8 @@ public:
     /**
      * @brief Makes new scene sphere body
      * @param type primitive body type
-     * @param body body data
-     * @param sphere sphere data
+     * @param body physical body data
+     * @param sphere shape data
      */
     Sphere(Type type, mechanics::Body body, geometry::Sphere sphere);
 
@@ -729,8 +729,8 @@ public:
     /**
      * @brief Makes new scene box primitive
      * @param type body type
-     * @param body body data
-     * @param box box data
+     * @param body physical body data
+     * @param box shape data
      */
     Box(Type type, mechanics::Body body, geometry::Box box);
 
@@ -775,7 +775,7 @@ class Force : public ForceBase
 public:
     /**
      * @brief Allocates new force in the scene and initializes it
-     * @param force force data
+     * @param force initialized force data
      */
     Force(ForceType force)
         : m_force(force)
@@ -785,7 +785,7 @@ public:
     }
 
     /**
-     * @brief Undinds all bodies and releases force handle
+     * @brief Unbinds all bodies and releases force handle
      */
     virtual ~Force()
     {
@@ -798,7 +798,7 @@ public:
 
     /**
      * @brief Sets force data
-     * @param force force data
+     * @param force initialized force data
      */
     void SetForce(ForceType force)
     {
@@ -848,7 +848,7 @@ class PrimitiveGroup
 public:
     /**
      * @brief Adds force pointer to the group and binds the force to all group's bodies
-     * @param force force to bind
+     * @param force reference to the force
      */
     void BindForce(ForceBase& force)
     {
@@ -879,7 +879,7 @@ public:
 
     /**
      * @brief Adds primitive pointer to the group and binds all group's forces to it
-     * @param primitive primitive to bind
+     * @param primitive reference to the primitive to bind
      */
     void BindPrimitive(Primitive& primitive)
     {
@@ -893,7 +893,7 @@ public:
 
     /**
      * @brief Removes body from the group and unbinds all group's forces from it
-     * @param primitive primitive to unbind
+     * @param primitive reference to the primitive to unbind
      */
     void UnbindPrimitive(Primitive& primitive)
     {

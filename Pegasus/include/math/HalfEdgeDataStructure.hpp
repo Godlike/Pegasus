@@ -158,7 +158,7 @@ public:
             }
 
             /**
-            * @brief Constructs const iterator from the current iterator and returns it
+            * @brief Constructs constant iterator from the current iterator and returns it
             */
             operator HalfEdgeCirculator<HalfEdgeType const>() const
             {
@@ -232,7 +232,7 @@ public:
             }
 
             /**
-             * @brief Decrements an interator to the previous adjacent face
+             * @brief Decrements an iterator to the previous adjacent face
              * @return decremented iterator
              */
             AdjacentFaceCirculator& operator--()
@@ -242,7 +242,7 @@ public:
             }
 
             /**
-             * @brief Decrements an interator to the previous adjacent face
+             * @brief Decrements an iterator to the previous adjacent face
              * @return iterator before decrement
              */
             AdjacentFaceCirculator operator--(int)
@@ -255,7 +255,7 @@ public:
             /**
              * @brief Performs a memberwise comparison and returns true if iterators are equal
              * @param[in] other reference to the right hand side iterator
-             * @return result of the comparation
+             * @return result of the comparison
              */
             bool operator==(AdjacentFaceCirculator const& other) const
             {
@@ -265,7 +265,7 @@ public:
             /**
              * @brief Performs a memberwise comparison and returns true if iterators are different
              * @param[in] other reference to the right hand side iterator
-             * @return result of the comparation
+             * @return result of the comparison
              */
             bool operator!=(AdjacentFaceCirculator const& other) const
             {
@@ -283,7 +283,7 @@ public:
             }
 
             /**
-             * @brief Constructs const iterator from the current iterator and returns it
+             * @brief Constructs constant iterator from the current iterator and returns it
              */
             operator AdjacentFaceCirculator<FaceType const>() const
             {
@@ -296,7 +296,7 @@ public:
 
         /**
          * @brief Constructs a face from a given half-edge
-         * @param[in] halfEdge face hald-edge
+         * @param[in] halfEdge face half-edge
          */
         PEGASUS_EXPORT explicit Face(HalfEdge& halfEdge);
 
@@ -307,8 +307,8 @@ public:
         PEGASUS_EXPORT edge_iterator GetHalfEdgeIterator();
 
         /**
-        * @brief Returns half-edge const iterator
-        * @return half-edge const iterator
+        * @brief Returns half-edge constant iterator
+        * @return half-edge constant iterator
         */
         PEGASUS_EXPORT const_edge_iterator GetHalfEdgeIterator() const;
 
@@ -319,8 +319,8 @@ public:
         PEGASUS_EXPORT face_iterator GetAdjacentFaceIterator();
 
         /**
-        * @brief Returns iterator to const adjacent faces
-        * @return adjacent face const iterator
+        * @brief Returns iterator to constant adjacent faces
+        * @return adjacent face constant iterator
         */
         PEGASUS_EXPORT const_face_iterator GetAdjacentFaceIterator() const;
 
@@ -337,7 +337,7 @@ public:
         uint64_t b;
         uint64_t c;
 
-        /* Hasher struct for the key object */
+        /* Hasher for the key object */
         struct Hasher
         {
             /**
@@ -381,17 +381,17 @@ public:
     PEGASUS_EXPORT face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c);
 
     /**
-    * @brief Returns a const face iterator
+    * @brief Returns a constant face iterator
     * @param[in] a vertex index
     * @param[in] b vertex index
     * @param[in] c vertex index
-    * @return face const iterator
+    * @return face constant iterator
     */
     PEGASUS_EXPORT const_face_iterator GetFace(uint64_t a, uint64_t b, uint64_t c) const;
 
     /**
      * @brief Returns end face iterator
-     * @return end face const iterator
+     * @return end face constant iterator
      */
     PEGASUS_EXPORT const_face_iterator GetFaceEnd() const;
 
@@ -418,7 +418,7 @@ private:
         uint64_t vertexIndexFrom;
         uint64_t vertexIndexTo;
 
-        /* Hasher struct for the key object */
+        /* Hasher for the key object */
         struct Hasher
         {
             /**

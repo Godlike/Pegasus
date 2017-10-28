@@ -135,7 +135,7 @@ private:
     /**
      * @brief Redraws the scene
      *
-     * Rerenders the frame and updates current frame buffer
+     * Re renders the frame and updates current frame buffer
      */
     void RenderFrame() const;
 };

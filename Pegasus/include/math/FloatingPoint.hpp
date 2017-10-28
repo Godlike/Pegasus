@@ -67,7 +67,7 @@ inline bool IsNotEqual(double lhs, double rhs)
  *  @param  lhs left-hand side value
  *  @param  rhs right-hand side value
  *
- *  @return @c true if lhs is less than rhs, @c false othewise
+ *  @return @c true if lhs is less than rhs, @c false otherwise
  */
 inline bool IsLess(double lhs, double rhs)
 {

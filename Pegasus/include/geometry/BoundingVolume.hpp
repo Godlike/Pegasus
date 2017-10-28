@@ -184,7 +184,7 @@ class BoundingSphere
 {
 public:
     /**
-     * @brief Stores representation of Boudning sphere
+     * @brief Stores representation of Bounding sphere
      */
     struct Sphere
     {
@@ -235,7 +235,7 @@ private:
     );
 
     /**
-     * @brief Iterativly refince sphere
+     * @brief Iteratively refines sphere
      *
      * Refining happens by accounting for the points that are outside of the current bounding sphere
      * @param[in] sphere initial sphere shape
