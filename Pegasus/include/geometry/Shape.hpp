@@ -84,7 +84,7 @@ public:
     PEGASUS_EXPORT Triangle(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
 
     /** Calculates normal from member vertices and writes it to the normal member field */
-    void CalculateNormal();
+    PEGASUS_EXPORT void CalculateNormal();
 
     glm::dvec3 aVertex;
     glm::dvec3 bVertex;

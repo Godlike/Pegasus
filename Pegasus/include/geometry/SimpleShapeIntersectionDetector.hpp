@@ -773,7 +773,7 @@ inline double CalculatePenetration<Box, Box>(SimpleShape const* a, SimpleShape c
 class SimpleShapeIntersectionDetector
 {
 public:
-    SimpleShapeIntersectionDetector();
+    PEGASUS_EXPORT SimpleShapeIntersectionDetector();
 
     SimpleShapeIntersectionDetector(SimpleShapeIntersectionDetector const&) = delete;
 
@@ -785,7 +785,7 @@ public:
     * @param[in] b input shape
     * @return @c true if there is intersection, @c false otherwise
     */
-    bool CalculateIntersection(SimpleShape const* a, SimpleShape const* b);
+    PEGASUS_EXPORT bool CalculateIntersection(SimpleShape const* a, SimpleShape const* b);
 
     /**
     * @brief Calculates surface contact normal of b shape
@@ -795,7 +795,7 @@ public:
     * @param[in] b input shape
     * @return contact normal
     */
-    glm::dvec3 CalculateContactNormal(SimpleShape const* a, SimpleShape const* b);
+    PEGASUS_EXPORT glm::dvec3 CalculateContactNormal(SimpleShape const* a, SimpleShape const* b);
 
     /**
     * @brief Calculates penetration depth of two shapes
@@ -806,7 +806,7 @@ public:
     * @param[in] b input shape
     * @return penetration depth
     */
-    double CalculatePenetration(SimpleShape const* a, SimpleShape const* b);
+    PEGASUS_EXPORT double CalculatePenetration(SimpleShape const* a, SimpleShape const* b);
 
 private:
     using ShapeTypePair = std::pair<SimpleShape::Type, SimpleShape::Type>;

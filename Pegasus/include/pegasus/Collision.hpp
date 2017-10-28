@@ -15,12 +15,18 @@ namespace pegasus
 namespace collision
 {
 
+/**
+ * @brief Stores contact information
+ */
 struct Contact
 {
     struct Manifold;
 
     Contact(mechanics::Body& aBody, mechanics::Body& bBody, Manifold manifold, double restitution);
 
+    /**
+     * @brief Stores contact manifold data
+     */
     struct Manifold
     {
         glm::dvec3 normal;
@@ -33,11 +39,22 @@ struct Contact
     double restitution;
 };
 
+/**
+ * @brief Detects collisions
+ */
 class Detector
 {
 public:
+    /**
+     * @brief Construct detector initialized with a given asset manager
+     * @param assetManager 
+     */
     Detector(scene::AssetManager& assetManager);
 
+    /**
+     * @brief Detects and returns contacts
+     * @return contacts
+     */
     std::vector<std::vector<Contact>> Detect();
 
 private:
@@ -53,14 +70,32 @@ private:
     scene::AssetManager* m_assetManager = nullptr;
     static geometry::SimpleShapeIntersectionDetector s_simpleShapeDetector;
 
+    /**
+     * @brief Checks if two shapes are intersecting
+     * @param aShape first shape
+     * @param bShape second shape
+     * @return @c true if shapes are intersecting, @c false otherwise
+     */
     static bool Intersect(
         geometry::SimpleShape const* aShape, geometry::SimpleShape const* bShape
     );
 
+    /**
+     * @brief Calculates contact manifold for two intersecting shapes
+     * @param aShape first shape
+     * @param bShape second shapes
+     * @return contact manifold
+     */
     static Contact::Manifold CalculateContactManifold(
         geometry::SimpleShape const* aShape, geometry::SimpleShape const* bShape
     );
 
+    /**
+     * @brief Detects collisions in the given set of rigid bodies
+     * @tparam Object rigid body type
+     * @tparam Shape shape type
+     * @return contacts
+     */
     template < typename Object, typename Shape >
     std::vector<Contact> Detect()
     {
@@ -94,6 +129,14 @@ private:
         return contacts;
     }
 
+    /**
+     * @brief Calculates contacts between two sets of rigid bodies
+     * @tparam ObjectA rigid body type
+     * @tparam ShapeA shape type
+     * @tparam ObjectB rigid body type
+     * @tparam ShapeB shape type
+     * @return contacts
+     */
     template < typename ObjectA, typename ShapeA, typename ObjectB, typename ShapeB >
     std::vector<Contact> Detect()
     {
@@ -134,21 +177,64 @@ public:
     uint32_t iterationsUsed;
     uint32_t iterations = 10000;
 
+    /**
+     * @brief Resolves collisions
+     * @param contacts contacts information
+     * @param duration delta time of the frame
+     */
     void Resolve(std::vector<std::vector<Contact>>& contacts, double duration);
 
 private:
+    /**
+     * @brief Calcualtes total separation speed of the contact
+     * @param contact contact information
+     * @return speed meters per second
+     */
     static double CalculateTotalSeparationSpeed(Contact contact);
 
+    /**
+     * @brief Removes acceleration caused component from the separation speed
+     * @param contact contact information
+     * @param separationSpeed total separation speed
+     * @param duration delta time of the frame
+     * @return pure separation speed
+     */
     static double CalculatePureSeparationSpeed(Contact contact, double separationSpeed, double duration);
 
+    /**
+     * @brief Calculates separation speed of the contact
+     * @param contact contact information
+     * @param duration delta time of the frame
+     * @return separation speed
+     */
     static double CalculateSeparationSpeed(Contact contact, double duration);
 
+    /**
+     * @brief Calculates total impulse of the contact
+     * @param contact contact information
+     * @param duration delta time of the frame
+     * @return total impulse
+     */
     static glm::dvec3 CalculateTotalImpulse(Contact contact, double duration);
 
+    /**
+     * @brief Updates velocities of the bodies in the contact
+     * @param contact contact information
+     * @param duration delta time of the frame
+     */
     static void ResolveVelocity(Contact contact, double duration);
 
+    /**
+     * @brief Updated poisitions of the bodies in the contact
+     * @param contact contact information
+     */
     static void ResolveInterpenetration(Contact contact);
 
+    /**
+     * @brief Resolves contact
+     * @param contact contact information
+     * @param duration delta time of the frame
+     */
     static void Resolve(Contact contact, double duration);
 };
 

@@ -19,7 +19,7 @@ namespace math
 class HyperPlane
 {
 public:
-    HyperPlane() = default;
+    PEGASUS_EXPORT HyperPlane() = default;
 
     /**
      * @brief Constructs a plane in Hessian Normal Form
@@ -102,7 +102,7 @@ public:
      * @param[out] resultPoint intersection point
      * @return @c true if there is an intersection point, @c false otherwise
      */
-    bool RayIntersection(
+    PEGASUS_EXPORT bool RayIntersection(
         glm::dvec3 const& rayNormal, glm::dvec3 const& rayPoint, glm::dvec3& resultPoint
     ) const;
 
@@ -124,7 +124,7 @@ public:
      *
      *  @return closest point on the plane
      */
-    glm::dvec3 ClosestPoint(glm::dvec3 const& point) const;
+    PEGASUS_EXPORT glm::dvec3 ClosestPoint(glm::dvec3 const& point) const;
 
 private:
     glm::dvec3 m_normal;
