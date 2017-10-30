@@ -821,7 +821,11 @@ public:
     void Bind(Primitive const& primitive) override
     {
         Handle const body = primitive.GetBodyHandle();
-        m_bodyForceBinds[body] = m_pScene->BindForce<ForceType>(body, m_forceHandle);
+
+        if (m_bodyForceBinds.find(body) == m_bodyForceBinds.end())
+        {
+            m_bodyForceBinds[body] = m_pScene->BindForce<ForceType>(body, m_forceHandle);
+        }
     }
 
     /**
@@ -831,7 +835,12 @@ public:
     void Unbind(Primitive const& primitive) override
     {
         Handle const body = primitive.GetBodyHandle();
-        m_pScene->UnbindForce<ForceType>(m_bodyForceBinds[body]);
+
+        if (m_bodyForceBinds.find(body) != m_bodyForceBinds.end())
+        {
+            m_pScene->UnbindForce<ForceType>(m_bodyForceBinds[body]);
+            m_bodyForceBinds.erase(body);
+        }
     }
 
 private:

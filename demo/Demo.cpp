@@ -39,8 +39,8 @@ void Demo::RunFrame()
 Demo::Primitive& Demo::MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3 end)
 {
     render::Primitive* shape = new render::LineSegment(
-        glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), 
-        glm::vec3(0.439, 0.502, 0.565), 
+        glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)),
+        glm::vec3(0.439, 0.502, 0.565),
         start, end
     );
     m_primitives.emplace_back(nullptr, shape);
@@ -90,6 +90,11 @@ Demo::Primitive& Demo::MakeBox(
 
 void Demo::Remove(Primitive& primitive)
 {
+    if (primitive.physicalPrimitive)
+    {
+        m_pGravityForce->Unbind(*primitive.physicalPrimitive);
+    }
+
     m_primitives.remove_if([&primitive](Primitive& p) { return &primitive == &p; });
 }
 
@@ -109,9 +114,10 @@ Demo::Demo()
 
 void Demo::ComputeFrame(double duration)
 {
+    //Compute physical data
     m_scene.ComputeFrame(duration);
 
-    //Update positions
+    //Update render data
     for (Primitive& primitive : m_primitives)
     {
         if (primitive.physicalPrimitive != nullptr)
