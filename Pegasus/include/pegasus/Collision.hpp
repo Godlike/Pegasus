@@ -107,6 +107,9 @@ private:
         {
             for (scene::Asset<scene::RigidBody> bObject : objects)
             {
+                if (aObject.id == 0 || bObject.id == 0)
+                    continue;
+
                 Shape* aShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<Shape>(), aObject.data.shape);
                 Shape* bShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<Shape>(), bObject.data.shape);
                 std::pair<Shape*, Shape*> const key = std::make_pair(aShape, bShape);
@@ -149,6 +152,9 @@ private:
         {
             for (scene::Asset<scene::RigidBody> bObject : bObjects)
             {
+                if (aObject.id == 0 || bObject.id == 0)
+                    continue;
+
                 ShapeA* aShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeA>(), aObject.data.shape);
                 ShapeB* bShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeB>(), bObject.data.shape);
                 std::pair<ShapeA*, ShapeB*> const key = std::make_pair(aShape, bShape);
