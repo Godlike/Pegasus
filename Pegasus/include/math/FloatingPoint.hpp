@@ -14,7 +14,7 @@ namespace math
 {
 namespace fp
 {
-constexpr double g_floatingPointThreshold = 1e-4;
+constexpr double g_floatingPointThreshold = 1e-8;
 
 /**
  *  @brief  Checks if given floating point number is equal to null within a set threshold

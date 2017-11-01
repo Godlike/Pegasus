@@ -148,7 +148,7 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
         }
 
         //Endless loop detection
-        if (previousDistance == distance)
+        if (math::fp::IsEqual(previousDistance, distance))
         {
             break;
         }
