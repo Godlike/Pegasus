@@ -3,8 +3,8 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#ifndef PEGASUS_GEOMETRY_HPP
-#define PEGASUS_GEOMETRY_HPP
+#ifndef PEGASUS_INTERSECTION_HPP
+#define PEGASUS_INTERSECTION_HPP
 
 #include <math/FloatingPoint.hpp>
 #include <glm/glm.hpp>
@@ -152,4 +152,4 @@ bool IsPointInsideTriangle(
 } // namespace geometry
 } // namespace pegasus
 
-#endif // PEGASUS_GEOMETRY_HPP
+#endif // PEGASUS_INTERSECTION_HPP

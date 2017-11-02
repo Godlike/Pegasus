@@ -23,10 +23,10 @@ void mechanics::Body::Material::SetMass(double mass)
     }
 }
 
-void mechanics::Body::Material::SetInverseMass(double inverseMass)
+void mechanics::Body::Material::SetInfiniteMass()
 {
-    m_inverseMass = inverseMass;
-    m_mass = (inverseMass == 0.0) ? 0.0 : (1.0 / inverseMass);
+    m_mass = 0;
+    m_inverseMass = 0;
 }
 
 double mechanics::Body::Material::GetMass() const

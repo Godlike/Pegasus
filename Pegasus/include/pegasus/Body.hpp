@@ -7,7 +7,7 @@
 #define PEGASUS_OBJECT_HPP
 
 #include <pegasus/SharedMacros.hpp>
-#include <geometry/Geometry.hpp>
+#include <geometry/Intersection.hpp>
 
 namespace pegasus
 {
@@ -32,10 +32,9 @@ struct Body
         PEGASUS_EXPORT void SetMass(double mass);
 
         /**
-         * @brief Sets inverse mass of the body
-         * @param inverseMass one divided by mass
+         * @brief Sets body mass, and inverse mass equal to 0
          */
-        PEGASUS_EXPORT void SetInverseMass(double inverseMass);
+        PEGASUS_EXPORT void SetInfiniteMass();
 
         /**
          * @brief Returns mass of the body

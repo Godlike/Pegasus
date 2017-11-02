@@ -8,7 +8,7 @@
 
 #include <pegasus/SharedMacros.hpp>
 #include <geometry/Shape.hpp>
-#include <geometry/Geometry.hpp>
+#include <geometry/Intersection.hpp>
 
 #include <vector>
 #include <set>

@@ -31,7 +31,7 @@ StaticBody::StaticBody(Handle body, Handle shape)
     : RigidBody(body, shape)
 {
     static AssetManager& am = AssetManager::GetInstance();
-    am.GetAsset(am.GetBodies(), body).material.SetInverseMass(0);
+    am.GetAsset(am.GetBodies(), body).material.SetInfiniteMass();
 }
 
 DynamicBody::DynamicBody(Handle body, Handle shape)

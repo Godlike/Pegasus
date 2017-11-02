@@ -18,7 +18,7 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
     switch (key)
     {
     case GLFW_KEY_M:
-        while (g_objects.size() < demo.maxParticles)
+        for (uint8_t index = 0; index < demo.maxObject; ++index)
         {
             pegasus::mechanics::Body body;
             body.linearMotion.position = glm::dvec3(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
@@ -27,20 +27,25 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
             static uint8_t isBox = false;
             isBox = !isBox;
             if (isBox)
+            {
+                glm::vec3 const k = {0,0,rand() % 10 / 10. + 0.1};
+                glm::vec3 const j = {0,rand() % 10 / 10. + 0.1,0};
+                glm::vec3 const i = {rand() % 10 / 10. + 0.1,0,0};
+
                 g_objects.push_back(&demo.MakeBox(
-                    body,
-                    {rand() % 10 / 10. + 0.1,0,0},
-                    {0,rand() % 10 / 10. + 0.1,0},
-                    {0,0,rand() % 10 / 10. + 0.1},
-                    pegasus::scene::Primitive::Type::DYNAMIC
+                    body, i, j, k, pegasus::scene::Primitive::Type::DYNAMIC
                 ));
+            }
             else
+            {
+                double const radius = rand() % 10 / 10. + 0.1;
                 g_objects.push_back(&demo.MakeSphere(
-                    body, rand() % 10 / 10. + 0.1, pegasus::scene::Primitive::Type::DYNAMIC
+                    body, radius, pegasus::scene::Primitive::Type::DYNAMIC
                 ));
+            }
         }
         break;
-    case GLFW_KEY_R:    
+    case GLFW_KEY_R:
         while (g_objects.size() > 1)
         {
             demo.Remove(*g_objects.back());

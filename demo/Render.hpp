@@ -518,7 +518,7 @@ private:
     Renderer();
 
     /**
-     * @brief De initializes GLFW
+     * @brief Deinitializes GLFW
      */
     ~Renderer();
 

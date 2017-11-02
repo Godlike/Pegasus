@@ -3,7 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include <geometry/Geometry.hpp>
+#include <geometry/Intersection.hpp>
 #include <math/HyperPlane.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL

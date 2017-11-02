@@ -47,7 +47,7 @@ class Detector
 public:
     /**
      * @brief Construct detector initialized with a given asset manager
-     * @param assetManager 
+     * @param assetManager
      */
     Detector(scene::AssetManager& assetManager);
 
@@ -205,7 +205,7 @@ private:
      * @param duration delta time of the frame
      * @return pure separation speed
      */
-    static double CalculatePureSeparationSpeed(Contact contact, double separationSpeed, double duration);
+    static double CalculatePureSeparationSpeed(Contact contact, double totalSeparationSpeed, double duration);
 
     /**
      * @brief Calculates separation speed of the contact

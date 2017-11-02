@@ -90,10 +90,10 @@ double Resolver::CalculateTotalSeparationSpeed(Contact contact)
     return separationSpeed;
 }
 
-double Resolver::CalculatePureSeparationSpeed(Contact contact, double separationSpeed, double duration)
+double Resolver::CalculatePureSeparationSpeed(Contact contact, double totalSeparationSpeed, double duration)
 {
     //Decompose acceleration caused separation velocity component
-    double newSeparationSpeed = -separationSpeed * contact.restitution;
+    double newSeparationSpeed = -totalSeparationSpeed * contact.restitution;
     glm::dvec3 const accelerationCausedVelocity = contact.aBody->linearMotion.acceleration - contact.bBody->linearMotion.acceleration;
     double const accelerationCausedSeparationSpeed = glm::dot(accelerationCausedVelocity,
         contact.manifold.normal * duration);
@@ -106,7 +106,7 @@ double Resolver::CalculatePureSeparationSpeed(Contact contact, double separation
             newSeparationSpeed = 0;
         }
     }
-    double const deltaSpeed = newSeparationSpeed - separationSpeed;
+    double const deltaSpeed = newSeparationSpeed - totalSeparationSpeed;
 
     return deltaSpeed;
 }

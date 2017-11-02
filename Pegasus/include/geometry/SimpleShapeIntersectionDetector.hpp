@@ -9,7 +9,7 @@
 #include <geometry/Shape.hpp>
 #include <geometry/GilbertJohnsonKeerthi.hpp>
 #include <geometry/ExpandingPolytopeAlgorithm.hpp>
-#include <geometry/Geometry.hpp>
+#include <geometry/Intersection.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
@@ -20,7 +20,7 @@
 #include <array>
 #include <memory>
 
-namespace pegasus 
+namespace pegasus
 {
 namespace geometry
 {

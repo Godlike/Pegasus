@@ -4,7 +4,7 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include <geometry/GilbertJohnsonKeerthi.hpp>
-#include <geometry/Geometry.hpp>
+#include <geometry/Intersection.hpp>
 #include <math/Math.hpp>
 
 using namespace pegasus;

@@ -32,7 +32,7 @@ set(PEGASUS_HEADERS
     include/math/JacobiEigenvalue.hpp
     include/math/QuickhullConvexHull.hpp
 
-    include/geometry/Geometry.hpp
+    include/geometry/Intersection.hpp
     include/geometry/Shape.hpp
     include/geometry/ConfigurationSpaceObject.hpp
     include/geometry/GilbertJohnsonKeerthi.hpp
@@ -52,7 +52,7 @@ set(PEGASUS_SOURCES
     sources/math/HyperPlane.cpp
     sources/math/JacobiEigenvalue.cpp
 
-    sources/geometry/Geometry.cpp
+    sources/geometry/Intersection.cpp
     sources/geometry/Shape.cpp
     sources/geometry/ConfigurationSpaceObject.cpp
     sources/geometry/GilbertJohnsonKeerthi.cpp
