@@ -3,7 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include <geometry/BoundingVolume.hpp>
+#include <pegasus/BoundingVolumes.hpp>
 #include <math/JacobiEigenvalue.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
