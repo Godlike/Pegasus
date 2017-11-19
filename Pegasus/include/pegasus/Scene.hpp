@@ -71,7 +71,7 @@ struct Asset
 };
 
 /**
- * @brief Singleton class stores scens's assets
+ * @brief Singleton class stores scene's assets
  */
 class AssetManager
 {

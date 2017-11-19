@@ -38,8 +38,8 @@ set(PEGASUS_HEADERS
     include/geometry/GilbertJohnsonKeerthi.hpp
     include/geometry/ExpandingPolytopeAlgorithm.hpp
     include/geometry/SimpleShapeIntersectionDetector.hpp
-    include/BoundingVolumes.hpp
 
+    include/pegasus/BoundingVolumes.hpp
     include/pegasus/Body.hpp
     include/pegasus/Force.hpp
     include/pegasus/Integration.hpp
@@ -57,8 +57,8 @@ set(PEGASUS_SOURCES
     sources/geometry/ConfigurationSpaceObject.cpp
     sources/geometry/GilbertJohnsonKeerthi.cpp
     sources/geometry/SimpleShapeIntersectionDetector.cpp
-    sources/BoundingVolumes.cpp
 
+    sources/BoundingVolumes.cpp
     sources/Body.cpp
     sources/Force.cpp
     sources/Integration.cpp
