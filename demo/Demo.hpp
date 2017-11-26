@@ -7,7 +7,9 @@
 #define PEGASUS_DEMO_HPP
 
 #include "demo/Render.hpp"
-#include <pegasus/ParticleWorld.hpp>
+#include <pegasus/Scene.hpp>
+#include <list>
+#include <memory>
 
 namespace pegasus
 {
@@ -15,7 +17,7 @@ namespace pegasus
 class Demo
 {
 public:
-    struct Object;
+    struct Primitive;
 
     /**
      * @brief Returns a reference to the singleton Demo instance
@@ -41,90 +43,86 @@ public:
      *
      * The object contains only render-related part and is not registered in the physics world
      *
-     * @param[in] particle physical data
+     * @param[in] body physical data
      * @param[in] start line start
      * @param[in] end line end
      * @return a newly created Object
      */
-    Object& MakeLine(Particle particle, glm::vec3 start, glm::vec3 end);
+    Primitive& MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3 end);
 
     /**
      * @brief Creates an object describing a plane
      *
-     * Particle::centerOfMass is used as the position of the object,
+     * Body::linearMotion::position is used as the position of the object,
      * both physical and graphical
      *
-     * @param[in] particle physical data
+     * @param[in] body physical data
      * @param[in] normal normal of the vector
      * @return a newly created Object
      */
-    Object& MakePlane(Particle particle, glm::dvec3 normal);
+    Primitive& MakePlane(mechanics::Body body, glm::dvec3 normal, scene::Primitive::Type type);
 
     /**
      * @brief Creates an object describing a sphere
      *
-     * Particle::centerOfMass is used as the position of the object,
+     * Body::linearMotion::position is used as the position of the object,
      * both physical and graphical
      *
-     * @param[in] particle physical data
+     * @param[in] body physical data
      * @param[in] radius radius of the sphere
      * @return a newly created Object
      */
-    Object& MakeSphere(Particle particle, double radius);
+    Primitive& MakeSphere(mechanics::Body body, double radius, scene::Primitive::Type type);
 
     /**
      * @brief Creates an object describing a box
      *
-     * Particle::centerOfMass is used as the position of the object,
+     * Body::linearMotion::position is used as the position of the object,
      * both physical and graphical
      *
-     * @param[in] particle physical data
+     * @param[in] body physical data
      * @param[in] i orthogonal basis vector of the box base
      * @param[in] j orthogonal basis vector of the box base
      * @param[in] k orthogonal basis vector of the box base
      * @return a newly created Object
      */
-    Object& MakeBox(Particle particle, glm::vec3 i, glm::vec3 j, glm::vec3 k);
+    Primitive& MakeBox(mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, scene::Primitive::Type type);
 
     /**
      * @brief Removes object from the demo
      * @param[in] object reference to the object to be deleted
      */
-    void Remove(Object& object);
+    void Remove(Primitive& object);
 
     //! Maximum number of particles in the demo
-    uint32_t const maxParticles = 200;
+    uint32_t const maxObjects = 100;
 
     /**
      * @brief Represents an instance of the render and physical objects
      */
-    struct Object
+    struct Primitive
     {
         /**
-         * @brief Constructs Object instance
+         * @brief Constructs Primitive instance
          *
-         * @note Assumes ownership of @p shape
-         * @param[in] body physical world body
-         * @param[in] shape render scene shape
+         * @note Assumes ownership of @p shape and @p body
+         * @param[in] body physical scene object instance
+         * @param[in] shape render scene object instance
          */
-        Object(RigidBody* body, render::primitive::Primitive* shape);
+        Primitive(scene::Primitive* body, render::Primitive* shape);
 
-        //! Physical data
-        RigidBody* body;
+        //! Physics data
+        std::unique_ptr<scene::Primitive> physicalPrimitive;
 
         //! Render data
-        std::unique_ptr<render::primitive::Primitive> shape;
+        std::unique_ptr<render::Primitive> renderPrimitive;
     };
 
 private:
-    std::list<Object> m_objects;
-    render::Renderer& m_pRenderer;
-    ParticleWorld m_particleWorld;
-    Particles m_particles;
-    RigidBodies m_rigidBodies;
-    ParticleContactGenerators m_particleContactGenerators;
-    ParticleForceRegistry m_particleForceRegistry;
-    ParticleGravity m_gravityForce;
+    scene::Scene& m_scene;
+    render::Renderer& m_renderer;
+    std::list<Primitive> m_primitives;
+    std::unique_ptr<scene::Force<force::StaticField>> m_pGravityForce;
 
     Demo();
 
@@ -140,14 +138,6 @@ private:
      * Rerenders the frame and updates current frame buffer
      */
     void RenderFrame() const;
-
-    /**
-     * @brief Makes rigid body
-     * @param[in] particle physical data
-     * @param[in] shape collision geometry shape
-     * @return a newly created RigidBody
-     */
-    RigidBody& MakeRigidBody(Particle particle, std::unique_ptr<geometry::SimpleShape>&& shape);
 };
 } // namespace pegasus
 

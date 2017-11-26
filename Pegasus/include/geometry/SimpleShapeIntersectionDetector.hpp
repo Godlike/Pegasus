@@ -3,11 +3,13 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#ifndef PEGASUS_GEOMETRY_HPP
-#define PEGASUS_GEOMETRY_HPP
+#ifndef PEGASUS_SSID_HPP
+#define PEGASUS_SSID_HPP
 
-#include <pegasus/SharedMacros.hpp>
-#include <pegasus/Math.hpp>
+#include <geometry/Shape.hpp>
+#include <geometry/GilbertJohnsonKeerthi.hpp>
+#include <geometry/ExpandingPolytopeAlgorithm.hpp>
+#include <geometry/Intersection.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
@@ -15,625 +17,15 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/glm.hpp>
 
-#include <algorithm>
-#include <utility>
-#include <limits>
-#include <memory>
 #include <array>
-#include <vector>
-#include <unordered_map>
+#include <memory>
 
 namespace pegasus
 {
 namespace geometry
 {
-/**
- * @brief Base shape class
- */
-class Shape
-{
-public:
-    Shape() = default;
-    PEGASUS_EXPORT explicit Shape(glm::dvec3 const& centerOfMass);
-
-    glm::dvec3 centerOfMass;
-};
-
-/**
- * @brief Generic class for representing shapes that could be described as a simple parametric or quadric surface
- */
-class SimpleShape : public Shape
-{
-public:
-    enum class Type : uint8_t
-    {
-        RAY,
-        PLANE,
-        TRIANGLE,
-        SPHERE,
-        CONE,
-        CYLINDER,
-        CAPSULE,
-        BOX,
-        NONE
-    };
-
-    Type type = Type::NONE;
-
-    SimpleShape() = default;
-
-    PEGASUS_EXPORT explicit SimpleShape(Type type)
-        : type(type)
-    {
-    }
-
-    PEGASUS_EXPORT SimpleShape(glm::dvec3 const& centerOfMass, Type type);
-};
-
-/** Ray data storage class */
-class Ray : public SimpleShape
-{
-public:
-    glm::dvec3 direction;
-
-    PEGASUS_EXPORT Ray();
-    PEGASUS_EXPORT Ray(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
-};
-
-/** Plane data storage class */
-class Plane : public SimpleShape
-{
-public:
-    PEGASUS_EXPORT Plane();
-    PEGASUS_EXPORT Plane(glm::dvec3 const& centerOfMass, glm::dvec3 const& normal);
-
-    glm::dvec3 normal;
-};
-
-/** Triangle data storage class */
-class Triangle : public SimpleShape
-{
-public:
-    PEGASUS_EXPORT Triangle();
-    PEGASUS_EXPORT Triangle(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3 const& c);
-
-    /** Calculates normal from member vertices and writes it to the normal member field */
-    void CalculateNormal();
-
-    glm::dvec3 aVertex;
-    glm::dvec3 bVertex;
-    glm::dvec3 cVertex;
-    glm::dvec3 normal;
-};
-
-/** Sphere data storage class */
-class Sphere : public SimpleShape
-{
-public:
-    PEGASUS_EXPORT Sphere();
-    PEGASUS_EXPORT Sphere(glm::dvec3 const& centerOfMass, double r);
-
-    double radius;
-};
-
-/** Cone data storage class */
-class Cone : public SimpleShape
-{
-public:
-    PEGASUS_EXPORT Cone();
-    PEGASUS_EXPORT Cone(glm::dvec3 const& centerOfMass, glm::dvec3 const& a, double r);
-
-    glm::dvec3 apex;
-    double radius;
-};
-
-/** Capsule data storage class */
-class Capsule : public SimpleShape
-{
-public:
-    PEGASUS_EXPORT Capsule();
-    PEGASUS_EXPORT Capsule(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
-
-    glm::dvec3 halfHeight;
-    double radius;
-};
-
-/** Cylinder data storage class */
-class Cylinder : public SimpleShape
-{
-public:
-    PEGASUS_EXPORT Cylinder();
-    PEGASUS_EXPORT Cylinder(glm::dvec3 const& centerOfMass, glm::dvec3 const& halfHeight, double r);
-
-    glm::dvec3 halfHeight;
-    double radius;
-};
-
-/** Box data storage class */
-class Box : public SimpleShape
-{
-public:
-    PEGASUS_EXPORT Box();
-    PEGASUS_EXPORT Box(glm::dvec3 const& centerOfMass, glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k);
-
-    glm::dvec3 iAxis;
-    glm::dvec3 jAxis;
-    glm::dvec3 kAxis;
-};
-
 namespace intersection
 {
-/** Stores ray factors for Ray collisions */
-struct RayIntersectionFactors
-{
-    //! Factor to closest to ray origin intersection point
-    double tMin;
-
-    //! Factor to furthest from ray origin intersection point
-    double tMax;
-};
-
-/**
- *  @brief  Checks if Ray and Sphere are intersecting
- *
- *  @param  raySphere      vector from the ray origin to the sphere center
- *  @param  sphereRadius   radius of the sphere
- *  @param  rayDirection   normalized direction vector of the ray
- *
- *  @return @c true if there is intersection, @c false otherwise
- */
-bool CheckRaySphereIntersection(
-    glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
-);
-
-/**
- *  @brief  Calculates ray factors for the Ray-Sphere intersection points
- *
- *  @attention  Must be called only if given ray and sphere are intersecting
- *
- *  @param  raySphere       vector from the ray to the sphere center
- *  @param  sphereRadius    radius of the sphere
- *  @param  rayDirection    normalized direction vector of the ray
- *
- *  @return ray factors for intersection
- */
-RayIntersectionFactors CalculateRaySphereIntersectionFactors(
-    glm::dvec3 const& raySphere, double sphereRadius, glm::dvec3 const& rayDirection
-);
-
-/** Stores AABB using minimum and maximum points */
-struct AabbExtremalVertices
-{
-    glm::dvec3 minVertex;
-    glm::dvec3 maxVertex;
-};
-
-/**
- *  @brief Calculates ray intersection factors for AABB-Ray collision
- *
- *  @param  boxMinPoint     min point of AABB
- *  @param  boxMaxPoint     max point of AABB
- *  @param  rayDirection    normalized direction vector
- *  @param  rayOrigin       ray origin
- *
- *  @return ray factors for intersection
- */
-RayIntersectionFactors CalculateRayAabbIntersectionFactors(
-    glm::dvec3 const& boxMinPoint, glm::dvec3 const& boxMaxPoint,
-    glm::dvec3 const& rayDirection, glm::dvec3 const& rayOrigin
-);
-
-/**
-  * @brief  Calculates AABB min and max points from the given OBB basis
-  *
-  * @attention  given vectors must be different
-  *
-  * @param  i   vector from an orthogonal basis
-  * @param  j   vector from an orthogonal basis
-  * @param  k   vector from an orthogonal basis
-  *
-  * @return AABB min and max points
-  */
-AabbExtremalVertices MakeExtremalVerticesAabb(
-    glm::dvec3 const& i, glm::dvec3 const& j, glm::dvec3 const& k
-);
-
-/**
- *  @brief  Checks if Ray intersection factors indicate a valid intersection
- *
- *  @param  factors ray factors for intersection
- *
- *  @return @c true if intersection factors are valid, @c false otherwise
- */
-bool CheckRayIntersectionFactors(RayIntersectionFactors factors);
-
-/**
- *  @brief  Checks if two vectors are at acute angle
- *
- *  @param  aVector input vector
- *  @param  bVector input vector
- *
- *  @return @c true if vectors are at acute angle, @c false otherwise
- */
-inline bool IsAngleAcute(glm::dvec3 const& aVector, glm::dvec3 const& bVector)
-{
-    return math::fp::IsGreater(glm::dot(aVector, bVector), 0);
-}
-
-/**
- *  @brief  Checks if two points are on the same side of the halfspace
- *
- *  Halfspace is defined by a line and a point
- *
- *  @param  lineStart   line start point
- *  @param  lineEnd     line end point
- *  @param  aPoint      point of interest
- *  @param  bPoint      point of interest
- *
- *  @return @c true if points are on the same side of the halfspace, @c false otherwise
- */
-inline bool IsSameSide(
-    glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd,
-    glm::dvec3 const& aPoint, glm::dvec3 const& bPoint
-)
-{
-    glm::dvec3 const cp1 = glm::cross(lineEnd - lineStart, aPoint - lineStart);
-    glm::dvec3 const cp2 = glm::cross(lineEnd - lineStart, bPoint - lineStart);
-    return math::fp::IsGreaterOrEqual(glm::dot(cp1, cp2), 0);
-}
-
-/**
- *  @brief  Checks if point is inside triangle
- *
- *  @param  triangleVertex1 triangle vertex
- *  @param  triangleVertex2 triangle vertex
- *  @param  triangleVertex3 triangle vertex
- *  @param  point           point of interest
- *
- *  @return @c true if point is inside triangle, @c false otherwise
- */
-bool IsPointInsideTriangle(
-    glm::dvec3 const& triangleVertex1, glm::dvec3 const& triangleVertex2,
-    glm::dvec3 const& triangleVertex3, glm::dvec3 const& point
-);
-
-namespace cso
-{
-/**
- *  @brief  Calculates farthest vertex on the surface of the sphere in given direction
- *
- *  @param  sphere      shape object
- *  @param  direction   normalized search vector
- *
- *  @return point on the surface
- */
-glm::dvec3 Support(Sphere const& sphere, glm::dvec3 direction);
-
-/**
- *  @brief  Calculates farthest vertex on the surface of the box in given direction
- *
- *  @param  box         shape object
- *  @param  direction   normalized search vector
- *
- *  @return point on the surface
- */
-glm::dvec3 Support(Box const& box, glm::dvec3 direction);
-
-/**
- *  @brief  Calculates farthest vertex on the surface of the Configuration Space
- *          Object in given direction
- *
- *  Configuration Space Object (aka Minkowski Difference and Minkowski
- *  Configuration Object) is a cartesian product of two sets of points, where
- *  each element in one of the sets is multiplied by -1.
- *
- *  @tparam ShapeA      any shape type for which gjk::Support is overloaded
- *  @tparam ShapeB      any shape type for which gjk::Support is overloaded
- *
- *  @param  aShape      shape object
- *  @param  bShape      shape object
- *  @param  direction   normalized search vector
- *
- *  @return point on the surface
- */
-template < typename ShapeA, typename ShapeB >
-glm::dvec3 Support(ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
-{
-    glm::dvec3 const aShapeSupportVertex = Support(aShape, direction);
-    glm::dvec3 const bShapeSupportVertex = Support(bShape, -direction);
-    glm::dvec3 const vertex = aShapeSupportVertex - bShapeSupportVertex;
-    return vertex;
-}
-} // namespace cso
-
-namespace gjk
-{
-/** Simplex data container */
-struct Simplex
-{
-    //! Simplex vertices. Note that some vertices may be unused
-    std::array<glm::dvec3, 4> vertices;
-
-    //! Indicated number of used vertices
-    uint8_t size;
-};
-
-/**
- *  @brief  Checks if simplex contains origin
- *
- *  @attention  Must only be called on a simplex of size in range [2; 4]
- *
- *  @param  simplex simplex data
- *
- *  @return @c true if simplex contains origin @c false otherwise
- */
-bool SimplexContainsOrigin(Simplex const& simplex);
-
-/**
- *  @brief  Calculates nearest simplex to the origin
- *
- *  Presumes that simplex vertices are stored in a way such that the latest
- *  added vertex has index @c simplexSize - 1
- *
- *  Given simplex may be reduced down to size 1 as a result of this method.
- *
- *  @param[in,out]  simplex simplex data
- *
- *  @return new search direction
- */
-glm::dvec3 NearestSimplex(Simplex& simplex);
-
-/**
- *  @brief Checks if simplex contains origin
- *
- *  If simplex does not contain origin it is replaced by a new sub simplex
- *  that is closest to the origin
- *
- *  @param[in,out]  simplex     current simplex
- *  @param[in,out]  direction   current search direction
- *
- *  @return @c true if simplex contains origin, @c false otherwise
- */
-bool DoSimplex(gjk::Simplex& simplex, glm::dvec3& direction);
-
-/**
- *  @brief  Сalculates a tetrahedron from the CSO such that it contains the origin
- *
- *  If simplex contains origin then there is intersection between given shapes
- *
- *  @tparam ShapeA  any shape type for which gjk::Support is overloaded
- *  @tparam ShapeB  any shape type for which gjk::Support is overloaded
- *
- *  @param[in,out]  simplex     initial simplex
- *  @param[in]      aShape      reference to the shape object
- *  @param[in]      bShape      reference to the shape object
- *  @param[in]      direction   initial search direction vector of unit length
- *
- *  @return @c true if simplex contains origin, @c false otherwise
- */
-template <typename ShapeA, typename ShapeB>
-bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape, glm::dvec3 direction)
-{
-    std::vector<double> distances;
-
-    do
-    {
-        //Add new vertex to the simplex
-        simplex.vertices[simplex.size++] = cso::Support(aShape, bShape, direction);
-
-        //Calculate if the new vertex is past the origin
-        double const scalarDirectionProjection = glm::dot(simplex.vertices[simplex.size - 1], direction);
-        if (math::fp::IsLess(scalarDirectionProjection, 0.0))
-        {
-            return false;
-        }
-
-        //Endless loop
-        if (std::find(distances.begin(), distances.end(), scalarDirectionProjection) != distances.end())
-        {
-            return false;
-        }
-        distances.push_back(scalarDirectionProjection);
-
-    } while (!DoSimplex(simplex, direction));
-
-    return true;
-}
-
-/**
- *  @brief  Checks if two shapes are intersecting using GJK algorithm
- *
- *  @tparam ShapeA  any shape type for which gjk::Support is overloaded
- *  @tparam ShapeB  any shape type for which gjk::Support is overloaded
- *
- *  @param  aShape  reference to the shape object
- *  @param  bShape  reference to the shape object
- *
- *  @return @c true if there is intersection, @c false otherwise
- *
- *  @sa CalculateSimplex, CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
- */
-template <typename ShapeA, typename ShapeB>
-bool CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
-{
-    return CalculateIntersection(Simplex(), aShape, bShape);
-}
-
-/**
- *  @brief  Checks if two shapes are intersecting using GJK algorithm
- *
- *  @tparam ShapeA  any shape type for which gjk::Support is overloaded
- *  @tparam ShapeB  any shape type for which gjk::Support is overloaded
- *
- *  @param[out] simplex tetrahedron from CSO points containing the origin if one exists
- *  @param[in]  aShape  reference to the shape object
- *  @param[in]  bShape  reference to the shape object
- *
- *  @return @c true if there is intersection, @c false otherwise
- *
- *  @sa CalculateSimplex, CalculateIntersection(ShapeA const& aShape, ShapeB const& bShape)
- */
-template <typename ShapeA, typename ShapeB>
-bool CalculateIntersection(Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
-{
-    simplex = {
-        {{ cso::Support(aShape, bShape, glm::normalize(glm::dvec3{1,1,1})) }},
-        1
-    };
-
-    return CalculateSimplex(simplex, aShape, bShape, glm::normalize(-simplex.vertices[0]));
-}
-} // namespace gjk
-
-namespace epa
-{
-/** Stores contact information */
-struct ContactManifold
-{
-    glm::dvec3 aContactPointModelSpace;
-    glm::dvec3 bContactPointModelSpace;
-    glm::dvec3 aContactPointWorldSpace;
-    glm::dvec3 bContactPointWorldSpace;
-    glm::dvec3 contactNormal;
-    double penetration;
-};
-
-/**
- *  @brief  Blows up simplex into tetrahedron
- *
- *  Works only for simplexes of size 2 or 3, otherwise does nothing
- *
- *  @tparam ShapeA  SimpleShape or SimpleShape derived object
- *  @tparam ShapeB  SimpleShape or SimpleShape derived object
- *
- *  @param[in,out]  simplex initial simplex
- *  @param[in]      aShape  input shape
- *  @param[in]      bShape  input shape
- */
-template <typename ShapeA, typename ShapeB>
-void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& bShape)
-{
-    if (simplex.size == 2)
-    {
-        glm::dvec3 const A0 = -simplex.vertices[1];
-        uint8_t const n = (math::fp::IsNotEqual(A0[0], 0.0) ? 0 : (math::fp::IsNotEqual(A0[1], 0.0) ? 1 : 2));
-        uint8_t const m = (n == 0 ? 1 : (n == 1 ? 2 : 1));
-
-        glm::dvec3 orthogonalDirection;
-        orthogonalDirection[n] = A0[m];
-        orthogonalDirection[m] = A0[n];
-        orthogonalDirection = glm::normalize(orthogonalDirection);
-
-        glm::dvec3 const a = cso::Support(aShape, bShape, orthogonalDirection);
-        glm::dvec3 const b = cso::Support(aShape, bShape, -orthogonalDirection);
-        double const adist = math::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], a);
-        double const bdist = math::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], b);
-
-        simplex.vertices[2] = math::fp::IsGreater(adist, bdist) ? a : b;
-        ++simplex.size;
-    }
-
-    if (simplex.size == 3)
-    {
-        math::HyperPlane const hyperPlane{
-            simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]
-        };
-
-        glm::dvec3 const AB = simplex.vertices[1] - simplex.vertices[2];
-        glm::dvec3 const AC = simplex.vertices[0] - simplex.vertices[2];
-        glm::dvec3 const ABC = glm::cross(AB, AC);
-
-        glm::dvec3 const a = cso::Support(aShape, bShape, glm::normalize(ABC));
-        glm::dvec3 const b = cso::Support(aShape, bShape, glm::normalize(-ABC));
-
-        simplex.vertices[3] = math::fp::IsGreater(hyperPlane.Distance(a), hyperPlane.Distance(b)) ? a : b;
-        ++simplex.size;
-    }
-}
-
-/**
- *  @brief  Calculates contact manifold using Expanding Polytope Algorithm
- *
- *  @tparam ShapeA  SimpleShape or SimpleShape derived object
- *  @tparam ShapeB  SimpleShape or SimpleShape derived object
- *
- *  @param  aShape  input shape
- *  @param  bShape  input shape
- *  @param  simplex initial simplex
- *
- *  @return contact manifold
- */
-template <typename ShapeA, typename ShapeB>
-ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bShape, gjk::Simplex simplex)
-{
-    using ConvexHull = math::QuickhullConvexHull<std::vector<glm::dvec3>>;
-
-    //Blow up initial simplex if needed
-    if (simplex.size < 4)
-    {
-        BlowUpPolytope(simplex, aShape, bShape);
-    }
-
-    //Initialize polytope and calculate initial convex hull
-    std::vector<glm::dvec3> polytopeVertices{ simplex.vertices.begin(), simplex.vertices.end() };
-    ConvexHull convexHull(polytopeVertices);
-    convexHull.Calculate();
-
-    //Support information
-    glm::dvec3 direction;
-    double supportVertexDistance;
-    double previousDistance = std::numeric_limits<double>::min();
-    double distance;
-
-    do
-    {
-        //Get polytope's faces and sort them by the distance to the origin
-        ConvexHull::Faces chFaces = convexHull.GetFaces();
-        chFaces.sort([](ConvexHull::Face& a, ConvexHull::Face& b) -> bool
-        {
-            return a.GetHyperPlane().GetDistance() < b.GetHyperPlane().GetDistance();
-        });
-
-        //Get distance and direction to the polytope's face that is nearest to the origin
-        math::HyperPlane const& hp = chFaces.front().GetHyperPlane();
-        direction = hp.GetNormal();
-        distance = hp.GetDistance();
-
-        //Find CSO point using new search direction
-        glm::dvec3 const supportVertex = cso::Support(aShape, bShape, direction);
-        supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
-
-        //If it's a face from the edge, end EPA
-        if (math::fp::IsGreater(supportVertexDistance, distance))
-        {
-            //Expand polytope if possible
-            polytopeVertices.push_back(supportVertex);
-            if (!convexHull.AddVertex(polytopeVertices.size() - 1))
-            {
-                polytopeVertices.pop_back();
-            }
-        }
-
-        //Endless loop detection
-        if (previousDistance == distance)
-        {
-            break;
-        }
-        previousDistance = distance;
-
-    } while (math::fp::IsGreater(supportVertexDistance, distance));
-
-    return {
-        cso::Support(aShape, direction),
-        cso::Support(bShape, -direction),
-        cso::Support(aShape, direction) + aShape.centerOfMass,
-        cso::Support(bShape, -direction) + bShape.centerOfMass,
-        direction,
-        distance
-    };
-}
-} // namespace epa
-
 /** Base cache data structure for shapes intersection queries */
 struct CacheBase
 {
@@ -767,43 +159,43 @@ struct Cache<Box, Box> : CacheBase
 };
 
 /**
- * @brief Performs intersection test using shapes and cache data and returns true if shapes are intersecting
- * @tparam ShapeA SimpleShape or SimpleShape derived object
- * @tparam ShapeB SimpleShape or SimpleShape derived object
- * @param[in] a pointer to the ShapeA type object
- * @param[in] b pointer to the ShapeB type object
- * @param[in, out] cacheBase pointer to the IntersectionCacheBase or IntersectionCacheBase derived object
- * @return @c true if there is intersection, @c false otherwise
- */
+* @brief Performs intersection test using shapes and cache data and returns true if shapes are intersecting
+* @tparam ShapeA SimpleShape or SimpleShape derived object
+* @tparam ShapeB SimpleShape or SimpleShape derived object
+* @param[in] a pointer to the ShapeA type object
+* @param[in] b pointer to the ShapeB type object
+* @param[in, out] cacheBase pointer to the IntersectionCacheBase or IntersectionCacheBase derived object
+* @return @c true if there is intersection, @c false otherwise
+*/
 template <typename ShapeA, typename ShapeB>
 bool CalculateIntersection(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase);
 
 /**
- * @brief Calculates surface contact normal of b shape using shapes and cache data and returns it
- *
- * Must be called strictly after the corresponding CalculateIntersection function call, otherwise result is undefined
- * @tparam ShapeA SimpleShape or SimpleShape derived object
- * @tparam ShapeB SimpleShape or SimpleShape derived object
- * @param[in] a pointer to the ShapeA type object
- * @param[in] b pointer to the ShapeB type object
- * @param[in, out] cacheBase pointer to the IntersectionCacheBase or IntersectionCacheBase derived object
- * @return surface contact normal of the b object
- */
+* @brief Calculates surface contact normal of b shape using shapes and cache data and returns it
+*
+* Must be called strictly after the corresponding CalculateIntersection function call, otherwise result is undefined
+* @tparam ShapeA SimpleShape or SimpleShape derived object
+* @tparam ShapeB SimpleShape or SimpleShape derived object
+* @param[in] a pointer to the ShapeA type object
+* @param[in] b pointer to the ShapeB type object
+* @param[in, out] cacheBase pointer to the IntersectionCacheBase or IntersectionCacheBase derived object
+* @return surface contact normal of the b object
+*/
 template <typename ShapeA, typename ShapeB>
 glm::dvec3 CalculateContactNormal(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase);
 
 /**
- * @brief Calculates penetration depth using shapes and cache data and returns it
- *
- * Must be called strictly after the corresponding CalculateContactNormal function call,
- * otherwise result is undefined
- * @tparam ShapeA SimpleShape or SimpleShape derived object
- * @tparam ShapeB SimpleShape or SimpleShape derived object
- * @param[in] a pointer to the ShapeA type object
- * @param[in] b pointer to the ShapeB type object
- * @param[in, out] cacheBase pointer to the IntersectionCacheBase or IntersectionCacheBase derived object
- * @return penetration depth
- */
+* @brief Calculates penetration depth using shapes and cache data and returns it
+*
+* Must be called strictly after the corresponding CalculateContactNormal function call,
+* otherwise result is undefined
+* @tparam ShapeA SimpleShape or SimpleShape derived object
+* @tparam ShapeB SimpleShape or SimpleShape derived object
+* @param[in] a pointer to the ShapeA type object
+* @param[in] b pointer to the ShapeB type object
+* @param[in, out] cacheBase pointer to the IntersectionCacheBase or IntersectionCacheBase derived object
+* @return penetration depth
+*/
 template <typename ShapeA, typename ShapeB>
 double CalculatePenetration(SimpleShape const* a, SimpleShape const* b, CacheBase* cacheBase);
 
@@ -865,7 +257,7 @@ inline bool CalculateIntersection<Ray, Plane>(SimpleShape const* a, SimpleShape 
     auto ray = static_cast<Ray const*>(a);
     auto plane = static_cast<Plane const*>(b);
 
-    math::HyperPlane hyperPlane{plane->normal, plane->centerOfMass};
+    math::HyperPlane hyperPlane{ plane->normal, plane->centerOfMass };
 
     return hyperPlane.RayIntersection(ray->direction, ray->centerOfMass, cache->contact);
 }
@@ -967,22 +359,22 @@ inline glm::dvec3 CalculateContactNormal<Ray, Box>(SimpleShape const* a, SimpleS
     auto cache = static_cast<Cache<Ray, Box>*>(cacheBase);
     auto box = static_cast<Box const*>(b);
 
-    std::array<double, 6> const faces = {{
-        cache->aabbMaxPoint[0], cache->aabbMaxPoint[1], cache->aabbMaxPoint[2],
-        cache->aabbMinPoint[0], cache->aabbMinPoint[1], cache->aabbMinPoint[2]
-    }};
+    std::array<double, 6> const faces = { {
+            cache->aabbMaxPoint[0], cache->aabbMaxPoint[1], cache->aabbMaxPoint[2],
+            cache->aabbMinPoint[0], cache->aabbMinPoint[1], cache->aabbMinPoint[2]
+        } };
 
-    std::array<double, 6> const deltas = {{
-        faces[0] - cache->inPoint[0], faces[1] - cache->inPoint[1], faces[2] - cache->inPoint[2],
-        faces[3] - cache->inPoint[0], faces[4] - cache->inPoint[1], faces[5] - cache->inPoint[2],
-    }};
+    std::array<double, 6> const deltas = { {
+            faces[0] - cache->inPoint[0], faces[1] - cache->inPoint[1], faces[2] - cache->inPoint[2],
+            faces[3] - cache->inPoint[0], faces[4] - cache->inPoint[1], faces[5] - cache->inPoint[2],
+        } };
 
     size_t const contactFaceIndex = std::distance(deltas.begin(),
         std::min_element(deltas.begin(), deltas.end(),
             [](double a, double b) -> bool
-        {
-            return glm::abs(a) < glm::abs(b);
-        }
+    {
+        return glm::abs(a) < glm::abs(b);
+    }
     ));
 
     //Transforming intersection points in the world space
@@ -1092,7 +484,7 @@ inline bool CalculateIntersection<Plane, Box>(SimpleShape const* a, SimpleShape 
     auto box = static_cast<Box const*>(b);
     auto cache = static_cast<Cache<Plane, Box>*>(cacheBase);
 
-    cache->boxFaces = {{box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis}};
+    cache->boxFaces = { { box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis } };
 
     std::array<glm::dvec3, 8> boxVertices;
     math::CalculateBoxVertices(box->iAxis, box->jAxis, box->kAxis, boxVertices.begin());
@@ -1375,46 +767,46 @@ inline double CalculatePenetration<Box, Box>(SimpleShape const* a, SimpleShape c
 }
 } // namespace intersection
 
-/**
- * @brief Provides generic interface for the runtime simple shape intersection detections
- */
+  /**
+  * @brief Provides generic interface for the runtime simple shape intersection detections
+  */
 class SimpleShapeIntersectionDetector
 {
 public:
-    SimpleShapeIntersectionDetector();
+    PEGASUS_EXPORT SimpleShapeIntersectionDetector();
 
     SimpleShapeIntersectionDetector(SimpleShapeIntersectionDetector const&) = delete;
 
     SimpleShapeIntersectionDetector& operator=(SimpleShapeIntersectionDetector const&) = delete;
 
     /**
-     * @brief Performs intersection test of two shapes and returns true if shapes are intersecting
-     * @param[in] a input shape
-     * @param[in] b input shape
-     * @return @c true if there is intersection, @c false otherwise
-     */
-    bool CalculateIntersection(SimpleShape const* a, SimpleShape const* b);
+    * @brief Performs intersection test of two shapes and returns true if shapes are intersecting
+    * @param[in] a input shape
+    * @param[in] b input shape
+    * @return @c true if there is intersection, @c false otherwise
+    */
+    PEGASUS_EXPORT bool CalculateIntersection(SimpleShape const* a, SimpleShape const* b);
 
     /**
-     * @brief Calculates surface contact normal of b shape
-     *
-     * Must be called strictly after CalculateIntersection function call, otherwise result is undefined
-     * @param[in] a input shape
-     * @param[in] b input shape
-     * @return contact normal
-     */
-    glm::dvec3 CalculateContactNormal(SimpleShape const* a, SimpleShape const* b);
+    * @brief Calculates surface contact normal of b shape
+    *
+    * Must be called strictly after CalculateIntersection function call, otherwise result is undefined
+    * @param[in] a input shape
+    * @param[in] b input shape
+    * @return contact normal
+    */
+    PEGASUS_EXPORT glm::dvec3 CalculateContactNormal(SimpleShape const* a, SimpleShape const* b);
 
     /**
-     * @brief Calculates penetration depth of two shapes
-     *
-     * Must be called strictly after CalculateContactNormal function call,
-     * otherwise result is undefined
-     * @param[in] a input shape
-     * @param[in] b input shape
-     * @return penetration depth
-     */
-    double CalculatePenetration(SimpleShape const* a, SimpleShape const* b);
+    * @brief Calculates penetration depth of two shapes
+    *
+    * Must be called strictly after CalculateContactNormal function call,
+    * otherwise result is undefined
+    * @param[in] a input shape
+    * @param[in] b input shape
+    * @return penetration depth
+    */
+    PEGASUS_EXPORT double CalculatePenetration(SimpleShape const* a, SimpleShape const* b);
 
 private:
     using ShapeTypePair = std::pair<SimpleShape::Type, SimpleShape::Type>;
@@ -1428,27 +820,25 @@ private:
     static constexpr uint32_t s_unorderedMapInitialPrimeSize = 11;
 
     std::unordered_map<ShapeTypePair,
-                       std::unique_ptr<intersection::CacheBase>,
-                       ShapeTypePairHasher>
-    m_intersectionCaches;
+        std::unique_ptr<intersection::CacheBase>,
+        ShapeTypePairHasher>
+        m_intersectionCaches;
 
     std::unordered_map<ShapeTypePair,
-                       bool(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
-                       ShapeTypePairHasher>
-    m_calculateIntersectionFunctors;
+        bool(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
+        ShapeTypePairHasher>
+        m_calculateIntersectionFunctors;
 
     std::unordered_map<ShapeTypePair,
-                       glm::dvec3(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
-                       ShapeTypePairHasher>
-    m_calculateContactNormalFunctors;
+        glm::dvec3(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
+        ShapeTypePairHasher>
+        m_calculateContactNormalFunctors;
 
     std::unordered_map<ShapeTypePair,
-                       double(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
-                       ShapeTypePairHasher>
-    m_calculatePenetrationFunctors;
+        double(*)(SimpleShape const*, SimpleShape const*, intersection::CacheBase*),
+        ShapeTypePairHasher>
+        m_calculatePenetrationFunctors;
 };
-
 } // namespace geometry
 } // namespace pegasus
-
-#endif // PEGASUS_GEOMETRY_HPP
+#endif // PEGASUS_SSID_HPP

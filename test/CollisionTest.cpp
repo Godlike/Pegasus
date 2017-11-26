@@ -6,7 +6,8 @@
 #define CATCH_CONFIG_MAIN
 #include <catch.hpp>
 
-#include <pegasus/Geometry.hpp>
+#include <geometry/Shape.hpp>
+#include <geometry/SimpleShapeIntersectionDetector.hpp>
 
 TEST_CASE("Sphere-Sphere Collision", "[collision][sphere]")
 {

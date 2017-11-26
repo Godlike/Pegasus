@@ -3,52 +3,53 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#include "pegasus/BoundingVolumes.hpp"
-#include "pegasus/Math.hpp"
+#include <pegasus/BoundingVolumes.hpp>
+#include <math/JacobiEigenvalue.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 
+#include <algorithm>
 #include <functional>
 
 using namespace pegasus;
 using namespace geometry;
-using namespace volumes;
+using namespace volume;
 
-volumes::Shape::Shape(volumes::Vertices const& vertices, volumes::Faces const& indices)
+volume::Mesh::Mesh(std::vector<glm::dvec3> const& vertices, std::vector<glm::u64vec3> const& indices)
     : vertices(vertices)
     , indices(indices)
 {
 }
 
-glm::dvec3 volumes::CalculateMeanVertex(volumes::Shape const& shape, volumes::Indices const& indices)
+glm::dvec3 volume::CalculateMeanVertex(volume::Mesh const& mesh, std::set<std::size_t> const& indices)
 {
     glm::dvec3 sum{0, 0, 0};
     for (auto index : indices)
     {
-        auto const& face = shape.indices[index];
+        auto const& face = mesh.indices[index];
 
-        sum += shape.vertices[face[0]];
-        sum += shape.vertices[face[1]];
-        sum += shape.vertices[face[2]];
+        sum += mesh.vertices[face[0]];
+        sum += mesh.vertices[face[1]];
+        sum += mesh.vertices[face[2]];
     }
 
     glm::dvec3 const mean = 1.0 / (3.0 * indices.size()) * sum;
     return mean;
 }
 
-glm::dmat3 volumes::CalculateCovarianceMatrix(
-    volumes::Shape const& shape, volumes::Indices const& indices, glm::dvec3 const& mean)
+glm::dmat3 volume::CalculateCovarianceMatrix(
+    volume::Mesh const& mesh, std::set<std::size_t> const& indices, glm::dvec3 const& mean)
 {
     glm::dmat3 c(0.0);
 
     for (auto index : indices)
     {
-        auto const& face = shape.indices[index];
+        auto const& face = mesh.indices[index];
 
-        glm::dvec3 const p = shape.vertices[face[0]] - mean;
-        glm::dvec3 const q = shape.vertices[face[1]] - mean;
-        glm::dvec3 const r = shape.vertices[face[2]] - mean;
+        glm::dvec3 const p = mesh.vertices[face[0]] - mean;
+        glm::dvec3 const q = mesh.vertices[face[1]] - mean;
+        glm::dvec3 const r = mesh.vertices[face[2]] - mean;
 
         for (uint8_t j = 0; j < 3; ++j)
         {
@@ -72,21 +73,21 @@ glm::dmat3 volumes::CalculateCovarianceMatrix(
     return c;
 }
 
-glm::dmat3 volumes::CalculateExtremalVertices(
-    glm::dmat3 const& eigenVectors, volumes::Shape const& shape, volumes::Indices const& indices)
+glm::dmat3 volume::CalculateExtremalVertices(
+    glm::dmat3 const& basis, volume::Mesh const& mesh, std::set<std::size_t> const& indices)
 {
     std::vector<glm::dvec3 const *> vertices;
     for (auto index : indices)
     {
-        auto const& face = shape.indices[index];
-        vertices.insert(vertices.end(), {&shape.vertices[face[0]], &shape.vertices[face[1]], &shape.vertices[face[2]]});
+        auto const& face = mesh.indices[index];
+        vertices.insert(vertices.end(), {&mesh.vertices[face[0]], &mesh.vertices[face[1]], &mesh.vertices[face[2]]});
     }
 
     glm::dmat3 extremal(0);
     for (uint8_t i = 0; i < 3; ++i)
     {
-        auto maxVertex = *std::max_element(vertices.begin(), vertices.end(), [&eigenVectors, i](auto a, auto b) -> bool {
-           return glm::abs(glm::dot(*a, eigenVectors[i])) < glm::abs(glm::dot(*b, eigenVectors[i]));
+        auto maxVertex = *std::max_element(vertices.begin(), vertices.end(), [&basis, i](auto a, auto b) -> bool {
+           return glm::abs(glm::dot(*a, basis[i])) < glm::abs(glm::dot(*b, basis[i]));
         });
         extremal[i] = *maxVertex;
     }
@@ -94,18 +95,18 @@ glm::dmat3 volumes::CalculateExtremalVertices(
     return extremal;
 }
 
-obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const& shape, volumes::Indices const& indices)
+obb::OrientedBoundingBox::OrientedBoundingBox(volume::Mesh const& mesh, std::set<std::size_t> const& indices)
     : m_boxShape({}, {}, {}, {})
-    , m_shape(shape)
+    , m_shape(mesh)
     , m_indices(indices)
 {
     //Todo: implement convex hull step
-    m_box.mean = volumes::CalculateMeanVertex(m_shape, m_indices);
-    m_box.covariance = volumes::CalculateCovarianceMatrix(m_shape, m_indices, m_box.mean);
+    m_box.mean = volume::CalculateMeanVertex(m_shape, m_indices);
+    m_box.covariance = volume::CalculateCovarianceMatrix(m_shape, m_indices, m_box.mean);
 
     pegasus::math::JacobiEigenvalue jacobiEigen(m_box.covariance);
     m_box.eigenVectors = jacobiEigen.GetEigenvectors();
-    m_box.extremalVertices = volumes::CalculateExtremalVertices(m_box.eigenVectors, m_shape, m_indices);
+    m_box.extremalVertices = volume::CalculateExtremalVertices(m_box.eigenVectors, m_shape, m_indices);
 
     for (uint8_t i = 0; i < 3; ++i) {
         m_box.eigenVectorsNormalized[i] = glm::normalize(m_box.eigenVectors[i]);
@@ -118,15 +119,15 @@ obb::OrientedBoundingBox::OrientedBoundingBox(volumes::Shape const& shape, volum
     m_boxShape = geometry::Box(m_box.mean, m_box.boxAxes[0], m_box.boxAxes[1], m_box.boxAxes[2]);
 }
 
-geometry::Box obb::OrientedBoundingBox::GetBox() const
+geometry::Box obb::OrientedBoundingBox::GetVolume() const
 {
     return m_boxShape;
 }
 
 aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(
-    const volumes::Shape& shape, volumes::Indices const& indices)
+    const volume::Mesh& mesh, std::set<std::size_t> const& indices)
     : m_boxShape({}, {}, {}, {})
-    , m_shape(shape)
+    , m_shape(mesh)
     , m_indices(indices)
 {
     //ToDo: Calculate extremal vertices from a convex hull
@@ -135,13 +136,13 @@ aabb::AxisAlignedBoundingBox::AxisAlignedBoundingBox(
     CreateBox(m_box);
 }
 
-geometry::Box aabb::AxisAlignedBoundingBox::GetBox() const
+geometry::Box aabb::AxisAlignedBoundingBox::GetVolume() const
 {
     return m_boxShape;
 }
 
 void aabb::AxisAlignedBoundingBox::CalculateExtremalVetices(
-    volumes::Shape const& shape, volumes::Indices const& indices, aabb::AxisAlignedBoundingBox::Box& box)
+    volume::Mesh const& mesh, std::set<std::size_t> const& indices, aabb::AxisAlignedBoundingBox::Box& box)
 {
     using namespace std::placeholders;
 
@@ -150,9 +151,9 @@ void aabb::AxisAlignedBoundingBox::CalculateExtremalVetices(
     validVertices.reserve(indices.size() * 3);
     for (auto faceIndex : indices)
     {
-        for (auto vertexIndex : shape.indices[faceIndex])
+        for (uint8_t i = 0; i < 3; ++i)
         {
-            validVertices.push_back(&shape.vertices[vertexIndex]);
+            validVertices.push_back(&mesh.vertices[mesh.indices[faceIndex][i]]);
         }
     }
 
@@ -196,13 +197,13 @@ void aabb::AxisAlignedBoundingBox::CreateBox(aabb::AxisAlignedBoundingBox::Box& 
     );
 }
 
-sphere::BoundingSphere::BoundingSphere(volumes::Shape const& shape, volumes::Indices const& indices)
+sphere::BoundingSphere::BoundingSphere(volume::Mesh const& mesh, std::set<std::size_t> const& indices)
     : m_sphereShape({}, 0)
-    , m_shape(shape)
+    , m_shape(mesh)
     , m_indices(indices)
 {
-    m_sphere.mean = volumes::CalculateMeanVertex(shape, indices);
-    m_sphere.covariance = volumes::CalculateCovarianceMatrix(shape, indices, m_sphere.mean);
+    m_sphere.mean = volume::CalculateMeanVertex(mesh, indices);
+    m_sphere.covariance = volume::CalculateCovarianceMatrix(mesh, indices, m_sphere.mean);
 
     pegasus::math::JacobiEigenvalue jacobiEigen(m_sphere.covariance);
     m_sphere.eigenValues = jacobiEigen.GetEigenvalues();
@@ -211,19 +212,19 @@ sphere::BoundingSphere::BoundingSphere(volumes::Shape const& shape, volumes::Ind
     for (uint8_t i = 0; i < 3; ++i) {
         m_sphere.eigenVectorsNormalized[i] = glm::normalize(m_sphere.eigenVectors[i]);
     }
-    m_sphereShape = CalculateBoundingSphere(
+    m_sphereShape = CalculateInitialBoundingSphere(
         m_sphere.eigenVectorsNormalized, m_sphere.eigenValues, m_shape, m_indices);
-    m_sphereShape = RefineSphere(m_sphereShape, shape, indices);
+    m_sphereShape = RefineSphere(m_sphereShape, mesh, indices);
 }
 
-geometry::Sphere sphere::BoundingSphere::GetSphere() const
+geometry::Sphere sphere::BoundingSphere::GetVolume() const
 {
     return m_sphereShape;
 }
 
-geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
+geometry::Sphere sphere::BoundingSphere::CalculateInitialBoundingSphere(
     glm::dmat3 const& eigenVectors, glm::dvec3 const& eigenValues,
-    volumes::Shape const& shape, volumes::Indices const& indices
+    volume::Mesh const& mesh, std::set<std::size_t> const& indices
 )
 {
     //Find max dispersion axis
@@ -239,14 +240,15 @@ geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
     size_t maxVertexIndex = 0;
     for (auto face_index : indices)
     {
-        for (auto vertex_index : shape.indices[face_index])
+        for (uint8_t i = 0; i < 3; ++i)
         {
-            auto const currentVertexProjection = glm::dot(shape.vertices[vertex_index], maxDispersionAxis);
-            if (currentVertexProjection > glm::dot(shape.vertices[maxVertexIndex], maxDispersionAxis))
+            uint64_t const vertex_index = mesh.indices[face_index][i];
+            auto const currentVertexProjection = glm::dot(mesh.vertices[vertex_index], maxDispersionAxis);
+            if (currentVertexProjection > glm::dot(mesh.vertices[maxVertexIndex], maxDispersionAxis))
             {
                 maxVertexIndex = vertex_index;
             }
-            if (currentVertexProjection < glm::dot(shape.vertices[minVertexIndex], maxDispersionAxis))
+            if (currentVertexProjection < glm::dot(mesh.vertices[minVertexIndex], maxDispersionAxis))
             {
                 minVertexIndex = vertex_index;
             }
@@ -254,16 +256,16 @@ geometry::Sphere sphere::BoundingSphere::CalculateBoundingSphere(
     }
 
     //Calculate sphere
-    auto const diameter = glm::length(shape.vertices[maxVertexIndex] - shape.vertices[minVertexIndex]);
+    auto const diameter = glm::length(mesh.vertices[maxVertexIndex] - mesh.vertices[minVertexIndex]);
     auto const radius = diameter / 2.0;
-    auto const center = (shape.vertices[maxVertexIndex] - shape.vertices[minVertexIndex]) / 2.0
-            + shape.vertices[minVertexIndex];
+    auto const center = (mesh.vertices[maxVertexIndex] - mesh.vertices[minVertexIndex]) / 2.0
+            + mesh.vertices[minVertexIndex];
 
     return geometry::Sphere(center, radius);
 }
 
 geometry::Sphere sphere::BoundingSphere::RefineSphere(
-    geometry::Sphere const& sphere, volumes::Shape const& shape, volumes::Indices const& indices
+    geometry::Sphere const& sphere, volume::Mesh const& mesh, std::set<std::size_t> const& indices
 )
 {
     double sphereRadius = sphere.radius;
@@ -272,9 +274,10 @@ geometry::Sphere sphere::BoundingSphere::RefineSphere(
     //Find point outside of the sphere and resize sphere
     for (auto faceIndex : indices)
     {
-        for (auto vertexIndex : shape.indices[faceIndex])
+        for (uint8_t i = 0; i < 3; ++i)
         {
-            glm::dvec3 const & vertex = shape.vertices[vertexIndex];
+            uint64_t const vertexIndex = mesh.indices[faceIndex][i];
+            glm::dvec3 const & vertex = mesh.vertices[vertexIndex];
             glm::dvec3 const sphereVertexVec = vertex - sphereCenter;
             double const sphereVertexNorm = glm::length(sphereVertexVec);
 

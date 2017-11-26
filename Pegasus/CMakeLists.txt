@@ -25,26 +25,45 @@ include_directories(
 message(STATUS "Version: ${PEGASUS_VERSION}")
 
 set(PEGASUS_HEADERS
-    include/pegasus/Particle.hpp
-    include/pegasus/ParticleForceGenerator.hpp
-    include/pegasus/ParticleContacts.hpp
-    include/pegasus/ParticleLinks.hpp
-    include/pegasus/ParticleWorld.hpp
-    include/pegasus/Geometry.hpp
-    include/pegasus/Mechanics.hpp
-    include/pegasus/Math.hpp
+    include/math/Math.hpp
+    include/math/HalfEdgeDataStructure.hpp
+    include/math/FloatingPoint.hpp
+    include/math/HyperPlane.hpp
+    include/math/JacobiEigenvalue.hpp
+    include/math/QuickhullConvexHull.hpp
+
+    include/geometry/Intersection.hpp
+    include/geometry/Shape.hpp
+    include/geometry/ConfigurationSpaceObject.hpp
+    include/geometry/GilbertJohnsonKeerthi.hpp
+    include/geometry/ExpandingPolytopeAlgorithm.hpp
+    include/geometry/SimpleShapeIntersectionDetector.hpp
+
     include/pegasus/BoundingVolumes.hpp
+    include/pegasus/Body.hpp
+    include/pegasus/Force.hpp
+    include/pegasus/Integration.hpp
+    include/pegasus/Collision.hpp
+    include/pegasus/Scene.hpp
 )
 set(PEGASUS_SOURCES
-    sources/Particle.cpp
-    sources/ParticleForceGenerator.cpp
-    sources/ParticleContacts.cpp
-    sources/ParticleLinks.cpp
-    sources/ParticleWorld.cpp
-    sources/Geometry.cpp
-    sources/Mechanics.cpp
-    sources/Math.cpp
+    sources/math/Math.cpp
+    sources/math/HalfEdgeDataStructure.cpp
+    sources/math/HyperPlane.cpp
+    sources/math/JacobiEigenvalue.cpp
+
+    sources/geometry/Intersection.cpp
+    sources/geometry/Shape.cpp
+    sources/geometry/ConfigurationSpaceObject.cpp
+    sources/geometry/GilbertJohnsonKeerthi.cpp
+    sources/geometry/SimpleShapeIntersectionDetector.cpp
+
     sources/BoundingVolumes.cpp
+    sources/Body.cpp
+    sources/Force.cpp
+    sources/Integration.cpp
+    sources/Collision.cpp
+    sources/Scene.cpp
 )
 
 set(PEGASUS_EXTRA)
