@@ -20,6 +20,7 @@ include_directories(${GLFW_INCLUDE_DIR})
 include(PegasusConfig)
 include_directories (
     ${PEGASUS_INCLUDE_DIR}
+    ${EPONA_INCLUDE_DIR}
 )
 set(DEMO_HEADERS
     Demo.hpp
@@ -41,4 +42,5 @@ target_link_libraries(${PROJECT_NAME}
     ${GLBINDING_LIB}
     ${GLFW_LIB}
     ${PEGASUS_LIB}
+    ${EPONA_LIB}
 )

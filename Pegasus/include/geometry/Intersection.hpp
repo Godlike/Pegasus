@@ -6,7 +6,7 @@
 #ifndef PEGASUS_INTERSECTION_HPP
 #define PEGASUS_INTERSECTION_HPP
 
-#include <math/FloatingPoint.hpp>
+#include <Epona/FloatingPoint.hpp>
 #include <glm/glm.hpp>
 
 namespace pegasus
@@ -109,7 +109,7 @@ bool CheckRayIntersectionFactors(RayIntersectionFactors factors);
  */
 inline bool IsAngleAcute(glm::dvec3 const& aVector, glm::dvec3 const& bVector)
 {
-    return math::fp::IsGreater(glm::dot(aVector, bVector), 0);
+    return epona::fp::IsGreater(glm::dot(aVector, bVector), 0);
 }
 
 /**
@@ -131,7 +131,7 @@ inline bool IsSameSide(
 {
     glm::dvec3 const cp1 = glm::cross(lineEnd - lineStart, aPoint - lineStart);
     glm::dvec3 const cp2 = glm::cross(lineEnd - lineStart, bPoint - lineStart);
-    return math::fp::IsGreaterOrEqual(glm::dot(cp1, cp2), 0);
+    return epona::fp::IsGreaterOrEqual(glm::dot(cp1, cp2), 0);
 }
 
 /**

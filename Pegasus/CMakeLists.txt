@@ -17,6 +17,12 @@ if (NOT GLM_FOUND)
     add_subdirectory(${GLM_ROOT_DIR})
 endif()
 
+if (NOT EPONA_FOUND)
+    option(EPONA_BUILD_DEMOS "Build Epona demo." OFF)
+    option(EPONA_BUILD_TESTS "Build Epona tests." OFF)
+    add_subdirectory(${PEGASUS_ROOT}/Pegasus/godlike/Epona)
+endif()
+
 #Target
 include_directories(
     ${PEGASUS_INCLUDE_DIR}
@@ -25,13 +31,6 @@ include_directories(
 message(STATUS "Version: ${PEGASUS_VERSION}")
 
 set(PEGASUS_HEADERS
-    include/math/Math.hpp
-    include/math/HalfEdgeDataStructure.hpp
-    include/math/FloatingPoint.hpp
-    include/math/HyperPlane.hpp
-    include/math/JacobiEigenvalue.hpp
-    include/math/QuickhullConvexHull.hpp
-
     include/geometry/Intersection.hpp
     include/geometry/Shape.hpp
     include/geometry/ConfigurationSpaceObject.hpp
@@ -47,11 +46,6 @@ set(PEGASUS_HEADERS
     include/pegasus/Scene.hpp
 )
 set(PEGASUS_SOURCES
-    sources/math/Math.cpp
-    sources/math/HalfEdgeDataStructure.cpp
-    sources/math/HyperPlane.cpp
-    sources/math/JacobiEigenvalue.cpp
-
     sources/geometry/Intersection.cpp
     sources/geometry/Shape.cpp
     sources/geometry/ConfigurationSpaceObject.cpp
@@ -88,6 +82,10 @@ add_library(${PEGASUS_LIB}
     ${PEGASUS_EXTRA}
 )
 
+target_include_directories(${PEGASUS_LIB} PUBLIC
+    ${EPONA_INCLUDE_DIR}
+)
+
 set_target_properties(
     ${PEGASUS_LIB}
     PROPERTIES
@@ -95,7 +93,7 @@ set_target_properties(
         SOVERSION ${PEGASUS_SOVERSION}
 )
 
-target_link_libraries(${PEGASUS_LIB})
+target_link_libraries(${PEGASUS_LIB} ${EPONA_LIB})
 
 install( DIRECTORY ${GLM_INCLUDE_DIR}/glm
     DESTINATION ${PEGASUS_INSTALL_INCLUDE_DIR}

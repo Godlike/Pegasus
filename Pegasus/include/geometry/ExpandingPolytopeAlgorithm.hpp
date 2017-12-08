@@ -7,9 +7,8 @@
 #define PEGASUS_EPA_HPP
 
 #include <geometry/GilbertJohnsonKeerthi.hpp>
-#include <math/Math.hpp>
-#include <math/FloatingPoint.hpp>
-#include <math/QuickhullConvexHull.hpp>
+#include <Epona/Analysis.hpp>
+#include <Epona/QuickhullConvexHull.hpp>
 #include <glm/glm.hpp>
 
 namespace pegasus
@@ -49,7 +48,7 @@ void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& b
     if (simplex.size == 2)
     {
         glm::dvec3 const A0 = -simplex.vertices[1];
-        uint8_t const n = (math::fp::IsNotEqual(A0[0], 0.0) ? 0 : (math::fp::IsNotEqual(A0[1], 0.0) ? 1 : 2));
+        uint8_t const n = (epona::fp::IsNotEqual(A0[0], 0.0) ? 0 : (epona::fp::IsNotEqual(A0[1], 0.0) ? 1 : 2));
         uint8_t const m = (n == 0 ? 1 : (n == 1 ? 2 : 1));
 
         glm::dvec3 orthogonalDirection;
@@ -59,16 +58,16 @@ void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& b
 
         glm::dvec3 const a = cso::Support(aShape, bShape, orthogonalDirection);
         glm::dvec3 const b = cso::Support(aShape, bShape, -orthogonalDirection);
-        double const adist = math::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], a);
-        double const bdist = math::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], b);
+        double const adist = epona::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], a);
+        double const bdist = epona::LineSegmentPointDistance(simplex.vertices[0], simplex.vertices[1], b);
 
-        simplex.vertices[2] = math::fp::IsGreater(adist, bdist) ? a : b;
+        simplex.vertices[2] = epona::fp::IsGreater(adist, bdist) ? a : b;
         ++simplex.size;
     }
 
     if (simplex.size == 3)
     {
-        math::HyperPlane const hyperPlane{
+        epona::HyperPlane const hyperPlane{
             simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]
         };
 
@@ -79,7 +78,7 @@ void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& b
         glm::dvec3 const a = cso::Support(aShape, bShape, glm::normalize(ABC));
         glm::dvec3 const b = cso::Support(aShape, bShape, glm::normalize(-ABC));
 
-        simplex.vertices[3] = math::fp::IsGreater(hyperPlane.Distance(a), hyperPlane.Distance(b)) ? a : b;
+        simplex.vertices[3] = epona::fp::IsGreater(hyperPlane.Distance(a), hyperPlane.Distance(b)) ? a : b;
         ++simplex.size;
     }
 }
@@ -99,7 +98,7 @@ void BlowUpPolytope(gjk::Simplex& simplex, ShapeA const& aShape, ShapeB const& b
 template <typename ShapeA, typename ShapeB>
 ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bShape, gjk::Simplex simplex)
 {
-    using ConvexHull = math::QuickhullConvexHull<std::vector<glm::dvec3>>;
+    using ConvexHull = epona::QuickhullConvexHull<std::vector<glm::dvec3>>;
 
     //Blow up initial simplex if needed
     if (simplex.size < 4)
@@ -128,7 +127,7 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
         });
 
         //Get distance and direction to the polytope's face that is nearest to the origin
-        math::HyperPlane const& hp = chFaces.front().GetHyperPlane();
+        epona::HyperPlane const& hp = chFaces.front().GetHyperPlane();
         direction = hp.GetNormal();
         distance = hp.GetDistance();
 
@@ -137,7 +136,7 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
         supportVertexDistance = glm::abs(glm::dot(supportVertex, direction));
 
         //If it's a face from the edge, end EPA
-        if (math::fp::IsGreater(supportVertexDistance, distance))
+        if (epona::fp::IsGreater(supportVertexDistance, distance))
         {
             //Expand polytope if possible
             polytopeVertices.push_back(supportVertex);
@@ -148,13 +147,13 @@ ContactManifold CalculateContactManifold(ShapeA const& aShape, ShapeB const& bSh
         }
 
         //Endless loop detection
-        if (math::fp::IsEqual(previousDistance, distance))
+        if (epona::fp::IsEqual(previousDistance, distance))
         {
             break;
         }
         previousDistance = distance;
 
-    } while (math::fp::IsGreater(supportVertexDistance, distance));
+    } while (epona::fp::IsGreater(supportVertexDistance, distance));
 
     return {
         cso::Support(aShape, direction),

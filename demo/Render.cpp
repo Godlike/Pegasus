@@ -4,7 +4,7 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include "demo/Render.hpp"
-#include <math/Math.hpp>
+#include <Epona/Analysis.hpp>
 
 using namespace pegasus;
 using namespace render;
@@ -70,7 +70,7 @@ mesh::Mesh mesh::CreatePlane(glm::dvec3 normal, double length)
 {
     Mesh mesh;
 
-    glm::dvec3 const i = math::CalculateOrthogonalVector(normal) * (length / 2.0);
+    glm::dvec3 const i = epona::CalculateOrthogonalVector(normal) * (length / 2.0);
     glm::dvec3 const j = glm::normalize(glm::cross(i, normal)) * (length / 2.0);
 
     mesh.vertices = {

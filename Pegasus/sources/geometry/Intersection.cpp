@@ -4,7 +4,7 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include <geometry/Intersection.hpp>
-#include <math/HyperPlane.hpp>
+#include <Epona/HyperPlane.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
@@ -99,8 +99,8 @@ bool intersection::IsPointInsideTriangle(
     glm::dvec3 const& triangleVertex1, glm::dvec3 const& triangleVertex2, glm::dvec3 const& triangleVertex3, glm::dvec3 const& point
 )
 {
-    double const distance = math::HyperPlane{triangleVertex1, triangleVertex2, triangleVertex3}.Distance(point);
-    if (!math::fp::IsZero(distance))
+    double const distance = epona::HyperPlane{triangleVertex1, triangleVertex2, triangleVertex3}.Distance(point);
+    if (!epona::fp::IsZero(distance))
     {
         return false;
     }
