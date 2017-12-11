@@ -19,7 +19,6 @@
 
 #include <array>
 #include <memory>
-#include <unordered_map>
 
 namespace pegasus
 {
