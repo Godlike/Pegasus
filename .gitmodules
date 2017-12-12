@@ -10,6 +10,6 @@
 [submodule "third_party/glbinding"]
 	path = third_party/glbinding
 	url = https://github.com/cginternals/glbinding.git
-[submodule "Pegasus/godlike/Epona"]
-	path = Pegasus/godlike/Epona
-	url = https://github.com/Godlike/Epona.git
+[submodule "Pegasus/godlike/Arion"]
+	path = Pegasus/godlike/Arion
+	url = https://github.com/Godlike/Arion.git

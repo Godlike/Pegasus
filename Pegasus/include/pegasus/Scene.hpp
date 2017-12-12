@@ -9,7 +9,7 @@
 #include <pegasus/SharedMacros.hpp>
 #include <pegasus/Body.hpp>
 #include <pegasus/Force.hpp>
-#include <geometry/Shape.hpp>
+#include <Arion/Shape.hpp>
 
 #include <vector>
 #include <unordered_map>
@@ -180,9 +180,9 @@ private:
     std::vector<Asset<mechanics::Body>> m_bodies;
 
     //!Shapes
-    std::vector<Asset<geometry::Plane>> m_planes;
-    std::vector<Asset<geometry::Sphere>> m_spheres;
-    std::vector<Asset<geometry::Box>> m_boxes;
+    std::vector<Asset<arion::Plane>> m_planes;
+    std::vector<Asset<arion::Sphere>> m_spheres;
+    std::vector<Asset<arion::Box>> m_boxes;
 
     //!Objects
     std::vector<Asset<RigidBody>> m_staticPlanes;
@@ -210,55 +210,55 @@ private:
 };
 
 template <>
-inline std::vector<Asset<geometry::Plane>>& AssetManager::GetShapes<geometry::Plane>()
+inline std::vector<Asset<arion::Plane>>& AssetManager::GetShapes<arion::Plane>()
 {
     return m_planes;
 }
 
 template <>
-inline std::vector<Asset<geometry::Sphere>>& AssetManager::GetShapes<geometry::Sphere>()
+inline std::vector<Asset<arion::Sphere>>& AssetManager::GetShapes<arion::Sphere>()
 {
     return m_spheres;
 }
 
 template <>
-inline std::vector<Asset<geometry::Box>>& AssetManager::GetShapes<geometry::Box>()
+inline std::vector<Asset<arion::Box>>& AssetManager::GetShapes<arion::Box>()
 {
     return m_boxes;
 }
 
 template <>
-inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, geometry::Plane>()
+inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, arion::Plane>()
 {
     return m_staticPlanes;
 }
 
 template <>
-inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, geometry::Plane>()
+inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, arion::Plane>()
 {
     return m_dynamicPlanes;
 }
 
 template <>
-inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, geometry::Sphere>()
+inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, arion::Sphere>()
 {
     return m_staticSpheres;
 }
 
 template <>
-inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, geometry::Sphere>()
+inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, arion::Sphere>()
 {
     return m_dynamicSpheres;
 }
 
 template <>
-inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, geometry::Box>()
+inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, arion::Box>()
 {
     return m_staticBoxes;
 }
 
 template <>
-inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, geometry::Box>()
+inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, arion::Box>()
 {
     return m_dynamicBoxes;
 }
@@ -679,7 +679,7 @@ public:
      * @param body physical body data
      * @param plane shape data
      */
-    Plane(Type type, mechanics::Body body, geometry::Plane plane);
+    Plane(Type type, mechanics::Body body, arion::Plane plane);
 
     /**
      * @brief Releases shape handle and object handle
@@ -690,7 +690,7 @@ public:
      * @brief Returns reference to the plane instance
      * @return shape instance
      */
-    geometry::Plane& GetShape() const;
+    arion::Plane& GetShape() const;
 };
 
 /**
@@ -705,7 +705,7 @@ public:
      * @param body physical body data
      * @param sphere shape data
      */
-    Sphere(Type type, mechanics::Body body, geometry::Sphere sphere);
+    Sphere(Type type, mechanics::Body body, arion::Sphere sphere);
 
     /**
      * @brief Releases shape handle and body handle
@@ -716,7 +716,7 @@ public:
      * @brief Return reference to the sphere instance
      * @return sphere instance
      */
-    geometry::Sphere& GetShape() const;
+    arion::Sphere& GetShape() const;
 };
 
 /**
@@ -731,7 +731,7 @@ public:
      * @param body physical body data
      * @param box shape data
      */
-    Box(Type type, mechanics::Body body, geometry::Box box);
+    Box(Type type, mechanics::Body body, arion::Box box);
 
     /**
      * @brief Releases shape handle and object handle
@@ -742,7 +742,7 @@ public:
      * @brief Returns reference to the box instance
      * @return box shape
      */
-    geometry::Box& GetShape() const;
+    arion::Box& GetShape() const;
 };
 
 /**

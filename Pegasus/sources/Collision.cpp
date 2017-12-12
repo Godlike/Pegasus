@@ -25,35 +25,35 @@ Detector::Detector(scene::AssetManager& assetManager)
 std::vector<std::vector<Contact>> Detector::Detect()
 {
     return {
-        Detect<scene::DynamicBody, geometry::Plane>(),
-        Detect<scene::DynamicBody, geometry::Plane, scene::DynamicBody, geometry::Sphere>(),
-        Detect<scene::DynamicBody, geometry::Plane, scene::DynamicBody, geometry::Box>(),
-        Detect<scene::DynamicBody, geometry::Plane, scene::StaticBody, geometry::Plane>(),
-        Detect<scene::DynamicBody, geometry::Plane, scene::StaticBody, geometry::Sphere>(),
-        Detect<scene::DynamicBody, geometry::Plane, scene::StaticBody, geometry::Box>(),
+        Detect<scene::DynamicBody, arion::Plane>(),
+        Detect<scene::DynamicBody, arion::Plane, scene::DynamicBody, arion::Sphere>(),
+        Detect<scene::DynamicBody, arion::Plane, scene::DynamicBody, arion::Box>(),
+        Detect<scene::DynamicBody, arion::Plane, scene::StaticBody, arion::Plane>(),
+        Detect<scene::DynamicBody, arion::Plane, scene::StaticBody, arion::Sphere>(),
+        Detect<scene::DynamicBody, arion::Plane, scene::StaticBody, arion::Box>(),
 
-        Detect<scene::DynamicBody, geometry::Sphere>(),
-        Detect<scene::DynamicBody, geometry::Sphere, scene::DynamicBody, geometry::Box>(),
-        Detect<scene::DynamicBody, geometry::Sphere, scene::StaticBody, geometry::Plane>(),
-        Detect<scene::DynamicBody, geometry::Sphere, scene::StaticBody, geometry::Sphere>(),
-        Detect<scene::DynamicBody, geometry::Sphere, scene::StaticBody, geometry::Box>(),
+        Detect<scene::DynamicBody, arion::Sphere>(),
+        Detect<scene::DynamicBody, arion::Sphere, scene::DynamicBody, arion::Box>(),
+        Detect<scene::DynamicBody, arion::Sphere, scene::StaticBody, arion::Plane>(),
+        Detect<scene::DynamicBody, arion::Sphere, scene::StaticBody, arion::Sphere>(),
+        Detect<scene::DynamicBody, arion::Sphere, scene::StaticBody, arion::Box>(),
 
-        Detect<scene::DynamicBody, geometry::Box>(),
-        Detect<scene::DynamicBody, geometry::Box, scene::StaticBody, geometry::Plane>(),
-        Detect<scene::DynamicBody, geometry::Box, scene::StaticBody, geometry::Sphere>(),
-        Detect<scene::DynamicBody, geometry::Box, scene::StaticBody, geometry::Box>(),
+        Detect<scene::DynamicBody, arion::Box>(),
+        Detect<scene::DynamicBody, arion::Box, scene::StaticBody, arion::Plane>(),
+        Detect<scene::DynamicBody, arion::Box, scene::StaticBody, arion::Sphere>(),
+        Detect<scene::DynamicBody, arion::Box, scene::StaticBody, arion::Box>(),
     };
 }
 
-bool Detector::Intersect(geometry::SimpleShape const* aShape, geometry::SimpleShape const* bShape)
+bool Detector::Intersect(arion::SimpleShape const* aShape, arion::SimpleShape const* bShape)
 {
     return s_simpleShapeDetector.CalculateIntersection(aShape, bShape);
 }
 
-geometry::SimpleShapeIntersectionDetector Detector::s_simpleShapeDetector;
+arion::SimpleShapeIntersectionDetector Detector::s_simpleShapeDetector;
 
-Contact::Manifold Detector::CalculateContactManifold(geometry::SimpleShape const* aShape,
-    geometry::SimpleShape const* bShape)
+Contact::Manifold Detector::CalculateContactManifold(arion::SimpleShape const* aShape,
+    arion::SimpleShape const* bShape)
 {
     Contact::Manifold manifold;
     manifold.normal = s_simpleShapeDetector.CalculateContactNormal(aShape, bShape);

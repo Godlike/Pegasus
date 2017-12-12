@@ -7,7 +7,7 @@
 #define PEGASUS_COLLISION_HPP
 
 #include <pegasus/Scene.hpp>
-#include <geometry/SimpleShapeIntersectionDetector.hpp>
+#include <Arion/SimpleShapeIntersectionDetector.hpp>
 #include <unordered_set>
 
 namespace pegasus
@@ -68,7 +68,7 @@ private:
     };
 
     scene::AssetManager* m_assetManager = nullptr;
-    static geometry::SimpleShapeIntersectionDetector s_simpleShapeDetector;
+    static arion::SimpleShapeIntersectionDetector s_simpleShapeDetector;
 
     /**
      * @brief Checks if two shapes are intersecting
@@ -77,7 +77,7 @@ private:
      * @return @c true if shapes are intersecting, @c false otherwise
      */
     static bool Intersect(
-        geometry::SimpleShape const* aShape, geometry::SimpleShape const* bShape
+        arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
     );
 
     /**
@@ -87,7 +87,7 @@ private:
      * @return contact manifold
      */
     static Contact::Manifold CalculateContactManifold(
-        geometry::SimpleShape const* aShape, geometry::SimpleShape const* bShape
+        arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
     );
 
     /**

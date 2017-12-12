@@ -5,7 +5,7 @@
 */
 
 #include "demo/Demo.hpp"
-#include <geometry/Shape.hpp>
+#include <Arion/Shape.hpp>
 
 #include <glm/glm.hpp>
 #include <chrono>
@@ -50,7 +50,7 @@ Demo::Primitive& Demo::MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3
 
 Demo::Primitive& Demo::MakePlane(mechanics::Body body, glm::dvec3 normal, scene::Primitive::Type type)
 {
-    scene::Primitive* object = new scene::Plane(type, body, geometry::Plane(body.linearMotion.position, normal));
+    scene::Primitive* object = new scene::Plane(type, body, arion::Plane(body.linearMotion.position, normal));
     render::Primitive* shape = new render::Plane(
         glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), normal
     );
@@ -62,7 +62,7 @@ Demo::Primitive& Demo::MakePlane(mechanics::Body body, glm::dvec3 normal, scene:
 
 Demo::Primitive& Demo::MakeSphere(mechanics::Body body, double radius, scene::Primitive::Type type)
 {
-    scene::Primitive* object = new scene::Sphere(type, body, geometry::Sphere(body.linearMotion.position, radius));
+    scene::Primitive* object = new scene::Sphere(type, body, arion::Sphere(body.linearMotion.position, radius));
     render::Primitive* shape = new render::Sphere(
         glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)), glm::vec3(0.439, 0.502, 0.565), radius
     );
@@ -76,7 +76,7 @@ Demo::Primitive& Demo::MakeBox(
         mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, scene::Primitive::Type type
     )
 {
-    scene::Primitive* object = new scene::Box(type, body, geometry::Box(body.linearMotion.position, i, j, k));
+    scene::Primitive* object = new scene::Box(type, body, arion::Box(body.linearMotion.position, i, j, k));
     render::Primitive* shape = new render::Box(
         glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position)),
         glm::vec3(0.439, 0.502, 0.565),
