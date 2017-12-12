@@ -7,8 +7,10 @@
 #define PEGASUS_GJK_HPP
 
 #include <geometry/ConfigurationSpaceObject.hpp>
-#include <math/FloatingPoint.hpp>
+#include <Epona/FloatingPoint.hpp>
+
 #include <glm/glm.hpp>
+
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -96,7 +98,7 @@ bool CalculateSimplex(Simplex& simplex, ShapeA const& aShape, ShapeB const& bSha
 
         //Calculate if the new vertex is past the origin
         double const scalarDirectionProjection = glm::dot(simplex.vertices[simplex.size - 1], direction);
-        if (math::fp::IsLess(scalarDirectionProjection, 0.0))
+        if (epona::fp::IsLess(scalarDirectionProjection, 0.0))
         {
             return false;
         }

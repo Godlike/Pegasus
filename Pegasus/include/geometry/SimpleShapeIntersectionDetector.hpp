@@ -229,7 +229,7 @@ inline bool CalculateIntersection<Ray, Ray>(SimpleShape const* a, SimpleShape co
     cache->bClosestApproach =
         bRay->centerOfMass + bNumerator / cache->denominator * bRay->direction;
 
-    return math::fp::IsEqual(glm::length2(cache->aClosestApproach), glm::length2(cache->bClosestApproach));
+    return epona::fp::IsEqual(glm::length2(cache->aClosestApproach), glm::length2(cache->bClosestApproach));
 }
 
 /** Ray, Ray CalculateContactNormal specialization */
@@ -257,7 +257,7 @@ inline bool CalculateIntersection<Ray, Plane>(SimpleShape const* a, SimpleShape 
     auto ray = static_cast<Ray const*>(a);
     auto plane = static_cast<Plane const*>(b);
 
-    math::HyperPlane hyperPlane{ plane->normal, plane->centerOfMass };
+    epona::HyperPlane hyperPlane{ plane->normal, plane->centerOfMass };
 
     return hyperPlane.RayIntersection(ray->direction, ray->centerOfMass, cache->contact);
 }
@@ -487,7 +487,7 @@ inline bool CalculateIntersection<Plane, Box>(SimpleShape const* a, SimpleShape 
     cache->boxFaces = { { box->iAxis, box->jAxis, box->kAxis, -box->iAxis, -box->jAxis, -box->kAxis } };
 
     std::array<glm::dvec3, 8> boxVertices;
-    math::CalculateBoxVertices(box->iAxis, box->jAxis, box->kAxis, boxVertices.begin());
+    epona::CalculateBoxVertices(box->iAxis, box->jAxis, box->kAxis, boxVertices.begin());
     for (glm::dvec3& veretex : boxVertices)
     {
         veretex += box->centerOfMass;

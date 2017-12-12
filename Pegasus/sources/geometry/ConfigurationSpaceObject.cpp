@@ -4,7 +4,7 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include <geometry/ConfigurationSpaceObject.hpp>
-#include <math/Math.hpp>
+#include <Epona/Analysis.hpp>
 #include <array>
 
 using namespace pegasus;
@@ -21,7 +21,7 @@ glm::dvec3 intersection::cso::Support(Box const& box, glm::dvec3 direction)
     using namespace intersection;
 
     std::array<glm::dvec3, 8> boxVertices;
-    math::CalculateBoxVertices(box.iAxis, box.jAxis, box.kAxis, box.centerOfMass, boxVertices.begin());
+    epona::CalculateBoxVertices(box.iAxis, box.jAxis, box.kAxis, box.centerOfMass, boxVertices.begin());
     glm::dvec3 const maxPoint = *std::max_element(boxVertices.begin(), boxVertices.end(),
         [&direction](glm::dvec3 const& a, glm::dvec3 const& b) -> bool
     {

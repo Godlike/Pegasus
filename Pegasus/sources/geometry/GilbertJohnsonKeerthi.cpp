@@ -5,7 +5,7 @@
 */
 #include <geometry/GilbertJohnsonKeerthi.hpp>
 #include <geometry/Intersection.hpp>
-#include <math/Math.hpp>
+#include <Epona/Analysis.hpp>
 
 using namespace pegasus;
 using namespace geometry;
@@ -22,8 +22,8 @@ namespace
 */
 bool LineSegmentContainsOrigin(glm::dvec3 const& lineStart, glm::dvec3 const& lineEnd)
 {
-    double const distance = math::LineSegmentPointDistance(lineStart, lineEnd, glm::dvec3{});
-    return math::fp::IsZero(distance);
+    double const distance = epona::LineSegmentPointDistance(lineStart, lineEnd, glm::dvec3{});
+    return epona::fp::IsZero(distance);
 }
 
 /**
@@ -51,17 +51,17 @@ bool TriangleContainsOrigin(glm::dvec3 const& a, glm::dvec3 const& b, glm::dvec3
 */
 bool TetrahedronContainsOrigin(std::array<glm::dvec3, 4> const& vertices)
 {
-    std::array<math::HyperPlane, 4> const faces{ {
-            math::HyperPlane{ vertices[0], vertices[1], vertices[2], &vertices[3] },
-            math::HyperPlane{ vertices[1], vertices[2], vertices[3], &vertices[0] },
-            math::HyperPlane{ vertices[0], vertices[2], vertices[3], &vertices[1] },
-            math::HyperPlane{ vertices[0], vertices[1], vertices[3], &vertices[2] }
+    std::array<epona::HyperPlane, 4> const faces{ {
+            epona::HyperPlane{ vertices[0], vertices[1], vertices[2], &vertices[3] },
+            epona::HyperPlane{ vertices[1], vertices[2], vertices[3], &vertices[0] },
+            epona::HyperPlane{ vertices[0], vertices[2], vertices[3], &vertices[1] },
+            epona::HyperPlane{ vertices[0], vertices[1], vertices[3], &vertices[2] }
         } };
 
-    return math::fp::IsGreaterOrEqual(faces[0].GetDistance(), 0.0)
-        && math::fp::IsGreaterOrEqual(faces[1].GetDistance(), 0.0)
-        && math::fp::IsGreaterOrEqual(faces[2].GetDistance(), 0.0)
-        && math::fp::IsGreaterOrEqual(faces[3].GetDistance(), 0.0);
+    return epona::fp::IsGreaterOrEqual(faces[0].GetDistance(), 0.0)
+        && epona::fp::IsGreaterOrEqual(faces[1].GetDistance(), 0.0)
+        && epona::fp::IsGreaterOrEqual(faces[2].GetDistance(), 0.0)
+        && epona::fp::IsGreaterOrEqual(faces[3].GetDistance(), 0.0);
 }
 
 /**
@@ -191,9 +191,9 @@ glm::dvec3 NearestSimplexTetrahedron(intersection::gjk::Simplex& simplex)
     std::array<glm::dvec3, 4> const& vertices = simplex.vertices;
 
     std::array<double, 3> const planeOriginDistances{ {
-            math::HyperPlane{ vertices[0], vertices[1], vertices[3], &vertices[2] }.GetDistance(),
-            math::HyperPlane{ vertices[1], vertices[2], vertices[3], &vertices[0] }.GetDistance(),
-            math::HyperPlane{ vertices[0], vertices[2], vertices[3], &vertices[1] }.GetDistance()
+            epona::HyperPlane{ vertices[0], vertices[1], vertices[3], &vertices[2] }.GetDistance(),
+            epona::HyperPlane{ vertices[1], vertices[2], vertices[3], &vertices[0] }.GetDistance(),
+            epona::HyperPlane{ vertices[0], vertices[2], vertices[3], &vertices[1] }.GetDistance()
         } };
 
     size_t const closestPlaneIndex = std::distance(planeOriginDistances.begin(),

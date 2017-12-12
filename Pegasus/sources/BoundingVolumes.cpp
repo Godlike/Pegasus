@@ -4,7 +4,7 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include <pegasus/BoundingVolumes.hpp>
-#include <math/JacobiEigenvalue.hpp>
+#include <Epona/JacobiEigenvalue.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
@@ -104,7 +104,7 @@ obb::OrientedBoundingBox::OrientedBoundingBox(volume::Mesh const& mesh, std::set
     m_box.mean = volume::CalculateMeanVertex(m_shape, m_indices);
     m_box.covariance = volume::CalculateCovarianceMatrix(m_shape, m_indices, m_box.mean);
 
-    pegasus::math::JacobiEigenvalue jacobiEigen(m_box.covariance);
+    epona::JacobiEigenvalue jacobiEigen(m_box.covariance);
     m_box.eigenVectors = jacobiEigen.GetEigenvectors();
     m_box.extremalVertices = volume::CalculateExtremalVertices(m_box.eigenVectors, m_shape, m_indices);
 
@@ -205,7 +205,7 @@ sphere::BoundingSphere::BoundingSphere(volume::Mesh const& mesh, std::set<std::s
     m_sphere.mean = volume::CalculateMeanVertex(mesh, indices);
     m_sphere.covariance = volume::CalculateCovarianceMatrix(mesh, indices, m_sphere.mean);
 
-    pegasus::math::JacobiEigenvalue jacobiEigen(m_sphere.covariance);
+    epona::JacobiEigenvalue jacobiEigen(m_sphere.covariance);
     m_sphere.eigenValues = jacobiEigen.GetEigenvalues();
     m_sphere.eigenVectors = jacobiEigen.GetEigenvectors();
 
