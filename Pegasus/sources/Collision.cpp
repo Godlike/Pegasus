@@ -6,8 +6,10 @@
 #include <pegasus/Integration.hpp>
 #include <pegasus/Collision.hpp>
 
-using namespace pegasus;
-using namespace collision;
+namespace pegasus
+{
+namespace collision
+{
 
 Contact::Contact(mechanics::Body& aBody, mechanics::Body& bBody, Manifold manifold, double restitution)
     : aBody(&aBody)
@@ -154,3 +156,5 @@ void Resolver::Resolve(Contact contact, double duration)
     ResolveVelocity(contact, duration);
     ResolveInterpenetration(contact);
 }
+} // namespace collision
+} // namespace pegasus

@@ -13,8 +13,10 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/optimum_pow.hpp>
 
-using namespace pegasus;
-using namespace force;
+namespace pegasus
+{
+namespace force
+{
 
 StaticField::StaticField(glm::dvec3 force)
     : m_force(force)
@@ -109,3 +111,5 @@ glm::dvec3 Buoyancy::CalculateForce(mechanics::Body const& body) const
 
     return force;
 }
+} // namespace force
+} // namespace pegasus

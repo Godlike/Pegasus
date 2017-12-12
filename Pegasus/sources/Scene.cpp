@@ -7,8 +7,10 @@
 #include <pegasus/Collision.hpp>
 #include <pegasus/Integration.hpp>
 
-using namespace pegasus;
-using namespace scene;
+namespace pegasus
+{
+namespace scene
+{
 
 RigidBody::RigidBody(Handle body, Handle shape)
     : body(body)
@@ -207,3 +209,5 @@ arion::Box& Box::GetShape() const
 {
     return m_pScene->GetShape<arion::Box>(m_shapeHandle);
 }
+} // namespace scene
+} // namespace pegasus

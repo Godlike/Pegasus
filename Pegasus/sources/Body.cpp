@@ -5,8 +5,10 @@
 */
 #include <pegasus/Body.hpp>
 
-using namespace pegasus;
-using namespace mechanics;
+namespace pegasus
+{
+namespace mechanics
+{
 
 Body::Material::Material()
     : damping(1)
@@ -53,3 +55,5 @@ Body::Body()
     , linearMotion()
 {
 }
+} // namespace mechanics
+} // namespace pegasus
