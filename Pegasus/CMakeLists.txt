@@ -17,10 +17,10 @@ if (NOT GLM_FOUND)
     add_subdirectory(${GLM_ROOT_DIR})
 endif()
 
-if (NOT EPONA_FOUND)
-    option(EPONA_BUILD_DEMOS "Build Epona demo." OFF)
-    option(EPONA_BUILD_TESTS "Build Epona tests." OFF)
-    add_subdirectory(${PEGASUS_ROOT}/Pegasus/godlike/Epona)
+if (NOT ARION_FOUND)
+    option(ARION_BUILD_DEMOS "Build Arion demo." OFF)
+    option(ARION_BUILD_TESTS "Build Arion tests." OFF)
+    add_subdirectory(${PEGASUS_ROOT}/Pegasus/godlike/Arion)
 endif()
 
 #Target
@@ -31,14 +31,6 @@ include_directories(
 message(STATUS "Version: ${PEGASUS_VERSION}")
 
 set(PEGASUS_HEADERS
-    include/geometry/Intersection.hpp
-    include/geometry/Shape.hpp
-    include/geometry/ConfigurationSpaceObject.hpp
-    include/geometry/GilbertJohnsonKeerthi.hpp
-    include/geometry/ExpandingPolytopeAlgorithm.hpp
-    include/geometry/SimpleShapeIntersectionDetector.hpp
-
-    include/pegasus/BoundingVolumes.hpp
     include/pegasus/Body.hpp
     include/pegasus/Force.hpp
     include/pegasus/Integration.hpp
@@ -46,13 +38,6 @@ set(PEGASUS_HEADERS
     include/pegasus/Scene.hpp
 )
 set(PEGASUS_SOURCES
-    sources/geometry/Intersection.cpp
-    sources/geometry/Shape.cpp
-    sources/geometry/ConfigurationSpaceObject.cpp
-    sources/geometry/GilbertJohnsonKeerthi.cpp
-    sources/geometry/SimpleShapeIntersectionDetector.cpp
-
-    sources/BoundingVolumes.cpp
     sources/Body.cpp
     sources/Force.cpp
     sources/Integration.cpp
@@ -84,6 +69,7 @@ add_library(${PEGASUS_LIB}
 
 target_include_directories(${PEGASUS_LIB} PUBLIC
     ${EPONA_INCLUDE_DIR}
+    ${ARION_INCLUDE_DIR}
 )
 
 set_target_properties(
@@ -93,7 +79,10 @@ set_target_properties(
         SOVERSION ${PEGASUS_SOVERSION}
 )
 
-target_link_libraries(${PEGASUS_LIB} ${EPONA_LIB})
+target_link_libraries(${PEGASUS_LIB}
+    ${EPONA_LIB}
+    ${ARION_LIB}
+)
 
 install( DIRECTORY ${GLM_INCLUDE_DIR}/glm
     DESTINATION ${PEGASUS_INSTALL_INCLUDE_DIR}

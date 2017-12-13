@@ -7,8 +7,10 @@
 #include <pegasus/Collision.hpp>
 #include <pegasus/Integration.hpp>
 
-using namespace pegasus;
-using namespace scene;
+namespace pegasus
+{
+namespace scene
+{
 
 RigidBody::RigidBody(Handle body, Handle shape)
     : body(body)
@@ -109,9 +111,9 @@ void Scene::Integrate(double duration)
         }
     }
 
-    UpdateShapes<DynamicBody, geometry::Plane>();
-    UpdateShapes<DynamicBody, geometry::Sphere>();
-    UpdateShapes<DynamicBody, geometry::Box>();
+    UpdateShapes<DynamicBody, arion::Plane>();
+    UpdateShapes<DynamicBody, arion::Sphere>();
+    UpdateShapes<DynamicBody, arion::Box>();
 }
 
 Primitive::~Primitive()
@@ -151,59 +153,61 @@ Primitive::Primitive(Type type, mechanics::Body body)
     m_pScene->GetBody(m_bodyHandle) = body;
 }
 
-Plane::Plane(Type type, mechanics::Body body, geometry::Plane plane)
+Plane::Plane(Type type, mechanics::Body body, arion::Plane plane)
     : Primitive(type, body)
 {
-    m_shapeHandle = m_pScene->MakeShape<geometry::Plane>();
-    m_pScene->GetShape<geometry::Plane>(m_shapeHandle) = plane;
-    MakeObject<geometry::Plane>();
+    m_shapeHandle = m_pScene->MakeShape<arion::Plane>();
+    m_pScene->GetShape<arion::Plane>(m_shapeHandle) = plane;
+    MakeObject<arion::Plane>();
 }
 
 Plane::~Plane()
 {
-    m_pScene->RemoveShape<geometry::Plane>(m_shapeHandle);
-    RemoveObject<geometry::Plane>();
+    m_pScene->RemoveShape<arion::Plane>(m_shapeHandle);
+    RemoveObject<arion::Plane>();
 }
 
-geometry::Plane& Plane::GetShape() const
+arion::Plane& Plane::GetShape() const
 {
-    return m_pScene->GetShape<geometry::Plane>(m_shapeHandle);
+    return m_pScene->GetShape<arion::Plane>(m_shapeHandle);
 }
 
-Sphere::Sphere(Type type, mechanics::Body body, geometry::Sphere sphere)
+Sphere::Sphere(Type type, mechanics::Body body, arion::Sphere sphere)
     : Primitive(type, body)
 {
-    m_shapeHandle = m_pScene->MakeShape<geometry::Sphere>();
-    m_pScene->GetShape<geometry::Sphere>(m_shapeHandle) = sphere;
-    MakeObject<geometry::Sphere>();
+    m_shapeHandle = m_pScene->MakeShape<arion::Sphere>();
+    m_pScene->GetShape<arion::Sphere>(m_shapeHandle) = sphere;
+    MakeObject<arion::Sphere>();
 }
 
 Sphere::~Sphere()
 {
-    m_pScene->RemoveShape<geometry::Sphere>(m_shapeHandle);
-    RemoveObject<geometry::Sphere>();
+    m_pScene->RemoveShape<arion::Sphere>(m_shapeHandle);
+    RemoveObject<arion::Sphere>();
 }
 
-geometry::Sphere& Sphere::GetShape() const
+arion::Sphere& Sphere::GetShape() const
 {
-    return m_pScene->GetShape<geometry::Sphere>(m_shapeHandle);
+    return m_pScene->GetShape<arion::Sphere>(m_shapeHandle);
 }
 
-Box::Box(Type type, mechanics::Body body, geometry::Box box)
+Box::Box(Type type, mechanics::Body body, arion::Box box)
     : Primitive(type, body)
 {
-    m_shapeHandle = m_pScene->MakeShape<geometry::Box>();
-    m_pScene->GetShape<geometry::Box>(m_shapeHandle) = box;
-    MakeObject<geometry::Box>();
+    m_shapeHandle = m_pScene->MakeShape<arion::Box>();
+    m_pScene->GetShape<arion::Box>(m_shapeHandle) = box;
+    MakeObject<arion::Box>();
 }
 
 Box::~Box()
 {
-    m_pScene->RemoveShape<geometry::Box>(m_shapeHandle);
-    RemoveObject<geometry::Box>();
+    m_pScene->RemoveShape<arion::Box>(m_shapeHandle);
+    RemoveObject<arion::Box>();
 }
 
-geometry::Box& Box::GetShape() const
+arion::Box& Box::GetShape() const
 {
-    return m_pScene->GetShape<geometry::Box>(m_shapeHandle);
+    return m_pScene->GetShape<arion::Box>(m_shapeHandle);
 }
+} // namespace scene
+} // namespace pegasus

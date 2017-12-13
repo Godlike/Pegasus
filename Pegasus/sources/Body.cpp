@@ -5,16 +5,19 @@
 */
 #include <pegasus/Body.hpp>
 
-using namespace pegasus;
+namespace pegasus
+{
+namespace mechanics
+{
 
-mechanics::Body::Material::Material()
+Body::Material::Material()
     : damping(1)
     , m_mass(1)
     , m_inverseMass(1)
 {
 }
 
-void mechanics::Body::Material::SetMass(double mass)
+void Body::Material::SetMass(double mass)
 {
     if (mass > 0)
     {
@@ -23,23 +26,23 @@ void mechanics::Body::Material::SetMass(double mass)
     }
 }
 
-void mechanics::Body::Material::SetInfiniteMass()
+void Body::Material::SetInfiniteMass()
 {
     m_mass = 0;
     m_inverseMass = 0;
 }
 
-double mechanics::Body::Material::GetMass() const
+double Body::Material::GetMass() const
 {
     return m_mass;
 }
 
-double mechanics::Body::Material::GetInverseMass() const
+double Body::Material::GetInverseMass() const
 {
     return m_inverseMass;
 }
 
-mechanics::Body::LinearMotion::LinearMotion()
+Body::LinearMotion::LinearMotion()
     : position(0, 0, 0)
     , velocity(0, 0, 0)
     , acceleration(0, 0, 0)
@@ -47,8 +50,10 @@ mechanics::Body::LinearMotion::LinearMotion()
 {
 }
 
-mechanics::Body::Body()
+Body::Body()
     : material()
     , linearMotion()
 {
 }
+} // namespace mechanics
+} // namespace pegasus

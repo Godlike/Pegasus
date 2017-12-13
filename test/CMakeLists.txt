@@ -7,7 +7,10 @@ cmake_policy(VERSION 3.0)
 
 project(PegasusTests)
 
-include_directories(${PEGASUS_INCLUDE_DIR} ${CATCH_ROOT}/include)
+include_directories(
+    ${PEGASUS_INCLUDE_DIR}
+    ${CATCH_ROOT}/single_include
+)
 
 function(pegasus_add_test)
     set(options )
@@ -33,7 +36,7 @@ function(pegasus_add_test)
     )
 endfunction()
 
-pegasus_add_test(NAME Collision
-    SOURCE CollisionTest.cpp
+pegasus_add_test(NAME Integration
+    SOURCE IntegrationTest.cpp
     DEPENDS ${PEGASUS_LIB}
 )

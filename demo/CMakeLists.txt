@@ -21,6 +21,7 @@ include(PegasusConfig)
 include_directories (
     ${PEGASUS_INCLUDE_DIR}
     ${EPONA_INCLUDE_DIR}
+    ${ARION_INCLUDE_DIR}
 )
 set(DEMO_HEADERS
     Demo.hpp
@@ -43,4 +44,5 @@ target_link_libraries(${PROJECT_NAME}
     ${GLFW_LIB}
     ${PEGASUS_LIB}
     ${EPONA_LIB}
+    ${ARION_LIB}
 )

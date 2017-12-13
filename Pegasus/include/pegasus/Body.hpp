@@ -7,7 +7,7 @@
 #define PEGASUS_OBJECT_HPP
 
 #include <pegasus/SharedMacros.hpp>
-#include <geometry/Intersection.hpp>
+#include <glm/glm.hpp>
 
 namespace pegasus
 {
