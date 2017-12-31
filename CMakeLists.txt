@@ -36,10 +36,13 @@ if (${PEGASUS_BUILD_DEMOS})
     add_subdirectory(demo)
 endif()
 
-set(PEGASUS_PHYSICS_LIB ${PEGASUS_LIB} PARENT_SCOPE)
-
 if (PEGASUS_BUILD_TESTS)
     enable_testing()
     set(CATCH_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/third_party/Catch)
     add_subdirectory(test)
+endif()
+
+get_directory_property(HAS_PARENT PARENT_DIRECTORY)
+if (HAS_PARENT)
+    set(PEGASUS_PHYSICS_LIB ${PEGASUS_LIB} PARENT_SCOPE)
 endif()
