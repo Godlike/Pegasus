@@ -19,7 +19,15 @@ namespace integration
  * @param appliedForce applied force
  * @return total force
  */
-PEGASUS_EXPORT glm::dvec3 IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce);
+inline PEGASUS_EXPORT glm::dvec3 IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
+{
+    return accumulatedForce + appliedForce;
+}
+
+inline PEGASUS_EXPORT glm::dvec3 IntegrateTorque(glm::dvec3 accumulatedTorque, glm::dvec3 appliedTorque)
+{
+    return IntegrateForce(accumulatedTorque, appliedTorque);
+}
 
 /**
  * @brief Calculates integrated body position

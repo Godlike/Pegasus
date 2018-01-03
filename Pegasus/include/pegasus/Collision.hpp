@@ -30,6 +30,8 @@ struct Contact
     struct Manifold
     {
         glm::dvec3 normal;
+        glm::dvec3 aContactPoint;
+        glm::dvec3 bContactPoint;
         double penetration;
     };
 

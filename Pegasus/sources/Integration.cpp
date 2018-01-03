@@ -15,7 +15,7 @@ namespace
 * @param duration delta time
 * @return new position
 */
-glm::dvec3 IntegratePosition(glm::dvec3 position, glm::dvec3 velocity, double duration)
+glm::dvec3 IntegrateLinearPosition(glm::dvec3 position, glm::dvec3 velocity, double duration)
 {
     return position + velocity * duration;
 }
@@ -27,7 +27,7 @@ glm::dvec3 IntegratePosition(glm::dvec3 position, glm::dvec3 velocity, double du
 * @param inverseMass one divided by mass
 * @return new acceleration
 */
-glm::dvec3 IntegrateAcceleration(glm::dvec3 acceleration, glm::dvec3 force, double inverseMass)
+glm::dvec3 IntegrateLinearAcceleration(glm::dvec3 acceleration, glm::dvec3 force, double inverseMass)
 {
     return acceleration + force * inverseMass;
 }
@@ -39,7 +39,7 @@ glm::dvec3 IntegrateAcceleration(glm::dvec3 acceleration, glm::dvec3 force, doub
 * @param duration delta time
 * @return new velocity
 */
-glm::dvec3 IntegrateVelocity(glm::dvec3 velocity, glm::dvec3 acceleration, double duration)
+glm::dvec3 IntegrateLinearVelocity(glm::dvec3 velocity, glm::dvec3 acceleration, double duration)
 {
     return velocity + acceleration * duration;
 }
@@ -51,7 +51,7 @@ glm::dvec3 IntegrateVelocity(glm::dvec3 velocity, glm::dvec3 acceleration, doubl
 * @param duration delta time
 * @return new velocity
 */
-glm::dvec3 IntegrateDamping(glm::dvec3 velocity, double damping, double duration)
+glm::dvec3 IntegrateLinearDamping(glm::dvec3 velocity, double damping, double duration)
 {
     return velocity * glm::pow(damping, duration);
 }
@@ -68,11 +68,59 @@ void IntegrateBody(
         double duration
     )
 {
-    glm::dvec3 const resultingAcceleration = ::IntegrateAcceleration(linearMotion.acceleration, linearMotion.force, material.GetInverseMass());
-    linearMotion.position = ::IntegratePosition(linearMotion.position, linearMotion.velocity, duration);
-    linearMotion.velocity = ::IntegrateVelocity(linearMotion.velocity, resultingAcceleration, duration);
-    linearMotion.velocity = ::IntegrateDamping(linearMotion.velocity, material.damping, duration);
+    glm::dvec3 const resultingAcceleration = ::IntegrateLinearAcceleration(
+        linearMotion.acceleration, linearMotion.force, material.GetInverseMass());
+    linearMotion.position = ::IntegrateLinearPosition(
+        linearMotion.position, linearMotion.velocity, duration);
+    linearMotion.velocity = ::IntegrateLinearVelocity(
+        linearMotion.velocity, resultingAcceleration, duration);
+    linearMotion.velocity = ::IntegrateLinearDamping(
+        linearMotion.velocity, material.damping, duration);
     linearMotion.force = glm::dvec3(0);
+}
+
+glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torque, double inertia)
+{
+    return acceleration + torque * (1.0 / inertia);
+}
+
+glm::dquat IntegrateAngularDisplacement(glm::dquat orientation, glm::dvec3 velocity, double duration)
+{
+    glm::dquat const velocityQuad{ 0, velocity.x, velocity.y, velocity.z };
+    return orientation + (velocityQuad * (duration * 0.5)) * orientation;
+}
+
+glm::dvec3 IntegrateAngularVelocity(glm::dvec3 velocity, glm::dvec3 resultingAcceleration, double duration)
+{
+    return velocity + resultingAcceleration * duration;
+}
+
+glm::dvec3 IntegrateAngularDamping(glm::dvec3 velocity, double damping, double duration)
+{
+    return velocity * glm::pow(damping, duration);
+}
+
+/**
+ * brief Updates body displacement
+ * @param[in, out] material body material data
+ * @param[in, out] angularMotion body angular motion data
+ * @param[in] duration delta time
+ */
+void IntegrateBody(
+        pegasus::mechanics::Body::Material& material,
+        pegasus::mechanics::Body::AngularMotion& angularMotion,
+        double duration
+    )
+{
+    glm::dvec3 const resultingAcceleration = ::IntegrateAngularAcceleration(
+        angularMotion.acceleration, angularMotion.torque, material.inertia);
+    angularMotion.orientation = ::IntegrateAngularDisplacement(
+        angularMotion.orientation, angularMotion.velocity, duration);
+    angularMotion.velocity = ::IntegrateAngularVelocity(
+        angularMotion.velocity, resultingAcceleration, duration);
+    angularMotion.velocity = ::IntegrateAngularDamping(
+        angularMotion.velocity, material.damping, duration);
+    angularMotion.torque = glm::dvec3(0, 0, 0);
 }
 } // namespace ::
 
@@ -80,14 +128,10 @@ namespace pegasus
 {
 namespace integration
 {
-glm::dvec3 IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
-{
-    return accumulatedForce + appliedForce;
-}
-
 void Integrate(mechanics::Body& body, double duration)
 {
     ::IntegrateBody(body.material, body.linearMotion, duration);
+    ::IntegrateBody(body.material, body.angularMotion, duration);
 }
 } // namespace integration
 } // namespace pegasus
