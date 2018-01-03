@@ -60,7 +60,12 @@ Contact::Manifold Detector::CalculateContactManifold(arion::SimpleShape const* a
     arion::SimpleShape const* bShape)
 {
     Contact::Manifold manifold;
+
     manifold.normal = s_simpleShapeDetector.CalculateContactNormal(aShape, bShape);
+    std::pair<glm::dvec3, glm::dvec3> const contactPoints =
+        s_simpleShapeDetector.CalculateContactPoints(aShape, bShape);
+    manifold.aContactPoint = contactPoints.first;
+    manifold.bContactPoint = contactPoints.second;
     manifold.penetration = s_simpleShapeDetector.CalculatePenetration(aShape, bShape);
 
     return manifold;

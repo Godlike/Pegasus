@@ -8,6 +8,7 @@
 
 #include <pegasus/SharedMacros.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace pegasus
 {
@@ -54,12 +55,15 @@ struct Body
          */
         PEGASUS_EXPORT double GetInverseMass() const;
 
-        //!Body motion bumping factor
+        //!Body's motion bumping factor
         double damping;
+
+        //!Body's moment of inertia
+        double inertia;
 
     private:
         double m_mass;
-        //!Is used to represent a body with an infinite mass by setting this value to 0
+        //!Used to represent a body with an infinite mass by setting this value to 0
         double m_inverseMass;
     };
 
@@ -76,10 +80,24 @@ struct Body
         glm::dvec3 force;
     };
 
+    /**
+     * @brief Stores angular motion data
+     */
+    struct AngularMotion
+    {
+        PEGASUS_EXPORT AngularMotion();
+
+        glm::dquat orientation;
+        glm::dvec3 velocity;
+        glm::dvec3 acceleration;
+        glm::dvec3 torque;
+    };
+
     PEGASUS_EXPORT Body();
 
     Material material;
     LinearMotion linearMotion;
+    AngularMotion angularMotion;
 };
 } // namespace mechanics
 } // namespace pegasus
