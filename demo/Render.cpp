@@ -148,9 +148,9 @@ mesh::Mesh mesh::CreateSphere(double radius, uint32_t depth)
 mesh::Mesh mesh::CreateBox(glm::dvec3 i, glm::dvec3 j, glm::dvec3 k)
 {
     Mesh mesh;
-    glm::dvec3 iNormal = glm::normalize(i);
-    glm::dvec3 jNormal = glm::normalize(j);
-    glm::dvec3 kNormal = glm::normalize(k);
+    glm::dvec3 const iNormal = glm::normalize(i);
+    glm::dvec3 const jNormal = glm::normalize(j);
+    glm::dvec3 const kNormal = glm::normalize(k);
     mesh.vertices = {
         //top
         ( i + j + k).x, ( i + j + k).y, ( i + j + k).z, kNormal.x, kNormal.y, kNormal.z,

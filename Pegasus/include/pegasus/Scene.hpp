@@ -538,8 +538,9 @@ private:
             if (asset.id != 0)
             {
                 mechanics::Body& body = GetBody(asset.data.body);
-                Shape& box = GetShape<Shape>(asset.data.shape);
-                box.centerOfMass = body.linearMotion.position;
+                Shape& shape = GetShape<Shape>(asset.data.shape);
+                shape.centerOfMass = body.linearMotion.position;
+                shape.orientation = body.angularMotion.orientation;
             }
         }
     }

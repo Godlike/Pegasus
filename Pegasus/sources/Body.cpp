@@ -59,7 +59,7 @@ Body::LinearMotion::LinearMotion()
 }
 
 Body::AngularMotion::AngularMotion()
-    : orientation(glm::angleAxis(0.0, glm::dvec3{ 0.0, 1.0, 0.0 }))
+    : orientation(glm::angleAxis(0.0, glm::dvec3{ 0, 0, 0 }))
     , velocity(0, 0, 0)
     , acceleration(0, 0, 0)
     , torque(0, 0, 0)
