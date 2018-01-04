@@ -35,6 +35,9 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
                 g_objects.push_back(&demo.MakeBox(
                     body, i, j, k, pegasus::scene::Primitive::Type::DYNAMIC
                 ));
+                pegasus::mechanics::Body physicalBody = g_objects.back()->physicalPrimitive->GetBody();
+                physicalBody.angularMotion.velocity = glm::dvec3{ 0, 1, 0 };
+                g_objects.back()->physicalPrimitive->SetBody(physicalBody);
             }
             else
             {
@@ -67,10 +70,6 @@ int main(int argc, char** argv)
     pegasus::mechanics::Body plane;
     plane.linearMotion.position = glm::dvec3(0, -10, 0);
     g_objects.push_back(&demo.MakePlane(plane, glm::vec3(0, 1, 0), pegasus::scene::Primitive::Type::STATIC));
-
-    pegasus::mechanics::Body line;
-    line.linearMotion.position = glm::dvec3(0, -10, 0);
-    g_objects.push_back(&demo.MakeLine(line, line.linearMotion.position, glm::vec3(0, 10, 0)));
 
     while (demo.IsValid())
     {

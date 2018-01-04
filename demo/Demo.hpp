@@ -95,7 +95,7 @@ public:
     void Remove(Primitive& object);
 
     //! Maximum number of particles in the demo
-    uint32_t const maxObjects = 100;
+    uint32_t const maxObjects = 20;
 
     /**
      * @brief Represents an instance of the render and physical objects

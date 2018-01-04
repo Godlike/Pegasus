@@ -87,7 +87,7 @@ glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torq
 glm::dquat IntegrateAngularDisplacement(glm::dquat orientation, glm::dvec3 velocity, double duration)
 {
     glm::dquat const velocityQuad{ 0, velocity.x, velocity.y, velocity.z };
-    return orientation + (velocityQuad * (duration * 0.5)) * orientation;
+    return glm::normalize(orientation + duration * velocityQuad * 0.5 * orientation);
 }
 
 glm::dvec3 IntegrateAngularVelocity(glm::dvec3 velocity, glm::dvec3 resultingAcceleration, double duration)
