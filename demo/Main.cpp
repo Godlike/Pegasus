@@ -21,12 +21,14 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
         for (uint8_t index = 0; index < demo.maxObjects; ++index)
         {
             pegasus::mechanics::Body body;
-            body.linearMotion.position = glm::dvec3(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
-            body.linearMotion.velocity = glm::dvec3(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
+            body.linearMotion.position = glm::dvec3(0, std::rand() % 100 / 10., 0);
+            //body.linearMotion.position = glm::dvec3(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
+            //body.linearMotion.velocity = glm::dvec3(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
 
-            static uint8_t isBox = false;
-            isBox = !isBox;
-            if (isBox)
+            //static uint8_t isBox = false;
+            //isBox = !isBox;
+            //if (isBox)
+            if (true)
             {
                 glm::vec3 const k = {0,0,rand() % 10 / 10. + 0.1};
                 glm::vec3 const j = {0,rand() % 10 / 10. + 0.1,0};
@@ -35,9 +37,12 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
                 g_objects.push_back(&demo.MakeBox(
                     body, i, j, k, pegasus::scene::Primitive::Type::DYNAMIC
                 ));
-                pegasus::mechanics::Body physicalBody = g_objects.back()->physicalPrimitive->GetBody();
-                physicalBody.angularMotion.velocity = glm::dvec3{ 0, 1, 0 };
-                g_objects.back()->physicalPrimitive->SetBody(physicalBody);
+                //pegasus::mechanics::Body physicalBody = g_objects.back()->physicalPrimitive->GetBody();
+                //physicalBody.angularMotion.orientation = glm::angleAxis(
+                //    std::rand() % 10 / 10.,
+                //    glm::normalize(glm::dvec3{ std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10. })
+                //);
+                //g_objects.back()->physicalPrimitive->SetBody(physicalBody);
             }
             else
             {

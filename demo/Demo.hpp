@@ -63,6 +63,19 @@ public:
     Primitive& MakePlane(mechanics::Body body, glm::dvec3 normal, scene::Primitive::Type type);
 
     /**
+    * @brief Creates an object describing a triangle
+    *
+    * The object contains only render-related part and is not registered in the physics world
+    *
+    * @param[in] body physical data
+    * @param[in] a triagne vertex
+    * @param[in] b triagne vertex
+    * @param[in] c triagne vertex
+    * @return a newly created Object
+    */
+    Primitive& MakeTriangle(mechanics::Body body, glm::vec3 a, glm::vec3 b, glm::vec3 c);
+
+    /**
      * @brief Creates an object describing a sphere
      *
      * Body::linearMotion::position is used as the position of the object,
@@ -89,13 +102,24 @@ public:
     Primitive& MakeBox(mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, scene::Primitive::Type type);
 
     /**
+    * @brief Creates an object describing a multiple triangles
+    *
+    * The object contains only render-related part and is not registered in the physics world
+    *
+    * @param[in] body physical data
+    * @param[in] triangles polygon data
+    * @return a newly created Object
+    */
+    Primitive& MakeTriangleCollection(mechanics::Body body, std::vector<glm::mat3> triangles);
+
+    /**
      * @brief Removes object from the demo
      * @param[in] object reference to the object to be deleted
      */
     void Remove(Primitive& object);
 
     //! Maximum number of particles in the demo
-    uint32_t const maxObjects = 20;
+    uint32_t const maxObjects = 2;
 
     /**
      * @brief Represents an instance of the render and physical objects
@@ -116,6 +140,37 @@ public:
 
         //! Render data
         std::unique_ptr<render::Primitive> renderPrimitive;
+
+        //! Collision debug information rendering
+        uint8_t debugRenderMask = 0;
+
+        //! Collision debug rendering masks
+        static uint8_t constexpr DRAW_CONTACT_POINTS                = 1 << 0;
+        static uint8_t constexpr DRAW_CONTACT_NORMALS               = 1 << 1;
+        static uint8_t constexpr DRAW_CONFIGURATION_SPACE_OBJECT    = 1 << 2;
+        static uint8_t constexpr DRAW_COLLISION_HIGHLIGHT           = 1 << 3;
+
+        /*
+         * @brief Sets debug rendering mask
+         *
+         * @param[in] mask the mask to set
+         * @param[in] value the binary value for the mask
+         */
+        void SetDebugRenderOption(uint8_t mask, bool value)
+        {
+            debugRenderMask = value ? (debugRenderMask | mask) : (debugRenderMask & ~mask);
+        }
+
+        /*
+         * @brief Checks debug rendering mask state
+         *
+         * @param[in] mask the mask to check
+         * @return @c true if the mask is set, @c false otherwise
+         */
+        bool IsDebugRenderOptionSet(uint8_t mask)
+        {
+            return mask & debugRenderMask;
+        }
     };
 
 private:
