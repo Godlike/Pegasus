@@ -85,6 +85,21 @@ mesh::Mesh mesh::CreatePlane(glm::dvec3 normal, double length)
     return mesh;
 }
 
+mesh::Mesh mesh::CreateTriangle(glm::dvec3 a, glm::dvec3 b, glm::dvec3 c)
+{
+    Mesh mesh;
+    glm::dvec3 const normal = glm::normalize(glm::cross(a - b, a - c));
+    mesh.vertices = { 
+        a.x, a.y, a.z, normal.x, normal.y, normal.z,
+        b.x, b.y, b.z, normal.x, normal.y, normal.z,
+        c.x, c.y, c.z, normal.x, normal.y, normal.z,
+    };
+    mesh.indices = { 0, 1, 2 };
+    Allocate(mesh);
+
+    return mesh;
+}
+
 mesh::Mesh mesh::CreateSphere(double radius, uint32_t depth)
 {
     //Initial hexahedron
@@ -196,6 +211,31 @@ mesh::Mesh mesh::CreateBox(glm::dvec3 i, glm::dvec3 j, glm::dvec3 k)
         16, 17, 18, 17, 18, 19, //back
         20, 21, 22, 21, 22, 23, //bottom
     };
+    Allocate(mesh);
+
+    return mesh;
+}
+
+mesh::Mesh mesh::CreateTriangleCollection(std::vector<glm::mat3> triangles)
+{
+    Mesh mesh;
+    for (size_t i = 0; i < triangles.size(); ++i)
+    {
+        glm::dvec3 const normal = glm::normalize(
+            glm::cross(triangles[i][0] - triangles[i][1], triangles[i][0] - triangles[i][2])
+        );
+
+        mesh.vertices.insert(mesh.vertices.end(), { 
+            triangles[i][0].x, triangles[i][0].y, triangles[i][0].z, normal.x, normal.y, normal.z, 
+            triangles[i][1].x, triangles[i][1].y, triangles[i][1].z, normal.x, normal.y, normal.z, 
+            triangles[i][2].x, triangles[i][2].y, triangles[i][2].z, normal.x, normal.y, normal.z,
+        });
+        mesh.indices.insert(mesh.indices.end(), { 
+            static_cast<GLuint>(i * 3 + 0), 
+            static_cast<GLuint>(i * 3 + 1), 
+            static_cast<GLuint>(i * 3 + 2)
+        });
+    }
     Allocate(mesh);
 
     return mesh;
@@ -754,6 +794,19 @@ double Sphere::GetRadius() const
     return m_radius;
 }
 
+Triangle::Triangle(glm::mat4 model, glm::vec3 color, glm::vec3 a, glm::vec3 b, glm::vec3 c)
+{
+    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
+    mesh = mesh::CreateTriangle(a, b, c);
+    mesh.model = model;
+    mesh.color = color;
+}
+
+glm::mat3 Triangle::GetVertices() const
+{
+    return { m_a, m_b, m_c };
+}
+
 Box::Box(glm::mat4 model, glm::vec3 color, Axes axes)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
@@ -765,4 +818,17 @@ Box::Box(glm::mat4 model, glm::vec3 color, Axes axes)
 Box::Axes Box::GetAxes() const
 {
     return m_axes;
+}
+
+TriangleCollection::TriangleCollection(glm::mat4 model, glm::vec3 color, std::vector<glm::mat3> const & triangles)
+{
+    mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
+    mesh = mesh::CreateTriangleCollection(triangles);
+    mesh.model = model;
+    mesh.color = color;
+}
+
+std::vector<glm::mat3> TriangleCollection::GetTriangles() const
+{
+    return m_triangles;
 }

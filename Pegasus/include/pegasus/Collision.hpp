@@ -131,8 +131,7 @@ private:
                     continue;
                 }
 
-                std::pair<Shape*, Shape*> const key = std::make_pair(aShape, bShape);
-
+                std::pair<Shape*, Shape*> const key = std::make_pair(std::min(aShape, bShape), std::max(aShape, bShape));
                 if (Intersect(aShape, bShape)
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
@@ -159,7 +158,7 @@ private:
     std::vector<Contact> Detect()
     {
         std::vector<Contact> contacts;
-        std::unordered_set<std::pair<ShapeA*, ShapeB*>, ObjectHasher> registeredContacts;
+        std::unordered_set<std::pair<void*, void*>, ObjectHasher> registeredContacts;
         std::vector<scene::Asset<scene::RigidBody>>& aObjects = m_assetManager->GetObjects<ObjectA, ShapeA>();
         std::vector<scene::Asset<scene::RigidBody>>& bObjects = m_assetManager->GetObjects<ObjectB, ShapeB>();
 
@@ -181,7 +180,10 @@ private:
 
                 ShapeA* aShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeA>(), aObject.data.shape);
                 ShapeB* bShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeB>(), bObject.data.shape);
-                std::pair<ShapeA*, ShapeB*> const key = std::make_pair(aShape, bShape);
+                std::pair<void*, void*> const key = std::make_pair(
+                    std::min(static_cast<void*>(aShape), static_cast<void*>(bShape)), 
+                    std::max(static_cast<void*>(aShape), static_cast<void*>(bShape))
+                );
 
                 if (Intersect(aShape, bShape)
                     && registeredContacts.find(key) == registeredContacts.end())

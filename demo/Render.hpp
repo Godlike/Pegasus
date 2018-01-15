@@ -73,6 +73,15 @@ Mesh CreateLineSegment(glm::vec3 start, glm::vec3 end);
 Mesh CreatePlane(glm::dvec3 normal, double length);
 
 /**
+* @brief Makes plane triangle and copies its data to the GPU memory
+* @param[in] a triangle vertex
+* @param[in] b triangle vertex
+* @param[in] c triangle vertex
+* @return created mesh
+*/
+Mesh CreateTriangle(glm::dvec3 a, glm::dvec3 b, glm::dvec3 c);
+
+/**
  * @brief Makes ICO sphere mesh and copies its data to the GPU memory
  * @param[in] radius sphere's radius
  * @param[in] depth sphere's level of the details
@@ -88,6 +97,13 @@ Mesh CreateSphere(double radius, uint32_t depth);
  * @return created mesh
  */
 Mesh CreateBox(glm::dvec3 i, glm::dvec3 j, glm::dvec3 k);
+
+/**
+* @brief Makes a mesh from triangles and copies its data to the GPU memory
+* @param[in] triangles polygon data
+* @return created mesh
+*/
+Mesh CreateTriangleCollection(std::vector<glm::mat3> triangles);
 
 /**
  * @brief Deallocates GPU and local memory used by the mesh
@@ -706,6 +722,32 @@ private:
     double m_sideLength;
 };
 
+/* Triangle mesh data container */
+class Triangle : public Primitive
+{
+public:
+    /**
+     * @brief Creates new triangle in the renderer
+     * @param model stores local to world space mesh transformation
+     * @param color primitive's color in the float rgb format
+     * @param a triangle vertex
+     * @param b triangle vertex
+     * @param c triangle vertex
+     */
+    Triangle(glm::mat4 model, glm::vec3 color, glm::vec3 a, glm::vec3 b, glm::vec3 c);
+
+    /**
+     * @brief Returns mesh vertices data
+     * @return vertices data
+     */
+    glm::mat3 GetVertices() const;
+
+private:
+    glm::vec3 m_a;
+    glm::vec3 m_b;
+    glm::vec3 m_c;
+};
+
 /** ICO sphere mesh data container */
 class Sphere : public Primitive
 {
@@ -758,7 +800,28 @@ private:
     Axes m_axes;
 };
 
+/* Triangle collection mesh data container */
+class TriangleCollection : public Primitive
+{
+public:
+    /**
+     * @brief Creates new triangle collection mesh in the renderer
+     * @param model stores local to rowld space mesh transformation
+     * @param color primitive's color in the float rgb format
+     * @param triangles vertices of the triangles 
+     */
+    TriangleCollection(glm::mat4 model, glm::vec3 color, std::vector<glm::mat3> const& triangles);
+
+    /**
+     * @brief Returns triangles vertices data
+     * @return vertices data
+     */
+    std::vector<glm::mat3> GetTriangles() const;
+
+private:
+    std::vector<glm::mat3> m_triangles;
+};
+
 } // namespace render
 } // namespace pegasus
-
 #endif // PEGASUS_DEMO_RENDER_HPP

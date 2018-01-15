@@ -63,6 +63,16 @@ Demo::Primitive& Demo::MakePlane(mechanics::Body body, glm::dvec3 normal, scene:
     return m_primitives.back();
 }
 
+Demo::Primitive& Demo::MakeTriangle(mechanics::Body body, glm::vec3 a, glm::vec3 b, glm::vec3 c)
+{
+    glm::mat4 const model{ glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
+        * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
+    render::Primitive* shape = new render::Triangle(model, glm::vec3(0.439, 0.502, 0.565), a, b, c);
+    m_primitives.emplace_back(nullptr, shape);
+
+    return m_primitives.back();
+}
+
 Demo::Primitive& Demo::MakeSphere(mechanics::Body body, double radius, scene::Primitive::Type type)
 {
     scene::Primitive* object = new scene::Sphere(type, body,
@@ -87,6 +97,16 @@ Demo::Primitive& Demo::MakeBox(
     render::Primitive* shape = new render::Box(model, glm::vec3(0.439, 0.502, 0.565), render::Box::Axes{i, j, k});
     m_primitives.emplace_back(object, shape);
     m_pGravityForce->Bind(*object);
+
+    return m_primitives.back();
+}
+
+Demo::Primitive& Demo::MakeTriangleCollection(mechanics::Body body, std::vector<glm::mat3> triangles)
+{
+    glm::mat4 const model{ glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
+        * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
+    render::Primitive* shape = new render::TriangleCollection(model, glm::vec3(0.439, 0.502, 0.565), triangles);
+    m_primitives.emplace_back(nullptr, shape);
 
     return m_primitives.back();
 }
