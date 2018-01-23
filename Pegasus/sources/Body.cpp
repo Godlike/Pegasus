@@ -32,7 +32,7 @@ void Body::Material::SetInfiniteMass()
     m_inverseMass = 0;
 }
 
-PEGASUS_EXPORT bool Body::Material::HasInfiniteMass() const
+bool Body::Material::HasInfiniteMass() const
 {
     return m_inverseMass == 0;
 }
