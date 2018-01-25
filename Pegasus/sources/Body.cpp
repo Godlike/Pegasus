@@ -32,6 +32,11 @@ void Body::Material::SetInfiniteMass()
     m_inverseMass = 0;
 }
 
+bool Body::Material::HasInfiniteMass() const
+{
+    return m_inverseMass == 0;
+}
+
 double Body::Material::GetMass() const
 {
     return m_mass;

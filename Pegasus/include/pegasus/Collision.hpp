@@ -57,6 +57,9 @@ public:
      */
     std::vector<std::vector<Contact>> Detect();
 
+    //!Default restitution factor for collision manifests
+    static double constexpr restitutionCoefficient = 0.75;
+
 private:
     struct ObjectHasher
     {
@@ -108,21 +111,31 @@ private:
             for (scene::Asset<scene::RigidBody> bObject : objects)
             {
                 if (aObject.id == 0 || bObject.id == 0)
+                {
                     continue;
+                }
+
+                mechanics::Body& aBody = m_assetManager->GetAsset(m_assetManager->GetBodies(), aObject.data.body);
+                mechanics::Body& bBody = m_assetManager->GetAsset(m_assetManager->GetBodies(), bObject.data.body);
+                if (aBody.material.HasInfiniteMass() && bBody.material.HasInfiniteMass())
+                {
+                    continue;
+                }
 
                 Shape* aShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<Shape>(), aObject.data.shape);
                 Shape* bShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<Shape>(), bObject.data.shape);
+                if (aShape == bShape)
+                {
+                    continue;
+                }
+
                 std::pair<Shape*, Shape*> const key = std::make_pair(aShape, bShape);
 
-                if (aShape != bShape
-                    && Intersect(aShape, bShape)
+                if (Intersect(aShape, bShape)
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
                     contacts.emplace_back(
-                        std::ref(m_assetManager->GetAsset(m_assetManager->GetBodies(), aObject.data.body)),
-                        std::ref(m_assetManager->GetAsset(m_assetManager->GetBodies(), bObject.data.body)),
-                        CalculateContactManifold(aShape, bShape),
-                        0.75
+                        std::ref(aBody), std::ref(bBody), CalculateContactManifold(aShape, bShape), restitutionCoefficient
                     );
                     registeredContacts.insert(key);
                 }
@@ -153,7 +166,16 @@ private:
             for (scene::Asset<scene::RigidBody> bObject : bObjects)
             {
                 if (aObject.id == 0 || bObject.id == 0)
+                {
                     continue;
+                }
+
+                mechanics::Body& aBody = m_assetManager->GetAsset(m_assetManager->GetBodies(), aObject.data.body);
+                mechanics::Body& bBody = m_assetManager->GetAsset(m_assetManager->GetBodies(), bObject.data.body);
+                if (aBody.material.HasInfiniteMass() && bBody.material.HasInfiniteMass())
+                {
+                    continue;
+                }
 
                 ShapeA* aShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeA>(), aObject.data.shape);
                 ShapeB* bShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeB>(), bObject.data.shape);
@@ -163,10 +185,7 @@ private:
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
                     contacts.emplace_back(
-                        std::ref(m_assetManager->GetAsset(m_assetManager->GetBodies(), aObject.data.body)),
-                        std::ref(m_assetManager->GetAsset(m_assetManager->GetBodies(), bObject.data.body)),
-                        CalculateContactManifold(aShape, bShape),
-                        0.75
+                        std::ref(aBody), std::ref(bBody), CalculateContactManifold(aShape, bShape), restitutionCoefficient
                     );
                     registeredContacts.insert(key);
                 }

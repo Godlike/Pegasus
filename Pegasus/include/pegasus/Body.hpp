@@ -37,6 +37,12 @@ struct Body
         PEGASUS_EXPORT void SetInfiniteMass();
 
         /**
+        * @brief Checks if the body has an infinite mass
+        * @return @c true if the mass is infinite, @c false otherwise
+        */
+        PEGASUS_EXPORT bool HasInfiniteMass() const;
+
+        /**
          * @brief Returns mass of the body
          * @return mass of the body
          */

@@ -47,6 +47,8 @@ std::vector<std::vector<Contact>> Detector::Detect()
     };
 }
 
+double constexpr Detector::restitutionCoefficient;
+
 bool Detector::Intersect(arion::SimpleShape const* aShape, arion::SimpleShape const* bShape)
 {
     return s_simpleShapeDetector.CalculateIntersection(aShape, bShape);
