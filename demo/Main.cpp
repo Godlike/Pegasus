@@ -5,6 +5,7 @@
 */
 
 #include "demo/Demo.hpp"
+#include <Arion/Debug.hpp>
 #include <list>
 
 std::list<pegasus::Demo::Primitive*> g_objects;
@@ -65,16 +66,49 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
     }
 }
 
+void EpaDebugCallback(
+        epona::QuickhullConvexHull<std::vector<glm::dvec3>>& convexHull,
+        std::vector<glm::dvec3>& polytopeVertices,
+        arion::intersection::gjk::Simplex& simplex
+    )
+{
+    static pegasus::Demo& demo = pegasus::Demo::GetInstance();
+    static pegasus::Demo::Primitive* primitive = nullptr;
+
+    if (primitive) {
+        demo.Remove(*primitive);
+        primitive = nullptr;
+    }
+
+    primitive = &demo.MakeTriangleCollection({}, { glm::mat3{
+            simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]
+        }, glm::mat3{
+            simplex.vertices[0], simplex.vertices[1], simplex.vertices[3]
+        }, glm::mat3{
+            simplex.vertices[1], simplex.vertices[2], simplex.vertices[3]
+        }, glm::mat3{
+            simplex.vertices[0], simplex.vertices[2], simplex.vertices[3]
+    }});
+}
+
 int main(int argc, char** argv)
 {
     pegasus::Demo& demo = pegasus::Demo::GetInstance();
+    auto& debug = arion::debug::Debug::GetInstace();
+    debug.epaDebugCallback = EpaDebugCallback;
 
     pegasus::render::Input& input = pegasus::render::Input::GetInstance();
     input.AddKeyButtonCallback(KeyButtonCallback);
 
+    //Ground
     pegasus::mechanics::Body plane;
     plane.linearMotion.position = glm::dvec3(0, -10, 0);
     g_objects.push_back(&demo.MakePlane(plane, glm::vec3(0, 1, 0), pegasus::scene::Primitive::Type::STATIC));
+
+    //Axes
+    g_objects.push_back(&demo.MakeLine({}, {1, 0, 0}, {0, 0, 0}, {1, 0, 0}));
+    g_objects.push_back(&demo.MakeLine({}, {0, 1, 0}, {0, 0, 0}, {0, 1, 0}));
+    g_objects.push_back(&demo.MakeLine({}, {0, 0, 1}, {0, 0, 0}, {0, 0, 1}));
 
     while (demo.IsValid())
     {

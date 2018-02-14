@@ -650,7 +650,7 @@ public:
     Primitive();
 
     /** Deallocates mesh memory */
-    ~Primitive();
+    virtual ~Primitive();
 
     /**
      * @brief Sets model matrix for the given primitive's mesh

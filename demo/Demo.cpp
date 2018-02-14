@@ -40,11 +40,11 @@ void Demo::RunFrame()
     std::this_thread::sleep_until(nextFrameTime);
 }
 
-Demo::Primitive& Demo::MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3 end)
+Demo::Primitive& Demo::MakeLine(mechanics::Body body, glm::vec3 color, glm::vec3 start, glm::vec3 end)
 {
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
-    render::Primitive* shape = new render::LineSegment(model, glm::vec3(0.439, 0.502, 0.565), start, end);
+    render::Primitive* shape = new render::LineSegment(model, color, start, end);
     m_primitives.emplace_back(nullptr, shape);
 
     return m_primitives.back();

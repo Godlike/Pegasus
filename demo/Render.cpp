@@ -56,9 +56,9 @@ mesh::Mesh mesh::CreateLineSegment(glm::vec3 start, glm::vec3 end)
     Mesh mesh;
 
     mesh.vertices = {
-        start.x, start.y, start.z, 0, 0, 0,
-        end.x, end.y, end.z, 0, 0, 0,
-        end.x, end.y, end.z, 0, 0, 0,
+        start.x, start.y, start.z, 1, 0, 0,
+        end.x, end.y, end.z, 0, 1, 0,
+        end.x, end.y, end.z, 0, 0, 1,
     };
     mesh.indices = { 0, 1, 2 };
     Allocate(mesh);
