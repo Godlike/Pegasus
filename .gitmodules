@@ -13,3 +13,6 @@
 [submodule "Pegasus/godlike/Arion"]
 	path = Pegasus/godlike/Arion
 	url = https://github.com/Godlike/Arion.git
+[submodule "Pegasus/godlike/Epona"]
+	path = Pegasus/godlike/Epona
+	url = https://github.com/Godlike/Epona.git

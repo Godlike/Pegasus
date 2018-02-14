@@ -44,11 +44,12 @@ public:
      * The object contains only render-related part and is not registered in the physics world
      *
      * @param[in] body physical data
+     * @param[in] color the line color
      * @param[in] start line start
      * @param[in] end line end
      * @return a newly created Object
      */
-    Primitive& MakeLine(mechanics::Body body, glm::vec3 start, glm::vec3 end);
+    Primitive& MakeLine(mechanics::Body body, glm::vec3 color, glm::vec3 start, glm::vec3 end);
 
     /**
      * @brief Creates an object describing a plane
