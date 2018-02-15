@@ -80,7 +80,6 @@ set_target_properties(
 )
 
 target_link_libraries(${PEGASUS_LIB}
-    ${EPONA_LIB}
     ${ARION_LIB}
 )
 
