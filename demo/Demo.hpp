@@ -108,10 +108,11 @@ public:
     * The object contains only render-related part and is not registered in the physics world
     *
     * @param[in] body physical data
+    * @param[in] color the mesh color
     * @param[in] triangles polygon data
     * @return a newly created Object
     */
-    Primitive& MakeTriangleCollection(mechanics::Body body, std::vector<glm::mat3> triangles);
+    Primitive& MakeTriangleCollection(mechanics::Body body, glm::vec3 color, std::vector<glm::mat3> triangles);
 
     /**
      * @brief Removes object from the demo
@@ -121,6 +122,9 @@ public:
 
     //! Maximum number of particles in the demo
     uint32_t const maxObjects = 2;
+
+    //! Physics calculation state
+    bool calculatePhysics = true;
 
     /**
      * @brief Represents an instance of the render and physical objects

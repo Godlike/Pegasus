@@ -22,10 +22,14 @@ include_directories(${IMGUI_INCLUDE_DIR})
 
 #Target
 include(PegasusConfig)
+set(PEGASUS_DEMO_INCLUDE_DIR
+    ${PEGASUS_ROOT}/demo
+)
 include_directories (
     ${PEGASUS_INCLUDE_DIR}
     ${EPONA_INCLUDE_DIR}
     ${ARION_INCLUDE_DIR}
+    ${PEGASUS_DEMO_INCLUDE_DIR}
 )
 set(DEMO_HEADERS
     Demo.hpp
