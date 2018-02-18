@@ -16,6 +16,10 @@ include(GlfwConfig)
 add_subdirectory(${GLFW_SOURCE_DIR} ${GLFW_BINARY_DIR})
 include_directories(${GLFW_INCLUDE_DIR})
 
+#IMGUI
+include(ImguiConfig)
+include_directories(${IMGUI_INCLUDE_DIR})
+
 #Target
 include(PegasusConfig)
 include_directories (
@@ -37,6 +41,7 @@ set(DEMO_SOURCES
 add_executable (${PROJECT_NAME}
     ${DEMO_SOURCES}
     ${DEMO_HEADERS}
+    ${IMGUI_SOURCES}
 )
 target_link_libraries(${PROJECT_NAME}
     ${OPENGL_LIBRARIES}
