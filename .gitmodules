@@ -16,3 +16,6 @@
 [submodule "Pegasus/godlike/Epona"]
 	path = Pegasus/godlike/Epona
 	url = https://github.com/Godlike/Epona.git
+[submodule "third_party/imgui"]
+	path = third_party/imgui
+	url = https://github.com/ocornut/imgui.git
