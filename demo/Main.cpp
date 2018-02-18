@@ -61,6 +61,12 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
             g_objects.pop_back();
         }
         break;
+    case GLFW_KEY_P:
+        if (action == GLFW_RELEASE) 
+        {
+            demo.calculatePhysics = !demo.calculatePhysics;
+        }
+        break;
     default:
         break;
     }
@@ -73,14 +79,25 @@ void EpaDebugCallback(
     )
 {
     static pegasus::Demo& demo = pegasus::Demo::GetInstance();
-    static pegasus::Demo::Primitive* primitive = nullptr;
+    static pegasus::Demo::Primitive* gjkSimplex = nullptr;
+    static pegasus::Demo::Primitive* epaPolytope = nullptr;
 
-    if (primitive) {
-        demo.Remove(*primitive);
-        primitive = nullptr;
+    if (gjkSimplex) {
+        demo.Remove(*gjkSimplex);
+        demo.Remove(*epaPolytope);
+        gjkSimplex = nullptr;
+        epaPolytope = nullptr;
     }
 
-    primitive = &demo.MakeTriangleCollection({}, { glm::mat3{
+    std::vector<glm::mat3> triangles;
+    for (auto& face : convexHull.GetFaces())
+    {
+        auto indices = face.GetIndices();
+        triangles.emplace_back(polytopeVertices[indices[0]], polytopeVertices[indices[1]], polytopeVertices[indices[2]]);
+    }
+
+    epaPolytope = &demo.MakeTriangleCollection({}, { 0, 1, 0 }, triangles);
+    gjkSimplex = &demo.MakeTriangleCollection({}, { 1, 0, 0 }, { glm::mat3{
             simplex.vertices[0], simplex.vertices[1], simplex.vertices[2]
         }, glm::mat3{
             simplex.vertices[0], simplex.vertices[1], simplex.vertices[3]

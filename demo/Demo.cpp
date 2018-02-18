@@ -35,7 +35,10 @@ void Demo::RunFrame()
     nextFrameTime += deltaTime;
 
     RenderFrame();
-    ComputeFrame(static_cast<double>(deltaTime.count()) / 1e3);
+    if (calculatePhysics) 
+    {
+        ComputeFrame(static_cast<double>(deltaTime.count()) / 1e3);
+    }
 
     std::this_thread::sleep_until(nextFrameTime);
 }
@@ -101,11 +104,11 @@ Demo::Primitive& Demo::MakeBox(
     return m_primitives.back();
 }
 
-Demo::Primitive& Demo::MakeTriangleCollection(mechanics::Body body, std::vector<glm::mat3> triangles)
+Demo::Primitive& Demo::MakeTriangleCollection(mechanics::Body body, glm::vec3 color, std::vector<glm::mat3> triangles)
 {
     glm::mat4 const model{ glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
-    render::Primitive* shape = new render::TriangleCollection(model, glm::vec3(0.439, 0.502, 0.565), triangles);
+    render::Primitive* shape = new render::TriangleCollection(model, color, triangles);
     m_primitives.emplace_back(nullptr, shape);
 
     return m_primitives.back();

@@ -544,6 +544,8 @@ private:
      */
     void InitializeGlfw();
 
+    void InitializeImgui();
+
     /**
      * @brief Initializes GLFW context
      * @attention must be called from the main thread

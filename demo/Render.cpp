@@ -5,6 +5,8 @@
 */
 #include "demo/Render.hpp"
 #include <Epona/Analysis.hpp>
+#include <imgui.h>
+#include <imgui_impl_glfw_gl3.h>
 
 using namespace pegasus;
 using namespace render;
@@ -490,11 +492,16 @@ bool Renderer::IsValid() const
 
 void Renderer::RenderFrame()
 {
+    //Poll events and initilize imgui
+    glfwPollEvents();
+    ImGui_ImplGlfwGL3_NewFrame();
+
+    //Clear buffer
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    //Render primitives
     glUseProgram(m_program.handle);
-
     for (Asset<mesh::Mesh>& mesh : m_meshes)
     {
         glBindVertexArray(mesh.data.bufferData.vertexArrayObject);
@@ -516,9 +523,22 @@ void Renderer::RenderFrame()
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
     }
+    
+    {
+        bool show_another_window = true;
+        ImGui::Begin("Another Window", &show_another_window);
+        ImGui::Text("Hello from another window!");
+        if (ImGui::Button("Close Me"))
+            show_another_window = false;
+        ImGui::End();
+    }
 
+    //Render imgui interface
+    ImGui::Render();
+    ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+
+    //Swap buffers
     glfwSwapBuffers(m_window.pWindow);
-    glfwPollEvents();
 }
 
 Handle Renderer::MakeMesh()
@@ -541,6 +561,7 @@ Renderer::Renderer()
 {
     InitializeGlfw();
     InitializeContext();
+    InitializeImgui();
     InitializeCallbacks();
     InitializeShaderProgram();
 
@@ -556,6 +577,11 @@ Renderer::~Renderer()
     input.RemoveResizeCallback(&Renderer::Resize);
     input.RemoveKeyButtonCallback(&Renderer::KeyButton);
 
+    //Deinitialize imgui
+    ImGui_ImplGlfwGL3_Shutdown();
+    ImGui::DestroyContext();
+
+    //Deinitialize glfw
     glfwTerminate();
 }
 
@@ -566,6 +592,13 @@ void Renderer::InitializeGlfw()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
+}
+
+void pegasus::render::Renderer::InitializeImgui()
+{
+    ImGui::CreateContext();
+    ImGui_ImplGlfwGL3_Init(m_window.pWindow, true);   
+    ImGui::StyleColorsDark();
 }
 
 void Renderer::InitializeContext()

@@ -12,6 +12,7 @@ set(GLFW_DOCUMENT_INTERNALS OFF CACHE BOOL "Flag to override default GLFW_DOCUME
 set(GLFW_SOURCE_DIR "${PEGASUS_ROOT}/third_party/glfw" CACHE STRING "Path to GLFW root directory")
 set(GLFW_BINARY_DIR "${CMAKE_BINARY_DIR}/glfw" CACHE STRING "Path to GLFW binary directory")
 set(GLFW_LIB "glfw" CACHE STRING "Name of GLFW library")
+
 set(GLFW_INCLUDE_DIR
     "${GLFW_SOURCE_DIR}/include"
     "${GLFW_SOURCE_DIR}/deps"
