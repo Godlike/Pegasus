@@ -516,21 +516,26 @@ void Renderer::RenderFrame()
         glUniformMatrix4fv(m_modelUniformHandle, 1, GL_FALSE, glm::value_ptr(mesh.data.model));
         glUniformMatrix4fv(m_mvpUniformHandle, 1, GL_FALSE, glm::value_ptr(modelViewProjection));
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
+        if (PrimitiveRenderType::SOLID == primitiveRenderType 
+            || PrimitiveRenderType::WIRE_SOLID == primitiveRenderType)
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
+        }
 
-        glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(glm::vec3(0.2,0.2,0.2)));
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
+        if (PrimitiveRenderType::WIRE == primitiveRenderType
+            || PrimitiveRenderType::WIRE_SOLID == primitiveRenderType)
+        {
+            glUniform3fv(m_colorUniformHandle, 1, glm::value_ptr(glm::vec3(0.2, 0.2, 0.2)));
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
+        }
     }
-    
+   
+    //Draw UI if possible
+    if (drawUiCallback)
     {
-        bool show_another_window = true;
-        ImGui::Begin("Another Window", &show_another_window);
-        ImGui::Text("Hello from another window!");
-        if (ImGui::Button("Close Me"))
-            show_another_window = false;
-        ImGui::End();
+        drawUiCallback();
     }
 
     //Render imgui interface
@@ -598,7 +603,9 @@ void pegasus::render::Renderer::InitializeImgui()
 {
     ImGui::CreateContext();
     ImGui_ImplGlfwGL3_Init(m_window.pWindow, true);   
-    ImGui::StyleColorsDark();
+    ImGui::StyleColorsClassic();
+    ImGuiIO& io = ImGui::GetIO();
+    io.NavFlags |= ImGuiNavFlags_EnableKeyboard;
 }
 
 void Renderer::InitializeContext()
@@ -668,6 +675,7 @@ void Renderer::Resize(GLFWwindow* /*window*/, int width, int height)
 
 void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+    Renderer& renderer = GetInstance();
     Camera& camera = GetInstance().m_camera;
     glm::vec3 const left = glm::normalize(glm::cross(camera.GetUp(), camera.GetDirection()));
     GLint const nextCursorMode =
@@ -706,9 +714,10 @@ void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, 
                 camera.SetPosition(camera.GetPosition() + (-camera.GetUp() * 0.2f));
             }
             break;
-        case GLFW_KEY_C:
+        case GLFW_KEY_F:
             if (action == GLFW_RELEASE) {
                 glfwSetInputMode(window, GLFW_CURSOR, nextCursorMode);
+                renderer.freeLook = !renderer.freeLook;
             }
             break;
         default:
@@ -718,7 +727,7 @@ void Renderer::KeyButton(GLFWwindow* window, int key, int scancode, int action, 
 
 void Renderer::CursorMove(GLFWwindow* window, double xpos, double ypos)
 {
-    if (glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
+    if (!GetInstance().freeLook)
     {
         return;
     }

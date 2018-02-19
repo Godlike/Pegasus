@@ -442,6 +442,20 @@ public:
      */
     void RemoveMesh(Handle id);
 
+    //! Imgui interface rendering call function pointer
+    std::function<void()> drawUiCallback;
+
+    //! Primitive rendering polygone mode type
+    enum class PrimitiveRenderType : uint8_t 
+    {
+        WIRE,
+        SOLID,
+        WIRE_SOLID,
+    };
+
+    //! Current polygone mode type
+    PrimitiveRenderType primitiveRenderType = PrimitiveRenderType::WIRE_SOLID;
+
 private:
     /** Stores GLFW window handler and window related information */
     struct Window
@@ -467,6 +481,7 @@ private:
     bool m_initialized;
     Window m_window;
     Camera m_camera;
+    bool freeLook = false;
     std::vector<Asset<mesh::Mesh>> m_meshes;
 
     shader::Program m_program;
@@ -544,6 +559,10 @@ private:
      */
     void InitializeGlfw();
 
+    /**
+     * @brief Initializes Imgui library
+     * @attention must be called from the main thread
+     */
     void InitializeImgui();
 
     /**

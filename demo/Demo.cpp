@@ -6,13 +6,178 @@
 
 #include "demo/Demo.hpp"
 #include <Arion/Shape.hpp>
+#include <Arion/Debug.hpp>
 
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
+#include <imgui.h>
 
 #include <chrono>
 #include <thread>
+
+namespace 
+{
+static bool g_gjkSimplexCheckbox = false;
+static bool g_epaPolytopeCheckbox = false;
+std::list<pegasus::Demo::Primitive*> g_objects;
+
+void EpaDebugCallback(
+        epona::QuickhullConvexHull<std::vector<glm::dvec3>>& convexHull,
+        std::vector<glm::dvec3>& polytopeVertices,
+        arion::intersection::gjk::Simplex& simplex
+    )
+{
+    static pegasus::Demo& demo = pegasus::Demo::GetInstance();
+    static pegasus::Demo::Primitive* gjkSimplex = nullptr;
+    static pegasus::Demo::Primitive* epaPolytope = nullptr;
+
+    if (gjkSimplex) 
+    {
+        demo.Remove(*gjkSimplex);
+        gjkSimplex = nullptr;
+    }
+    if (epaPolytope)
+    {
+        demo.Remove(*epaPolytope);
+        epaPolytope = nullptr;
+    }
+
+    if (g_epaPolytopeCheckbox) 
+    {
+        std::vector<glm::mat3> triangles;
+        for (auto& face : convexHull.GetFaces())
+        {
+            auto indices = face.GetIndices();
+            triangles.emplace_back(polytopeVertices[indices[0]], polytopeVertices[indices[1]], polytopeVertices[indices[2]]);
+        }
+        epaPolytope = &demo.MakeTriangleCollection({}, { 0, 1, 0 }, triangles);
+    }
+
+    if (g_gjkSimplexCheckbox) 
+    {
+        gjkSimplex = &demo.MakeTriangleCollection({}, { 1, 0, 0 }, {
+            glm::mat3{ simplex.vertices[0], simplex.vertices[1], simplex.vertices[2] },
+            glm::mat3{ simplex.vertices[0], simplex.vertices[1], simplex.vertices[3] },
+            glm::mat3{ simplex.vertices[1], simplex.vertices[2], simplex.vertices[3] },
+            glm::mat3{ simplex.vertices[0], simplex.vertices[2], simplex.vertices[3] },
+        });
+    }
+}
+
+void DrawUi()
+{
+    static bool physicsDebugWindowVisible = false;
+
+    ImGui::BeginMainMenuBar();
+    {
+        static bool item = false;
+        ImGui::MenuItem("Scene", "ctrl+s", &item);
+    }
+    ImGui::EndMainMenuBar();
+
+    ImGui::Begin("Physics debug", &physicsDebugWindowVisible);
+    {
+        auto& demo = pegasus::Demo::GetInstance();
+
+        {
+            ImGui::Text("CSO debug");
+            ImGui::Spacing();
+            ImGui::Checkbox("Draw GJK simplex", &g_gjkSimplexCheckbox);
+            ImGui::Checkbox("Draw EPA polytope", &g_epaPolytopeCheckbox);
+            ImGui::Spacing();
+        }
+
+        {
+            ImGui::Separator();
+            ImGui::Text("Simulation configs");
+            ImGui::Spacing();
+            ImGui::Checkbox("Use static frame duration", &demo.useStaticDuration);
+            float duration = static_cast<float>(demo.staticDuration);
+            ImGui::SliderFloat("Duration", &duration, 0.001f, 0.016f);
+            demo.staticDuration = duration;
+
+            if (ImGui::Button(demo.calculatePhysics ? "Pause" : "Run  "))
+            {
+                demo.calculatePhysics = !demo.calculatePhysics;
+            }
+            ImGui::Text("Frame: %.3f ms; (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::Spacing();
+        }
+        
+        {
+            ImGui::Separator();
+            ImGui::Text("Scene configs");
+            ImGui::Spacing();
+
+            const char* primitiveTypeComboItems[] = { "Sphere", "Box"};
+            static int currentPrimitiveType = 1;
+            ImGui::Combo("Primitive type", &currentPrimitiveType, primitiveTypeComboItems, IM_ARRAYSIZE(primitiveTypeComboItems));
+
+            const char* primitiveBodyTypeComboItems[] = { "Static", "Dynamic" };
+            static int currentPrimitiveBodyType = 1;
+            ImGui::Combo("Body type", &currentPrimitiveBodyType, primitiveBodyTypeComboItems, IM_ARRAYSIZE(primitiveBodyTypeComboItems));
+
+            static float position[3] = {};
+            ImGui::InputFloat3("Position (X Y Z)", position);
+
+            static float sphereRadius = 1;
+            static float boxSides[3] = { 1, 1, 1 };
+            if (currentPrimitiveType == 0)
+            {
+                ImGui::InputFloat("Radius", &sphereRadius);
+                if (ImGui::Button("Random")) 
+                {
+                    sphereRadius = rand() % 10 / 10.f;
+                }
+            }
+            else 
+            {
+                ImGui::InputFloat3("Axes (X Y Z)", boxSides);
+                if (ImGui::Button("Random"))
+                {
+                    boxSides[0] = (rand() % 10 / 10.f + 0.1f); 
+                    boxSides[1] = (rand() % 10 / 10.f + 0.1f); 
+                    boxSides[2] = (rand() % 10 / 10.f + 0.1f);
+                }
+            }
+
+            if (ImGui::Button("Make"))
+            {
+                if (g_objects.size() < demo.maxObjects)
+                {
+                    pegasus::mechanics::Body body;
+                    body.linearMotion.position = glm::make_vec3(position);
+
+                    auto bodyType = (currentPrimitiveBodyType == 0)
+                        ? pegasus::scene::Primitive::Type::STATIC 
+                        : pegasus::scene::Primitive::Type::DYNAMIC;
+
+                    if (currentPrimitiveType == 0)
+                    {
+                        g_objects.push_back(&demo.MakeSphere(body, sphereRadius, bodyType));
+                    } 
+                    else
+                    {
+                        g_objects.push_back(&demo.MakeBox(
+                            body, {boxSides[0], 0, 0}, {0, boxSides[1], 0}, {0, 0, boxSides[2]}, bodyType
+                        ));
+                    }
+                }
+            }
+            if (ImGui::Button("Clear"))
+            {
+                while (!g_objects.empty())
+                {
+                    demo.Remove(*g_objects.back());
+                    g_objects.pop_back();
+                }
+            }
+        }
+    }
+    ImGui::End();
+}
+} // namespace ::
 
 namespace pegasus
 {
@@ -134,6 +299,10 @@ Demo::Demo()
     : m_scene(scene::Scene::GetInstance())
     , m_renderer(render::Renderer::GetInstance())
 {
+    auto& debug = arion::debug::Debug::GetInstace();
+    debug.epaDebugCallback = ::EpaDebugCallback;
+    m_renderer.drawUiCallback = ::DrawUi;
+
     m_scene.Initialize(scene::AssetManager::GetInstance());
     m_pGravityForce = std::make_unique<scene::Force<force::StaticField>>(force::StaticField(glm::dvec3{ 0, -9.8, 0 }));
 }
@@ -141,8 +310,8 @@ Demo::Demo()
 void Demo::ComputeFrame(double duration)
 {
     //Compute physical data
-    m_scene.ComputeFrame(duration);
-
+    m_scene.ComputeFrame(useStaticDuration ? staticDuration : duration);
+    
     //Update render data
     for (Primitive& primitive : m_primitives)
     {

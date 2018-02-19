@@ -121,10 +121,16 @@ public:
     void Remove(Primitive& object);
 
     //! Maximum number of particles in the demo
-    uint32_t const maxObjects = 2;
+    uint32_t const maxObjects = 50;
 
     //! Physics calculation state
     bool calculatePhysics = true;
+
+    //! Physics runs with dynamic or static duration interval
+    bool useStaticDuration = true;
+
+    //! Physics frame duration
+    double staticDuration = 0.016;
 
     /**
      * @brief Represents an instance of the render and physical objects
