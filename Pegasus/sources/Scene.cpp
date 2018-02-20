@@ -3,6 +3,7 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
+#include <pegasus/Debug.hpp>
 #include <pegasus/Scene.hpp>
 #include <pegasus/Collision.hpp>
 #include <pegasus/Integration.hpp>
@@ -80,6 +81,7 @@ void Scene::ResolveCollisions(double duration) const
 {
     static collision::Detector detector(*m_assetManager);
     std::vector<std::vector<collision::Contact>> contacts = detector.Detect();
+    debug::Debug::CollisionDetectionCall(contacts);
 
     static collision::Resolver resolver;
     resolver.Resolve(contacts, duration);

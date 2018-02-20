@@ -31,6 +31,7 @@ include_directories(
 message(STATUS "Version: ${PEGASUS_VERSION}")
 
 set(PEGASUS_HEADERS
+    include/pegasus/Debug.hpp
     include/pegasus/Body.hpp
     include/pegasus/Force.hpp
     include/pegasus/Integration.hpp

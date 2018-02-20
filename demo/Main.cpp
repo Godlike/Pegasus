@@ -24,6 +24,7 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
             body.linearMotion.position = glm::dvec3(0, std::rand() % 100 / 10., 0);
             body.linearMotion.position = glm::dvec3(std::rand() % 100 / 10., std::rand() % 100 / 10., std::rand() % 100 / 10.);
             body.linearMotion.velocity = glm::dvec3(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
+            body.angularMotion.velocity = glm::dvec3(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
         
             static uint8_t isBox = false;
             isBox = !isBox;
@@ -79,6 +80,9 @@ int main(int argc, char** argv)
     demo.MakeLine({}, {1, 0, 0}, {0, 0, 0}, {1, 0, 0});
     demo.MakeLine({}, {0, 1, 0}, {0, 0, 0}, {0, 1, 0});
     demo.MakeLine({}, {0, 0, 1}, {0, 0, 0}, {0, 0, 1});
+    demo.MakeSphere({1, 0, 0}, 0.05, {1, 0, 0});
+    demo.MakeSphere({0, 1, 0}, 0.05, {0, 1, 0});
+    demo.MakeSphere({0, 0, 1}, 0.05, {0, 0, 1});
 
     while (demo.IsValid())
     {

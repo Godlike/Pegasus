@@ -57,10 +57,11 @@ mesh::Mesh mesh::CreateLineSegment(glm::vec3 start, glm::vec3 end)
 {
     Mesh mesh;
 
+    glm::dvec3 const normal = glm::normalize(epona::CalculateOrthogonalVector(end - start));
     mesh.vertices = {
-        start.x, start.y, start.z, 1, 0, 0,
-        end.x, end.y, end.z, 0, 1, 0,
-        end.x, end.y, end.z, 0, 0, 1,
+        start.x, start.y, start.z, normal.x, normal.y, normal.z,
+        end.x,   end.y,   end.z,   normal.x, normal.y, normal.z,
+        end.x,   end.y,   end.z,   normal.x, normal.y, normal.z,
     };
     mesh.indices = { 0, 1, 2 };
     Allocate(mesh);
