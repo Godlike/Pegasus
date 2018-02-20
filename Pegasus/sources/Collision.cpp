@@ -56,8 +56,9 @@ bool Detector::Intersect(arion::SimpleShape const* aShape, arion::SimpleShape co
 
 arion::SimpleShapeIntersectionDetector Detector::s_simpleShapeDetector;
 
-Contact::Manifold Detector::CalculateContactManifold(arion::SimpleShape const* aShape,
-    arion::SimpleShape const* bShape)
+Contact::Manifold Detector::CalculateContactManifold(
+        arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
+    )
 {
     Contact::Manifold manifold;
 

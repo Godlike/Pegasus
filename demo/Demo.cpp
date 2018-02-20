@@ -5,6 +5,7 @@
 */
 
 #include "demo/Demo.hpp"
+#include <pegasus/Debug.hpp>
 #include <Arion/Shape.hpp>
 #include <Arion/Debug.hpp>
 
@@ -20,7 +21,35 @@ namespace
 {
 static bool g_gjkSimplexCheckbox = false;
 static bool g_epaPolytopeCheckbox = false;
+static bool g_collisionPointsCheckbox = false;
 std::list<pegasus::Demo::Primitive*> g_objects;
+
+void CollisionDetectionDebugCallback(
+        std::vector<std::vector<pegasus::collision::Contact>>& contacts
+    )
+{
+    static pegasus::Demo& demo = pegasus::Demo::GetInstance();
+    static std::vector<pegasus::Demo::Primitive*> contactPoints;
+
+    if (g_collisionPointsCheckbox)
+    {
+        for (auto p : contactPoints)
+        {
+            demo.Remove(*p);
+            p = nullptr;
+        }
+        contactPoints.clear();
+
+        for (auto& c : contacts)
+        {
+            for (auto& contact : c)
+            {
+                contactPoints.push_back(&demo.MakeSphere(contact.manifold.aContactPoint, 0.05, { 1, 0, 0 }));
+                contactPoints.push_back(&demo.MakeSphere(contact.manifold.bContactPoint, 0.05, { 0, 1, 0 }));
+            }
+        }
+    }
+}
 
 void EpaDebugCallback(
         epona::QuickhullConvexHull<std::vector<glm::dvec3>>& convexHull,
@@ -76,6 +105,7 @@ void DrawUi()
     }
     ImGui::EndMainMenuBar();
 
+
     ImGui::Begin("Physics debug", &physicsDebugWindowVisible);
     {
         auto& demo = pegasus::Demo::GetInstance();
@@ -88,6 +118,19 @@ void DrawUi()
             ImGui::Spacing();
         }
 
+        const char* primitiveBodyTypeComboItems[] = { "Static", "Dynamic" };
+        static int currentPrimitiveBodyType = 1;
+        ImGui::Combo("Body type", &currentPrimitiveBodyType, primitiveBodyTypeComboItems, IM_ARRAYSIZE(primitiveBodyTypeComboItems));
+
+        static float position[3] = { 0, 0, 0 };
+        ImGui::InputFloat3("Position (X Y Z)", position, 3);
+
+        static float angleAxis[4] = {};
+        ImGui::InputFloat4("Angle, Axis (X Y Z)", angleAxis, 3);
+
+        static float sphereRadius = 1;
+        static float boxSides[3] = { 0.5f, 0.5f, 0.5f };
+        if (currentPrimitiveType == 0)
         {
             ImGui::Separator();
             ImGui::Text("Simulation configs");
@@ -109,6 +152,12 @@ void DrawUi()
             ImGui::Separator();
             ImGui::Text("Scene configs");
             ImGui::Spacing();
+
+            const char* primitiveRenderComboItems[] = { "Wire", "Solid", "Wire&Solid" };
+            static int currentPrimitiveRenderType = 2;
+            ImGui::Combo("Render type", &currentPrimitiveRenderType, primitiveRenderComboItems, IM_ARRAYSIZE(primitiveRenderComboItems));
+            auto& render = pegasus::render::Renderer::GetInstance();
+            render.primitiveRenderType = static_cast<pegasus::render::Renderer::PrimitiveRenderType>(currentPrimitiveRenderType);
 
             const char* primitiveTypeComboItems[] = { "Sphere", "Box"};
             static int currentPrimitiveType = 1;
@@ -231,11 +280,11 @@ Demo::Primitive& Demo::MakePlane(mechanics::Body body, glm::dvec3 normal, scene:
     return m_primitives.back();
 }
 
-Demo::Primitive& Demo::MakeTriangle(mechanics::Body body, glm::vec3 a, glm::vec3 b, glm::vec3 c)
+Demo::Primitive& Demo::MakeTriangle(mechanics::Body body, glm::vec3 color, glm::vec3 a, glm::vec3 b, glm::vec3 c)
 {
     glm::mat4 const model{ glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
-    render::Primitive* shape = new render::Triangle(model, glm::vec3(0.439, 0.502, 0.565), a, b, c);
+    render::Primitive* shape = new render::Triangle(model, color, a, b, c);
     m_primitives.emplace_back(nullptr, shape);
 
     return m_primitives.back();
@@ -247,9 +296,19 @@ Demo::Primitive& Demo::MakeSphere(mechanics::Body body, double radius, scene::Pr
         arion::Sphere(body.linearMotion.position, body.angularMotion.orientation, radius));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
-    render::Primitive* shape = new render::Sphere(model, glm::vec3(0.439, 0.502, 0.565),  radius);
+    render::Primitive* shape = new render::Sphere(model, glm::vec3(0.439, 0.502, 0.565), radius);
     m_primitives.emplace_back(object, shape);
     m_pGravityForce->Bind(*object);
+
+    return m_primitives.back();
+}
+
+Demo::Primitive& Demo::MakeSphere(glm::dvec3 center, double radius, glm::vec3 color)
+{
+    glm::mat4 const model{ glm::translate(glm::mat4(1), glm::vec3(center))
+        * glm::mat4(glm::toMat4(glm::dquat(glm::angleAxis(0.0, glm::dvec3{ 0, 0, 0 })))) };
+    render::Primitive* shape = new render::Sphere(model, color, radius);
+    m_primitives.emplace_back(nullptr, shape);
 
     return m_primitives.back();
 }
@@ -299,8 +358,12 @@ Demo::Demo()
     : m_scene(scene::Scene::GetInstance())
     , m_renderer(render::Renderer::GetInstance())
 {
-    auto& debug = arion::debug::Debug::GetInstace();
-    debug.epaDebugCallback = ::EpaDebugCallback;
+    auto& arionDebug = arion::debug::Debug::GetInstace();
+    arionDebug.epaCallback = ::EpaDebugCallback;
+
+    auto& pegasusDebug = pegasus::debug::Debug::GetInstace();
+    pegasusDebug.collisionDetectionCall = ::CollisionDetectionDebugCallback;
+
     m_renderer.drawUiCallback = ::DrawUi;
 
     m_scene.Initialize(scene::AssetManager::GetInstance());

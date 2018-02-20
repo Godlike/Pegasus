@@ -74,7 +74,7 @@ public:
     * @param[in] c triagne vertex
     * @return a newly created Object
     */
-    Primitive& MakeTriangle(mechanics::Body body, glm::vec3 a, glm::vec3 b, glm::vec3 c);
+    Primitive& MakeTriangle(mechanics::Body body, glm::vec3 color, glm::vec3 a, glm::vec3 b, glm::vec3 c);
 
     /**
      * @brief Creates an object describing a sphere
@@ -87,6 +87,18 @@ public:
      * @return a newly created Object
      */
     Primitive& MakeSphere(mechanics::Body body, double radius, scene::Primitive::Type type);
+
+    /**
+    * @brief Creates an object describing a sphere
+    *
+    * The object contains only render-related part and is not registered in the physics world
+    *
+    * @param[in] center position of the center of the sphere
+    * @param[in] radius radius of the sphere
+    * @param[in] color the color of the mesh
+    * @return a newly created Object
+    */
+    Primitive& MakeSphere(glm::dvec3 center, double radius, glm::vec3 color);
 
     /**
      * @brief Creates an object describing a box
