@@ -138,6 +138,9 @@ public:
     //! Physics calculation state
     bool calculatePhysics = true;
 
+    //! Allows to calculate one frame during the paused state
+    bool calculatePhysicsNextFrame = false;
+
     //! Physics runs with dynamic or static duration interval
     bool useStaticDuration = true;
 
@@ -163,37 +166,6 @@ public:
 
         //! Render data
         std::unique_ptr<render::Primitive> renderPrimitive;
-
-        //! Collision debug information rendering
-        uint8_t debugRenderMask = 0;
-
-        //! Collision debug rendering masks
-        static uint8_t constexpr DRAW_CONTACT_POINTS                = 1 << 0;
-        static uint8_t constexpr DRAW_CONTACT_NORMALS               = 1 << 1;
-        static uint8_t constexpr DRAW_CONFIGURATION_SPACE_OBJECT    = 1 << 2;
-        static uint8_t constexpr DRAW_COLLISION_HIGHLIGHT           = 1 << 3;
-
-        /*
-         * @brief Sets debug rendering mask
-         *
-         * @param[in] mask the mask to set
-         * @param[in] value the binary value for the mask
-         */
-        void SetDebugRenderOption(uint8_t mask, bool value)
-        {
-            debugRenderMask = value ? (debugRenderMask | mask) : (debugRenderMask & ~mask);
-        }
-
-        /*
-         * @brief Checks debug rendering mask state
-         *
-         * @param[in] mask the mask to check
-         * @return @c true if the mask is set, @c false otherwise
-         */
-        bool IsDebugRenderOptionSet(uint8_t mask)
-        {
-            return mask & debugRenderMask;
-        }
     };
 
 private:
