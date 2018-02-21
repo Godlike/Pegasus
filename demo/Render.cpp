@@ -507,8 +507,7 @@ void Renderer::RenderFrame()
     {
         glBindVertexArray(mesh.data.bufferData.vertexArrayObject);
 
-        glm::mat4 const viewProjection = m_camera.GetProjection() * m_camera.GetView();
-        glm::mat4 const modelViewProjection = viewProjection * mesh.data.model;
+        glm::mat4 const modelViewProjection = m_camera.GetProjection() * m_camera.GetView() * mesh.data.model;
         glm::vec3 const light{ glm::normalize(glm::vec3{ -0.5, 1.0, 0.2 }) };
 
         glUniform3fv(m_lightUniformHandle, 1, glm::value_ptr(light));
@@ -570,8 +569,8 @@ Renderer::Renderer()
     InitializeImgui();
     InitializeCallbacks();
     InitializeShaderProgram();
-
-    m_camera.SetPosition(glm::vec3(1, 1, 1) * 15.f);
+    
+    m_camera.SetPosition(glm::vec3(1, 1, 1) * 4.f);
     m_camera.SetDirection(glm::normalize(glm::dvec3{-1, -1, -1}));
 }
 
