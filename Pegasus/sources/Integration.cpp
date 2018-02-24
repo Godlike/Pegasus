@@ -79,9 +79,9 @@ void IntegrateBody(
     linearMotion.force = glm::dvec3(0);
 }
 
-glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torque, double inertia)
+glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torque, glm::dmat3 inverseMomentOfInertia)
 {
-    return acceleration + torque * (1.0 / inertia);
+    return acceleration + inverseMomentOfInertia * torque;
 }
 
 glm::dquat IntegrateAngularDisplacement(glm::dquat orientation, glm::dvec3 velocity, double duration)
@@ -113,7 +113,7 @@ void IntegrateBody(
     )
 {
     glm::dvec3 const resultingAcceleration = ::IntegrateAngularAcceleration(
-        angularMotion.acceleration, angularMotion.torque, material.inertia);
+        angularMotion.acceleration, angularMotion.torque, material.GetInverseMomentOfInertia());
     angularMotion.orientation = ::IntegrateAngularDisplacement(
         angularMotion.orientation, angularMotion.velocity, duration);
     angularMotion.velocity = ::IntegrateAngularVelocity(

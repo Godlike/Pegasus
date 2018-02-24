@@ -29,15 +29,24 @@ struct Contact
      */
     struct Manifold
     {
+        //!Contact normal from the perspective of the b body
         glm::dvec3 normal;
+
+        //!Contact point in the world space on the a body
         glm::dvec3 aContactPoint;
+
+        //!Contact point in the world dpace on the b body
         glm::dvec3 bContactPoint;
+
+        //!Penetration depth of two bodies
         double penetration;
     };
 
     mechanics::Body* aBody;
     mechanics::Body* bBody;
     Manifold manifold;
+
+    //!Factor that's responsible for calculating the amount of energy lost to the deformation
     double restitution;
 };
 
