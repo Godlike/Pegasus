@@ -325,6 +325,7 @@ Demo::Primitive& Demo::MakeTriangle(mechanics::Body body, glm::vec3 color, glm::
 
 Demo::Primitive& Demo::MakeSphere(mechanics::Body body, double radius, scene::Primitive::Type type)
 {
+    body.material.SetMomentOfInertia(mechanics::CalculateSolidSphereMomentOfInertia(radius, body.material.GetMass()));
     scene::Primitive* object = new scene::Sphere(type, body,
         arion::Sphere(body.linearMotion.position, body.angularMotion.orientation, radius));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
@@ -350,6 +351,8 @@ Demo::Primitive& Demo::MakeBox(
         mechanics::Body body, glm::vec3 i, glm::vec3 j, glm::vec3 k, scene::Primitive::Type type
     )
 {
+    body.material.SetMomentOfInertia(mechanics::CalculateSolidCuboidMomentOfInertia(
+        glm::length(i), glm::length(j), glm::length(k), body.material.GetMass()));
     scene::Primitive* object = new scene::Box(type, body,
         arion::Box(body.linearMotion.position, body.angularMotion.orientation, i, j, k));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))

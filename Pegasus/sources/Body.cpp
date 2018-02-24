@@ -14,7 +14,8 @@ namespace mechanics
 
 Body::Material::Material()
     : damping(1)
-    , inertia(1)
+    , m_momentOfInertia(1)
+    , m_inverseMomentOfInertia(1)
     , m_mass(1)
     , m_inverseMass(1)
 {
