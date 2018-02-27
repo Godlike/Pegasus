@@ -34,6 +34,8 @@ void Body::Material::SetInfiniteMass()
 {
     m_mass = 0;
     m_inverseMass = 0;
+    m_momentOfInertia = glm::dmat3(0);
+    m_inverseMomentOfInertia = glm::dmat3(0);
 }
 
 bool Body::Material::HasInfiniteMass() const

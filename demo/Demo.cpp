@@ -22,6 +22,9 @@ namespace
 static bool g_gjkSimplexCheckbox = false;
 static bool g_epaPolytopeCheckbox = false;
 static bool g_collisionPointsCheckbox = false;
+static bool g_contactNormalsCheckbox = false;
+static bool g_originAxesCheckbox = true;
+static bool g_pauseOnCollisionCheckbox = false;
 std::list<pegasus::Demo::Primitive*> g_objects;
 
 void CollisionDetectionDebugCallback(
@@ -30,13 +33,13 @@ void CollisionDetectionDebugCallback(
 {
     static pegasus::Demo& demo = pegasus::Demo::GetInstance();
     static std::vector<pegasus::Demo::Primitive*> contactPoints;
+    static std::vector<pegasus::Demo::Primitive*> contactNormals;
 
     if (g_collisionPointsCheckbox)
     {
         for (auto p : contactPoints)
         {
             demo.Remove(*p);
-            p = nullptr;
         }
         contactPoints.clear();
 
@@ -46,6 +49,37 @@ void CollisionDetectionDebugCallback(
             {
                 contactPoints.push_back(&demo.MakeSphere(contact.manifold.aContactPoint, 0.05, { 1, 0, 0 }));
                 contactPoints.push_back(&demo.MakeSphere(contact.manifold.bContactPoint, 0.05, { 0, 1, 0 }));
+            }
+        }
+    }
+
+    if (g_contactNormalsCheckbox)
+    {
+        for (auto p : contactNormals)
+        {
+            demo.Remove(*p);
+        }
+        contactNormals.clear();
+
+        for (auto& c : contacts)
+        {
+            for (auto& contact : c)
+            {
+                static pegasus::mechanics::Body line;
+                line.linearMotion.position = contact.manifold.bContactPoint;
+                contactNormals.push_back(&demo.MakeLine(line, { 1, 0, 0 }, {}, contact.manifold.normal));
+            }
+        }
+    }
+
+    if (g_pauseOnCollisionCheckbox)
+    {
+        for (auto c : contacts)
+        {
+            if (!c.empty())
+            {
+                demo.calculatePhysics = false;
+                break;
             }
         }
     }
@@ -95,16 +129,24 @@ void GjkDebugCallback(
 void EpaDebugCallback(
         epona::QuickhullConvexHull<std::vector<glm::dvec3>>& convexHull,
         std::vector<glm::dvec3>& polytopeVertices,
-        arion::intersection::gjk::Simplex& simplex
+        arion::intersection::gjk::Simplex& simplex,
+        glm::dvec3 supportVertex,
+        glm::dvec3 direction
     )
 {
     static pegasus::Demo& demo = pegasus::Demo::GetInstance();
     static pegasus::Demo::Primitive* epaPolytope = nullptr;
+    static pegasus::Demo::Primitive* sphere = nullptr;
+    static pegasus::Demo::Primitive* normal = nullptr;
 
     if (epaPolytope)
     {
         demo.Remove(*epaPolytope);
+        demo.Remove(*sphere);
+        demo.Remove(*normal);
         epaPolytope = nullptr;
+        sphere = nullptr;
+        normal = nullptr;
     }
 
     if (g_epaPolytopeCheckbox)
@@ -116,34 +158,81 @@ void EpaDebugCallback(
             triangles.emplace_back(polytopeVertices[indices[0]], polytopeVertices[indices[1]], polytopeVertices[indices[2]]);
         }
         epaPolytope = &demo.MakeTriangleCollection({}, { 0, 1, 0 }, triangles);
+        sphere = &demo.MakeSphere(supportVertex, 0.05, { 1, 1, 1 });
+        normal = &demo.MakeLine({}, { 1, 1, 1 }, supportVertex, supportVertex + direction);
     }
 }
 
 void DrawUi()
 {
-    static bool csoDebugWindowVisible = true;
-    static bool simulationDebugWindowVisible = true;
-    static bool sceneDebugWindowVisible = true;
+    static bool collisionDebugWindowVisible = true;
+    static bool sceneConfigWindowVisible = true;
+    static bool objectsWindowVisible = true;
 
     ImGui::BeginMainMenuBar();
     {
-        static bool item = false;
-        ImGui::MenuItem("Scene", "ctrl+s", &item);
+        if (ImGui::BeginMenu("Tools"))
+        {
+            if (ImGui::MenuItem("Objects", "Alt+O")) 
+            { 
+                objectsWindowVisible = true; 
+            }
+            if (ImGui::MenuItem("Scene configs", "Alt+S")) 
+            { 
+                sceneConfigWindowVisible = true; 
+            }
+            if (ImGui::MenuItem("Collision debug", "Alt+C")) 
+            { 
+                collisionDebugWindowVisible = true; 
+            }
+            ImGui::EndMenu();
+        }
     }
     ImGui::EndMainMenuBar();
 
     auto& demo = pegasus::Demo::GetInstance();
 
-    ImGui::Begin("Collision debug", &csoDebugWindowVisible);
+    if (collisionDebugWindowVisible)
     {
+        ImGui::Begin("Collision debug", &collisionDebugWindowVisible);
         ImGui::Checkbox("Draw GJK simplex", &g_gjkSimplexCheckbox);
         ImGui::Checkbox("Draw EPA polytope", &g_epaPolytopeCheckbox);
         ImGui::Checkbox("Draw contact points", &g_collisionPointsCheckbox);
+        ImGui::Checkbox("Draw contact normals", &g_contactNormalsCheckbox);
+        ImGui::End();
     }
-    ImGui::End();
 
-    ImGui::Begin("Scene configs", &simulationDebugWindowVisible);
+    if (sceneConfigWindowVisible)
     {
+        ImGui::Begin("Scene configs", &sceneConfigWindowVisible);
+        ImGui::Checkbox("Draw origin axes", &g_originAxesCheckbox);
+        static std::vector<pegasus::Demo::Primitive*> axes;
+        if (g_originAxesCheckbox)
+        {
+            if (axes.empty())
+            {
+                axes.push_back(&demo.MakeLine({}, { 1, 0, 0 }, { 0, 0, 0 }, { 1, 0, 0 }));
+                axes.push_back(&demo.MakeLine({}, { 0, 1, 0 }, { 0, 0, 0 }, { 0, 1, 0 }));
+                axes.push_back(&demo.MakeLine({}, { 0, 0, 1 }, { 0, 0, 0 }, { 0, 0, 1 }));
+                axes.push_back(&demo.MakeSphere({ 1, 0, 0 }, 0.05, { 1, 0, 0 }));
+                axes.push_back(&demo.MakeSphere({ 0, 1, 0 }, 0.05, { 0, 1, 0 }));
+                axes.push_back(&demo.MakeSphere({ 0, 0, 1 }, 0.05, { 0, 0, 1 }));
+                axes.push_back(&demo.MakeLine({}, { 1, 0, 0 }, { 0, 0, 0 }, { -1,  0,  0 }));
+                axes.push_back(&demo.MakeLine({}, { 0, 1, 0 }, { 0, 0, 0 }, { 0, -1,  0 }));
+                axes.push_back(&demo.MakeLine({}, { 0, 0, 1 }, { 0, 0, 0 }, { 0,  0, -1 }));
+            }
+        } 
+        else
+        {
+            for (auto& axis : axes)
+            {
+                demo.Remove(*axis);
+            }
+            axes.clear();
+        }
+
+        ImGui::Checkbox("Pause on collision", &g_pauseOnCollisionCheckbox);
+
         ImGui::Checkbox("Use static frame duration", &demo.useStaticDuration);
         float duration = static_cast<float>(demo.staticDuration);
         ImGui::SliderFloat("Duration", &duration, 0.001f, 0.016f);
@@ -161,11 +250,12 @@ void DrawUi()
         }
         ImGui::Text("Frame: %.3f ms; (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Spacing();
+        ImGui::End();
     }
-    ImGui::End();
 
-    ImGui::Begin("Objects", &sceneDebugWindowVisible);
+    if (objectsWindowVisible)
     {
+        ImGui::Begin("Objects", &objectsWindowVisible);
         const char* primitiveRenderComboItems[] = { "Wire", "Solid", "Wire&Solid" };
         static int currentPrimitiveRenderType = 2;
         ImGui::Combo("Render type", &currentPrimitiveRenderType, primitiveRenderComboItems, IM_ARRAYSIZE(primitiveRenderComboItems));
@@ -247,6 +337,8 @@ void DrawUi()
                 g_objects.back()->physicalPrimitive->SetBody(body);
             }
         }
+
+        ImGui::SameLine();
         if (ImGui::Button("Clear"))
         {
             while (!g_objects.empty())
@@ -255,8 +347,8 @@ void DrawUi()
                 g_objects.pop_back();
             }
         }
+        ImGui::End();
     }
-    ImGui::End();
 }
 } // namespace ::
 
