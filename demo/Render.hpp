@@ -492,7 +492,7 @@ private:
     GLint m_eyeUniformHandle;
     GLchar const* m_pVertexShaderSources =
     R"(
-        #version 440
+        #version 330
 
         uniform mat4 model;
         uniform mat4 mvp;
@@ -512,7 +512,7 @@ private:
     )";
     GLchar const* m_pFragmentShaderSources =
     R"(
-        #version 440
+        #version 330
 
         uniform vec3 eye;
         uniform vec3 light;
