@@ -103,10 +103,12 @@ double Resolver::CalculateTotalSeparationSpeed(Contact contact)
 double Resolver::CalculatePureSeparationSpeed(Contact contact, double totalSeparationSpeed, double duration)
 {
     //Decompose acceleration caused separation velocity component
+    glm::dvec3 const accelerationCausedVelocity =
+        contact.aBody->linearMotion.acceleration - contact.bBody->linearMotion.acceleration;
+    double const accelerationCausedSeparationSpeed =
+        glm::dot(accelerationCausedVelocity, contact.manifold.normal * duration);
+
     double newSeparationSpeed = -totalSeparationSpeed * contact.restitution;
-    glm::dvec3 const accelerationCausedVelocity = contact.aBody->linearMotion.acceleration - contact.bBody->linearMotion.acceleration;
-    double const accelerationCausedSeparationSpeed = glm::dot(accelerationCausedVelocity,
-        contact.manifold.normal * duration);
     if (accelerationCausedSeparationSpeed < 0.0)
     {
         newSeparationSpeed += contact.restitution * accelerationCausedSeparationSpeed;
@@ -129,22 +131,46 @@ double Resolver::CalculateSeparationSpeed(Contact contact, double duration)
     return pureSeparationSpeed;
 }
 
-glm::dvec3 Resolver::CalculateTotalImpulse(Contact contact, double duration)
-{
-    double const separationSpeed = CalculateSeparationSpeed(contact, duration);
-    double const totalInverseMass = contact.aBody->material.GetInverseMass() + contact.bBody->material.GetInverseMass();
-    double const impulse = separationSpeed / totalInverseMass;
-    glm::dvec3 const totalImpulse = contact.manifold.normal * impulse;
-
-    return totalImpulse;
-}
-
 void Resolver::ResolveVelocity(Contact contact, double duration)
 {
-    glm::dvec3 const totalImpulse = CalculateTotalImpulse(contact, duration);
+    //Convert contact points to the local space
+    contact.manifold.aContactPoint -= contact.aBody->linearMotion.position;
+    contact.manifold.bContactPoint -= contact.bBody->linearMotion.position;
+    contact.restitution = 0.5;
 
-    contact.aBody->linearMotion.velocity = contact.aBody->linearMotion.velocity + totalImpulse * contact.aBody->material.GetInverseMass();
-    contact.bBody->linearMotion.velocity = contact.bBody->linearMotion.velocity + totalImpulse * -contact.bBody->material.GetInverseMass();
+    //Calculate total contact impulse magnitude
+    glm::dvec3 const aContactPointVelocity = contact.aBody->linearMotion.velocity
+        + glm::cross(contact.aBody->angularMotion.velocity, contact.manifold.aContactPoint);
+    glm::dvec3 const bContactPointVelocity = contact.bBody->linearMotion.velocity
+        + glm::cross(contact.bBody->angularMotion.velocity, contact.manifold.bContactPoint);
+
+    glm::dvec3 const aBodyAngularImpulse = contact.aBody->material.GetInverseMomentOfInertia()
+        * glm::cross(glm::cross(contact.manifold.aContactPoint, contact.manifold.normal), contact.manifold.aContactPoint);
+    glm::dvec3 const bBodyAngularImpulse = contact.bBody->material.GetInverseMomentOfInertia()
+        * glm::cross(glm::cross(contact.manifold.bContactPoint, contact.manifold.normal), contact.manifold.bContactPoint);
+
+    double const linearImpulsePerUnitMass = contact.aBody->material.GetInverseMass() + contact.bBody->material.GetInverseMass();
+    double const angularImpulsePerUnitMass = glm::dot(aBodyAngularImpulse + bBodyAngularImpulse, contact.manifold.normal);
+    double const totalImpulsePerUnitMass = linearImpulsePerUnitMass + angularImpulsePerUnitMass;
+    glm::dvec3 const relativeContactPointVelocity = aContactPointVelocity - bContactPointVelocity;
+
+    double const impulseMagnitude =
+        glm::dot(-(1 + contact.restitution) * relativeContactPointVelocity, contact.manifold.normal) / totalImpulsePerUnitMass;
+    glm::dvec3 const impulse = impulseMagnitude * contact.manifold.normal;
+
+    //Calculate post contact linear velocity
+    contact.aBody->linearMotion.velocity =
+        contact.aBody->linearMotion.velocity + impulse * contact.aBody->material.GetInverseMass();
+    contact.bBody->linearMotion.velocity =
+        contact.bBody->linearMotion.velocity - impulse * contact.bBody->material.GetInverseMass();
+
+    //Calculate post contact angular velocity
+    contact.aBody->angularMotion.velocity = contact.aBody->angularMotion.velocity
+        + (contact.aBody->material.GetInverseMomentOfInertia() * impulseMagnitude)
+        * glm::cross(contact.manifold.aContactPoint, contact.manifold.normal);
+    contact.bBody->angularMotion.velocity = contact.bBody->angularMotion.velocity
+        - (contact.bBody->material.GetInverseMomentOfInertia() * impulseMagnitude)
+        * glm::cross(contact.manifold.bContactPoint, contact.manifold.normal);
 }
 
 void Resolver::ResolveInterpenetration(Contact contact)

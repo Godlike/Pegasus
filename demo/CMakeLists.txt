@@ -25,6 +25,11 @@ include(PegasusConfig)
 set(PEGASUS_DEMO_INCLUDE_DIR
     ${PEGASUS_ROOT}/demo
 )
+configure_file(
+    "${PEGASUS_DEMO_INCLUDE_DIR}/fonts/Roboto-Medium.ttf"
+    ${CMAKE_CURRENT_BINARY_DIR}
+    COPYONLY
+)
 include_directories (
     ${PEGASUS_INCLUDE_DIR}
     ${EPONA_INCLUDE_DIR}

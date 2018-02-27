@@ -92,7 +92,7 @@ mesh::Mesh mesh::CreateTriangle(glm::dvec3 a, glm::dvec3 b, glm::dvec3 c)
 {
     Mesh mesh;
     glm::dvec3 const normal = glm::normalize(glm::cross(a - b, a - c));
-    mesh.vertices = { 
+    mesh.vertices = {
         a.x, a.y, a.z, normal.x, normal.y, normal.z,
         b.x, b.y, b.z, normal.x, normal.y, normal.z,
         c.x, c.y, c.z, normal.x, normal.y, normal.z,
@@ -228,14 +228,14 @@ mesh::Mesh mesh::CreateTriangleCollection(std::vector<glm::mat3> triangles)
             glm::cross(triangles[i][0] - triangles[i][1], triangles[i][0] - triangles[i][2])
         );
 
-        mesh.vertices.insert(mesh.vertices.end(), { 
-            triangles[i][0].x, triangles[i][0].y, triangles[i][0].z, normal.x, normal.y, normal.z, 
-            triangles[i][1].x, triangles[i][1].y, triangles[i][1].z, normal.x, normal.y, normal.z, 
+        mesh.vertices.insert(mesh.vertices.end(), {
+            triangles[i][0].x, triangles[i][0].y, triangles[i][0].z, normal.x, normal.y, normal.z,
+            triangles[i][1].x, triangles[i][1].y, triangles[i][1].z, normal.x, normal.y, normal.z,
             triangles[i][2].x, triangles[i][2].y, triangles[i][2].z, normal.x, normal.y, normal.z,
         });
-        mesh.indices.insert(mesh.indices.end(), { 
-            static_cast<GLuint>(i * 3 + 0), 
-            static_cast<GLuint>(i * 3 + 1), 
+        mesh.indices.insert(mesh.indices.end(), {
+            static_cast<GLuint>(i * 3 + 0),
+            static_cast<GLuint>(i * 3 + 1),
             static_cast<GLuint>(i * 3 + 2)
         });
     }
@@ -516,7 +516,7 @@ void Renderer::RenderFrame()
         glUniformMatrix4fv(m_modelUniformHandle, 1, GL_FALSE, glm::value_ptr(mesh.data.model));
         glUniformMatrix4fv(m_mvpUniformHandle, 1, GL_FALSE, glm::value_ptr(modelViewProjection));
 
-        if (PrimitiveRenderType::SOLID == primitiveRenderType 
+        if (PrimitiveRenderType::SOLID == primitiveRenderType
             || PrimitiveRenderType::WIRE_SOLID == primitiveRenderType)
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -531,7 +531,7 @@ void Renderer::RenderFrame()
             glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.data.indices.size()), GL_UNSIGNED_INT, nullptr);
         }
     }
-   
+
     //Draw UI if possible
     if (drawUiCallback)
     {
@@ -569,7 +569,7 @@ Renderer::Renderer()
     InitializeImgui();
     InitializeCallbacks();
     InitializeShaderProgram();
-    
+
     m_camera.SetPosition(glm::vec3(1, 1, 1) * 4.f);
     m_camera.SetDirection(glm::normalize(glm::dvec3{-1, -1, -1}));
 }
@@ -602,10 +602,11 @@ void Renderer::InitializeGlfw()
 void pegasus::render::Renderer::InitializeImgui()
 {
     ImGui::CreateContext();
-    ImGui_ImplGlfwGL3_Init(m_window.pWindow, true);   
-    ImGui::StyleColorsClassic();
+    ImGui_ImplGlfwGL3_Init(m_window.pWindow, true);
+    ImGui::StyleColorsLight();
     ImGuiIO& io = ImGui::GetIO();
     io.NavFlags |= ImGuiNavFlags_EnableKeyboard;
+    io.Fonts->AddFontFromFileTTF("Roboto-Medium.ttf", 14.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 }
 
 void Renderer::InitializeContext()

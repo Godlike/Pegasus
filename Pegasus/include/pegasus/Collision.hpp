@@ -35,7 +35,7 @@ struct Contact
         //!Contact point in the world space on the a body
         glm::dvec3 aContactPoint;
 
-        //!Contact point in the world dpace on the b body
+        //!Contact point in the world space on the b body
         glm::dvec3 bContactPoint;
 
         //!Penetration depth of two bodies
@@ -190,7 +190,7 @@ private:
                 ShapeA* aShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeA>(), aObject.data.shape);
                 ShapeB* bShape = &m_assetManager->GetAsset(m_assetManager->GetShapes<ShapeB>(), bObject.data.shape);
                 std::pair<void*, void*> const key = std::make_pair(
-                    std::min(static_cast<void*>(aShape), static_cast<void*>(bShape)), 
+                    std::min(static_cast<void*>(aShape), static_cast<void*>(bShape)),
                     std::max(static_cast<void*>(aShape), static_cast<void*>(bShape))
                 );
 
@@ -246,14 +246,6 @@ private:
      * @return separation speed
      */
     static double CalculateSeparationSpeed(Contact contact, double duration);
-
-    /**
-     * @brief Calculates total impulse of the contact
-     * @param contact contact information
-     * @param duration delta time of the frame
-     * @return total impulse
-     */
-    static glm::dvec3 CalculateTotalImpulse(Contact contact, double duration);
 
     /**
      * @brief Updates velocities of the bodies in the contact
