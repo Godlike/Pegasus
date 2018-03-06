@@ -39,6 +39,19 @@ public:
     void RunFrame();
 
     /**
+     * @brief Runs physics calculations with given duration
+     * @param duration duration of the physical frame
+     */
+    void ComputeFrame(double duration);
+
+    /**
+     * @brief Redraws the scene
+     *
+     * Rerenders the frame and updates current frame buffer
+     */
+    void RenderFrame() const;
+
+    /**
      * @brief Creates an object describing a line
      *
      * The object contains only render-related part and is not registered in the physics world
@@ -176,18 +189,6 @@ private:
 
     Demo();
 
-    /**
-     * @brief Runs physics calculations with given duration
-     * @param duration duration of the physical frame
-     */
-    void ComputeFrame(double duration);
-
-    /**
-     * @brief Redraws the scene
-     *
-     * Rerenders the frame and updates current frame buffer
-     */
-    void RenderFrame() const;
 };
 } // namespace pegasus
 

@@ -6,6 +6,7 @@
 
 #include "demo/Demo.hpp"
 #include <pegasus/Debug.hpp>
+#include <Epona/Analysis.hpp>
 #include <Arion/Shape.hpp>
 #include <Arion/Debug.hpp>
 
@@ -21,6 +22,9 @@ namespace
 {
 static bool g_gjkSimplexCheckbox = false;
 static bool g_epaPolytopeCheckbox = false;
+static bool g_gjkHold = false;
+static bool g_epaHold = false;
+static bool g_epaCsoCheckbox = false;
 static bool g_collisionPointsCheckbox = false;
 static bool g_contactNormalsCheckbox = false;
 static bool g_originAxesCheckbox = true;
@@ -47,7 +51,7 @@ void CollisionDetectionDebugCallback(
         {
             for (auto& contact : c)
             {
-                contactPoints.push_back(&demo.MakeSphere(contact.manifold.aContactPoint, 0.05, { 1, 0, 0 }));
+                //contactPoints.push_back(&demo.MakeSphere(contact.manifold.aContactPoint, 0.05, { 1, 0, 0 }));
                 contactPoints.push_back(&demo.MakeSphere(contact.manifold.bContactPoint, 0.05, { 0, 1, 0 }));
             }
         }
@@ -86,7 +90,7 @@ void CollisionDetectionDebugCallback(
 }
 
 void GjkDebugCallback(
-        arion::intersection::gjk::Simplex& simplex
+        arion::intersection::gjk::Simplex& simplex, bool end
     )
 {
     static pegasus::Demo& demo = pegasus::Demo::GetInstance();
@@ -124,20 +128,29 @@ void GjkDebugCallback(
                 break;
         }
     }
+
+    g_gjkHold = end && g_gjkSimplexCheckbox;
+    while (g_gjkHold)
+    {
+        demo.RenderFrame();
+    }
 }
 
 void EpaDebugCallback(
-        epona::QuickhullConvexHull<std::vector<glm::dvec3>>& convexHull,
-        std::vector<glm::dvec3>& polytopeVertices,
-        arion::intersection::gjk::Simplex& simplex,
-        glm::dvec3 supportVertex,
-        glm::dvec3 direction
-    )
+    epona::QuickhullConvexHull<std::vector<glm::dvec3>>& convexHull,
+    std::vector<glm::dvec3>& polytopeVertices,
+    arion::intersection::gjk::Simplex& simplex,
+    arion::SimpleShape const& aShape,
+    arion::SimpleShape const& bShape,
+    glm::dvec3 supportVertex,
+    glm::dvec3 direction
+)
 {
     static pegasus::Demo& demo = pegasus::Demo::GetInstance();
     static pegasus::Demo::Primitive* epaPolytope = nullptr;
     static pegasus::Demo::Primitive* sphere = nullptr;
     static pegasus::Demo::Primitive* normal = nullptr;
+    static std::vector<pegasus::Demo::Primitive*> csoPrimitives;
 
     if (epaPolytope)
     {
@@ -147,6 +160,16 @@ void EpaDebugCallback(
         epaPolytope = nullptr;
         sphere = nullptr;
         normal = nullptr;
+    }
+
+    if (!csoPrimitives.empty())
+    {
+        for (auto p : csoPrimitives)
+        {
+            demo.Remove(*p);
+            p = nullptr;
+        }
+        csoPrimitives.clear();
     }
 
     if (g_epaPolytopeCheckbox)
@@ -160,6 +183,77 @@ void EpaDebugCallback(
         epaPolytope = &demo.MakeTriangleCollection({}, { 0, 1, 0 }, triangles);
         sphere = &demo.MakeSphere(supportVertex, 0.05, { 1, 1, 1 });
         normal = &demo.MakeLine({}, { 1, 1, 1 }, supportVertex, supportVertex + direction);
+    }
+
+    if (   g_epaCsoCheckbox
+        && aShape.type == arion::SimpleShape::Type::BOX
+        && bShape.type == arion::SimpleShape::Type::BOX)
+    {
+        //Calculate box vertices
+        auto& aBox = static_cast<arion::Box const&>(aShape);
+        auto& bBox = static_cast<arion::Box const&>(bShape);
+        static std::vector<glm::dvec3> aVertices{ 8 }, bVertices{ 8 };
+
+        epona::CalculateBoxVertices(aBox.iAxis, aBox.jAxis, aBox.kAxis, 
+            aBox.centerOfMass, glm::toMat3(aBox.orientation), aVertices.begin());
+        epona::CalculateBoxVertices(bBox.iAxis, bBox.jAxis, bBox.kAxis,
+            bBox.centerOfMass, glm::toMat3(bBox.orientation), bVertices.begin());
+
+        std::vector<glm::dvec3> csoVertices;
+        csoVertices.reserve(8 * 8);
+        for (glm::dvec3 b : bVertices)
+        {
+            csoVertices.push_back(b);
+            for (glm::dvec3 a : aVertices)
+            {
+                csoVertices.push_back(a);
+                csoVertices.push_back(b - a);
+            }
+        }
+
+        //Draw CSO vertices
+        for (uint8_t i = 0; i < csoVertices.size(); ++i)
+        {
+            csoPrimitives.push_back(&demo.MakeSphere(csoVertices[i], 0.05, { 1, 0, 0 }));
+        }
+    }
+
+    g_epaHold = g_epaPolytopeCheckbox;
+    while (g_epaHold)
+    {
+        demo.RenderFrame();
+    }
+}
+
+void QuickhullConvexHullCallback(
+        epona::QuickhullConvexHull<std::vector<glm::dvec3>>& quickHull,
+        std::vector<glm::dvec3>& vertexBuffer
+    )
+{
+    static pegasus::Demo::Primitive* ch = nullptr;
+    auto& demo = pegasus::Demo::GetInstance();
+
+    if (g_epaCsoCheckbox)
+    {
+        if (ch)
+        {
+            demo.Remove(*ch);
+            ch = nullptr;
+        } 
+
+        if (!ch)
+        {
+            std::vector<glm::mat3> triangles;
+            auto&  faces = quickHull.GetFaces();
+        
+            for (auto& face : faces)
+            {
+                auto const i = face.GetIndices();
+                triangles.emplace_back(vertexBuffer[i[0]], vertexBuffer[i[1]], vertexBuffer[i[2]]);
+            }
+
+            ch = &demo.MakeTriangleCollection({}, { 1, 1, 0 }, triangles);
+        }
     }
 }
 
@@ -197,6 +291,7 @@ void DrawUi()
         ImGui::Begin("Collision debug", &collisionDebugWindowVisible);
         ImGui::Checkbox("Draw GJK simplex", &g_gjkSimplexCheckbox);
         ImGui::Checkbox("Draw EPA polytope", &g_epaPolytopeCheckbox);
+        ImGui::Checkbox("Draw CSO polytope", &g_epaCsoCheckbox);
         ImGui::Checkbox("Draw contact points", &g_collisionPointsCheckbox);
         ImGui::Checkbox("Draw contact normals", &g_contactNormalsCheckbox);
         ImGui::End();
@@ -349,6 +444,15 @@ void DrawUi()
         }
         ImGui::End();
     }
+
+    static bool epaGjkHoldWindowVisible = true;
+    if (g_epaHold || g_gjkHold)
+    {
+        ImGui::Begin("EPA debug", &epaGjkHoldWindowVisible);
+        g_epaHold = !ImGui::Button("Break EPA hold");
+        g_gjkHold = !ImGui::Button("Break GJK hold");
+        ImGui::End();
+    }
 }
 } // namespace ::
 
@@ -380,6 +484,29 @@ void Demo::RunFrame()
     }
 
     std::this_thread::sleep_until(nextFrameTime);
+}
+
+void Demo::ComputeFrame(double duration)
+{
+    //Compute physical data
+    m_scene.ComputeFrame(useStaticDuration ? staticDuration : duration);
+
+    //Update render data
+    for (Primitive& primitive : m_primitives)
+    {
+        if (primitive.physicalPrimitive != nullptr)
+        {
+            mechanics::Body const physicalBody = primitive.physicalPrimitive->GetBody();
+            glm::mat4 const model = glm::translate(glm::mat4(1), glm::vec3(physicalBody.linearMotion.position))
+                * glm::mat4(glm::toMat4(physicalBody.angularMotion.orientation));
+            primitive.renderPrimitive->SetModel(model);
+        }
+    }
+}
+
+void Demo::RenderFrame() const
+{
+    m_renderer.RenderFrame();
 }
 
 Demo::Primitive& Demo::MakeLine(mechanics::Body body, glm::vec3 color, glm::vec3 start, glm::vec3 end)
@@ -486,6 +613,9 @@ Demo::Demo()
     : m_scene(scene::Scene::GetInstance())
     , m_renderer(render::Renderer::GetInstance())
 {
+    auto& eponaDebug = epona::debug::Debug::GetInstace();
+    eponaDebug.quickhullConvexHullCallback = ::QuickhullConvexHullCallback;
+
     auto& arionDebug = arion::debug::Debug::GetInstace();
     arionDebug.epaCallback = ::EpaDebugCallback;
     arionDebug.gjkCallback = ::GjkDebugCallback;
@@ -499,26 +629,4 @@ Demo::Demo()
     m_pGravityForce = std::make_unique<scene::Force<force::StaticField>>(force::StaticField(glm::dvec3{ 0, -9.8, 0 }));
 }
 
-void Demo::ComputeFrame(double duration)
-{
-    //Compute physical data
-    m_scene.ComputeFrame(useStaticDuration ? staticDuration : duration);
-
-    //Update render data
-    for (Primitive& primitive : m_primitives)
-    {
-        if (primitive.physicalPrimitive != nullptr)
-        {
-            mechanics::Body const physicalBody = primitive.physicalPrimitive->GetBody();
-            glm::mat4 const model = glm::translate(glm::mat4(1), glm::vec3(physicalBody.linearMotion.position))
-                * glm::mat4(glm::toMat4(physicalBody.angularMotion.orientation));
-            primitive.renderPrimitive->SetModel(model);
-        }
-    }
-}
-
-void Demo::RenderFrame() const
-{
-    m_renderer.RenderFrame();
-}
 } // namespace pegasus
