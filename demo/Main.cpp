@@ -59,7 +59,6 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
 int main(int argc, char** argv)
 {
     pegasus::Demo& demo = pegasus::Demo::GetInstance();
-
     pegasus::render::Input& input = pegasus::render::Input::GetInstance();
     input.AddKeyButtonCallback(KeyButtonCallback);
 
