@@ -29,14 +29,20 @@ struct Contact
      */
     struct Manifold
     {
-        //!Contact normal from the perspective of the b body
-        glm::dvec3 normal;
-
         //!Contact point in the world space on the a body
-        glm::dvec3 aContactPoint;
+        glm::dvec3 aWorldContactPoint;
 
         //!Contact point in the world space on the b body
-        glm::dvec3 bContactPoint;
+        glm::dvec3 bWorldContactPoint;
+
+        //!Contact point in the local space on the a body
+        glm::dvec3 aModelContactPoint;
+
+        //!Contact point in the local space on the b body
+        glm::dvec3 bModelContactPoint;
+
+        //!Contact normal from the perspective of the b body
+        glm::dvec3 normal;
 
         //!Penetration depth of two bodies
         double penetration;
@@ -223,30 +229,6 @@ public:
     void Resolve(std::vector<std::vector<Contact>>& contacts, double duration);
 
 private:
-    /**
-     * @brief Calculates total separation speed of the contact
-     * @param contact contact information
-     * @return speed meters per second
-     */
-    static double CalculateTotalSeparationSpeed(Contact contact);
-
-    /**
-     * @brief Removes acceleration caused component from the separation speed
-     * @param contact contact information
-     * @param separationSpeed total separation speed
-     * @param duration delta time of the frame
-     * @return pure separation speed
-     */
-    static double CalculatePureSeparationSpeed(Contact contact, double totalSeparationSpeed, double duration);
-
-    /**
-     * @brief Calculates separation speed of the contact
-     * @param contact contact information
-     * @param duration delta time of the frame
-     * @return separation speed
-     */
-    static double CalculateSeparationSpeed(Contact contact, double duration);
-
     /**
      * @brief Updates velocities of the bodies in the contact
      * @param contact contact information
