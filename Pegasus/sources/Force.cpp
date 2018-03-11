@@ -10,6 +10,7 @@
 */
 #include <pegasus/Force.hpp>
 #include <pegasus/Integration.hpp>
+#include <Epona/FloatingPoint.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/optimum_pow.hpp>
 
@@ -26,6 +27,30 @@ StaticField::StaticField(glm::dvec3 force)
 glm::dvec3 StaticField::CalculateForce(mechanics::Body const& body) const
 {
     return m_force * body.material.GetMass();
+}
+
+SquareDistanceSource::SquareDistanceSource(double magnitude, glm::dvec3 centerOfMass)
+    : centerOfMass(centerOfMass)
+    , m_magnitude(magnitude)
+{
+}
+
+glm::dvec3 SquareDistanceSource::CalculateForce(mechanics::Body const& body) const
+{
+    double const distance = glm::distance(body.linearMotion.position, centerOfMass);
+    glm::dvec3 force{ 0 };
+
+    if (!epona::fp::IsZero(distance))
+    {
+        glm::dvec3 const direction = glm::normalize(centerOfMass - body.linearMotion.position);
+
+        if (!epona::fp::IsZero(glm::length(direction)))
+        {
+            force = direction * (m_magnitude / glm::pow2(distance));
+        }
+    }
+
+    return force;
 }
 
 Drag::Drag(double k1, double k2)
