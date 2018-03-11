@@ -52,7 +52,7 @@ void CollisionDetectionDebugCallback(
             for (auto& contact : c)
             {
                 //contactPoints.push_back(&demo.MakeSphere(contact.manifold.aContactPoint, 0.05, { 1, 0, 0 }));
-                contactPoints.push_back(&demo.MakeSphere(contact.manifold.bContactPoint, 0.05, { 0, 1, 0 }));
+                contactPoints.push_back(&demo.MakeSphere(contact.manifold.bWorldContactPoint, 0.05, { 0, 1, 0 }));
             }
         }
     }
@@ -70,7 +70,7 @@ void CollisionDetectionDebugCallback(
             for (auto& contact : c)
             {
                 static pegasus::mechanics::Body line;
-                line.linearMotion.position = contact.manifold.bContactPoint;
+                line.linearMotion.position = contact.manifold.bWorldContactPoint;
                 contactNormals.push_back(&demo.MakeLine(line, { 1, 0, 0 }, {}, contact.manifold.normal));
             }
         }
@@ -194,27 +194,27 @@ void EpaDebugCallback(
         auto& bBox = static_cast<arion::Box const&>(bShape);
         static std::vector<glm::dvec3> aVertices{ 8 }, bVertices{ 8 };
 
-        epona::CalculateBoxVertices(aBox.iAxis, aBox.jAxis, aBox.kAxis, 
+        epona::CalculateBoxVerticesWorld(aBox.iAxis, aBox.jAxis, aBox.kAxis, 
             aBox.centerOfMass, glm::toMat3(aBox.orientation), aVertices.begin());
-        epona::CalculateBoxVertices(bBox.iAxis, bBox.jAxis, bBox.kAxis,
+        epona::CalculateBoxVerticesWorld(bBox.iAxis, bBox.jAxis, bBox.kAxis,
             bBox.centerOfMass, glm::toMat3(bBox.orientation), bVertices.begin());
 
         std::vector<glm::dvec3> csoVertices;
         csoVertices.reserve(8 * 8);
-        for (glm::dvec3 b : bVertices)
+        for (glm::dvec3 a : aVertices)
         {
-            csoVertices.push_back(b);
-            for (glm::dvec3 a : aVertices)
+            csoVertices.push_back(a);
+            for (glm::dvec3 b : bVertices)
             {
-                csoVertices.push_back(a);
-                csoVertices.push_back(b - a);
+                csoVertices.push_back(b);
+                csoVertices.push_back(a - b);
             }
         }
 
         //Draw CSO vertices
         for (uint8_t i = 0; i < csoVertices.size(); ++i)
         {
-            csoPrimitives.push_back(&demo.MakeSphere(csoVertices[i], 0.05, { 1, 0, 0 }));
+            csoPrimitives.push_back(&demo.MakeSphere(csoVertices[i], 0.03, { 1, 0, 0 }));
         }
     }
 
@@ -613,8 +613,7 @@ Demo::Demo()
     : m_scene(scene::Scene::GetInstance())
     , m_renderer(render::Renderer::GetInstance())
 {
-    auto& eponaDebug = epona::debug::Debug::GetInstace();
-    eponaDebug.quickhullConvexHullCallback = ::QuickhullConvexHullCallback;
+    epona::debug::Debug::SetQuickhullConvexHullCallback<std::vector<glm::dvec3>>(::QuickhullConvexHullCallback);
 
     auto& arionDebug = arion::debug::Debug::GetInstace();
     arionDebug.epaCallback = ::EpaDebugCallback;

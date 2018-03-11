@@ -65,8 +65,8 @@ Contact::Manifold Detector::CalculateContactManifold(
     manifold.normal = s_simpleShapeDetector.CalculateContactNormal(aShape, bShape);
     std::pair<glm::dvec3, glm::dvec3> const contactPoints =
         s_simpleShapeDetector.CalculateContactPoints(aShape, bShape);
-    manifold.aContactPoint = contactPoints.first;
-    manifold.bContactPoint = contactPoints.second;
+    manifold.aWorldContactPoint = contactPoints.first;
+    manifold.bWorldContactPoint = contactPoints.second;
     manifold.penetration = s_simpleShapeDetector.CalculatePenetration(aShape, bShape);
 
     return manifold;
@@ -76,12 +76,6 @@ void Resolver::Resolve(std::vector<std::vector<Contact>>& contacts, double durat
 {
     for (std::vector<Contact>& contact : contacts)
     {
-        std::sort(contact.begin(), contact.end(),
-            [](Contact const& a, Contact const& b) -> bool
-        {
-            return CalculateTotalSeparationSpeed(a) < CalculateTotalSeparationSpeed(b);
-        });
-
         iterationsUsed = 0;
         while (iterationsUsed++ < iterations && !contact.empty())
         {
@@ -91,63 +85,23 @@ void Resolver::Resolve(std::vector<std::vector<Contact>>& contacts, double durat
     }
 }
 
-double Resolver::CalculateTotalSeparationSpeed(Contact contact)
-{
-    //Calculate initial separation velocity
-    glm::dvec3 const relativeVelocity = contact.aBody->linearMotion.velocity - contact.bBody->linearMotion.velocity;
-    double const separationSpeed = glm::dot(relativeVelocity, contact.manifold.normal);
-
-    return separationSpeed;
-}
-
-double Resolver::CalculatePureSeparationSpeed(Contact contact, double totalSeparationSpeed, double duration)
-{
-    //Decompose acceleration caused separation velocity component
-    glm::dvec3 const accelerationCausedVelocity =
-        contact.aBody->linearMotion.acceleration - contact.bBody->linearMotion.acceleration;
-    double const accelerationCausedSeparationSpeed =
-        glm::dot(accelerationCausedVelocity, contact.manifold.normal * duration);
-
-    double newSeparationSpeed = -totalSeparationSpeed * contact.restitution;
-    if (accelerationCausedSeparationSpeed < 0.0)
-    {
-        newSeparationSpeed += contact.restitution * accelerationCausedSeparationSpeed;
-
-        if (newSeparationSpeed < 0.0)
-        {
-            newSeparationSpeed = 0;
-        }
-    }
-    double const deltaSpeed = newSeparationSpeed - totalSeparationSpeed;
-
-    return deltaSpeed;
-}
-
-double Resolver::CalculateSeparationSpeed(Contact contact, double duration)
-{
-    double const totalSeparationSpeed = CalculateTotalSeparationSpeed(contact);
-    double const pureSeparationSpeed = CalculatePureSeparationSpeed(contact, totalSeparationSpeed, duration);
-
-    return pureSeparationSpeed;
-}
-
 void Resolver::ResolveVelocity(Contact contact, double duration)
 {
-    //Convert contact points to the local space
-    contact.manifold.aContactPoint -= contact.aBody->linearMotion.position;
-    contact.manifold.bContactPoint -= contact.bBody->linearMotion.position;
+    //Convert contact points to the local 
+    glm::dvec3 aContactPoint = contact.manifold.aWorldContactPoint - contact.aBody->linearMotion.position;
+    glm::dvec3 bContactPoint = contact.manifold.bWorldContactPoint - contact.bBody->linearMotion.position;
     contact.restitution = 0.5;
 
     //Calculate total contact impulse magnitude
     glm::dvec3 const aContactPointVelocity = contact.aBody->linearMotion.velocity
-        + glm::cross(contact.aBody->angularMotion.velocity, contact.manifold.aContactPoint);
+        + glm::cross(contact.aBody->angularMotion.velocity, aContactPoint);
     glm::dvec3 const bContactPointVelocity = contact.bBody->linearMotion.velocity
-        + glm::cross(contact.bBody->angularMotion.velocity, contact.manifold.bContactPoint);
+        + glm::cross(contact.bBody->angularMotion.velocity, bContactPoint);
 
     glm::dvec3 const aBodyAngularImpulse = contact.aBody->material.GetInverseMomentOfInertia()
-        * glm::cross(glm::cross(contact.manifold.aContactPoint, contact.manifold.normal), contact.manifold.aContactPoint);
+        * glm::cross(glm::cross(aContactPoint, contact.manifold.normal), aContactPoint);
     glm::dvec3 const bBodyAngularImpulse = contact.bBody->material.GetInverseMomentOfInertia()
-        * glm::cross(glm::cross(contact.manifold.bContactPoint, contact.manifold.normal), contact.manifold.bContactPoint);
+        * glm::cross(glm::cross(bContactPoint, contact.manifold.normal), bContactPoint);
 
     double const linearImpulsePerUnitMass = contact.aBody->material.GetInverseMass() + contact.bBody->material.GetInverseMass();
     double const angularImpulsePerUnitMass = glm::dot(aBodyAngularImpulse + bBodyAngularImpulse, contact.manifold.normal);
@@ -167,10 +121,10 @@ void Resolver::ResolveVelocity(Contact contact, double duration)
     //Calculate post contact angular velocity
     contact.aBody->angularMotion.velocity = contact.aBody->angularMotion.velocity
         + (contact.aBody->material.GetInverseMomentOfInertia() * impulseMagnitude)
-        * glm::cross(contact.manifold.aContactPoint, contact.manifold.normal);
+        * glm::cross(aContactPoint, contact.manifold.normal);
     contact.bBody->angularMotion.velocity = contact.bBody->angularMotion.velocity
         - (contact.bBody->material.GetInverseMomentOfInertia() * impulseMagnitude)
-        * glm::cross(contact.manifold.bContactPoint, contact.manifold.normal);
+        * glm::cross(bContactPoint, contact.manifold.normal);
 }
 
 void Resolver::ResolveInterpenetration(Contact contact)
