@@ -194,6 +194,7 @@ private:
 
     //!Forces
     std::vector<Asset<force::StaticField>> m_staticFieldForces;
+    std::vector<Asset<force::SquareDistanceSource>> m_squareDistanceSourceForces;
     std::vector<Asset<force::Drag>> m_dragForces;
     std::vector<Asset<force::Spring>> m_springForces;
     std::vector<Asset<force::Bungee>> m_bungeeForces;
@@ -201,6 +202,7 @@ private:
 
     //!ForceBind bindings
     std::vector<Asset<ForceBind>> m_staticFieldForceBindings;
+    std::vector<Asset<ForceBind>> m_squareDistanceSourceForceBindings;
     std::vector<Asset<ForceBind>> m_dragForceBindings;
     std::vector<Asset<ForceBind>> m_springForceBindings;
     std::vector<Asset<ForceBind>> m_bungeeForceBindings;
@@ -270,6 +272,12 @@ inline std::vector<Asset<force::StaticField>>& AssetManager::GetForces<force::St
 }
 
 template <>
+inline std::vector<Asset<force::SquareDistanceSource>>& AssetManager::GetForces<force::SquareDistanceSource>()
+{
+    return m_squareDistanceSourceForces;
+}
+
+template <>
 inline std::vector<Asset<force::Drag>>& AssetManager::GetForces<force::Drag>()
 {
     return m_dragForces;
@@ -297,6 +305,12 @@ template <>
 inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::StaticField>()
 {
     return m_staticFieldForceBindings;
+}
+
+template <>
+inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::SquareDistanceSource>()
+{
+    return m_squareDistanceSourceForceBindings;
 }
 
 template <>
@@ -766,10 +780,15 @@ public:
 
 /**
  * @brief Stores force data
+ * 
+ * @attention This class works as a high level API over the Scene singleton instance. 
+ * Only the handles are guaranteed to be valid. Any reference/pointer is invalidated 
+ * after a new instance of a Force class is created or deleted.
+ * 
  * @tparam ForceType force type
  */
 template < typename ForceType >
-class Force : public ForceBase
+class Force final : public ForceBase
 {
 public:
     /**
@@ -806,9 +825,14 @@ public:
 
     /**
      * @brief Returns force data
-     * @return force data
+     *
+     * @attention This class works as a high level API over the Scene singleton instance. 
+     * Only the handles are guaranteed to be valid. Any reference/pointer is invalidated 
+     * after a new instance of a Force class is created or deleted.
+     *
+     * @return force data reference
      */
-    ForceType GetForce() const
+    ForceType& GetForce()
     {
         return m_pScene->GetForce<ForceType>(m_forceHandle);
     }
@@ -860,6 +884,12 @@ public:
      */
     void BindForce(ForceBase& force)
     {
+        if (std::find_if(m_forces.begin(), m_forces.end(),
+            [&force](ForceBase* f) { return &force == f; }) != m_forces.end())
+        {
+            return;
+        }
+
         m_forces.push_back(&force);
 
         for (Primitive* primitive : m_primitives)
@@ -873,6 +903,12 @@ public:
      */
     void UnbindForce(ForceBase& force)
     {
+        if (std::find_if(m_forces.begin(), m_forces.end(),
+            [&force](ForceBase* f) { return &force == f; }) == m_forces.end())
+        {
+            return;
+        }
+
         for (Primitive* primitive : m_primitives)
         {
             force.Unbind(*primitive);
@@ -891,6 +927,12 @@ public:
      */
     void BindPrimitive(Primitive& primitive)
     {
+        if (std::find_if(m_primitives.begin(), m_primitives.end(),
+            [&primitive](Primitive* p) { return &primitive == p; }) != m_primitives.end())
+        {
+            return;
+        }
+
         m_primitives.push_back(&primitive);
 
         for (ForceBase* force : m_forces)
@@ -905,6 +947,12 @@ public:
      */
     void UnbindPrimitive(Primitive& primitive)
     {
+        if (std::find_if(m_primitives.begin(), m_primitives.end(),
+            [&primitive](Primitive* p) { return &primitive == p; }) == m_primitives.end())
+        {
+            return;
+        }
+
         for (ForceBase* force : m_forces)
         {
             force->Unbind(primitive);

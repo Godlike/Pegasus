@@ -95,6 +95,7 @@ void Scene::ApplyForces()
 
     //Reapply forces
     ApplyForce<force::StaticField>();
+    ApplyForce<force::SquareDistanceSource>();
     ApplyForce<force::Drag>();
     ApplyForce<force::Spring>();
     ApplyForce<force::Bungee>();

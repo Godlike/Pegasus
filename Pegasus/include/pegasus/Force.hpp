@@ -44,6 +44,43 @@ private:
 };
 
 /**
+ * @brief Square distance force calculation algorithm
+ */
+class SquareDistanceSource
+{
+public:
+    PEGASUS_EXPORT SquareDistanceSource() = default;
+
+    /**
+     * @brief Constructs square distance source instance
+     * @param magnitude    the magnitude of the force
+     * @param centerOfMass the source of the force
+     */
+    PEGASUS_EXPORT explicit SquareDistanceSource(double magnitude, glm::dvec3 centerOfMass);
+
+    /**
+     * @brief Calculates force that is acting on the given body
+     *
+     * The strength of the force is in inverse ration with the squared distance
+     * from the force's source to the body's center of mass.
+     *
+     * @attention The distance beetween force and body must not be equal to zero
+     * with respect to the system floating point threshold.
+     * Otherwise the behavior is undefined.
+     *
+     * @param body target body
+     * @return force acting on the targe body
+     */
+    PEGASUS_EXPORT glm::dvec3 CalculateForce(mechanics::Body const& body) const;
+
+    //!Center of mass of the force
+    glm::dvec3 centerOfMass;
+
+private:
+    double m_magnitude;
+};
+
+/**
  * @brief Drag force calculation algorithm
  */
 class Drag
