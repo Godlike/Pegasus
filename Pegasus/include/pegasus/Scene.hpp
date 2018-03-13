@@ -13,13 +13,14 @@
 
 #include <vector>
 #include <unordered_map>
-#include <algorithm>
 
 namespace pegasus
 {
 namespace scene
 {
+
 using Handle = uint32_t;
+class Scene;
 
 /**
  * @brief Stores handles to the physical body and collision geometry
@@ -28,10 +29,11 @@ struct RigidBody
 {
     RigidBody() = default;
 
-    RigidBody(Handle body, Handle shape);
+    RigidBody(Scene& scene, Handle body, Handle shape);
 
     Handle body = 0;
     Handle shape = 0;
+    Scene* pScene = nullptr;
 };
 
 /**
@@ -39,7 +41,7 @@ struct RigidBody
  */
 struct StaticBody : RigidBody
 {
-    StaticBody(Handle body, Handle shape);
+    StaticBody(Scene& scene, Handle body, Handle shape);
 };
 
 /**
@@ -47,7 +49,7 @@ struct StaticBody : RigidBody
  */
 struct DynamicBody : RigidBody
 {
-    DynamicBody(Handle body, Handle shape);
+    DynamicBody(Scene& scene, Handle body, Handle shape);
 };
 
 /**
@@ -76,11 +78,10 @@ struct Asset
 class AssetManager
 {
 public:
-    /**
-     * @brief Returns the instance of the asset manager
-     * @return asset manager
-     */
-    static AssetManager& GetInstance();
+    struct Assets;
+
+    using FrameStackIterator = std::vector<Assets>::iterator;
+    using ConstFrameStackIterator = std::vector<Assets>::const_iterator;
 
     /**
     * @brief Returns a handle for @p T data
@@ -175,166 +176,191 @@ public:
     template < typename Force >
     std::vector<Asset<ForceBind>>& GetForceBinds();
 
+    void PushFrame()
+    {
+        m_assetStack.push_back(m_asset);
+    }
+
+    void PopFrame()
+    {   
+        if (!m_assetStack.empty())
+        {
+            m_assetStack.pop_back();
+        }
+    }
+
+    void Back()
+    {
+        if (!m_assetStack.empty())
+        {
+            m_asset = m_assetStack.back();
+        }
+    }
+
+    struct Assets
+    {
+        //!Bodies
+        std::vector<Asset<mechanics::Body>> m_bodies;
+
+        //!Shapes
+        std::vector<Asset<arion::Plane>> m_planes;
+        std::vector<Asset<arion::Sphere>> m_spheres;
+        std::vector<Asset<arion::Box>> m_boxes;
+
+        //!Objects
+        std::vector<Asset<RigidBody>> m_staticPlanes;
+        std::vector<Asset<RigidBody>> m_dynamicPlanes;
+        std::vector<Asset<RigidBody>> m_staticSpheres;
+        std::vector<Asset<RigidBody>> m_dynamicSpheres;
+        std::vector<Asset<RigidBody>> m_staticBoxes;
+        std::vector<Asset<RigidBody>> m_dynamicBoxes;
+
+        //!Forces
+        std::vector<Asset<force::StaticField>> m_staticFieldForces;
+        std::vector<Asset<force::SquareDistanceSource>> m_squareDistanceSourceForces;
+        std::vector<Asset<force::Drag>> m_dragForces;
+        std::vector<Asset<force::Spring>> m_springForces;
+        std::vector<Asset<force::Bungee>> m_bungeeForces;
+        std::vector<Asset<force::Buoyancy>> m_buoyancyForces;
+
+        //!ForceBind bindings
+        std::vector<Asset<ForceBind>> m_staticFieldForceBindings;
+        std::vector<Asset<ForceBind>> m_squareDistanceSourceForceBindings;
+        std::vector<Asset<ForceBind>> m_dragForceBindings;
+        std::vector<Asset<ForceBind>> m_springForceBindings;
+        std::vector<Asset<ForceBind>> m_bungeeForceBindings;
+        std::vector<Asset<ForceBind>> m_buoyancyForceBindings;
+    };
+
 private:
-    //!Bodies
-    std::vector<Asset<mechanics::Body>> m_bodies;
-
-    //!Shapes
-    std::vector<Asset<arion::Plane>> m_planes;
-    std::vector<Asset<arion::Sphere>> m_spheres;
-    std::vector<Asset<arion::Box>> m_boxes;
-
-    //!Objects
-    std::vector<Asset<RigidBody>> m_staticPlanes;
-    std::vector<Asset<RigidBody>> m_dynamicPlanes;
-    std::vector<Asset<RigidBody>> m_staticSpheres;
-    std::vector<Asset<RigidBody>> m_dynamicSpheres;
-    std::vector<Asset<RigidBody>> m_staticBoxes;
-    std::vector<Asset<RigidBody>> m_dynamicBoxes;
-
-    //!Forces
-    std::vector<Asset<force::StaticField>> m_staticFieldForces;
-    std::vector<Asset<force::SquareDistanceSource>> m_squareDistanceSourceForces;
-    std::vector<Asset<force::Drag>> m_dragForces;
-    std::vector<Asset<force::Spring>> m_springForces;
-    std::vector<Asset<force::Bungee>> m_bungeeForces;
-    std::vector<Asset<force::Buoyancy>> m_buoyancyForces;
-
-    //!ForceBind bindings
-    std::vector<Asset<ForceBind>> m_staticFieldForceBindings;
-    std::vector<Asset<ForceBind>> m_squareDistanceSourceForceBindings;
-    std::vector<Asset<ForceBind>> m_dragForceBindings;
-    std::vector<Asset<ForceBind>> m_springForceBindings;
-    std::vector<Asset<ForceBind>> m_bungeeForceBindings;
-    std::vector<Asset<ForceBind>> m_buoyancyForceBindings;
-
-    AssetManager() = default;
+    Assets m_asset;
+    std::vector<Assets> m_assetStack;
 };
 
 template <>
 inline std::vector<Asset<arion::Plane>>& AssetManager::GetShapes<arion::Plane>()
 {
-    return m_planes;
+    return m_asset.m_planes;
 }
 
 template <>
 inline std::vector<Asset<arion::Sphere>>& AssetManager::GetShapes<arion::Sphere>()
 {
-    return m_spheres;
+    return m_asset.m_spheres;
 }
 
 template <>
 inline std::vector<Asset<arion::Box>>& AssetManager::GetShapes<arion::Box>()
 {
-    return m_boxes;
+    return m_asset.m_boxes;
 }
 
 template <>
 inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, arion::Plane>()
 {
-    return m_staticPlanes;
+    return m_asset.m_staticPlanes;
 }
 
 template <>
 inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, arion::Plane>()
 {
-    return m_dynamicPlanes;
+    return m_asset.m_dynamicPlanes;
 }
 
 template <>
 inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, arion::Sphere>()
 {
-    return m_staticSpheres;
+    return m_asset.m_staticSpheres;
 }
 
 template <>
 inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, arion::Sphere>()
 {
-    return m_dynamicSpheres;
+    return m_asset.m_dynamicSpheres;
 }
 
 template <>
 inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<StaticBody, arion::Box>()
 {
-    return m_staticBoxes;
+    return m_asset.m_staticBoxes;
 }
 
 template <>
 inline std::vector<Asset<RigidBody>>& AssetManager::GetObjects<DynamicBody, arion::Box>()
 {
-    return m_dynamicBoxes;
+    return m_asset.m_dynamicBoxes;
 }
 
 template <>
 inline std::vector<Asset<force::StaticField>>& AssetManager::GetForces<force::StaticField>()
 {
-    return m_staticFieldForces;
+    return m_asset.m_staticFieldForces;
 }
 
 template <>
 inline std::vector<Asset<force::SquareDistanceSource>>& AssetManager::GetForces<force::SquareDistanceSource>()
 {
-    return m_squareDistanceSourceForces;
+    return m_asset.m_squareDistanceSourceForces;
 }
 
 template <>
 inline std::vector<Asset<force::Drag>>& AssetManager::GetForces<force::Drag>()
 {
-    return m_dragForces;
+    return m_asset.m_dragForces;
 }
 
 template <>
 inline std::vector<Asset<force::Spring>>& AssetManager::GetForces<force::Spring>()
 {
-    return m_springForces;
+    return m_asset.m_springForces;
 }
 
 template <>
 inline std::vector<Asset<force::Bungee>>& AssetManager::GetForces<force::Bungee>()
 {
-    return m_bungeeForces;
+    return m_asset.m_bungeeForces;
 }
 
 template <>
 inline std::vector<Asset<force::Buoyancy>>& AssetManager::GetForces<force::Buoyancy>()
 {
-    return m_buoyancyForces;
+    return m_asset.m_buoyancyForces;
 }
 
 template <>
 inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::StaticField>()
 {
-    return m_staticFieldForceBindings;
+    return m_asset.m_staticFieldForceBindings;
 }
 
 template <>
 inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::SquareDistanceSource>()
 {
-    return m_squareDistanceSourceForceBindings;
+    return m_asset.m_squareDistanceSourceForceBindings;
 }
 
 template <>
 inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::Drag>()
 {
-    return m_dragForceBindings;
+    return m_asset.m_dragForceBindings;
 }
 
 template <>
 inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::Spring>()
 {
-    return m_springForceBindings;
+    return m_asset.m_springForceBindings;
 }
 
 template <>
 inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::Bungee>()
 {
-    return m_bungeeForceBindings;
+    return m_asset.m_bungeeForceBindings;
 }
 
 template <>
 inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::Buoyancy>()
 {
-    return m_buoyancyForceBindings;
+    return m_asset.m_buoyancyForceBindings;
 }
 
 /**
@@ -343,18 +369,6 @@ inline std::vector<Asset<ForceBind>>& AssetManager::GetForceBinds<force::Buoyanc
 class Scene
 {
 public:
-    /**
-    * @brief Returns singleton instance of the scene
-    * @return scene instance
-    */
-    PEGASUS_EXPORT static Scene& GetInstance();
-
-    /**
-     * @brief Performs scene initialization
-     * @param assetManager scene asset holder
-     */
-    PEGASUS_EXPORT void Initialize(AssetManager& assetManager);
-
     /**
      * @brief Runs physical simulation with the given duration
      * @param duration delta time of the integration in seconds
@@ -365,20 +379,20 @@ public:
      * @brief Makes new body instance and returns its handle
      * @return new body handle
      */
-    PEGASUS_EXPORT Handle MakeBody() const;
+    PEGASUS_EXPORT Handle MakeBody();
 
     /**
      * @brief Returns instance of the body assigned to the given handle
      * @param handle body handle
      * @return body instance
      */
-    PEGASUS_EXPORT mechanics::Body& GetBody(Handle handle) const;
+    PEGASUS_EXPORT mechanics::Body& GetBody(Handle handle);
 
     /**
      * @brief Removes instance of the body assigned to the given handle
      * @param handle body handle
      */
-    PEGASUS_EXPORT void RemoveBody(Handle handle) const;
+    PEGASUS_EXPORT void RemoveBody(Handle handle);
 
     /**
      * @brief Makes new shape instance and returns its handle
@@ -386,9 +400,9 @@ public:
      * @return shape handle
      */
     PEGASUS_EXPORT template < typename Shape >
-    Handle MakeShape() const
+    Handle MakeShape()
     {
-        return m_assetManager->MakeAsset(m_assetManager->GetShapes<Shape>());
+        return m_assetManager.MakeAsset(m_assetManager.GetShapes<Shape>());
     }
 
     /**
@@ -400,7 +414,7 @@ public:
     PEGASUS_EXPORT template < typename Shape >
     Shape& GetShape(Handle handle)
     {
-        return m_assetManager->GetAsset(m_assetManager->GetShapes<Shape>(), handle);
+        return m_assetManager.GetAsset(m_assetManager.GetShapes<Shape>(), handle);
     }
 
     /**
@@ -409,9 +423,9 @@ public:
      * @param handle shape handle
      */
     PEGASUS_EXPORT template < typename Shape >
-    void RemoveShape(Handle handle) const
+    void RemoveShape(Handle handle)
     {
-        m_assetManager->RemoveAsset(m_assetManager->GetShapes<Shape>(), handle);
+        m_assetManager.RemoveAsset(m_assetManager.GetShapes<Shape>(), handle);
     }
 
     /**
@@ -423,10 +437,10 @@ public:
      * @return handle of the rigid body
      */
     PEGASUS_EXPORT template < typename Object, typename Shape >
-    Handle MakeObject(Handle body, Handle shape) const
+    Handle MakeObject(Handle body, Handle shape)
     {
-        Handle const id = m_assetManager->MakeAsset<RigidBody>(m_assetManager->GetObjects<Object, Shape>());
-        m_assetManager->GetAsset<RigidBody>(m_assetManager->GetObjects<Object, Shape>(), id) = static_cast<RigidBody>(Object(body, shape));
+        Handle const id = m_assetManager.MakeAsset<RigidBody>(m_assetManager.GetObjects<Object, Shape>());
+        m_assetManager.GetAsset<RigidBody>(m_assetManager.GetObjects<Object, Shape>(), id) = static_cast<RigidBody>(Object(*this, body, shape));
         return id;
     }
 
@@ -437,9 +451,9 @@ public:
      * @param handle rigid body handle
      */
     PEGASUS_EXPORT template < typename Object, typename Shape >
-    void RemoveObject(Handle handle) const
+    void RemoveObject(Handle handle)
     {
-        m_assetManager->RemoveAsset(m_assetManager->GetObjects<Object, Shape>(), handle);
+        m_assetManager.RemoveAsset(m_assetManager.GetObjects<Object, Shape>(), handle);
     }
 
     /**
@@ -448,9 +462,9 @@ public:
      * @return force handle
      */
     PEGASUS_EXPORT template < typename Force >
-    Handle MakeForce() const
+    Handle MakeForce()
     {
-        return m_assetManager->MakeAsset(m_assetManager->GetForces<Force>());
+        return m_assetManager.MakeAsset(m_assetManager.GetForces<Force>());
     }
 
     /**
@@ -462,7 +476,7 @@ public:
     PEGASUS_EXPORT template < typename Force >
     Force& GetForce(Handle handle)
     {
-        return m_assetManager->GetAsset(m_assetManager->GetForces<Force>(), handle);
+        return m_assetManager.GetAsset(m_assetManager.GetForces<Force>(), handle);
     }
 
     /**
@@ -471,9 +485,9 @@ public:
      * @param handle force handle
      */
     PEGASUS_EXPORT template < typename Force >
-    void RemoveForce(Handle handle) const
+    void RemoveForce(Handle handle)
     {
-        m_assetManager->RemoveAsset(m_assetManager->GetForces<Force>(), handle);
+        m_assetManager.RemoveAsset(m_assetManager.GetForces<Force>(), handle);
     }
 
     /**
@@ -484,10 +498,10 @@ public:
      * @return bind handle
      */
     PEGASUS_EXPORT template < typename Force >
-    Handle BindForce(Handle body, Handle force) const
+    Handle BindForce(Handle body, Handle force)
     {
-        Handle const id = m_assetManager->MakeAsset(m_assetManager->GetForceBinds<Force>());
-        m_assetManager->GetAsset(m_assetManager->GetForceBinds<Force>(), id) = { body, force };
+        Handle const id = m_assetManager.MakeAsset(m_assetManager.GetForceBinds<Force>());
+        m_assetManager.GetAsset(m_assetManager.GetForceBinds<Force>(), id) = { body, force };
         return id;
     }
 
@@ -497,15 +511,15 @@ public:
      * @param handle bind handle
      */
     PEGASUS_EXPORT template < typename Force >
-    void UnbindForce(Handle handle) const
+    void UnbindForce(Handle handle)
     {
-        m_assetManager->RemoveAsset(m_assetManager->GetForceBinds<Force>(), handle);
+        m_assetManager.RemoveAsset(m_assetManager.GetForceBinds<Force>(), handle);
     }
 
-private:
-    AssetManager* m_assetManager;
+    AssetManager& GetAssets();
 
-    Scene() = default;
+private:
+    AssetManager m_assetManager;
 
     /**
      * @brief Calculates force applied to the binded bodies
@@ -514,11 +528,11 @@ private:
     template < typename Force >
     void ApplyForce()
     {
-        for (Asset<ForceBind>& asset : m_assetManager->GetForceBinds<Force>())
+        for (Asset<ForceBind>& asset : m_assetManager.GetForceBinds<Force>())
         {
             if (asset.id != 0)
             {
-                Force& force = GetForce<Force>(asset.data.force);
+                auto& force = GetForce<Force>(asset.data.force);
                 mechanics::Body& body = GetBody(asset.data.body);
                 body.linearMotion.force += force.CalculateForce(body);
             }
@@ -533,12 +547,12 @@ private:
     template < typename Object, typename Shape >
     void UpdateShapes()
     {
-        for (Asset<RigidBody>& asset : m_assetManager->GetObjects<Object, Shape>())
+        for (Asset<RigidBody>& asset : m_assetManager.GetObjects<Object, Shape>())
         {
             if (asset.id != 0)
             {
                 mechanics::Body& body = GetBody(asset.data.body);
-                Shape& shape = GetShape<Shape>(asset.data.shape);
+                auto& shape = GetShape<Shape>(asset.data.shape);
                 shape.centerOfMass = body.linearMotion.position;
                 shape.orientation = body.angularMotion.orientation;
             }
@@ -549,7 +563,7 @@ private:
      * @brief Resolves registered collisions
      * @param duration delta time of the frame
      */
-    void ResolveCollisions(double duration) const;
+    void ResolveCollisions(double duration);
 
     /**
      * @brief Applies all registered forces to the bodies
@@ -570,8 +584,8 @@ private:
 class SceneObject
 {
 public:
-    SceneObject()
-        : m_pScene(&Scene::GetInstance())
+    SceneObject(Scene& scene)
+        : m_pScene(&scene)
     {
     }
 
@@ -639,7 +653,7 @@ protected:
      * @param type body type
      * @param body data
      */
-    Primitive(Type type, mechanics::Body body);
+    Primitive(Scene& scene, Type type, mechanics::Body body);
 
     /**
      * @brief Makes new scene primitive
@@ -694,7 +708,7 @@ public:
      * @param body physical body data
      * @param plane shape data
      */
-    Plane(Type type, mechanics::Body body, arion::Plane plane);
+    Plane(Scene& scene, Type type, mechanics::Body body, arion::Plane plane);
 
     /**
      * @brief Releases shape handle and object handle
@@ -720,7 +734,7 @@ public:
      * @param body physical body data
      * @param sphere shape data
      */
-    Sphere(Type type, mechanics::Body body, arion::Sphere sphere);
+    Sphere(Scene& scene, Type type, mechanics::Body body, arion::Sphere sphere);
 
     /**
      * @brief Releases shape handle and body handle
@@ -746,7 +760,7 @@ public:
      * @param body physical body data
      * @param box shape data
      */
-    Box(Type type, mechanics::Body body, arion::Box box);
+    Box(Scene& scene, Type type, mechanics::Body body, arion::Box box);
 
     /**
      * @brief Releases shape handle and object handle
@@ -766,6 +780,11 @@ public:
 class ForceBase : public SceneObject
 {
 public:
+    ForceBase(Scene& scene)
+        : SceneObject(scene)
+    {
+    }
+
     /**
      * @brief Binds primitive's body to the force
      * @param[in] primitive body to be bound
@@ -781,11 +800,11 @@ public:
 
 /**
  * @brief Stores force data
- * 
- * @attention This class works as a high level API over the Scene singleton instance. 
- * Only the handles are guaranteed to be valid. Any reference/pointer is invalidated 
+ *
+ * @attention This class works as a high level API over the Scene singleton instance.
+ * Only the handles are guaranteed to be valid. Any reference/pointer is invalidated
  * after a new instance of a Force class is created or deleted.
- * 
+ *
  * @tparam ForceType force type
  */
 template < typename ForceType >
@@ -796,8 +815,9 @@ public:
      * @brief Allocates new force in the scene and initializes it
      * @param force initialized force data
      */
-    Force(ForceType force)
-        : m_force(force)
+    Force(Scene& scene, ForceType force)
+        : ForceBase(scene)
+        , m_force(force)
     {
         m_forceHandle = m_pScene->MakeForce<ForceType>();
         SetForce(force);
@@ -827,8 +847,8 @@ public:
     /**
      * @brief Returns force data
      *
-     * @attention This class works as a high level API over the Scene singleton instance. 
-     * Only the handles are guaranteed to be valid. Any reference/pointer is invalidated 
+     * @attention This class works as a high level API over the Scene singleton instance.
+     * Only the handles are guaranteed to be valid. Any reference/pointer is invalidated
      * after a new instance of a Force class is created or deleted.
      *
      * @return force data reference
@@ -883,88 +903,24 @@ public:
      * @brief Adds force pointer to the group and binds the force to all group's bodies
      * @param force reference to the force
      */
-    void BindForce(ForceBase& force)
-    {
-        if (std::find_if(m_forces.begin(), m_forces.end(),
-            [&force](ForceBase* f) { return &force == f; }) != m_forces.end())
-        {
-            return;
-        }
-
-        m_forces.push_back(&force);
-
-        for (Primitive* primitive : m_primitives)
-        {
-            force.Bind(*primitive);
-        }
-    }
+    void BindForce(ForceBase& force);
 
     /**
      * @brief Removes force from the group and unbinds all bodies
      */
-    void UnbindForce(ForceBase& force)
-    {
-        if (std::find_if(m_forces.begin(), m_forces.end(),
-            [&force](ForceBase* f) { return &force == f; }) == m_forces.end())
-        {
-            return;
-        }
-
-        for (Primitive* primitive : m_primitives)
-        {
-            force.Unbind(*primitive);
-        }
-
-        m_forces.erase(
-            std::remove_if(m_forces.begin(), m_forces.end(),
-                [&force](ForceBase* f) { return &force == f; }),
-            m_forces.end()
-        );
-    }
+    void UnbindForce(ForceBase& force);
 
     /**
      * @brief Adds primitive pointer to the group and binds all group's forces to it
      * @param primitive reference to the primitive to bind
      */
-    void BindPrimitive(Primitive& primitive)
-    {
-        if (std::find_if(m_primitives.begin(), m_primitives.end(),
-            [&primitive](Primitive* p) { return &primitive == p; }) != m_primitives.end())
-        {
-            return;
-        }
-
-        m_primitives.push_back(&primitive);
-
-        for (ForceBase* force : m_forces)
-        {
-            force->Bind(primitive);
-        }
-    }
+    void BindPrimitive(Primitive& primitive);
 
     /**
      * @brief Removes body from the group and unbinds all group's forces from it
      * @param primitive reference to the primitive to unbind
      */
-    void UnbindPrimitive(Primitive& primitive)
-    {
-        if (std::find_if(m_primitives.begin(), m_primitives.end(),
-            [&primitive](Primitive* p) { return &primitive == p; }) == m_primitives.end())
-        {
-            return;
-        }
-
-        for (ForceBase* force : m_forces)
-        {
-            force->Unbind(primitive);
-        }
-
-        m_primitives.erase(
-            std::remove_if(m_primitives.begin(), m_primitives.end(),
-                [&primitive](Primitive* p) { return p == &primitive; }),
-            m_primitives.end()
-        );
-    }
+    void UnbindPrimitive(Primitive& primitive);
 
 private:
     std::vector<ForceBase*> m_forces;

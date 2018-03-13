@@ -20,40 +20,19 @@ namespace collision
  */
 struct Contact
 {
-    struct Manifold;
+    using Manifold = arion::intersection::ContactManifold;
 
     Contact(mechanics::Body& aBody, mechanics::Body& bBody, Manifold manifold, double restitution);
 
-    /**
-     * @brief Stores contact manifold data
-     */
-    struct Manifold
-    {
-        //!Contact point in the world space on the a body
-        glm::dvec3 aWorldContactPoint;
-
-        //!Contact point in the world space on the b body
-        glm::dvec3 bWorldContactPoint;
-
-        //!Contact point in the local space on the a body
-        glm::dvec3 aModelContactPoint;
-
-        //!Contact point in the local space on the b body
-        glm::dvec3 bModelContactPoint;
-
-        //!Contact normal from the perspective of the b body
-        glm::dvec3 normal;
-
-        //!Penetration depth of two bodies
-        double penetration;
-    };
-
-    mechanics::Body* aBody;
-    mechanics::Body* bBody;
+    mechanics::Body* aBody = nullptr;
+    mechanics::Body* bBody = nullptr;
     Manifold manifold;
 
     //!Factor that's responsible for calculating the amount of energy lost to the deformation
-    double restitution;
+    double restitution = 1.0;
+
+    //!Definece if the contact is persistent across frames
+    bool persistent = false;
 };
 
 /**
@@ -88,7 +67,7 @@ private:
     };
 
     scene::AssetManager* m_assetManager = nullptr;
-    static arion::SimpleShapeIntersectionDetector s_simpleShapeDetector;
+    static arion::intersection::SimpleShapeIntersectionDetector s_simpleShapeDetector;
 
     /**
      * @brief Checks if two shapes are intersecting
@@ -218,7 +197,7 @@ private:
 class Resolver
 {
 public:
-    uint32_t iterationsUsed;
+    uint32_t iterationsUsed = 0;
     uint32_t iterations = 10000;
 
     /**

@@ -18,9 +18,11 @@ if (NOT GLM_FOUND)
 endif()
 
 if (NOT ARION_FOUND)
-    option(ARION_BUILD_DEMOS "Build Arion demo." OFF)
+    option(ARION_BUILD_DEMOS "Build Arion demo."  OFF)
     option(ARION_BUILD_TESTS "Build Arion tests." OFF)
+    option(ARION_BUILD_DEBUG "Build Arion debug." ON)
     add_subdirectory(${PEGASUS_ROOT}/Pegasus/godlike/Arion)
+    add_definitions(${ARION_DEFINITIONS})
 endif()
 
 #Target

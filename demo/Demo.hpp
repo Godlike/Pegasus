@@ -181,11 +181,14 @@ public:
         std::unique_ptr<render::Primitive> renderPrimitive;
     };
 
+    scene::Scene& GetScene();
+
 private:
-    scene::Scene& m_scene;
+    scene::Scene m_scene;
     render::Renderer& m_renderer;
     std::list<Primitive> m_primitives;
     std::unique_ptr<scene::Force<force::StaticField>> m_pGravityForce;
+    std::unique_ptr<scene::Force<force::Drag>> m_pDragForce;
 
     Demo();
 

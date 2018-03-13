@@ -13,73 +13,61 @@ namespace pegasus
 namespace scene
 {
 
-RigidBody::RigidBody(Handle body, Handle shape)
+RigidBody::RigidBody(Scene& scene, Handle body, Handle shape)
     : body(body)
     , shape(shape)
+    , pScene(&scene)
 {
-}
-
-AssetManager& AssetManager::GetInstance()
-{
-    static AssetManager am;
-    return am;
 }
 
 std::vector<Asset<mechanics::Body>>& AssetManager::GetBodies()
 {
-    return m_bodies;
+    return m_asset.m_bodies;
 }
 
-StaticBody::StaticBody(Handle body, Handle shape)
-    : RigidBody(body, shape)
+StaticBody::StaticBody(Scene& scene, Handle body, Handle shape)
+    : RigidBody(scene, body, shape)
 {
-    static AssetManager& am = AssetManager::GetInstance();
-    am.GetAsset(am.GetBodies(), body).material.SetInfiniteMass();
+    scene.GetBody(body).material.SetInfiniteMass();
 }
 
-DynamicBody::DynamicBody(Handle body, Handle shape)
-    : RigidBody(body, shape)
+DynamicBody::DynamicBody(Scene& scene, Handle body, Handle shape)
+    : RigidBody(scene, body, shape)
 {
-}
-
-Scene& Scene::GetInstance()
-{
-    static Scene scene;
-    return scene;
-}
-
-void Scene::Initialize(AssetManager& assetManager)
-{
-    m_assetManager = &assetManager;
 }
 
 void Scene::ComputeFrame(double duration)
 {
-    ResolveCollisions(duration);
-
     ApplyForces();
 
     Integrate(duration);
+
+    ResolveCollisions(duration);
 }
 
-Handle Scene::MakeBody() const
+Handle Scene::MakeBody()
 {
-    return m_assetManager->MakeAsset(m_assetManager->GetBodies());
+    return m_assetManager.MakeAsset(m_assetManager.GetBodies());
 }
 
-mechanics::Body& Scene::GetBody(Handle handle) const
+mechanics::Body& Scene::GetBody(Handle handle) 
 {
-    return m_assetManager->GetAsset(m_assetManager->GetBodies(), handle);
+    return m_assetManager.GetAsset(m_assetManager.GetBodies(), handle);
 }
 
-void Scene::RemoveBody(Handle handle) const
+void Scene::RemoveBody(Handle handle)
 {
-    m_assetManager->RemoveAsset(m_assetManager->GetBodies(), handle);
+    m_assetManager.RemoveAsset(m_assetManager.GetBodies(), handle);
 }
 
-void Scene::ResolveCollisions(double duration) const
+AssetManager& Scene::GetAssets()
 {
-    static collision::Detector detector(*m_assetManager);
+    return m_assetManager;
+}
+
+void Scene::ResolveCollisions(double duration)
+{
+    static collision::Detector detector(m_assetManager);
     std::vector<std::vector<collision::Contact>> contacts = detector.Detect();
     debug::Debug::CollisionDetectionCall(contacts);
 
@@ -90,7 +78,7 @@ void Scene::ResolveCollisions(double duration) const
 void Scene::ApplyForces()
 {
     //Clear previously applied forces
-    for (Asset<mechanics::Body>& asset : m_assetManager->GetBodies())
+    for (Asset<mechanics::Body>& asset : m_assetManager.GetBodies())
     {
         asset.data.linearMotion.force = glm::dvec3(0);
     }
@@ -106,7 +94,7 @@ void Scene::ApplyForces()
 
 void Scene::Integrate(double duration)
 {
-    for (Asset<mechanics::Body>& asset : m_assetManager->GetBodies())
+    for (Asset<mechanics::Body>& asset : m_assetManager.GetBodies())
     {
         if (asset.id != 0)
         {
@@ -149,15 +137,16 @@ Handle Primitive::GetObjectHandle() const
     return m_objectHandle;
 }
 
-Primitive::Primitive(Type type, mechanics::Body body)
-    : m_type(type)
+Primitive::Primitive(Scene& scene, Type type, mechanics::Body body)
+    : SceneObject(scene)
+    , m_type(type)
 {
     m_bodyHandle = m_pScene->MakeBody();
     m_pScene->GetBody(m_bodyHandle) = body;
 }
 
-Plane::Plane(Type type, mechanics::Body body, arion::Plane plane)
-    : Primitive(type, body)
+Plane::Plane(Scene& scene, Type type, mechanics::Body body, arion::Plane plane)
+    : Primitive(scene, type, body)
 {
     m_shapeHandle = m_pScene->MakeShape<arion::Plane>();
     m_pScene->GetShape<arion::Plane>(m_shapeHandle) = plane;
@@ -175,8 +164,8 @@ arion::Plane& Plane::GetShape() const
     return m_pScene->GetShape<arion::Plane>(m_shapeHandle);
 }
 
-Sphere::Sphere(Type type, mechanics::Body body, arion::Sphere sphere)
-    : Primitive(type, body)
+Sphere::Sphere(Scene& scene, Type type, mechanics::Body body, arion::Sphere sphere)
+    : Primitive(scene, type, body)
 {
     m_shapeHandle = m_pScene->MakeShape<arion::Sphere>();
     m_pScene->GetShape<arion::Sphere>(m_shapeHandle) = sphere;
@@ -194,8 +183,8 @@ arion::Sphere& Sphere::GetShape() const
     return m_pScene->GetShape<arion::Sphere>(m_shapeHandle);
 }
 
-Box::Box(Type type, mechanics::Body body, arion::Box box)
-    : Primitive(type, body)
+Box::Box(Scene& scene, Type type, mechanics::Body body, arion::Box box)
+    : Primitive(scene, type, body)
 {
     m_shapeHandle = m_pScene->MakeShape<arion::Box>();
     m_pScene->GetShape<arion::Box>(m_shapeHandle) = box;
@@ -212,5 +201,78 @@ arion::Box& Box::GetShape() const
 {
     return m_pScene->GetShape<arion::Box>(m_shapeHandle);
 }
+
+void PrimitiveGroup::BindForce(ForceBase& force)
+{
+    if (std::find_if(m_forces.begin(), m_forces.end(),
+                        [&force](ForceBase* f) { return &force == f; }) != m_forces.end())
+    {
+        return;
+    }
+
+    m_forces.push_back(&force);
+
+    for (Primitive* primitive : m_primitives)
+    {
+        force.Bind(*primitive);
+    }
+}
+
+void PrimitiveGroup::UnbindForce(ForceBase& force)
+{
+    if (std::find_if(m_forces.begin(), m_forces.end(),
+                        [&force](ForceBase* f) { return &force == f; }) == m_forces.end())
+    {
+        return;
+    }
+
+    for (Primitive* primitive : m_primitives)
+    {
+        force.Unbind(*primitive);
+    }
+
+    m_forces.erase(
+        std::remove_if(m_forces.begin(), m_forces.end(),
+                        [&force](ForceBase* f) { return &force == f; }),
+        m_forces.end()
+    );
+}
+
+void PrimitiveGroup::BindPrimitive(Primitive& primitive)
+{
+    if (std::find_if(m_primitives.begin(), m_primitives.end(),
+                        [&primitive](Primitive* p) { return &primitive == p; }) != m_primitives.end())
+    {
+        return;
+    }
+
+    m_primitives.push_back(&primitive);
+
+    for (ForceBase* force : m_forces)
+    {
+        force->Bind(primitive);
+    }
+}
+
+void PrimitiveGroup::UnbindPrimitive(Primitive& primitive)
+{
+    if (std::find_if(m_primitives.begin(), m_primitives.end(),
+                        [&primitive](Primitive* p) { return &primitive == p; }) == m_primitives.end())
+    {
+        return;
+    }
+
+    for (ForceBase* force : m_forces)
+    {
+        force->Unbind(primitive);
+    }
+
+    m_primitives.erase(
+        std::remove_if(m_primitives.begin(), m_primitives.end(),
+                        [&primitive](Primitive* p) { return p == &primitive; }),
+        m_primitives.end()
+    );
+}
+
 } // namespace scene
 } // namespace pegasus

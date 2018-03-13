@@ -1,8 +1,8 @@
 /*
-* Copyright (C) 2017 by Godlike
-* This code is licensed under the MIT license (MIT)
-* (http://opensource.org/licenses/MIT)
-*/
+ * Copyright (C) 2017 by Godlike
+ * This code is licensed under the MIT license (MIT)
+ * (http://opensource.org/licenses/MIT)
+ */
 #include <pegasus/Integration.hpp>
 #include <pegasus/Collision.hpp>
 
@@ -54,22 +54,13 @@ bool Detector::Intersect(arion::SimpleShape const* aShape, arion::SimpleShape co
     return s_simpleShapeDetector.CalculateIntersection(aShape, bShape);
 }
 
-arion::SimpleShapeIntersectionDetector Detector::s_simpleShapeDetector;
+arion::intersection::SimpleShapeIntersectionDetector Detector::s_simpleShapeDetector;
 
 Contact::Manifold Detector::CalculateContactManifold(
         arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
     )
 {
-    Contact::Manifold manifold;
-
-    manifold.normal = s_simpleShapeDetector.CalculateContactNormal(aShape, bShape);
-    std::pair<glm::dvec3, glm::dvec3> const contactPoints =
-        s_simpleShapeDetector.CalculateContactPoints(aShape, bShape);
-    manifold.aWorldContactPoint = contactPoints.first;
-    manifold.bWorldContactPoint = contactPoints.second;
-    manifold.penetration = s_simpleShapeDetector.CalculatePenetration(aShape, bShape);
-
-    return manifold;
+    return s_simpleShapeDetector.CalculateContactManifold(aShape, bShape);;
 }
 
 void Resolver::Resolve(std::vector<std::vector<Contact>>& contacts, double duration)
@@ -88,9 +79,8 @@ void Resolver::Resolve(std::vector<std::vector<Contact>>& contacts, double durat
 void Resolver::ResolveVelocity(Contact contact, double duration)
 {
     //Convert contact points to the local 
-    glm::dvec3 aContactPoint = contact.manifold.aWorldContactPoint - contact.aBody->linearMotion.position;
-    glm::dvec3 bContactPoint = contact.manifold.bWorldContactPoint - contact.bBody->linearMotion.position;
-    contact.restitution = 0.5;
+    glm::dvec3 const aContactPoint = contact.manifold.contactPoints.aWorldSpace - contact.aBody->linearMotion.position;
+    glm::dvec3 const bContactPoint = contact.manifold.contactPoints.bWorldSpace - contact.bBody->linearMotion.position;
 
     //Calculate total contact impulse magnitude
     glm::dvec3 const aContactPointVelocity = contact.aBody->linearMotion.velocity
@@ -99,18 +89,18 @@ void Resolver::ResolveVelocity(Contact contact, double duration)
         + glm::cross(contact.bBody->angularMotion.velocity, bContactPoint);
 
     glm::dvec3 const aBodyAngularImpulse = contact.aBody->material.GetInverseMomentOfInertia()
-        * glm::cross(glm::cross(aContactPoint, contact.manifold.normal), aContactPoint);
+        * glm::cross(glm::cross(aContactPoint, contact.manifold.contactNormal), aContactPoint);
     glm::dvec3 const bBodyAngularImpulse = contact.bBody->material.GetInverseMomentOfInertia()
-        * glm::cross(glm::cross(bContactPoint, contact.manifold.normal), bContactPoint);
+        * glm::cross(glm::cross(bContactPoint, contact.manifold.contactNormal), bContactPoint);
 
     double const linearImpulsePerUnitMass = contact.aBody->material.GetInverseMass() + contact.bBody->material.GetInverseMass();
-    double const angularImpulsePerUnitMass = glm::dot(aBodyAngularImpulse + bBodyAngularImpulse, contact.manifold.normal);
+    double const angularImpulsePerUnitMass = glm::dot(aBodyAngularImpulse + bBodyAngularImpulse, contact.manifold.contactNormal);
     double const totalImpulsePerUnitMass = linearImpulsePerUnitMass + angularImpulsePerUnitMass;
     glm::dvec3 const relativeContactPointVelocity = aContactPointVelocity - bContactPointVelocity;
 
     double const impulseMagnitude =
-        glm::dot(-(1 + contact.restitution) * relativeContactPointVelocity, contact.manifold.normal) / totalImpulsePerUnitMass;
-    glm::dvec3 const impulse = impulseMagnitude * contact.manifold.normal;
+        glm::dot(-(1 + contact.restitution) * relativeContactPointVelocity, contact.manifold.contactNormal) / totalImpulsePerUnitMass;
+    glm::dvec3 const impulse = impulseMagnitude * contact.manifold.contactNormal;
 
     //Calculate post contact linear velocity
     contact.aBody->linearMotion.velocity =
@@ -120,17 +110,25 @@ void Resolver::ResolveVelocity(Contact contact, double duration)
 
     //Calculate post contact angular velocity
     contact.aBody->angularMotion.velocity = contact.aBody->angularMotion.velocity
-        + (contact.aBody->material.GetInverseMomentOfInertia() * impulseMagnitude)
-        * glm::cross(aContactPoint, contact.manifold.normal);
+        + contact.aBody->material.GetInverseMomentOfInertia() 
+        * glm::cross(aContactPoint, contact.manifold.contactNormal) * impulseMagnitude;
     contact.bBody->angularMotion.velocity = contact.bBody->angularMotion.velocity
-        - (contact.bBody->material.GetInverseMomentOfInertia() * impulseMagnitude)
-        * glm::cross(bContactPoint, contact.manifold.normal);
+        - contact.bBody->material.GetInverseMomentOfInertia() 
+        * glm::cross(bContactPoint, contact.manifold.contactNormal) * impulseMagnitude;
+
+    //Normalize angular velocity
+    contact.aBody->angularMotion.velocity = glm::length2(contact.aBody->angularMotion.velocity) > 100.0 
+        ? glm::normalize(contact.aBody->angularMotion.velocity) * 10.0 
+        : contact.aBody->angularMotion.velocity;
+    contact.bBody->angularMotion.velocity = glm::length2(contact.bBody->angularMotion.velocity) > 100.0
+        ? glm::normalize(contact.bBody->angularMotion.velocity) * 10.0
+        : contact.bBody->angularMotion.velocity;
 }
 
 void Resolver::ResolveInterpenetration(Contact contact)
 {
     double const totalInverseMass = contact.aBody->material.GetInverseMass() + contact.bBody->material.GetInverseMass();
-    glm::dvec3 const movePerIMass = contact.manifold.normal * (contact.manifold.penetration / totalInverseMass);
+    glm::dvec3 const movePerIMass = contact.manifold.contactNormal * (contact.manifold.penetration / totalInverseMass);
 
     contact.aBody->linearMotion.position += movePerIMass * contact.aBody->material.GetInverseMass();
     contact.aBody->linearMotion.force = integration::IntegrateForce(contact.aBody->linearMotion.force, movePerIMass * -1.0);
