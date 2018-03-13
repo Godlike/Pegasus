@@ -20,15 +20,15 @@
 
 namespace
 {
-static bool g_gjkSimplexCheckbox = false;
-static bool g_epaPolytopeCheckbox = false;
-static bool g_gjkHold = false;
-static bool g_epaHold = false;
-static bool g_epaCsoCheckbox = false;
-static bool g_collisionPointsCheckbox = false;
-static bool g_contactNormalsCheckbox = false;
-static bool g_originAxesCheckbox = true;
-static bool g_pauseOnCollisionCheckbox = false;
+bool g_gjkSimplexCheckbox = false;
+bool g_epaPolytopeCheckbox = false;
+bool g_gjkHold = false;
+bool g_epaHold = false;
+bool g_epaCsoCheckbox = false;
+bool g_collisionPointsCheckbox = false;
+bool g_contactNormalsCheckbox = false;
+bool g_originAxesCheckbox = true;
+bool g_pauseOnCollisionCheckbox = false;
 std::list<pegasus::Demo::Primitive*> g_objects;
 
 void CollisionDetectionDebugCallback(
@@ -51,8 +51,8 @@ void CollisionDetectionDebugCallback(
         {
             for (auto& contact : c)
             {
-                //contactPoints.push_back(&demo.MakeSphere(contact.manifold.aContactPoint, 0.05, { 1, 0, 0 }));
-                contactPoints.push_back(&demo.MakeSphere(contact.manifold.bWorldContactPoint, 0.05, { 0, 1, 0 }));
+                contactPoints.push_back(&demo.MakeSphere(contact.manifold.contactPoints.aWorldSpace, 0.05, { 1, 0, 0 }));
+                contactPoints.push_back(&demo.MakeSphere(contact.manifold.contactPoints.bWorldSpace, 0.05, { 0, 1, 0 }));
             }
         }
     }
@@ -70,8 +70,8 @@ void CollisionDetectionDebugCallback(
             for (auto& contact : c)
             {
                 static pegasus::mechanics::Body line;
-                line.linearMotion.position = contact.manifold.bWorldContactPoint;
-                contactNormals.push_back(&demo.MakeLine(line, { 1, 0, 0 }, {}, contact.manifold.normal));
+                line.linearMotion.position = contact.manifold.contactPoints.bWorldSpace;
+                contactNormals.push_back(&demo.MakeLine(line, { 1, 0, 0 }, {}, contact.manifold.contactNormal));
             }
         }
     }
@@ -194,7 +194,7 @@ void EpaDebugCallback(
         auto& bBox = static_cast<arion::Box const&>(bShape);
         static std::vector<glm::dvec3> aVertices{ 8 }, bVertices{ 8 };
 
-        epona::CalculateBoxVerticesWorld(aBox.iAxis, aBox.jAxis, aBox.kAxis, 
+        epona::CalculateBoxVerticesWorld(aBox.iAxis, aBox.jAxis, aBox.kAxis,
             aBox.centerOfMass, glm::toMat3(aBox.orientation), aVertices.begin());
         epona::CalculateBoxVerticesWorld(bBox.iAxis, bBox.jAxis, bBox.kAxis,
             bBox.centerOfMass, glm::toMat3(bBox.orientation), bVertices.begin());
@@ -239,13 +239,13 @@ void QuickhullConvexHullCallback(
         {
             demo.Remove(*ch);
             ch = nullptr;
-        } 
+        }
 
         if (!ch)
         {
             std::vector<glm::mat3> triangles;
             auto&  faces = quickHull.GetFaces();
-        
+
             for (auto& face : faces)
             {
                 auto const i = face.GetIndices();
@@ -267,17 +267,17 @@ void DrawUi()
     {
         if (ImGui::BeginMenu("Tools"))
         {
-            if (ImGui::MenuItem("Objects", "Alt+O")) 
-            { 
-                objectsWindowVisible = true; 
+            if (ImGui::MenuItem("Objects", "Alt+O"))
+            {
+                objectsWindowVisible = true;
             }
-            if (ImGui::MenuItem("Scene configs", "Alt+S")) 
-            { 
-                sceneConfigWindowVisible = true; 
+            if (ImGui::MenuItem("Scene configs", "Alt+S"))
+            {
+                sceneConfigWindowVisible = true;
             }
-            if (ImGui::MenuItem("Collision debug", "Alt+C")) 
-            { 
-                collisionDebugWindowVisible = true; 
+            if (ImGui::MenuItem("Collision debug", "Alt+C"))
+            {
+                collisionDebugWindowVisible = true;
             }
             ImGui::EndMenu();
         }
@@ -316,7 +316,7 @@ void DrawUi()
                 axes.push_back(&demo.MakeLine({}, { 0, 1, 0 }, { 0, 0, 0 }, { 0, -1,  0 }));
                 axes.push_back(&demo.MakeLine({}, { 0, 0, 1 }, { 0, 0, 0 }, { 0,  0, -1 }));
             }
-        } 
+        }
         else
         {
             for (auto& axis : axes)
@@ -345,6 +345,17 @@ void DrawUi()
         }
         ImGui::Text("Frame: %.3f ms; (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Spacing();
+
+        if (ImGui::Button("Push frame"))
+        {
+            demo.GetScene().GetAssets().PushFrame();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Pop frame"))
+        {
+            demo.GetScene().GetAssets().Back();
+        }
+                
         ImGui::End();
     }
 
@@ -521,7 +532,7 @@ Demo::Primitive& Demo::MakeLine(mechanics::Body body, glm::vec3 color, glm::vec3
 
 Demo::Primitive& Demo::MakePlane(mechanics::Body body, glm::dvec3 normal, scene::Primitive::Type type)
 {
-    scene::Primitive* object = new scene::Plane(type, body,
+    scene::Primitive* object = new scene::Plane(m_scene, type, body,
         arion::Plane(body.linearMotion.position, body.angularMotion.orientation, normal));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
@@ -545,13 +556,14 @@ Demo::Primitive& Demo::MakeTriangle(mechanics::Body body, glm::vec3 color, glm::
 Demo::Primitive& Demo::MakeSphere(mechanics::Body body, double radius, scene::Primitive::Type type)
 {
     body.material.SetMomentOfInertia(mechanics::CalculateSolidSphereMomentOfInertia(radius, body.material.GetMass()));
-    scene::Primitive* object = new scene::Sphere(type, body,
+    scene::Primitive* object = new scene::Sphere(m_scene, type, body,
         arion::Sphere(body.linearMotion.position, body.angularMotion.orientation, radius));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
     render::Primitive* shape = new render::Sphere(model, glm::vec3(0.439, 0.502, 0.565), radius);
     m_primitives.emplace_back(object, shape);
     m_pGravityForce->Bind(*object);
+    m_pDragForce->Bind(*object);
 
     return m_primitives.back();
 }
@@ -572,13 +584,14 @@ Demo::Primitive& Demo::MakeBox(
 {
     body.material.SetMomentOfInertia(mechanics::CalculateSolidCuboidMomentOfInertia(
         glm::length(i), glm::length(j), glm::length(k), body.material.GetMass()));
-    scene::Primitive* object = new scene::Box(type, body,
+    scene::Primitive* object = new scene::Box(m_scene, type, body,
         arion::Box(body.linearMotion.position, body.angularMotion.orientation, i, j, k));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
     render::Primitive* shape = new render::Box(model, glm::vec3(0.439, 0.502, 0.565), render::Box::Axes{i, j, k});
     m_primitives.emplace_back(object, shape);
     m_pGravityForce->Bind(*object);
+    m_pDragForce->Bind(*object);
 
     return m_primitives.back();
 }
@@ -609,23 +622,26 @@ Demo::Primitive::Primitive(scene::Primitive* body, render::Primitive* shape)
 {
 }
 
+scene::Scene& Demo::GetScene()
+{
+    return m_scene;
+}
+
 Demo::Demo()
-    : m_scene(scene::Scene::GetInstance())
-    , m_renderer(render::Renderer::GetInstance())
+    : m_renderer(render::Renderer::GetInstance())
 {
     epona::debug::Debug::SetQuickhullConvexHullCallback<std::vector<glm::dvec3>>(::QuickhullConvexHullCallback);
 
-    auto& arionDebug = arion::debug::Debug::GetInstace();
-    arionDebug.epaCallback = ::EpaDebugCallback;
-    arionDebug.gjkCallback = ::GjkDebugCallback;
+    arion::debug::Debug::SetEpaCallback<std::vector<glm::dvec3>>(::EpaDebugCallback);
+    arion::debug::Debug::SetGjkCallback(::GjkDebugCallback);
 
     auto& pegasusDebug = pegasus::debug::Debug::GetInstace();
     pegasusDebug.collisionDetectionCall = ::CollisionDetectionDebugCallback;
 
     m_renderer.drawUiCallback = ::DrawUi;
 
-    m_scene.Initialize(scene::AssetManager::GetInstance());
-    m_pGravityForce = std::make_unique<scene::Force<force::StaticField>>(force::StaticField(glm::dvec3{ 0, -9.8, 0 }));
+    m_pGravityForce = std::make_unique<scene::Force<force::StaticField>>(m_scene, force::StaticField(glm::dvec3{ 0, -9.8, 0 }));
+    m_pDragForce = std::make_unique<scene::Force<force::Drag>>(m_scene, force::Drag(0.01, 0.05));
 }
 
 } // namespace pegasus

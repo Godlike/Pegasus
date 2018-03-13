@@ -61,7 +61,7 @@ public:
     /**
      * @brief Calculates force that is acting on the given body
      *
-     * The strength of the force is in inverse ration with the squared distance
+     * The strength of the force is in inverse ratio with the squared distance
      * from the force's source to the body's center of mass.
      *
      * @attention The distance beetween force and body must not be equal to zero

@@ -4,6 +4,8 @@
 * (http://opensource.org/licenses/MIT)
 */
 #include <pegasus/Integration.hpp>
+#include <Epona/FloatingPoint.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace
 {
@@ -77,6 +79,11 @@ void IntegrateBody(
     linearMotion.velocity = ::IntegrateLinearDamping(
         linearMotion.velocity, material.damping, duration);
     linearMotion.force = glm::dvec3(0);
+
+    assert(!std::isnan(linearMotion.position.x + linearMotion.position.y + linearMotion.position.z));
+    assert(!std::isnan(linearMotion.velocity.x + linearMotion.velocity.y + linearMotion.velocity.z));
+    assert(!std::isnan(linearMotion.acceleration.x + linearMotion.acceleration.y + linearMotion.acceleration.z));
+    assert(!std::isnan(linearMotion.force.x + linearMotion.force.y + linearMotion.force.z));
 }
 
 glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torque, glm::dmat3 inverseMomentOfInertia)
@@ -87,7 +94,9 @@ glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torq
 glm::dquat IntegrateAngularDisplacement(glm::dquat orientation, glm::dvec3 velocity, double duration)
 {
     glm::dquat const velocityQuad{ 0, velocity.x, velocity.y, velocity.z };
-    return glm::normalize(orientation + duration * velocityQuad * 0.5 * orientation);
+    glm::dquat const displacement{ glm::normalize(orientation + duration * velocityQuad * 0.5 * orientation) };
+
+    return displacement;
 }
 
 glm::dvec3 IntegrateAngularVelocity(glm::dvec3 velocity, glm::dvec3 resultingAcceleration, double duration)
@@ -121,6 +130,11 @@ void IntegrateBody(
     angularMotion.velocity = ::IntegrateAngularDamping(
         angularMotion.velocity, material.damping, duration);
     angularMotion.torque = glm::dvec3(0, 0, 0);
+
+    assert(!std::isnan(angularMotion.orientation.x + angularMotion.orientation.y + angularMotion.orientation.z));
+    assert(!std::isnan(angularMotion.velocity.x + angularMotion.velocity.y + angularMotion.velocity.z));
+    assert(!std::isnan(angularMotion.acceleration.x + angularMotion.acceleration.y + angularMotion.acceleration.z));
+    assert(!std::isnan(angularMotion.torque.x + angularMotion.torque.y + angularMotion.torque.z));
 }
 } // namespace ::
 

@@ -45,7 +45,7 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
         }
         break;
     case GLFW_KEY_R:
-        while (g_objects.size() > 0)
+        while (!g_objects.empty())
         {
             demo.Remove(*g_objects.back());
             g_objects.pop_back();
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     pegasus::mechanics::Body plane;
     plane.linearMotion.position = glm::dvec3(0, -5, 0);
     demo.MakePlane(plane, glm::vec3(0, 1, 0), pegasus::scene::Primitive::Type::STATIC);
-
+    
     while (demo.IsValid())
     {
         demo.RunFrame();

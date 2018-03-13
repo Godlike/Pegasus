@@ -13,6 +13,7 @@
 #include <Epona/FloatingPoint.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/optimum_pow.hpp>
+#include <glm/gtx/norm.hpp>
 
 namespace pegasus
 {
@@ -61,10 +62,16 @@ Drag::Drag(double k1, double k2)
 
 glm::dvec3 Drag::CalculateForce(mechanics::Body const& body) const
 {
-    double const speed = glm::length(body.linearMotion.velocity);
-    double const dragFactor = m_k1 * speed + m_k2 * glm::pow2(speed);
+    double const speedSq = glm::length2(body.linearMotion.velocity);
+    if (epona::fp::IsZero(speedSq) || std::isinf(speedSq))
+    {
+        return glm::dvec3{ 0 };
+    }
 
-    return -glm::normalize(body.linearMotion.velocity) * dragFactor;
+    double const dragFactor = m_k1 * glm::sqrt(speedSq) + m_k2 * speedSq;
+    glm::dvec3 const force = -glm::normalize(body.linearMotion.velocity) * dragFactor;
+
+    return force;
 }
 
 Spring::Spring(
