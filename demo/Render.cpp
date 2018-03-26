@@ -570,7 +570,7 @@ Renderer::Renderer()
     InitializeCallbacks();
     InitializeShaderProgram();
 
-    m_camera.SetPosition(glm::vec3(1, 1, 1) * 4.f);
+    m_camera.SetPosition(glm::vec3(1, 1, 1) * 10.f);
     m_camera.SetDirection(glm::normalize(glm::dvec3{-1, -1, -1}));
 }
 

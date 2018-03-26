@@ -70,7 +70,7 @@ void CollisionDetectionDebugCallback(
             for (auto& contact : c)
             {
                 static pegasus::mechanics::Body line;
-                line.linearMotion.position = contact.manifold.contactPoints.bWorldSpace;
+                line.linearMotion.position = contact.manifold.contactPoints.aWorldSpace;
                 contactNormals.push_back(&demo.MakeLine(line, { 1, 0, 0 }, {}, contact.manifold.contactNormal));
             }
         }
@@ -376,13 +376,23 @@ void DrawUi()
         static int currentPrimitiveBodyType = 1;
         ImGui::Combo("Body type", &currentPrimitiveBodyType, primitiveBodyTypeComboItems, IM_ARRAYSIZE(primitiveBodyTypeComboItems));
 
+        static float mass = 1;
+        ImGui::InputFloat("Mass KG", &mass);
+        mass = glm::min(glm::max(1.0f, mass), 1000.0f);
+
         static float position[3] = { 0, 0, 0 };
         ImGui::InputFloat3("Position (X Y Z)", position, 3);
 
-        static float angleAxis[4] = {};
+        static float velocity[4] = { 0, 0, 0, 0 };
+        ImGui::InputFloat4("Speed, V (X Y Z)", velocity, 3);
+
+        static float angleAxis[4] = { 0, 0, 0, 0 };
         ImGui::InputFloat4("Angle, Axis (X Y Z)", angleAxis, 3);
 
-        static float sphereRadius = 1;
+        static float angularVelocity[4] = { 0, 0, 0, 0 };
+        ImGui::InputFloat4("Speed, W (X Y Z)", angularVelocity, 3);
+   
+        static float sphereRadius = 0.5f;
         static float boxSides[3] = { 0.5f, 0.5f, 0.5f };
         if (currentPrimitiveType == 0)
         {
@@ -411,9 +421,19 @@ void DrawUi()
             if (g_objects.size() < demo.maxObjects)
             {
                 pegasus::mechanics::Body body;
+                body.material.SetMass(mass);
                 body.linearMotion.position = glm::make_vec3(position);
+                body.linearMotion.velocity = glm::make_vec3(&velocity[1]);
+                if (!epona::fp::IsZero(glm::length(body.linearMotion.velocity)))
+                {
+                    body.linearMotion.velocity = glm::normalize(body.linearMotion.velocity);
+                }
+                velocity[1] = static_cast<float>(body.linearMotion.velocity[0]);
+                velocity[2] = static_cast<float>(body.linearMotion.velocity[1]);
+                velocity[3] = static_cast<float>(body.linearMotion.velocity[2]);
+                body.linearMotion.velocity *= static_cast<double>(velocity[0]);
 
-                auto bodyType = (currentPrimitiveBodyType == 0)
+                const auto bodyType = (currentPrimitiveBodyType == 0)
                     ? pegasus::scene::Primitive::Type::STATIC
                     : pegasus::scene::Primitive::Type::DYNAMIC;
 
@@ -424,7 +444,7 @@ void DrawUi()
                 else
                 {
                     g_objects.push_back(&demo.MakeBox(
-                        body, {boxSides[0], 0, 0}, {0, boxSides[1], 0}, {0, 0, boxSides[2]}, bodyType
+                        body, { boxSides[0], 0, 0 }, { 0, boxSides[1], 0 }, { 0, 0, boxSides[2] }, bodyType
                     ));
                 }
 
@@ -435,10 +455,16 @@ void DrawUi()
                 angleAxis[2] = axisNormalized.y;
                 angleAxis[3] = axisNormalized.z;
 
+                glm::dvec3 const avd{glm::make_vec3(&angularVelocity[1])};
+                glm::dvec3 const avdNorm = epona::fp::IsZero(glm::length(avd)) ? avd : glm::normalize(avd);
+                angularVelocity[1] = static_cast<float>(avdNorm.x);
+                angularVelocity[2] = static_cast<float>(avdNorm.y);
+                angularVelocity[3] = static_cast<float>(avdNorm.z);
+
                 body = g_objects.back()->physicalPrimitive->GetBody();
+                body.angularMotion.velocity = avdNorm * static_cast<double>(angularVelocity[0]);
                 body.angularMotion.orientation = glm::dquat(
-                    glm::angleAxis(static_cast<double>(angleAxis[0]),
-                        glm::dvec3{ angleAxis[1], angleAxis[2], angleAxis[3] }
+                    glm::angleAxis(static_cast<double>(angleAxis[0]), glm::dvec3(glm::make_vec3(&angleAxis[1]))
                 ));
                 g_objects.back()->physicalPrimitive->SetBody(body);
             }

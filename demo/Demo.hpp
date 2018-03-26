@@ -8,6 +8,8 @@
 
 #include "demo/Render.hpp"
 #include <pegasus/Scene.hpp>
+#include <pegasus/Primitives.hpp>
+#include <pegasus/Force.hpp>
 #include <list>
 #include <memory>
 
