@@ -38,14 +38,20 @@ set(PEGASUS_HEADERS
     include/pegasus/Force.hpp
     include/pegasus/Integration.hpp
     include/pegasus/Collision.hpp
+    include/pegasus/Asset.hpp
+    include/pegasus/AssetManager.hpp
     include/pegasus/Scene.hpp
+    include/pegasus/Primitives.hpp
 )
 set(PEGASUS_SOURCES
     sources/Body.cpp
     sources/Force.cpp
     sources/Integration.cpp
     sources/Collision.cpp
+    sources/Asset.cpp
+    sources/AssetManager.cpp
     sources/Scene.cpp
+    sources/Primitives.cpp
 )
 
 set(PEGASUS_EXTRA)
