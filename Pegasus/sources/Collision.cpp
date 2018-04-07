@@ -25,10 +25,10 @@ namespace collision
 Contact::Contact(
     mechanics::Body& aBody,
     mechanics::Body& bBody,
-    scene::Handle aHandle, 
+    scene::Handle aHandle,
     scene::Handle bHandle,
-    Manifold manifold, 
-    double restitution, 
+    Manifold manifold,
+    double restitution,
     double friction
 )
     : aBody(&aBody)
@@ -85,7 +85,7 @@ Contact::Manifold Detector::CalculateContactManifold(
     )
 {
     auto const manifold = s_simpleShapeDetector.CalculateContactManifold(aShape, bShape);
-    
+
     Contact::Manifold result;
     result.contactPoints = manifold.contactPoints;
     result.contactNormal = manifold.contactNormal;
@@ -128,14 +128,14 @@ void Resolver::Resolve(std::vector<std::vector<Contact>>& contacts, double durat
 
 void Resolver::ResolvePersistantContacts() const
 {
-    for (auto& contact : m_contactCache)
-    {
-        
-    }
+    // for (auto& contact : m_contactCache)
+    // {
+        //
+    // }
 }
 
 void Resolver::ResolveConstraint(
-    Contact& contact, 
+    Contact& contact,
     double duration,
     double& contactLambda,
     double& frictionLamda1,
@@ -162,7 +162,7 @@ void Resolver::ResolveConstraint(
     glm::dvec3 const rA = contact.manifold.contactPoints.aWorldSpace - aBody.linearMotion.position;
     glm::dvec3 const rB = contact.manifold.contactPoints.bWorldSpace - bBody.linearMotion.position;
     ResolveContactConstraint(contact, duration, V, rA, rB, contactLambda);
-    
+
     if (!epona::fp::IsZero(glm::length2(aBody.angularMotion.velocity)))
     {
         contact.manifold.firstTangent = glm::normalize(
@@ -179,8 +179,8 @@ void Resolver::ResolveConstraint(
 }
 
 void Resolver::ResolveContactConstraint(
-    Contact& contact, 
-    double duration, 
+    Contact& contact,
+    double duration,
     Contact::Velocity const& V,
     glm::dvec3 const& rA,
     glm::dvec3 const& rB,
@@ -194,17 +194,17 @@ void Resolver::ResolveContactConstraint(
         glm::cross( rB, contact.manifold.contactNormal),
     };
 
-    double const separationSpeed = 
+    double const separationSpeed =
         -glm::dot(V.vB + glm::cross(V.wB, rB) - (V.vA + glm::cross(V.wA, rA)), contact.manifold.contactNormal);
     double constexpr restitutionSlop = 0.5;
     double const restitution = contact.restitution * glm::max(separationSpeed - restitutionSlop, 0.0);
     double constexpr beta = 0.1;
     double constexpr penetrationSlop = 0.0125;
-    double const baumgarteStabiliationTerm = 
+    double const baumgarteStabiliationTerm =
         - (beta / duration) * glm::max(contact.manifold.penetration + penetrationSlop, 0.0) + restitution;
-    contact.lagrangianMultiplier = -(contact.jacobian * V + baumgarteStabiliationTerm) 
+    contact.lagrangianMultiplier = -(contact.jacobian * V + baumgarteStabiliationTerm)
         / (contact.jacobian * (contact.inverseEffectiveMass * contact.jacobian));
-    
+
     double const prevTotalLagrangianMultiplier = totalLagrangianMultiplier;
     totalLagrangianMultiplier += contact.lagrangianMultiplier;
     totalLagrangianMultiplier = glm::max(0.0, totalLagrangianMultiplier);
@@ -216,7 +216,7 @@ void Resolver::ResolveContactConstraint(
 void Resolver::ResolveFrictionConstraint(
     Contact& contact,
     Contact::Velocity const& V,
-    glm::dvec3 const& rA, 
+    glm::dvec3 const& rA,
     glm::dvec3 const& rB,
     double& totalLagrangianMultiplier,
     double& totalTangentLagrangianMultiplier1,

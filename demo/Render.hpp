@@ -507,7 +507,7 @@ private:
         {
             gl_Position = mvp * vec4(aPos, 1.0);
             fragPos = vec3(model * vec4(aPos, 1.0));
-            fragNormal = aNormal;
+            fragNormal = mat3(model) * aNormal;
         }
     )";
     GLchar const* m_pFragmentShaderSources =

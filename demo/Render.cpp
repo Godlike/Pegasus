@@ -606,7 +606,7 @@ void pegasus::render::Renderer::InitializeImgui()
     ImGui::StyleColorsLight();
     ImGuiIO& io = ImGui::GetIO();
     io.NavFlags |= ImGuiNavFlags_EnableKeyboard;
-    io.Fonts->AddFontFromFileTTF("Roboto-Medium.ttf", 14.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
+    //io.Fonts->AddFontFromFileTTF("Roboto-Medium.ttf", 14.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 }
 
 void Renderer::InitializeContext()
