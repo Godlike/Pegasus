@@ -11,6 +11,7 @@
 #include <pegasus/Asset.hpp>
 #include <pegasus/AssetManager.hpp>
 #include <pegasus/Collision.hpp>
+#include <pegasus/Force.hpp>
 
 namespace pegasus
 {
@@ -242,6 +243,25 @@ private:
      */
     void Integrate(double duration);
 };
+
+template <>
+inline void Scene::ApplyForce<force::Drag>()
+{
+    for (Asset<ForceBind>& asset : m_assetManager.GetForceBinds<force::Drag>())
+    {
+        if (asset.id != ZERO_HANDLE)
+        {
+            auto& force = GetForce<force::Drag>(asset.data.force);
+            mechanics::Body& body = GetBody(asset.data.body);
+            body.linearMotion.force += force.CalculateForce(body);
+
+            glm::dvec3 const velocity = body.linearMotion.velocity;
+            body.linearMotion.velocity = body.angularMotion.velocity;
+            body.angularMotion.torque += force.CalculateForce(body);
+            body.linearMotion.velocity = velocity;
+        }
+    }
+}
 
 } // namespace scene
 } // namespace pegasus

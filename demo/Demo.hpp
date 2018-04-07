@@ -162,6 +162,9 @@ public:
     //! Physics frame duration
     double staticDuration = 0.016;
 
+    //! Physics tick dutation
+    double physicsTick = 0.004;
+
     /**
      * @brief Represents an instance of the render and physical objects
      */

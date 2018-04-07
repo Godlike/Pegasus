@@ -355,7 +355,7 @@ void DrawUi()
         {
             demo.GetScene().GetAssets().Back();
         }
-                
+
         ImGui::End();
     }
 
@@ -391,7 +391,7 @@ void DrawUi()
 
         static float angularVelocity[4] = { 0, 0, 0, 0 };
         ImGui::InputFloat4("Speed, W (X Y Z)", angularVelocity, 3);
-   
+
         static float sphereRadius = 0.5f;
         static float boxSides[3] = { 0.5f, 0.5f, 0.5f };
         if (currentPrimitiveType == 0)
@@ -526,7 +526,14 @@ void Demo::RunFrame()
 void Demo::ComputeFrame(double duration)
 {
     //Compute physical data
-    m_scene.ComputeFrame(useStaticDuration ? staticDuration : duration);
+    duration = useStaticDuration ? staticDuration : duration;
+    if (duration > physicsTick)
+    {
+        for (uint16_t i = 0; i < (duration / physicsTick); ++i)
+        {
+            m_scene.ComputeFrame(physicsTick);
+        }
+    }
 
     //Update render data
     for (Primitive& primitive : m_primitives)
