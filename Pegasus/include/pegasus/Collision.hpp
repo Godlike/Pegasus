@@ -93,23 +93,17 @@ struct Contact
     };
 
     Contact(
-        mechanics::Body& aBody,
-        mechanics::Body& bBody,
         scene::Handle aHandle, 
         scene::Handle bHandle, 
         Manifold manifold, 
         double restitution, 
         double friction
     );
-
-    //Rigid bodies
-    mechanics::Body* aBody = nullptr;
-    mechanics::Body* bBody = nullptr;
-
+    
     //Handles
     scene::Handle aBodyHandle;
     scene::Handle bBodyHandle;
-
+    
     //!Contact manifold data
     Manifold manifold;
 
@@ -121,6 +115,18 @@ struct Contact
     Jacobian deltaVelocity;
     MassMatrix inverseEffectiveMass;
     Jacobian jacobian;
+    double lagrangianMultiplier;
+    double tangentLagrangianMultiplier1;
+    double tangentLagrangianMultiplier2;
+};
+
+struct PersistentCollision
+{
+    Contact::Manifold::ContactPoints contactPoints;
+
+    scene::Handle aBodyHandle;
+    scene::Handle bBodyHandle;
+
     double lagrangianMultiplier;
 };
 
@@ -142,11 +148,11 @@ public:
      * @brief Detects and returns contacts
      * @return contacts
      */
-    std::vector<std::vector<Contact>> Detect();
+    std::vector<Contact> Detect();
 
     //!Default restitution factor for collision manifests
-    static double constexpr s_restitutionCoefficient = 0.35;  //Wood
-    static double constexpr s_frictionCoefficient    = 0.6;   //Wood
+    double const restitutionCoefficient = 0.35; //Wood
+    double const frictionCoefficient    = 0.6;  //Wood
 
 private:
     struct ObjectHasher
@@ -159,7 +165,7 @@ private:
     };
 
     scene::AssetManager* m_pAssetManager;
-    static arion::intersection::SimpleShapeIntersectionDetector s_simpleShapeDetector;
+    arion::intersection::SimpleShapeIntersectionDetector m_simpleShapeDetector;
 
     /**
      * @brief Checks if two shapes are intersecting
@@ -167,7 +173,7 @@ private:
      * @param bShape second shape
      * @return @c true if shapes are intersecting, @c false otherwise
      */
-    static bool Intersect(
+    bool Intersect(
         arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
     );
 
@@ -177,7 +183,7 @@ private:
      * @param bShape second shapes
      * @return contact manifold
      */
-    static Contact::Manifold CalculateContactManifold(
+    Contact::Manifold CalculateContactManifold(
         arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
     );
 
@@ -188,12 +194,11 @@ private:
      * @return contacts
      */
     template < typename Object, typename Shape >
-    std::vector<Contact> Detect()
+    void Detect(std::vector<Contact>& contacts)
     {
-        std::vector<Contact> contacts;
         std::unordered_set<std::pair<Shape*, Shape*>, ObjectHasher> registeredContacts;
-        std::vector<scene::Asset<scene::RigidBody>>& objects = m_pAssetManager->GetObjects<Object, Shape>();
-
+        std::vector<scene::Asset<scene::RigidBody>>& objects = m_pAssetManager->GetObjects<Object, Shape>();       
+                
         for (scene::Asset<scene::RigidBody> aObject : objects)
         {
             for (scene::Asset<scene::RigidBody> bObject : objects)
@@ -222,18 +227,15 @@ private:
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
                     contacts.emplace_back(
-                        std::ref(aBody), std::ref(bBody),
-                        aObject.id, bObject.id,
+                        aObject.data.body, bObject.data.body,
                         CalculateContactManifold(aShape, bShape), 
-                        s_restitutionCoefficient,
-                        s_frictionCoefficient
+                        restitutionCoefficient,
+                        frictionCoefficient
                     );
                     registeredContacts.insert(key);
                 }
             }
         }
-
-        return contacts;
     }
 
     /**
@@ -245,13 +247,12 @@ private:
      * @return contacts
      */
     template < typename ObjectA, typename ShapeA, typename ObjectB, typename ShapeB >
-    std::vector<Contact> Detect()
+    void Detect(std::vector<Contact>& contacts)
     {
-        std::vector<Contact> contacts;
         std::unordered_set<std::pair<void*, void*>, ObjectHasher> registeredContacts;
         std::vector<scene::Asset<scene::RigidBody>>& aObjects = m_pAssetManager->GetObjects<ObjectA, ShapeA>();
         std::vector<scene::Asset<scene::RigidBody>>& bObjects = m_pAssetManager->GetObjects<ObjectB, ShapeB>();
-
+        
         for (scene::Asset<scene::RigidBody> aObject : aObjects)
         {
             for (scene::Asset<scene::RigidBody> bObject : bObjects)
@@ -279,18 +280,15 @@ private:
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
                     contacts.emplace_back(
-                        std::ref(aBody), std::ref(bBody),
-                        aObject.id, bObject.id,
-                        CalculateContactManifold(aShape, bShape), 
-                        s_restitutionCoefficient,
-                        s_frictionCoefficient
+                        aObject.data.body, bObject.data.body,
+                        CalculateContactManifold(aShape, bShape),
+                        restitutionCoefficient,
+                        frictionCoefficient
                     );
                     registeredContacts.insert(key);
                 }
             }
         }
-
-        return contacts;
     }
 };
 
@@ -310,12 +308,14 @@ public:
      * @param contacts contacts information
      * @param duration delta time of the frame
      */
-    void Resolve(std::vector<std::vector<Contact>>& contacts, double duration) const;
+    void Resolve(std::vector<Contact> contacts, double duration);
 
     /**
      * @brief Resolves cached contacts
      */
-    void ResolvePersistantContacts() const; 
+    void ResolvePersistantContacts(double duration); 
+
+    double const persistentFactor = 0.05f;
 
 private:
     struct ContactHasher
@@ -333,36 +333,30 @@ private:
         }
     };
 
-    scene::AssetManager* m_pAssetManager;
-    std::unordered_map<
-            Contact, std::vector<Contact>, ContactHasher, ContactHasher
-        > m_contactCache;
-
-    void ResolveConstraint(
-        Contact& contact,
-        double duration,
-        double& contactLambda,
-        double& frictionLamda1,
-        double& frictionLamda2
-    ) const;
-
-    static void ResolveContactConstraint(
-        Contact& contact, 
-        double duration, 
-        Contact::Velocity const& V,
-        glm::dvec3 const& rA,
-        glm::dvec3 const& rB,
-        double& totalLagrangianMultiplier
+    double const s_persistentThreshold = 1e-3;
+    double const s_persistentThresholdSq = s_persistentThreshold * s_persistentThreshold;
+    scene::AssetManager* m_pAssetManager = nullptr;
+    std::vector<Contact> m_prevContacts;
+    std::vector<Contact> m_persistentContacts;
+    
+    void DetectPersistentContacts(
+        std::vector<Contact>& contacts
     );
 
-    static void ResolveFrictionConstraint(
+    void SolveConstraints(
+        Contact& contact, double duration, 
+        double& contactLambda, double& frictionLamda1, double& frictionLamda2
+    ) const;
+
+    static void SolveContactConstraint(
+        Contact& contact, double duration, 
+        Contact::Velocity const& V, glm::dvec3 const& rA, glm::dvec3 const& rB, double& totalLagrangianMultiplier
+    );
+
+    static void SolveFrictionConstraint(
         Contact& contact,
-        Contact::Velocity const& V,
-        glm::dvec3 const& rA, 
-        glm::dvec3 const& rB,
-        double& totalLagrangianMultiplier,
-        double& totalTangentLagrangianMultiplier1,
-        double& totalTangentLagrangianMultiplier2
+        Contact::Velocity const& V, glm::dvec3 const& rA,  glm::dvec3 const& rB,
+        double& totalLagrangianMultiplier, double& totalTangentLagrangianMultiplier1, double& totalTangentLagrangianMultiplier2
     );
 };
 

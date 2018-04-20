@@ -6,16 +6,6 @@
 #include <pegasus/Integration.hpp>
 #include <pegasus/Collision.hpp>
 
-namespace
-{
-void ApplyDeltas(pegasus::collision::Contact& contact)
-{
-    contact.aBody->linearMotion.velocity += contact.deltaVelocity.nA;
-    contact.aBody->angularMotion.velocity += contact.deltaVelocity.nwA;
-    contact.bBody->linearMotion.velocity += contact.deltaVelocity.nB;
-    contact.bBody->angularMotion.velocity += contact.deltaVelocity.nwB;
-}
-} // namespace ::
 
 namespace pegasus
 {
@@ -23,22 +13,20 @@ namespace collision
 {
 
 Contact::Contact(
-    mechanics::Body& aBody,
-    mechanics::Body& bBody,
     scene::Handle aHandle,
     scene::Handle bHandle,
     Manifold manifold,
     double restitution,
     double friction
 )
-    : aBody(&aBody)
-    , bBody(&bBody)
-    , aBodyHandle(aHandle)
+    : aBodyHandle(aHandle)
     , bBodyHandle(bHandle)
     , manifold(manifold)
     , restitution(restitution)
     , friction(friction)
     , lagrangianMultiplier(0.0)
+    , tangentLagrangianMultiplier1(0.0)
+    , tangentLagrangianMultiplier2(0.0)
 {
 }
 
@@ -47,51 +35,48 @@ Detector::Detector(scene::AssetManager& assetManager)
 {
 }
 
-std::vector<std::vector<Contact>> Detector::Detect()
+std::vector<Contact> Detector::Detect()
 {
-    return {
-        Detect<scene::DynamicBody, arion::Plane>(),
-        Detect<scene::DynamicBody, arion::Plane, scene::DynamicBody, arion::Sphere>(),
-        Detect<scene::DynamicBody, arion::Plane, scene::DynamicBody, arion::Box>(),
-        Detect<scene::DynamicBody, arion::Plane, scene::StaticBody, arion::Plane>(),
-        Detect<scene::DynamicBody, arion::Plane, scene::StaticBody, arion::Sphere>(),
-        Detect<scene::DynamicBody, arion::Plane, scene::StaticBody, arion::Box>(),
+    std::vector<Contact> contacts;
 
-        Detect<scene::DynamicBody, arion::Sphere>(),
-        Detect<scene::DynamicBody, arion::Sphere, scene::DynamicBody, arion::Box>(),
-        Detect<scene::DynamicBody, arion::Sphere, scene::StaticBody, arion::Plane>(),
-        Detect<scene::DynamicBody, arion::Sphere, scene::StaticBody, arion::Sphere>(),
-        Detect<scene::DynamicBody, arion::Sphere, scene::StaticBody, arion::Box>(),
+    Detect<scene::DynamicBody, arion::Plane>(contacts);
+    Detect<scene::DynamicBody, arion::Plane, scene::DynamicBody, arion::Sphere>(contacts);
+    Detect<scene::DynamicBody, arion::Plane, scene::DynamicBody, arion::Box>(contacts);
+    Detect<scene::DynamicBody, arion::Plane, scene::StaticBody, arion::Plane>(contacts);
+    Detect<scene::DynamicBody, arion::Plane, scene::StaticBody, arion::Sphere>(contacts);
+    Detect<scene::DynamicBody, arion::Plane, scene::StaticBody, arion::Box>(contacts);
 
-        Detect<scene::DynamicBody, arion::Box>(),
-        Detect<scene::DynamicBody, arion::Box, scene::StaticBody, arion::Plane>(),
-        Detect<scene::DynamicBody, arion::Box, scene::StaticBody, arion::Sphere>(),
-        Detect<scene::DynamicBody, arion::Box, scene::StaticBody, arion::Box>(),
-    };
+    Detect<scene::DynamicBody, arion::Sphere>(contacts);
+    Detect<scene::DynamicBody, arion::Sphere, scene::DynamicBody, arion::Box>(contacts);
+    Detect<scene::DynamicBody, arion::Sphere, scene::StaticBody, arion::Plane>(contacts);
+    Detect<scene::DynamicBody, arion::Sphere, scene::StaticBody, arion::Sphere>(contacts);
+    Detect<scene::DynamicBody, arion::Sphere, scene::StaticBody, arion::Box>(contacts);
+
+    Detect<scene::DynamicBody, arion::Box>(contacts);
+    Detect<scene::DynamicBody, arion::Box, scene::StaticBody, arion::Plane>(contacts);
+    Detect<scene::DynamicBody, arion::Box, scene::StaticBody, arion::Sphere>(contacts);
+    Detect<scene::DynamicBody, arion::Box, scene::StaticBody, arion::Box>(contacts);
+
+    return contacts;
 }
-
-double constexpr Detector::s_restitutionCoefficient;
-double constexpr Detector::s_frictionCoefficient;
 
 bool Detector::Intersect(arion::SimpleShape const* aShape, arion::SimpleShape const* bShape)
 {
-    return s_simpleShapeDetector.CalculateIntersection(aShape, bShape);
+    return m_simpleShapeDetector.CalculateIntersection(aShape, bShape);
 }
-
-arion::intersection::SimpleShapeIntersectionDetector Detector::s_simpleShapeDetector;
 
 Contact::Manifold Detector::CalculateContactManifold(
         arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
     )
 {
-    auto const manifold = s_simpleShapeDetector.CalculateContactManifold(aShape, bShape);
+    auto const manifold = m_simpleShapeDetector.CalculateContactManifold(aShape, bShape);
 
     Contact::Manifold result;
-    result.contactPoints = manifold.contactPoints;
-    result.contactNormal = manifold.contactNormal;
+    result.points = manifold.points;
+    result.normal = manifold.normal;
     result.penetration = manifold.penetration;
-    result.firstTangent = glm::normalize(epona::CalculateOrthogonalVector(manifold.contactNormal));
-    result.secondTangent = glm::cross(result.firstTangent, result.contactNormal);
+    result.firstTangent = glm::normalize(epona::CalculateOrthogonalVector(manifold.normal));
+    result.secondTangent = glm::cross(result.firstTangent, result.normal);
 
     return result;
 }
@@ -101,40 +86,139 @@ Resolver::Resolver(scene::AssetManager& assetManager)
 {
 }
 
-void Resolver::Resolve(std::vector<std::vector<Contact>>& contacts, double duration) const
+void Resolver::Resolve(std::vector<Contact> contacts, double duration)
 {
+    //Solve constraints
     double contactLambda  = 0;
     double frictionLamda1 = 0;
     double frictionLamda2 = 0;
-
-    for (std::vector<Contact>& contact : contacts)
-    {
-        for (auto& c : contact)
-        {
-            ResolveConstraint(
-                c, duration, contactLambda, frictionLamda1, frictionLamda2
-            );
-        }
-    }
-
     for (auto& contact : contacts)
     {
-        for (auto& c : contact)
+        SolveConstraints(
+            contact, duration, contactLambda, frictionLamda1, frictionLamda2
+        );
+    }
+
+    //Set current contacts buffer and find persistent contacts
+    DetectPersistentContacts(contacts);
+
+    //Resolve constraints
+    for (auto& contact : contacts)
+    {
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity += contact.deltaVelocity.nA;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwA;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity += contact.deltaVelocity.nB;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwB;
+    }
+
+    //Save currenct contacts for use in the next frame
+    m_prevContacts = std::move(contacts);
+}
+
+void Resolver::ResolvePersistantContacts(double duration)
+{
+    //Solve constraints
+    for (auto& contact : m_persistentContacts)
+    {
+        double const lagrangianMultiplier = contact.lagrangianMultiplier;
+        double const tangentLagrangianMultiplier1 = contact.tangentLagrangianMultiplier1;
+        double const tangentLagrangianMultiplier2 = contact.tangentLagrangianMultiplier2;
+    
+        double constexpr reduction = 0.01f;
+        contact.lagrangianMultiplier *= reduction;
+        contact.tangentLagrangianMultiplier1 *= reduction;
+        contact.tangentLagrangianMultiplier2 *= reduction;
+    
+        SolveConstraints(
+            contact, duration, contact.lagrangianMultiplier, 
+            contact.tangentLagrangianMultiplier1, contact.tangentLagrangianMultiplier2
+        );
+    
+        contact.lagrangianMultiplier = lagrangianMultiplier;
+        contact.tangentLagrangianMultiplier1 = tangentLagrangianMultiplier1; 
+        contact.tangentLagrangianMultiplier2 = tangentLagrangianMultiplier2; 
+    }
+    
+    //Resolve constraints
+    for (auto& contact : m_persistentContacts)
+    {
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nA  * persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwA * persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nB  * persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwB * persistentFactor;
+    }
+}
+
+namespace
+{
+bool IsPersistent(Contact::Manifold::ContactPoints& a, Contact::Manifold::ContactPoints& b, double persistentThresholdSq)
+{
+    glm::dvec3 const curPoint = (a.aWorldSpace + b.bWorldSpace) * 0.5;
+    glm::dvec3 const prevPoint = (a.aWorldSpace + b.bWorldSpace) * 0.5;
+
+    return glm::distance2(curPoint, prevPoint) < persistentThresholdSq;
+}
+}
+
+void Resolver::DetectPersistentContacts(std::vector<Contact>& contacts)
+{
+    static std::vector<size_t> currentPersistentContactIndices;
+    currentPersistentContactIndices.clear();
+
+    //Find persistent contacts
+    for (size_t i = 0; i < contacts.size(); ++i)
+    {
+        for (size_t j = 0; j < m_prevContacts.size(); ++j)
         {
-            ::ApplyDeltas(c);
+            if (   contacts[i].aBodyHandle == m_prevContacts[j].aBodyHandle
+                && contacts[i].bBodyHandle == m_prevContacts[j].bBodyHandle
+                && IsPersistent(contacts[i].manifold.points,
+                    m_prevContacts[j].manifold.points, 
+                    s_persistentThresholdSq))
+            {
+                currentPersistentContactIndices.push_back(i);
+            }
+        }
+    }
+
+    //Remove outdated persistent contacts
+    for (size_t index = 0; index < m_persistentContacts.size();)
+    {
+        auto const indexIt = std::find_if(currentPersistentContactIndices.begin(), currentPersistentContactIndices.end(), 
+            [contacts, this, index](size_t i) -> bool {
+                return contacts[i].aBodyHandle == this->m_persistentContacts[index].aBodyHandle
+                    && contacts[i].bBodyHandle == this->m_persistentContacts[index].bBodyHandle;
+        });
+
+        if (indexIt == currentPersistentContactIndices.end()
+            || !IsPersistent(m_persistentContacts[index].manifold.points, 
+                contacts[*indexIt].manifold.points, 
+                s_persistentThresholdSq))
+        {
+            m_persistentContacts.erase(m_persistentContacts.begin() + index);
+        } 
+        else
+        {
+            ++index;
+        }
+    }
+
+    //Add new persistent contacts
+    for (Contact& contact : contacts)
+    {
+        auto const contactIterator = std::find_if(m_persistentContacts.begin(), m_persistentContacts.end(),
+            [&contact](Contact& c) -> bool {
+                return contact.aBodyHandle == c.aBodyHandle && contact.bBodyHandle == c.bBodyHandle;
+        });
+
+        if (contactIterator == m_persistentContacts.end())
+        {
+            m_persistentContacts.push_back(contact);
         }
     }
 }
 
-void Resolver::ResolvePersistantContacts() const
-{
-    // for (auto& contact : m_contactCache)
-    // {
-        //
-    // }
-}
-
-void Resolver::ResolveConstraint(
+void Resolver::SolveConstraints(
     Contact& contact,
     double duration,
     double& contactLambda,
@@ -142,8 +226,8 @@ void Resolver::ResolveConstraint(
     double& frictionLamda2
 ) const
 {
-    mechanics::Body const& aBody = *contact.aBody;
-    mechanics::Body const& bBody = *contact.bBody;
+    mechanics::Body const& aBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle);
+    mechanics::Body const& bBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle);
 
     Contact::Velocity const V {
         aBody.linearMotion.velocity,
@@ -159,18 +243,18 @@ void Resolver::ResolveConstraint(
         bBody.material.GetInverseMomentOfInertia(),
     };
 
-    glm::dvec3 const rA = contact.manifold.contactPoints.aWorldSpace - aBody.linearMotion.position;
-    glm::dvec3 const rB = contact.manifold.contactPoints.bWorldSpace - bBody.linearMotion.position;
-    ResolveContactConstraint(contact, duration, V, rA, rB, contactLambda);
+    glm::dvec3 const rA = contact.manifold.points.aWorldSpace - aBody.linearMotion.position;
+    glm::dvec3 const rB = contact.manifold.points.bWorldSpace - bBody.linearMotion.position;
+    SolveContactConstraint(contact, duration, V, rA, rB, contactLambda);
 
     if (!epona::fp::IsZero(glm::length2(aBody.angularMotion.velocity)))
     {
         contact.manifold.firstTangent = glm::normalize(
-            glm::cross(aBody.angularMotion.velocity, contact.manifold.contactNormal));
+            glm::cross(aBody.angularMotion.velocity, contact.manifold.normal));
         contact.manifold.secondTangent = glm::normalize(glm::cross(
-            contact.manifold.firstTangent, contact.manifold.contactNormal));
+            contact.manifold.firstTangent, contact.manifold.normal));
     }
-    ResolveFrictionConstraint(contact, V, rA, rB, contactLambda, frictionLamda1, frictionLamda2);
+    SolveFrictionConstraint(contact, V, rA, rB, contactLambda, frictionLamda1, frictionLamda2);
 
     assert(!glm::isnan(contact.deltaVelocity.nA.x + contact.deltaVelocity.nA.y + contact.deltaVelocity.nA.z));
     assert(!glm::isnan(contact.deltaVelocity.nwA.x + contact.deltaVelocity.nwA.y + contact.deltaVelocity.nwA.z));
@@ -178,7 +262,7 @@ void Resolver::ResolveConstraint(
     assert(!glm::isnan(contact.deltaVelocity.nwB.x + contact.deltaVelocity.nwB.y + contact.deltaVelocity.nwB.z));
 }
 
-void Resolver::ResolveContactConstraint(
+void Resolver::SolveContactConstraint(
     Contact& contact,
     double duration,
     Contact::Velocity const& V,
@@ -188,14 +272,14 @@ void Resolver::ResolveContactConstraint(
 )
 {
     contact.jacobian = Contact::Jacobian {
-        -contact.manifold.contactNormal,
-        glm::cross(-rA, contact.manifold.contactNormal),
-        contact.manifold.contactNormal,
-        glm::cross( rB, contact.manifold.contactNormal),
+        -contact.manifold.normal,
+        glm::cross(-rA, contact.manifold.normal),
+        contact.manifold.normal,
+        glm::cross( rB, contact.manifold.normal),
     };
 
     double const separationSpeed =
-        -glm::dot(V.vB + glm::cross(V.wB, rB) - (V.vA + glm::cross(V.wA, rA)), contact.manifold.contactNormal);
+        -glm::dot(V.vB + glm::cross(V.wB, rB) - (V.vA + glm::cross(V.wA, rA)), contact.manifold.normal);
     double constexpr restitutionSlop = 0.5;
     double const restitution = contact.restitution * glm::max(separationSpeed - restitutionSlop, 0.0);
     double constexpr beta = 0.1;
@@ -213,7 +297,7 @@ void Resolver::ResolveContactConstraint(
     contact.deltaVelocity = contact.inverseEffectiveMass * contact.jacobian * contact.lagrangianMultiplier;
 }
 
-void Resolver::ResolveFrictionConstraint(
+void Resolver::SolveFrictionConstraint(
     Contact& contact,
     Contact::Velocity const& V,
     glm::dvec3 const& rA,
@@ -231,7 +315,7 @@ void Resolver::ResolveFrictionConstraint(
     };
 
     {
-        double lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
+        double const lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
 
         double const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier1;
         totalTangentLagrangianMultiplier1 += lagrangianMultiplier;
@@ -239,9 +323,9 @@ void Resolver::ResolveFrictionConstraint(
             glm::min(totalTangentLagrangianMultiplier1, totalLagrangianMultiplier * contact.friction),
             -totalLagrangianMultiplier * contact.friction
         );
-        lagrangianMultiplier = totalTangentLagrangianMultiplier1 - previousLagrangianMultiplierSum;
+        contact.tangentLagrangianMultiplier1 = totalTangentLagrangianMultiplier1 - previousLagrangianMultiplierSum;
 
-        contact.deltaVelocity += contact.inverseEffectiveMass * J * lagrangianMultiplier;
+        contact.deltaVelocity += contact.inverseEffectiveMass * J * contact.tangentLagrangianMultiplier1;
     }
 
     {
@@ -252,7 +336,7 @@ void Resolver::ResolveFrictionConstraint(
             glm::cross( rB, contact.manifold.secondTangent),
         };
 
-        double lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
+        double const lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
 
         double const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier2;
         totalTangentLagrangianMultiplier2 += lagrangianMultiplier;
@@ -260,9 +344,9 @@ void Resolver::ResolveFrictionConstraint(
             glm::min(totalTangentLagrangianMultiplier2, totalLagrangianMultiplier * contact.friction),
             -totalLagrangianMultiplier * contact.friction
         );
-        lagrangianMultiplier = totalTangentLagrangianMultiplier2 - previousLagrangianMultiplierSum;
+        contact.tangentLagrangianMultiplier2 = totalTangentLagrangianMultiplier2 - previousLagrangianMultiplierSum;
 
-        contact.deltaVelocity += contact.inverseEffectiveMass * J * lagrangianMultiplier;
+        contact.deltaVelocity += contact.inverseEffectiveMass * J * contact.tangentLagrangianMultiplier2;
     }
 }
 

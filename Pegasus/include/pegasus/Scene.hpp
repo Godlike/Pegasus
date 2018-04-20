@@ -188,7 +188,7 @@ private:
      * @tparam Force type of the force
      */
     template < typename Force >
-    void ApplyForce()
+    void ApplyForce(double duration)
     {
         for (Asset<ForceBind>& asset : m_assetManager.GetForceBinds<Force>())
         {
@@ -196,7 +196,7 @@ private:
             {
                 auto& force = GetForce<Force>(asset.data.force);
                 mechanics::Body& body = GetBody(asset.data.body);
-                body.linearMotion.force += force.CalculateForce(body);
+                body.linearMotion.force += force.CalculateForce(body) * duration;
             }
         }
     }
@@ -230,12 +230,12 @@ private:
     /**
      * @brief Applies initial impulses to resolve cached persistent contacts
      */
-    void ApplyCollisionCache();
+    void ApplyCollisionCache(double duration);
 
     /**
      * @brief Applies all registered forces to the bodies
      */
-    void ApplyForces();
+    void ApplyForces(double duration);
 
     /**
      * @brief Updates physical properties of the bodies within given duration
@@ -245,7 +245,7 @@ private:
 };
 
 template <>
-inline void Scene::ApplyForce<force::Drag>()
+inline void Scene::ApplyForce<force::Drag>(double duration)
 {
     for (Asset<ForceBind>& asset : m_assetManager.GetForceBinds<force::Drag>())
     {
@@ -253,11 +253,11 @@ inline void Scene::ApplyForce<force::Drag>()
         {
             auto& force = GetForce<force::Drag>(asset.data.force);
             mechanics::Body& body = GetBody(asset.data.body);
-            body.linearMotion.force += force.CalculateForce(body);
+            body.linearMotion.force += force.CalculateForce(body) * duration;
 
             glm::dvec3 const velocity = body.linearMotion.velocity;
             body.linearMotion.velocity = body.angularMotion.velocity;
-            body.angularMotion.torque += force.CalculateForce(body);
+            body.angularMotion.torque += force.CalculateForce(body) * duration;
             body.linearMotion.velocity = velocity;
         }
     }

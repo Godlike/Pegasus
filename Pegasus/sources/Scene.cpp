@@ -21,9 +21,9 @@ Scene::Scene()
 
 void Scene::ComputeFrame(double duration)
 {
-    ApplyCollisionCache();
+    ApplyCollisionCache(duration);
 
-    ApplyForces();
+    ApplyForces(1);
 
     Integrate(duration);
 
@@ -52,17 +52,17 @@ AssetManager& Scene::GetAssets()
 
 void Scene::ResolveCollisions(double duration)
 {
-    std::vector<std::vector<collision::Contact>> contacts = m_detector.Detect();
+    std::vector<collision::Contact> contacts = m_detector.Detect();
     debug::Debug::CollisionDetectionCall(contacts);
     m_resolver.Resolve(contacts, duration);
 }
 
-void Scene::ApplyCollisionCache()
+void Scene::ApplyCollisionCache(double duration)
 {
-
+    m_resolver.ResolvePersistantContacts(duration);
 }
 
-void Scene::ApplyForces()
+void Scene::ApplyForces(double duration)
 {
     //Clear previously applied forces
     for (Asset<mechanics::Body>& asset : m_assetManager.GetBodies())
@@ -71,12 +71,12 @@ void Scene::ApplyForces()
     }
 
     //Reapply forces
-    ApplyForce<force::StaticField>();
-    ApplyForce<force::SquareDistanceSource>();
-    ApplyForce<force::Drag>();
-    ApplyForce<force::Spring>();
-    ApplyForce<force::Bungee>();
-    ApplyForce<force::Buoyancy>();
+    ApplyForce<force::StaticField>(duration);
+    ApplyForce<force::SquareDistanceSource>(duration);
+    ApplyForce<force::Drag>(duration);
+    ApplyForce<force::Spring>(duration);
+    ApplyForce<force::Bungee>(duration);
+    ApplyForce<force::Buoyancy>(duration);
 }
 
 void Scene::Integrate(double duration)

@@ -26,7 +26,7 @@ public:
 		return debug;
 	}
 
-	static void CollisionDetectionCall(std::vector<std::vector<collision::Contact>>& contacts)
+	static void CollisionDetectionCall(std::vector<collision::Contact>& contacts)
 #ifdef PEGASUS_DEBUG
 	{
 		Debug& debug = GetInstace();
@@ -41,7 +41,7 @@ public:
 	}
 #endif
 
-	std::function<void(std::vector<std::vector<collision::Contact>>&)> collisionDetectionCall;
+	std::function<void(std::vector<collision::Contact>&)> collisionDetectionCall;
 };
 
 } // debug
