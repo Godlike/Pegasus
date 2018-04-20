@@ -32,7 +32,7 @@ bool g_pauseOnCollisionCheckbox = false;
 std::list<pegasus::Demo::Primitive*> g_objects;
 
 void CollisionDetectionDebugCallback(
-        std::vector<std::vector<pegasus::collision::Contact>>& contacts
+        std::vector<pegasus::collision::Contact>& contacts
     )
 {
     static pegasus::Demo& demo = pegasus::Demo::GetInstance();
@@ -47,13 +47,10 @@ void CollisionDetectionDebugCallback(
         }
         contactPoints.clear();
 
-        for (auto& c : contacts)
+        for (auto& contact : contacts)
         {
-            for (auto& contact : c)
-            {
-                contactPoints.push_back(&demo.MakeSphere(contact.manifold.contactPoints.aWorldSpace, 0.05, { 1, 0, 0 }));
-                contactPoints.push_back(&demo.MakeSphere(contact.manifold.contactPoints.bWorldSpace, 0.05, { 0, 1, 0 }));
-            }
+            contactPoints.push_back(&demo.MakeSphere(contact.manifold.points.aWorldSpace, 0.05, { 1, 0, 0 }));
+            contactPoints.push_back(&demo.MakeSphere(contact.manifold.points.bWorldSpace, 0.05, { 0, 1, 0 }));
         }
     }
 
@@ -65,27 +62,17 @@ void CollisionDetectionDebugCallback(
         }
         contactNormals.clear();
 
-        for (auto& c : contacts)
+        for (auto& contact : contacts)
         {
-            for (auto& contact : c)
-            {
-                static pegasus::mechanics::Body line;
-                line.linearMotion.position = contact.manifold.contactPoints.aWorldSpace;
-                contactNormals.push_back(&demo.MakeLine(line, { 1, 0, 0 }, {}, contact.manifold.contactNormal));
-            }
+            static pegasus::mechanics::Body line;
+            line.linearMotion.position = contact.manifold.points.aWorldSpace;
+            contactNormals.push_back(&demo.MakeLine(line, { 1, 0, 0 }, {}, contact.manifold.normal));
         }
     }
 
-    if (g_pauseOnCollisionCheckbox)
+    if (g_pauseOnCollisionCheckbox && !contacts.empty())
     {
-        for (auto c : contacts)
-        {
-            if (!c.empty())
-            {
-                demo.calculatePhysics = false;
-                break;
-            }
-        }
+        demo.calculatePhysics = false;
     }
 }
 
@@ -527,12 +514,17 @@ void Demo::ComputeFrame(double duration)
 {
     //Compute physical data
     duration = useStaticDuration ? staticDuration : duration;
+    //m_scene.ComputeFrame(duration);
     if (duration > physicsTick)
     {
         for (uint16_t i = 0; i < (duration / physicsTick); ++i)
         {
             m_scene.ComputeFrame(physicsTick);
         }
+    }
+    else
+    {
+        m_scene.ComputeFrame(duration);
     }
 
     //Update render data
