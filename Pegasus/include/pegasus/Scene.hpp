@@ -6,7 +6,6 @@
 #ifndef PEGASUS_SCENE_HPP
 #define PEGASUS_SCENE_HPP
 
-#include <pegasus/SharedMacros.hpp>
 #include <pegasus/Body.hpp>
 #include <pegasus/Asset.hpp>
 #include <pegasus/AssetManager.hpp>
@@ -33,33 +32,33 @@ public:
      * @brief Runs physical simulation with the given duration
      * @param duration delta time of the integration in seconds
      */
-    PEGASUS_EXPORT void ComputeFrame(double duration);
+    void ComputeFrame(double duration);
 
     /**
      * @brief Makes new body instance and returns its handle
      * @return new body handle
      */
-    PEGASUS_EXPORT Handle MakeBody();
+    Handle MakeBody();
 
     /**
      * @brief Returns instance of the body assigned to the given handle
      * @param handle body handle
      * @return body instance
      */
-    PEGASUS_EXPORT mechanics::Body& GetBody(Handle handle);
+    mechanics::Body& GetBody(Handle handle);
 
     /**
      * @brief Removes instance of the body assigned to the given handle
      * @param handle body handle
      */
-    PEGASUS_EXPORT void RemoveBody(Handle handle);
+    void RemoveBody(Handle handle);
 
     /**
      * @brief Makes new shape instance and returns its handle
      * @tparam Shape collision geometry shape type
      * @return shape handle
      */
-    PEGASUS_EXPORT template < typename Shape >
+    template < typename Shape >
     Handle MakeShape()
     {
         return m_assetManager.MakeAsset(m_assetManager.GetShapes<Shape>());
@@ -71,7 +70,7 @@ public:
      * @param handle shape handle
      * @return shape instance
      */
-    PEGASUS_EXPORT template < typename Shape >
+    template < typename Shape >
     Shape& GetShape(Handle handle)
     {
         return m_assetManager.GetAsset(m_assetManager.GetShapes<Shape>(), handle);
@@ -82,7 +81,7 @@ public:
      * @tparam Shape collision geometry shape type
      * @param handle shape handle
      */
-    PEGASUS_EXPORT template < typename Shape >
+    template < typename Shape >
     void RemoveShape(Handle handle)
     {
         m_assetManager.RemoveAsset(m_assetManager.GetShapes<Shape>(), handle);
@@ -96,7 +95,7 @@ public:
      * @param shape handle of the shape
      * @return handle of the rigid body
      */
-    PEGASUS_EXPORT template < typename Object, typename Shape >
+    template < typename Object, typename Shape >
     Handle MakeObject(Handle body, Handle shape)
     {
         Handle const id = m_assetManager.MakeAsset<RigidBody>(m_assetManager.GetObjects<Object, Shape>());
@@ -110,7 +109,7 @@ public:
      * @tparam Shape collision geometry shape type
      * @param handle rigid body handle
      */
-    PEGASUS_EXPORT template < typename Object, typename Shape >
+    template < typename Object, typename Shape >
     void RemoveObject(Handle handle)
     {
         m_assetManager.RemoveAsset(m_assetManager.GetObjects<Object, Shape>(), handle);
@@ -121,7 +120,7 @@ public:
      * @tparam Force type of the force
      * @return force handle
      */
-    PEGASUS_EXPORT template < typename Force >
+    template < typename Force >
     Handle MakeForce()
     {
         return m_assetManager.MakeAsset(m_assetManager.GetForces<Force>());
@@ -133,7 +132,7 @@ public:
      * @param handle force handle
      * @return force instance
      */
-    PEGASUS_EXPORT template < typename Force >
+    template < typename Force >
     Force& GetForce(Handle handle)
     {
         return m_assetManager.GetAsset(m_assetManager.GetForces<Force>(), handle);
@@ -144,7 +143,7 @@ public:
      * @tparam Force type of the force
      * @param handle force handle
      */
-    PEGASUS_EXPORT template < typename Force >
+    template < typename Force >
     void RemoveForce(Handle handle)
     {
         m_assetManager.RemoveAsset(m_assetManager.GetForces<Force>(), handle);
@@ -157,7 +156,7 @@ public:
      * @param force handle of the force
      * @return bind handle
      */
-    PEGASUS_EXPORT template < typename Force >
+    template < typename Force >
     Handle BindForce(Handle body, Handle force)
     {
         Handle const id = m_assetManager.MakeAsset(m_assetManager.GetForceBinds<Force>());
@@ -170,7 +169,7 @@ public:
      * @tparam Force type of the force
      * @param handle bind handle
      */
-    PEGASUS_EXPORT template < typename Force >
+    template < typename Force >
     void UnbindForce(Handle handle)
     {
         m_assetManager.RemoveAsset(m_assetManager.GetForceBinds<Force>(), handle);

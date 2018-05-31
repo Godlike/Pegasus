@@ -6,7 +6,6 @@
 #ifndef PEGASUS_INTEGRATION_HPP
 #define PEGASUS_INTEGRATION_HPP
 
-#include <pegasus/SharedMacros.hpp>
 #include <pegasus/Body.hpp>
 
 namespace pegasus
@@ -19,12 +18,12 @@ namespace integration
  * @param appliedForce applied force
  * @return total force
  */
-inline PEGASUS_EXPORT glm::dvec3 IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
+inline glm::dvec3 IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
 {
     return accumulatedForce + appliedForce;
 }
 
-inline PEGASUS_EXPORT glm::dvec3 IntegrateTorque(glm::dvec3 accumulatedTorque, glm::dvec3 appliedTorque)
+inline glm::dvec3 IntegrateTorque(glm::dvec3 accumulatedTorque, glm::dvec3 appliedTorque)
 {
     return IntegrateForce(accumulatedTorque, appliedTorque);
 }
@@ -34,7 +33,7 @@ inline PEGASUS_EXPORT glm::dvec3 IntegrateTorque(glm::dvec3 accumulatedTorque, g
  * @param[in,out] body point mass data
  * @param[in] duration delta time
  */
-PEGASUS_EXPORT void Integrate(mechanics::Body& body, double duration);
+void Integrate(mechanics::Body& body, double duration);
 } // namespace integration
 } // namespace pegasus
 

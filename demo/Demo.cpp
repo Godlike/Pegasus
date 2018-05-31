@@ -660,8 +660,7 @@ Demo::Demo()
     arion::debug::Debug::SetEpaCallback<std::vector<glm::dvec3>>(::EpaDebugCallback);
     arion::debug::Debug::SetGjkCallback(::GjkDebugCallback);
 
-    auto& pegasusDebug = pegasus::debug::Debug::GetInstace();
-    pegasusDebug.collisionDetectionCall = ::CollisionDetectionDebugCallback;
+    pegasus::Debug::s_collisionDetectionCall = ::CollisionDetectionDebugCallback;
 
     m_renderer.drawUiCallback = ::DrawUi;
 
