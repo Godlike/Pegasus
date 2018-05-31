@@ -8,11 +8,14 @@ project(Pegasus)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-option(PEGASUS_BUILD_DEMOS "Build Pegasus demo." ON)
+option(PEGASUS_BUILD_DEMOS "Build Pegasus demo."  ON)
 option(PEGASUS_BUILD_TESTS "Build Pegasus tests." ON)
+option(PEGASUS_BUILD_DEBUG "Build Pegasus debug." ON)
 
 message(STATUS "${PROJECT_NAME} configuration:")
 message(STATUS "-- PEGASUS_BUILD_DEMOS: ${PEGASUS_BUILD_DEMOS}")
+message(STATUS "-- PEGASUS_BUILD_TESTS: ${PEGASUS_BUILD_TESTS}")
+message(STATUS "-- PEGASUS_BUILD_DEBUG: ${PEGASUS_BUILD_DEBUG}")
 
 set(PEGASUS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "Pegasus root directory.")
 
@@ -31,6 +34,8 @@ if (NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 endif()
 
 add_subdirectory(Pegasus)
+add_definitions(${PEGASUS_DEFINITIONS})
+message(STATUS "Pegasus definitions:${PEGASUS_DEFINITIONS}")
 
 if (${PEGASUS_BUILD_DEMOS})
     add_subdirectory(demo)

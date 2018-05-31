@@ -8,6 +8,7 @@ include(PegasusConfig)
 
 project(${PEGASUS_NAME})
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build (Debug or Release)" FORCE)
@@ -34,6 +35,8 @@ message(STATUS "Version: ${PEGASUS_VERSION}")
 
 set(PEGASUS_HEADERS
     include/pegasus/Debug.hpp
+    include/pegasus/debug/DebugDummy.hpp
+    include/pegasus/debug/DebugImplementation.hpp
     include/pegasus/Body.hpp
     include/pegasus/Force.hpp
     include/pegasus/Integration.hpp
@@ -44,6 +47,8 @@ set(PEGASUS_HEADERS
     include/pegasus/Primitives.hpp
 )
 set(PEGASUS_SOURCES
+    sources/DebugDummy.cpp
+    sources/DebugImplementation.cpp
     sources/Body.cpp
     sources/Force.cpp
     sources/Integration.cpp
@@ -74,6 +79,10 @@ add_library(${PEGASUS_LIB}
     ${PEGASUS_HEADERS}
     ${PEGASUS_SOURCES}
     ${PEGASUS_EXTRA}
+)
+
+target_compile_definitions(${PEGASUS_LIB} PUBLIC
+    ${PEGASUS_DEFINITIONS}
 )
 
 target_include_directories(${PEGASUS_LIB} PUBLIC

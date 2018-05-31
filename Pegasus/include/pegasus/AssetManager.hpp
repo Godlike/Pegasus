@@ -120,11 +120,17 @@ public:
     template < typename Force >
     std::vector<Asset<ForceBind>>& GetForceBinds();
 
+    /**
+     * @brief Saves a copy of current scene on the heap allocaled stack
+     */
     void PushFrame()
     {
         m_assetStack.push_back(m_asset);
     }
 
+    /**
+    * @brief Removes top stack element from the heap allocaled stack
+    */
     void PopFrame()
     {
         if (!m_assetStack.empty())
@@ -133,6 +139,9 @@ public:
         }
     }
 
+    /**
+     * @brief Assigns top stack element to the current assets
+     */
     void Back()
     {
         if (!m_assetStack.empty())
@@ -141,6 +150,9 @@ public:
         }
     }
 
+    /**
+     * @brief Stores asset data
+     */
     struct Assets
     {
         //!Bodies

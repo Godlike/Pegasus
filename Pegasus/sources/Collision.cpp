@@ -142,16 +142,16 @@ void Resolver::ResolvePersistantContacts(double duration)
     //Resolve constraints
     for (auto& contact : m_persistentContacts)
     {
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nA  * persistentFactor;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwA * persistentFactor;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nB  * persistentFactor;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwB * persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nA  * m_persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwA * m_persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nB  * m_persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwB * m_persistentFactor;
     }
 }
 
 namespace
 {
-bool IsPersistent(Contact::Manifold::ContactPoints& a, Contact::Manifold::ContactPoints& b, double persistentThresholdSq)
+bool IsPersistent(Contact::Manifold::ContactPoints const& a, Contact::Manifold::ContactPoints const& b, double persistentThresholdSq)
 {
     glm::dvec3 const curPoint = (a.aWorldSpace + b.bWorldSpace) * 0.5;
     glm::dvec3 const prevPoint = (a.aWorldSpace + b.bWorldSpace) * 0.5;
@@ -160,7 +160,7 @@ bool IsPersistent(Contact::Manifold::ContactPoints& a, Contact::Manifold::Contac
 }
 }
 
-void Resolver::DetectPersistentContacts(std::vector<Contact>& contacts)
+void Resolver::DetectPersistentContacts(std::vector<Contact> const& contacts)
 {
     static std::vector<size_t> currentPersistentContactIndices;
     currentPersistentContactIndices.clear();
@@ -174,7 +174,7 @@ void Resolver::DetectPersistentContacts(std::vector<Contact>& contacts)
                 && contacts[i].bBodyHandle == m_prevContacts[j].bBodyHandle
                 && IsPersistent(contacts[i].manifold.points,
                     m_prevContacts[j].manifold.points, 
-                    s_persistentThresholdSq))
+                    m_persistentThresholdSq))
             {
                 currentPersistentContactIndices.push_back(i);
             }
@@ -193,7 +193,7 @@ void Resolver::DetectPersistentContacts(std::vector<Contact>& contacts)
         if (indexIt == currentPersistentContactIndices.end()
             || !IsPersistent(m_persistentContacts[index].manifold.points, 
                 contacts[*indexIt].manifold.points, 
-                s_persistentThresholdSq))
+                m_persistentThresholdSq))
         {
             m_persistentContacts.erase(m_persistentContacts.begin() + index);
         } 
@@ -204,7 +204,7 @@ void Resolver::DetectPersistentContacts(std::vector<Contact>& contacts)
     }
 
     //Add new persistent contacts
-    for (Contact& contact : contacts)
+    for (Contact const& contact : contacts)
     {
         auto const contactIterator = std::find_if(m_persistentContacts.begin(), m_persistentContacts.end(),
             [&contact](Contact& c) -> bool {

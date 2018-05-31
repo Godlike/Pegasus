@@ -85,6 +85,7 @@ protected:
 
     /**
      * @brief Allocates body in the scene and initializes
+     * @param scene scene instance
      * @param type body type
      * @param body data
      */
@@ -139,6 +140,7 @@ class Plane : public Primitive
 public:
     /**
      * @brief Makes new scene plane object
+     * @param scene scene instance
      * @param type primitive body type
      * @param body physical body data
      * @param plane shape data
@@ -165,6 +167,7 @@ class Sphere : public Primitive
 public:
     /**
      * @brief Makes new scene sphere body
+     * @param scene scene instance
      * @param type primitive body type
      * @param body physical body data
      * @param sphere shape data
@@ -191,6 +194,7 @@ class Box : public Primitive
 public:
     /**
      * @brief Makes new scene box primitive
+     * @param scene scene instance
      * @param type body type
      * @param body physical body data
      * @param box shape data
@@ -248,6 +252,7 @@ class Force final : public ForceBase
 public:
     /**
      * @brief Allocates new force in the scene and initializes it
+     * @param scene scene instance
      * @param force initialized force data
      */
     Force(Scene& scene, ForceType force)

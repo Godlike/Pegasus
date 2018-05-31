@@ -21,6 +21,7 @@ namespace collision
  */
 struct Contact
 {
+    //!Stores constraint velocity vector of size 12
     struct Velocity
     {
         glm::dvec3 vA;
@@ -29,6 +30,7 @@ struct Contact
         glm::dvec3 wB;
     };
 
+    //!Stores Jacobian vector of size 12 and defines operations on it
     struct Jacobian
     {
         Jacobian& operator+=(Jacobian const& j)
@@ -67,6 +69,7 @@ struct Contact
         glm::dvec3 nwB;
     };
 
+    //!Stores constraint mass matrix and provides operations on it
     struct MassMatrix
     {
         Jacobian operator*(Jacobian const& j) const
@@ -85,6 +88,7 @@ struct Contact
         glm::dmat3 inertiaB;
     };
 
+    //!Stores contact manifold with tangent vectors
     struct Manifold : arion::intersection::ContactManifold
     {
         //!Friction tangent vectors
@@ -92,6 +96,7 @@ struct Contact
         glm::dvec3 secondTangent;
     };
 
+    //!Constructs contact instance
     Contact(
         scene::Handle aHandle, 
         scene::Handle bHandle, 
@@ -100,7 +105,7 @@ struct Contact
         double friction
     );
     
-    //Handles
+    //!Handles
     scene::Handle aBodyHandle;
     scene::Handle bBodyHandle;
     
@@ -111,23 +116,16 @@ struct Contact
     double restitution;
     double friction;
     
-    //Contact constraint resolution data
-    Jacobian deltaVelocity;
+    //!Contact constraint resolution data
+    Jacobian deltaVelocity; 
+    //!Effective mass matrix inverse
     MassMatrix inverseEffectiveMass;
+    //!Jacobian for effective mass matrix
     Jacobian jacobian;
+    //!Total lagrangian multipliers
     double lagrangianMultiplier;
     double tangentLagrangianMultiplier1;
     double tangentLagrangianMultiplier2;
-};
-
-struct PersistentCollision
-{
-    Contact::Manifold::ContactPoints contactPoints;
-
-    scene::Handle aBodyHandle;
-    scene::Handle bBodyHandle;
-
-    double lagrangianMultiplier;
 };
 
 /**
@@ -146,7 +144,7 @@ public:
 
     /**
      * @brief Detects and returns contacts
-     * @return contacts
+     * @return contacts vector
      */
     std::vector<Contact> Detect();
 
@@ -155,6 +153,9 @@ public:
     double const frictionCoefficient    = 0.6;  //Wood
 
 private:
+    scene::AssetManager* m_pAssetManager = nullptr;
+    arion::intersection::SimpleShapeIntersectionDetector m_simpleShapeDetector;
+
     struct ObjectHasher
     {
         template < typename ObjectTypeA, typename ObjectTypeB = ObjectTypeA >
@@ -163,9 +164,6 @@ private:
             return std::hash<ObjectTypeA*>()(data.first) ^ std::hash<ObjectTypeB*>()(data.second);
         }
     };
-
-    scene::AssetManager* m_pAssetManager;
-    arion::intersection::SimpleShapeIntersectionDetector m_simpleShapeDetector;
 
     /**
      * @brief Checks if two shapes are intersecting
@@ -315,9 +313,15 @@ public:
      */
     void ResolvePersistantContacts(double duration); 
 
-    double const persistentFactor = 0.05f;
-
 private:
+    double const m_persistentFactor = 0.05f;
+    double const m_persistentThreshold = 1e-3;
+    double const m_persistentThresholdSq = m_persistentThreshold * m_persistentThreshold;
+    scene::AssetManager* m_pAssetManager = nullptr;
+    std::vector<Contact> m_prevContacts;
+    std::vector<Contact> m_persistentContacts;
+
+    //!Calculates hashes for contacts based on handles
     struct ContactHasher
     {
         size_t operator()(Contact const& c) const
@@ -332,27 +336,52 @@ private:
                 && (a.bBodyHandle == b.bBodyHandle);
         }
     };
-
-    double const s_persistentThreshold = 1e-3;
-    double const s_persistentThresholdSq = s_persistentThreshold * s_persistentThreshold;
-    scene::AssetManager* m_pAssetManager = nullptr;
-    std::vector<Contact> m_prevContacts;
-    std::vector<Contact> m_persistentContacts;
     
+    /**
+     * @brief Detects contacts existing during multiple frames
+     * @param contacts contact set for search
+     */
     void DetectPersistentContacts(
-        std::vector<Contact>& contacts
+        std::vector<Contact> const& contacts
     );
 
+    /**
+     * @brief Calculates and solves contact and friction constraints and updates lambdas
+     * @param[in,out] contact contact data
+     * @param[in]     duration duration of the frame 
+     * @param[in,out] contactLambda lagrangian multiplier for contact constraint
+     * @param[in,out] frictionLamda1 lagrangian multiplier for friction constraint 
+     * @param[in,out] frictionLamda2 lagrangian multiplier for friction constraint
+     */
     void SolveConstraints(
         Contact& contact, double duration, 
         double& contactLambda, double& frictionLamda1, double& frictionLamda2
     ) const;
 
+    /**
+     * @brief Resolves contact constraints and updates total lagrangian multiplier
+     * @param[in,out] contact contact data
+     * @param[in] duration durtaion of the frame
+     * @param[in] V velocity vector of size 12
+     * @param[in] rA contact point vector from the center of the body
+     * @param[in] rB contact point vector from the center of the body
+     * @param[in] totalLagrangianMultiplier total lagrangian multiplier for contact constraint
+     */
     static void SolveContactConstraint(
         Contact& contact, double duration, 
         Contact::Velocity const& V, glm::dvec3 const& rA, glm::dvec3 const& rB, double& totalLagrangianMultiplier
     );
 
+    /**
+     * @brief Reslove friction constraints and updates eatch total lagrangian multiplier
+     * @param[in, out] contact contact data
+     * @param[in] V velocity vector of size 12
+     * @param[in] rA contact point vector from the center of the body
+     * @param[in] rB contact point vector from the center of the body
+     * @param[in,out] totalLagrangianMultiplier 
+     * @param[in,out] totalTangentLagrangianMultiplier1 
+     * @param[in,out] totalTangentLagrangianMultiplier2 
+     */
     static void SolveFrictionConstraint(
         Contact& contact,
         Contact::Velocity const& V, glm::dvec3 const& rA,  glm::dvec3 const& rB,

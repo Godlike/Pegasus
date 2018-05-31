@@ -53,7 +53,7 @@ AssetManager& Scene::GetAssets()
 void Scene::ResolveCollisions(double duration)
 {
     std::vector<collision::Contact> contacts = m_detector.Detect();
-    debug::Debug::CollisionDetectionCall(contacts);
+    Debug::CollisionDetectionCall(contacts);
     m_resolver.Resolve(contacts, duration);
 }
 

@@ -6,7 +6,6 @@
 #ifndef PEGASUS_OBJECT_HPP
 #define PEGASUS_OBJECT_HPP
 
-#include <pegasus/SharedMacros.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -26,23 +25,23 @@ struct Body
      */
     struct Material
     {
-        PEGASUS_EXPORT Material();
+        Material();
 
         /**
          * @brief Sets mass of the body
          * @param mass mass
          */
-        PEGASUS_EXPORT void SetMass(double mass);
+        void SetMass(double mass);
 
         /**
          * @brief Sets body mass, and inverse mass equal to 0
          */
-        PEGASUS_EXPORT void SetInfiniteMass();
+        void SetInfiniteMass();
 
         /**
         * @brief Sets moment of inertia of the body
         */
-        PEGASUS_EXPORT void SetMomentOfInertia(glm::mat3 momentOfInertia)
+        void SetMomentOfInertia(glm::mat3 momentOfInertia)
         {
             m_momentOfInertia = momentOfInertia;
             m_inverseMomentOfInertia = glm::inverse(m_momentOfInertia);
@@ -51,7 +50,7 @@ struct Body
         /**
         * @brief Sets inverse moment of inertia of the body
         */
-        PEGASUS_EXPORT void SetInverseMomentOfInertia(glm::mat3 inverseMomentOfInertia)
+        void SetInverseMomentOfInertia(glm::mat3 inverseMomentOfInertia)
         {
             m_momentOfInertia = glm::inverse(inverseMomentOfInertia);
             m_inverseMomentOfInertia = inverseMomentOfInertia;
@@ -61,25 +60,25 @@ struct Body
         * @brief Checks if the body has an infinite mass
         * @return @c true if the mass is infinite, @c false otherwise
         */
-        PEGASUS_EXPORT bool HasInfiniteMass() const;
+        bool HasInfiniteMass() const;
 
         /**
          * @brief Returns mass of the body
          * @return mass of the body
          */
-        PEGASUS_EXPORT double GetMass() const;
+        double GetMass() const;
 
         /**
          * @brief Returns inverse mass of the body
          * @return inverse mass
          */
-        PEGASUS_EXPORT double GetInverseMass() const;
+        double GetInverseMass() const;
 
         /**
         * @brief Returns moment of inertia of the body
         * @return moment of inertia
         */
-        PEGASUS_EXPORT glm::dmat3 GetMomentOfInertia() const
+        glm::dmat3 GetMomentOfInertia() const
         {
             return m_momentOfInertia;
         }
@@ -88,7 +87,7 @@ struct Body
         * @brief Returns inverse moment of inertia of the body
         * @return inverse moment of inertia
         */
-        PEGASUS_EXPORT glm::dmat3 GetInverseMomentOfInertia() const
+        glm::dmat3 GetInverseMomentOfInertia() const
         {
             return m_inverseMomentOfInertia;
         }
@@ -115,7 +114,7 @@ struct Body
      */
     struct LinearMotion
     {
-        PEGASUS_EXPORT LinearMotion();
+        LinearMotion();
 
         glm::dvec3 position;
         glm::dvec3 velocity;
@@ -128,7 +127,7 @@ struct Body
      */
     struct AngularMotion
     {
-        PEGASUS_EXPORT AngularMotion();
+        AngularMotion();
 
         glm::dquat orientation;
         glm::dvec3 velocity;
@@ -136,7 +135,7 @@ struct Body
         glm::dvec3 torque;
     };
 
-    PEGASUS_EXPORT Body();
+    Body();
 
     Material material;
     LinearMotion linearMotion;
@@ -160,10 +159,10 @@ inline glm::dmat3 CalculateSolidSphereMomentOfInertia(double radius, double mass
 
 /**
  * @brief  Calculates 3d moment of inertia for the give solid cuboid
- * @param  width  cuboid's width  
- * @param  height cuboid's height 
- * @param  depth  cuboid's depth  
- * @param  mass   cuboid's mass   
+ * @param  width  cuboid's width
+ * @param  height cuboid's height
+ * @param  depth  cuboid's depth
+ * @param  mass   cuboid's mass
  * @return 3d moment of inertia
  */
 inline glm::dmat3 CalculateSolidCuboidMomentOfInertia(double width, double height, double depth, double mass)
