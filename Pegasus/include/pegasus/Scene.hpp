@@ -18,7 +18,7 @@ namespace scene
 {
 
 /**
- * @brief Singleton physical world simulation class
+ * @brief Physical world simulation class
  */
 class Scene
 {

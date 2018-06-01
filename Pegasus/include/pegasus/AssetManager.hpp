@@ -17,7 +17,7 @@ namespace scene
 {
 
 /**
- * @brief Singleton class stores scene's assets
+ * @brief Stores scene's assets
  */
 class AssetManager
 {
