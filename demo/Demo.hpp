@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017 by Godlike
+* Copyright (C) 2018 by Godlike
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
@@ -84,9 +84,10 @@ public:
     * The object contains only render-related part and is not registered in the physics world
     *
     * @param[in] body physical data
-    * @param[in] a triagne vertex
-    * @param[in] b triagne vertex
-    * @param[in] c triagne vertex
+    * @param[in] color color of the triangle
+    * @param[in] a triangle vertex
+    * @param[in] b triangle vertex
+    * @param[in] c triangle vertex
     * @return a newly created Object
     */
     Primitive& MakeTriangle(mechanics::Body body, glm::vec3 color, glm::vec3 a, glm::vec3 b, glm::vec3 c);

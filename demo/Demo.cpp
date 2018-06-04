@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017 by Godlike
+* Copyright (C) 2018 by Godlike
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
@@ -340,7 +340,7 @@ void DrawUi()
         ImGui::SameLine();
         if (ImGui::Button("Pop frame"))
         {
-            demo.GetScene().GetAssets().Back();
+            demo.GetScene().GetAssets().Top();
         }
 
         ImGui::End();
@@ -514,7 +514,6 @@ void Demo::ComputeFrame(double duration)
 {
     //Compute physical data
     duration = useStaticDuration ? staticDuration : duration;
-    //m_scene.ComputeFrame(duration);
     if (duration > physicsTick)
     {
         for (uint16_t i = 0; i < (duration / physicsTick); ++i)

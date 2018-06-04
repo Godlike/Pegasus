@@ -14,7 +14,7 @@ namespace scene
 {
 
 /**
- * @brief Generic scene object that stores reference to the scene singleton
+ * @brief Generic scene object that stores reference to the scene
  */
 class SceneObject
 {
@@ -92,7 +92,7 @@ protected:
     Primitive(Scene& scene, Type type, mechanics::Body body);
 
     /**
-     * @brief Makes new scene primitive
+     * @brief Initializes object with primitive data based on body type
      * @tparam Shape collision geometry shape type
      */
     template < typename Shape >
@@ -112,7 +112,7 @@ protected:
     }
 
     /**
-     * @brief Removes scene primitive
+     * @brief Removes scene primitive and invalidates its handle
      * @tparam Shape collision geometry shape type
      */
     template < typename Shape >
@@ -208,7 +208,7 @@ public:
 
     /**
      * @brief Returns reference to the box instance
-     * @return box shape
+     * @return box instance
      */
     arion::Box& GetShape() const;
 };
@@ -240,8 +240,8 @@ public:
 /**
  * @brief Stores force data
  *
- * @attention This class works as a high level API over the Scene singleton instance.
- * Only the handles are guaranteed to be valid. Any reference/pointer is invalidated
+ * @attention This class works as a high level API over the Scene instance.
+ * Only the handles are guaranteed to be valid. All pointers are invalidated
  * after a new instance of a Force class is created or deleted.
  *
  * @tparam ForceType force type
@@ -287,7 +287,7 @@ public:
     /**
      * @brief Returns force data
      *
-     * @attention This class works as a high level API over the Scene singleton instance.
+     * @attention This class works as a high level API over the Scene instance.
      * Only the handles are guaranteed to be valid. Any reference/pointer is invalidated
      * after a new instance of a Force class is created or deleted.
      *
@@ -357,7 +357,7 @@ public:
     void BindPrimitive(Primitive& primitive);
 
     /**
-     * @brief Removes body from the group and unbinds all group's forces from it
+     * @brief Removes primitive from the group and unbinds all group's forces from it
      * @param primitive reference to the primitive to unbind
      */
     void UnbindPrimitive(Primitive& primitive);

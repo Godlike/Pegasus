@@ -1,11 +1,12 @@
 /*
-* Copyright (C) 2017 by Godlike
+* Copyright (C) 2018 by Godlike
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#ifndef PEGASUS_OBJECT_HPP
-#define PEGASUS_OBJECT_HPP
+#ifndef PEGASUS_BODY_HPP
+#define PEGASUS_BODY_HPP
 
+#include <pegasus/Material.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -20,95 +21,6 @@ namespace mechanics
  */
 struct Body
 {
-    /**
-     * @brief Stores material properties of the body
-     */
-    struct Material
-    {
-        Material();
-
-        /**
-         * @brief Sets mass of the body
-         * @param mass mass
-         */
-        void SetMass(double mass);
-
-        /**
-         * @brief Sets body mass, and inverse mass equal to 0
-         */
-        void SetInfiniteMass();
-
-        /**
-        * @brief Sets moment of inertia of the body
-        */
-        void SetMomentOfInertia(glm::mat3 momentOfInertia)
-        {
-            m_momentOfInertia = momentOfInertia;
-            m_inverseMomentOfInertia = glm::inverse(m_momentOfInertia);
-        }
-
-        /**
-        * @brief Sets inverse moment of inertia of the body
-        */
-        void SetInverseMomentOfInertia(glm::mat3 inverseMomentOfInertia)
-        {
-            m_momentOfInertia = glm::inverse(inverseMomentOfInertia);
-            m_inverseMomentOfInertia = inverseMomentOfInertia;
-        }
-
-        /**
-        * @brief Checks if the body has an infinite mass
-        * @return @c true if the mass is infinite, @c false otherwise
-        */
-        bool HasInfiniteMass() const;
-
-        /**
-         * @brief Returns mass of the body
-         * @return mass of the body
-         */
-        double GetMass() const;
-
-        /**
-         * @brief Returns inverse mass of the body
-         * @return inverse mass
-         */
-        double GetInverseMass() const;
-
-        /**
-        * @brief Returns moment of inertia of the body
-        * @return moment of inertia
-        */
-        glm::dmat3 GetMomentOfInertia() const
-        {
-            return m_momentOfInertia;
-        }
-
-        /**
-        * @brief Returns inverse moment of inertia of the body
-        * @return inverse moment of inertia
-        */
-        glm::dmat3 GetInverseMomentOfInertia() const
-        {
-            return m_inverseMomentOfInertia;
-        }
-
-        //!Body's motion bumping factor
-        double damping;
-
-    private:
-        //!Body's moment of inertia
-        glm::dmat3 m_momentOfInertia;
-
-        //!Body's inverse moment of inertia
-        glm::dmat3 m_inverseMomentOfInertia;
-
-        //!Body's inverse moment of inertia
-        double m_mass;
-
-        //!Used to represent a body with an infinite mass by setting this value to 0
-        double m_inverseMass;
-    };
-
     /**
      * @brief Stores linear motion data
      */
@@ -150,10 +62,14 @@ struct Body
  */
 inline glm::dmat3 CalculateSolidSphereMomentOfInertia(double radius, double mass)
 {
+    double const factor = 2.0 / 5.0;
+    double const rSq = glm::pow2(radius);
+    double const inertia = (factor * mass * rSq);
+
     return glm::dmat3{
-        (2.0 / 5.0 * mass * glm::pow2(radius)), 0, 0,
-        0, (2.0 / 5.0 * mass * glm::pow2(radius)), 0,
-        0, 0, (2.0 / 5.0 * mass * glm::pow2(radius)),
+        inertia, 0, 0,
+        0, inertia, 0,
+        0, 0, inertia,
     };
 }
 
@@ -167,13 +83,18 @@ inline glm::dmat3 CalculateSolidSphereMomentOfInertia(double radius, double mass
  */
 inline glm::dmat3 CalculateSolidCuboidMomentOfInertia(double width, double height, double depth, double mass)
 {
+    double const massFraction = 1.0 / 12.0 * mass;
+    double const widthSq  = glm::pow2(width);
+    double const heightSq = glm::pow2(height);
+    double const depthSq  = glm::pow2(depth);
+
     return glm::dmat3{
-        (1.0 / 12.0 * mass * (glm::pow2(height) + glm::pow2(depth))), 0, 0,
-        0, (1.0 / 12.0 * mass * (glm::pow2(width) + glm::pow2(depth))),  0,
-        0, 0, (1.0 / 12.0 * mass * (glm::pow2(width) + glm::pow2(height))),
+        (massFraction * (heightSq + depthSq)), 0, 0,
+        0, (massFraction * (widthSq + depthSq)),  0,
+        0, 0, (massFraction * (widthSq + heightSq)),
     };
 }
 
 } // namespace mechanics
 } // namespace pegasus
-#endif // PEGASUS_OBJECT_HPP
+#endif // PEGASUS_BODY_HPP
