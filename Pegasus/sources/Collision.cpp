@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 by Godlike
+ * Copyright (C) 2018 by Godlike
  * This code is licensed under the MIT license (MIT)
  * (http://opensource.org/licenses/MIT)
  */
@@ -123,22 +123,22 @@ void Resolver::ResolvePersistantContacts(double duration)
         double const lagrangianMultiplier = contact.lagrangianMultiplier;
         double const tangentLagrangianMultiplier1 = contact.tangentLagrangianMultiplier1;
         double const tangentLagrangianMultiplier2 = contact.tangentLagrangianMultiplier2;
-    
+
         double constexpr reduction = 0.01f;
         contact.lagrangianMultiplier *= reduction;
         contact.tangentLagrangianMultiplier1 *= reduction;
         contact.tangentLagrangianMultiplier2 *= reduction;
-    
+
         SolveConstraints(
-            contact, duration, contact.lagrangianMultiplier, 
+            contact, duration, contact.lagrangianMultiplier,
             contact.tangentLagrangianMultiplier1, contact.tangentLagrangianMultiplier2
         );
-    
+
         contact.lagrangianMultiplier = lagrangianMultiplier;
-        contact.tangentLagrangianMultiplier1 = tangentLagrangianMultiplier1; 
-        contact.tangentLagrangianMultiplier2 = tangentLagrangianMultiplier2; 
+        contact.tangentLagrangianMultiplier1 = tangentLagrangianMultiplier1;
+        contact.tangentLagrangianMultiplier2 = tangentLagrangianMultiplier2;
     }
-    
+
     //Resolve constraints
     for (auto& contact : m_persistentContacts)
     {
@@ -173,7 +173,7 @@ void Resolver::DetectPersistentContacts(std::vector<Contact> const& contacts)
             if (   contacts[i].aBodyHandle == m_prevContacts[j].aBodyHandle
                 && contacts[i].bBodyHandle == m_prevContacts[j].bBodyHandle
                 && IsPersistent(contacts[i].manifold.points,
-                    m_prevContacts[j].manifold.points, 
+                    m_prevContacts[j].manifold.points,
                     m_persistentThresholdSq))
             {
                 currentPersistentContactIndices.push_back(i);
@@ -184,19 +184,19 @@ void Resolver::DetectPersistentContacts(std::vector<Contact> const& contacts)
     //Remove outdated persistent contacts
     for (size_t index = 0; index < m_persistentContacts.size();)
     {
-        auto const indexIt = std::find_if(currentPersistentContactIndices.begin(), currentPersistentContactIndices.end(), 
-            [contacts, this, index](size_t i) -> bool {
+        auto const indexIt = std::find_if(currentPersistentContactIndices.begin(), currentPersistentContactIndices.end(),
+            [&contacts, this, index](size_t i) -> bool {
                 return contacts[i].aBodyHandle == this->m_persistentContacts[index].aBodyHandle
                     && contacts[i].bBodyHandle == this->m_persistentContacts[index].bBodyHandle;
         });
 
         if (indexIt == currentPersistentContactIndices.end()
-            || !IsPersistent(m_persistentContacts[index].manifold.points, 
-                contacts[*indexIt].manifold.points, 
+            || !IsPersistent(m_persistentContacts[index].manifold.points,
+                contacts[*indexIt].manifold.points,
                 m_persistentThresholdSq))
         {
             m_persistentContacts.erase(m_persistentContacts.begin() + index);
-        } 
+        }
         else
         {
             ++index;

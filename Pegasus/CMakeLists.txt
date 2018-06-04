@@ -45,6 +45,7 @@ set(PEGASUS_HEADERS
     include/pegasus/AssetManager.hpp
     include/pegasus/Scene.hpp
     include/pegasus/Primitives.hpp
+    include/pegasus/Material.hpp
 )
 set(PEGASUS_SOURCES
     sources/DebugDummy.cpp
@@ -57,6 +58,7 @@ set(PEGASUS_SOURCES
     sources/AssetManager.cpp
     sources/Scene.cpp
     sources/Primitives.cpp
+    sources/Material.cpp
 )
 
 set(PEGASUS_EXTRA)

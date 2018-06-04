@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017 by Godlike
+* Copyright (C) 2018 by Godlike
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
@@ -65,7 +65,7 @@ glm::dvec3 IntegrateLinearDamping(glm::dvec3 velocity, double damping, double du
 * @param[in] duration delta time
 */
 void IntegrateBody(
-        pegasus::mechanics::Body::Material& material,
+        pegasus::mechanics::Material& material,
         pegasus::mechanics::Body::LinearMotion& linearMotion,
         double duration
     )
@@ -79,18 +79,27 @@ void IntegrateBody(
     linearMotion.velocity = ::IntegrateLinearDamping(
         linearMotion.velocity, material.damping, duration);
     linearMotion.force = glm::dvec3(0);
-
-    assert(!std::isnan(linearMotion.position.x + linearMotion.position.y + linearMotion.position.z));
-    assert(!std::isnan(linearMotion.velocity.x + linearMotion.velocity.y + linearMotion.velocity.z));
-    assert(!std::isnan(linearMotion.acceleration.x + linearMotion.acceleration.y + linearMotion.acceleration.z));
-    assert(!std::isnan(linearMotion.force.x + linearMotion.force.y + linearMotion.force.z));
 }
 
+/**
+ * @brief Recalculates angular acceleration of the body
+ * @param acceleration angular acceleration
+ * @param torque torque applied
+ * @param inverseMomentOfInertia inverse moment of inertia
+ * @return angular acceleration
+ */
 glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torque, glm::dmat3 inverseMomentOfInertia)
 {
     return acceleration + inverseMomentOfInertia * torque;
 }
 
+/**
+ * @brief Recalculates angular displacement of the body
+ * @param orientation body orientation quatrenion
+ * @param velocity angular velocity
+ * @param duration delta time
+ * @return angular displacement
+ */
 glm::dquat IntegrateAngularDisplacement(glm::dquat orientation, glm::dvec3 velocity, double duration)
 {
     glm::dquat const velocityQuad{ 0, velocity.x, velocity.y, velocity.z };
@@ -99,24 +108,38 @@ glm::dquat IntegrateAngularDisplacement(glm::dquat orientation, glm::dvec3 veloc
     return displacement;
 }
 
+/**
+ * @brief Recalculates angular velocity of the body
+ * @param velocity angular velocity
+ * @param resultingAcceleration total acceleration change
+ * @param duration delta time
+ * @return angular velocity
+ */
 glm::dvec3 IntegrateAngularVelocity(glm::dvec3 velocity, glm::dvec3 resultingAcceleration, double duration)
 {
     return velocity + resultingAcceleration * duration;
 }
 
+/**
+ * @brief Calculates angular damping velocity decrease
+ * @param velocity angular velocity
+ * @param damping damping factor
+ * @param duration delta time
+ * @return angular velocity
+ */
 glm::dvec3 IntegrateAngularDamping(glm::dvec3 velocity, double damping, double duration)
 {
     return velocity * glm::pow(damping, duration);
 }
 
 /**
- * brief Updates body displacement
+ * @brief Updates body displacement
  * @param[in, out] material body material data
  * @param[in, out] angularMotion body angular motion data
  * @param[in] duration delta time
  */
 void IntegrateBody(
-        pegasus::mechanics::Body::Material& material,
+        pegasus::mechanics::Material& material,
         pegasus::mechanics::Body::AngularMotion& angularMotion,
         double duration
     )
@@ -130,11 +153,6 @@ void IntegrateBody(
     angularMotion.velocity = ::IntegrateAngularDamping(
         angularMotion.velocity, material.damping, duration);
     angularMotion.torque = glm::dvec3(0, 0, 0);
-
-    assert(!std::isnan(angularMotion.orientation.x + angularMotion.orientation.y + angularMotion.orientation.z));
-    assert(!std::isnan(angularMotion.velocity.x + angularMotion.velocity.y + angularMotion.velocity.z));
-    assert(!std::isnan(angularMotion.acceleration.x + angularMotion.acceleration.y + angularMotion.acceleration.z));
-    assert(!std::isnan(angularMotion.torque.x + angularMotion.torque.y + angularMotion.torque.z));
 }
 } // namespace ::
 

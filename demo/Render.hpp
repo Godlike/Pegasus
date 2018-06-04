@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017 by Godlike
+* Copyright (C) 2018 by Godlike
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
@@ -446,7 +446,7 @@ public:
     std::function<void()> drawUiCallback;
 
     //! Primitive rendering polygone mode type
-    enum class PrimitiveRenderType : uint8_t 
+    enum class PrimitiveRenderType : uint8_t
     {
         WIRE,
         SOLID,
@@ -829,7 +829,7 @@ public:
      * @brief Creates new triangle collection mesh in the renderer
      * @param model stores local to rowld space mesh transformation
      * @param color primitive's color in the float rgb format
-     * @param triangles vertices of the triangles 
+     * @param triangles vertices of the triangles
      */
     TriangleCollection(glm::mat4 model, glm::vec3 color, std::vector<glm::mat3> const& triangles);
 

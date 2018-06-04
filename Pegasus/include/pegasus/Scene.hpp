@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017 by Godlike
+* Copyright (C) 2018 by Godlike
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
@@ -176,6 +176,8 @@ public:
     }
 
     AssetManager& GetAssets();
+
+    double forceDuration = 1.0;
 
 private:
     AssetManager m_assetManager;

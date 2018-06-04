@@ -3,8 +3,8 @@
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
-#ifndef PEGASUS_DEBUG_IMPLEMENTATION_HPP
-#define PEGASUS_DEBUG_IMPLEMENTATION_HPP
+#ifndef PEGASUS_DEBUG_DUMMY_HPP
+#define PEGASUS_DEBUG_DUMMY_HPP
 
 #include <pegasus/Collision.hpp>
 #include <functional>
@@ -32,4 +32,4 @@ public:
 
 } // pegasus
 
-#endif // PEGASUS_DEBUG_IMPLEMENTATION_HPP
+#endif // PEGASUS_DEBUG_DUMMY_HPP

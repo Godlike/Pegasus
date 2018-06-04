@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017 by Godlike
+* Copyright (C) 2018 by Godlike
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
@@ -23,7 +23,7 @@ void Scene::ComputeFrame(double duration)
 {
     ApplyCollisionCache(duration);
 
-    ApplyForces(1);
+    ApplyForces(forceDuration);
 
     Integrate(duration);
 
@@ -68,6 +68,7 @@ void Scene::ApplyForces(double duration)
     for (Asset<mechanics::Body>& asset : m_assetManager.GetBodies())
     {
         asset.data.linearMotion.force = glm::dvec3(0);
+        asset.data.angularMotion.torque = glm::dvec3(0);
     }
 
     //Reapply forces

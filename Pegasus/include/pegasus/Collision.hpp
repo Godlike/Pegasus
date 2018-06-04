@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2017 by Godlike
+* Copyright (C) 2018 by Godlike
 * This code is licensed under the MIT license (MIT)
 * (http://opensource.org/licenses/MIT)
 */
@@ -98,26 +98,26 @@ struct Contact
 
     //!Constructs contact instance
     Contact(
-        scene::Handle aHandle, 
-        scene::Handle bHandle, 
-        Manifold manifold, 
-        double restitution, 
+        scene::Handle aHandle,
+        scene::Handle bHandle,
+        Manifold manifold,
+        double restitution,
         double friction
     );
-    
+
     //!Handles
     scene::Handle aBodyHandle;
     scene::Handle bBodyHandle;
-    
+
     //!Contact manifold data
     Manifold manifold;
 
-    //!Factor that's responsible for calculating the amount of energy lost to the deformation
+    //!Factors responsible for calculating the amount of energy lost to the deformation
     double restitution;
     double friction;
-    
+
     //!Contact constraint resolution data
-    Jacobian deltaVelocity; 
+    Jacobian deltaVelocity;
     //!Effective mass matrix inverse
     MassMatrix inverseEffectiveMass;
     //!Jacobian for effective mass matrix
@@ -159,9 +159,10 @@ private:
     struct ObjectHasher
     {
         template < typename ObjectTypeA, typename ObjectTypeB = ObjectTypeA >
-        size_t operator()(std::pair<ObjectTypeA*, ObjectTypeB*> data) const
+        size_t operator()(std::pair<ObjectTypeA const*, ObjectTypeB const*> data) const
         {
-            return std::hash<ObjectTypeA*>()(data.first) ^ std::hash<ObjectTypeB*>()(data.second);
+            return std::hash<ObjectTypeA const*>()(data.first)
+                ^ std::hash<ObjectTypeB const*>()(data.second);
         }
     };
 
@@ -194,9 +195,9 @@ private:
     template < typename Object, typename Shape >
     void Detect(std::vector<Contact>& contacts)
     {
-        std::unordered_set<std::pair<Shape*, Shape*>, ObjectHasher> registeredContacts;
-        std::vector<scene::Asset<scene::RigidBody>>& objects = m_pAssetManager->GetObjects<Object, Shape>();       
-                
+        std::unordered_set<std::pair<Shape const*, Shape const*>, ObjectHasher> registeredContacts;
+        std::vector<scene::Asset<scene::RigidBody>>& objects = m_pAssetManager->GetObjects<Object, Shape>();
+
         for (scene::Asset<scene::RigidBody> aObject : objects)
         {
             for (scene::Asset<scene::RigidBody> bObject : objects)
@@ -206,27 +207,27 @@ private:
                     continue;
                 }
 
-                mechanics::Body& aBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), aObject.data.body);
-                mechanics::Body& bBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), bObject.data.body);
+                mechanics::Body const& aBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), aObject.data.body);
+                mechanics::Body const& bBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), bObject.data.body);
                 if (aBody.material.HasInfiniteMass() && bBody.material.HasInfiniteMass())
                 {
                     continue;
                 }
 
-                Shape* aShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<Shape>(), aObject.data.shape);
-                Shape* bShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<Shape>(), bObject.data.shape);
+                Shape const* aShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<Shape>(), aObject.data.shape);
+                Shape const* bShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<Shape>(), bObject.data.shape);
                 if (aShape == bShape)
                 {
                     continue;
                 }
 
-                std::pair<Shape*, Shape*> const key = std::make_pair(std::min(aShape, bShape), std::max(aShape, bShape));
+                std::pair<Shape const*, Shape const*> const key = std::make_pair(std::min(aShape, bShape), std::max(aShape, bShape));
                 if (Intersect(aShape, bShape)
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
                     contacts.emplace_back(
                         aObject.data.body, bObject.data.body,
-                        CalculateContactManifold(aShape, bShape), 
+                        CalculateContactManifold(aShape, bShape),
                         restitutionCoefficient,
                         frictionCoefficient
                     );
@@ -247,10 +248,10 @@ private:
     template < typename ObjectA, typename ShapeA, typename ObjectB, typename ShapeB >
     void Detect(std::vector<Contact>& contacts)
     {
-        std::unordered_set<std::pair<void*, void*>, ObjectHasher> registeredContacts;
-        std::vector<scene::Asset<scene::RigidBody>>& aObjects = m_pAssetManager->GetObjects<ObjectA, ShapeA>();
-        std::vector<scene::Asset<scene::RigidBody>>& bObjects = m_pAssetManager->GetObjects<ObjectB, ShapeB>();
-        
+        std::unordered_set<std::pair<void const*, void const*>, ObjectHasher> registeredContacts;
+        std::vector<scene::Asset<scene::RigidBody>> const& aObjects = m_pAssetManager->GetObjects<ObjectA, ShapeA>();
+        std::vector<scene::Asset<scene::RigidBody>> const& bObjects = m_pAssetManager->GetObjects<ObjectB, ShapeB>();
+
         for (scene::Asset<scene::RigidBody> aObject : aObjects)
         {
             for (scene::Asset<scene::RigidBody> bObject : bObjects)
@@ -260,18 +261,18 @@ private:
                     continue;
                 }
 
-                mechanics::Body& aBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), aObject.data.body);
-                mechanics::Body& bBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), bObject.data.body);
+                mechanics::Body const& aBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), aObject.data.body);
+                mechanics::Body const& bBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), bObject.data.body);
                 if (aBody.material.HasInfiniteMass() && bBody.material.HasInfiniteMass())
                 {
                     continue;
                 }
 
-                ShapeA* aShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<ShapeA>(), aObject.data.shape);
-                ShapeB* bShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<ShapeB>(), bObject.data.shape);
-                std::pair<void*, void*> const key = std::make_pair(
-                    std::min(static_cast<void*>(aShape), static_cast<void*>(bShape)),
-                    std::max(static_cast<void*>(aShape), static_cast<void*>(bShape))
+                ShapeA const* aShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<ShapeA>(), aObject.data.shape);
+                ShapeB const* bShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<ShapeB>(), bObject.data.shape);
+                std::pair<void const*, void const*> const key = std::make_pair(
+                    std::min(static_cast<void const*>(aShape), static_cast<void const*>(bShape)),
+                    std::max(static_cast<void const*>(aShape), static_cast<void const*>(bShape))
                 );
 
                 if (Intersect(aShape, bShape)
@@ -303,6 +304,9 @@ public:
 
     /**
      * @brief Resolves collisions
+     * 
+     * @note This method is inteded to be called once during the pipeline execution
+     * 
      * @param contacts contacts information
      * @param duration delta time of the frame
      */
@@ -310,8 +314,10 @@ public:
 
     /**
      * @brief Resolves cached contacts
+     * 
+     * @note This method is inteded to be called once during the pipeline execution
      */
-    void ResolvePersistantContacts(double duration); 
+    void ResolvePersistantContacts(double duration);
 
 private:
     double const m_persistentFactor = 0.05f;
@@ -336,7 +342,7 @@ private:
                 && (a.bBodyHandle == b.bBodyHandle);
         }
     };
-    
+
     /**
      * @brief Detects contacts existing during multiple frames
      * @param contacts contact set for search
@@ -348,13 +354,13 @@ private:
     /**
      * @brief Calculates and solves contact and friction constraints and updates lambdas
      * @param[in,out] contact contact data
-     * @param[in]     duration duration of the frame 
+     * @param[in]     duration duration of the frame
      * @param[in,out] contactLambda lagrangian multiplier for contact constraint
-     * @param[in,out] frictionLamda1 lagrangian multiplier for friction constraint 
+     * @param[in,out] frictionLamda1 lagrangian multiplier for friction constraint
      * @param[in,out] frictionLamda2 lagrangian multiplier for friction constraint
      */
     void SolveConstraints(
-        Contact& contact, double duration, 
+        Contact& contact, double duration,
         double& contactLambda, double& frictionLamda1, double& frictionLamda2
     ) const;
 
@@ -368,7 +374,7 @@ private:
      * @param[in] totalLagrangianMultiplier total lagrangian multiplier for contact constraint
      */
     static void SolveContactConstraint(
-        Contact& contact, double duration, 
+        Contact& contact, double duration,
         Contact::Velocity const& V, glm::dvec3 const& rA, glm::dvec3 const& rB, double& totalLagrangianMultiplier
     );
 
@@ -378,9 +384,9 @@ private:
      * @param[in] V velocity vector of size 12
      * @param[in] rA contact point vector from the center of the body
      * @param[in] rB contact point vector from the center of the body
-     * @param[in,out] totalLagrangianMultiplier 
-     * @param[in,out] totalTangentLagrangianMultiplier1 
-     * @param[in,out] totalTangentLagrangianMultiplier2 
+     * @param[in,out] totalLagrangianMultiplier
+     * @param[in,out] totalTangentLagrangianMultiplier1
+     * @param[in,out] totalTangentLagrangianMultiplier2
      */
     static void SolveFrictionConstraint(
         Contact& contact,

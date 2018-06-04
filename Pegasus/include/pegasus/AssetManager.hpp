@@ -10,6 +10,7 @@
 #include <pegasus/Force.hpp>
 #include <Arion/Shape.hpp>
 #include <vector>
+#include <deque>
 
 namespace pegasus
 {
@@ -31,6 +32,9 @@ public:
     * @brief Returns a handle for @p T data
     *
     * Searches for an empty handle in @p data. If there are no empty handles, creates a new one.
+    *
+    * @attention Calling this method invalidates all data pointers and iterators, handles are
+    * guaranteed to not be invalidated
     *
     * @tparam T storage data type
     * @param[in,out] data reference to the vector of assets
@@ -121,7 +125,7 @@ public:
     std::vector<Asset<ForceBind>>& GetForceBinds();
 
     /**
-     * @brief Saves a copy of current scene on the heap allocaled stack
+     * @brief Saves a copy of current scene on asset stack
      */
     void PushFrame()
     {
@@ -129,7 +133,7 @@ public:
     }
 
     /**
-    * @brief Removes top stack element from the heap allocaled stack
+    * @brief Removes top stack element from the asset stack
     */
     void PopFrame()
     {
@@ -140,9 +144,9 @@ public:
     }
 
     /**
-     * @brief Assigns top stack element to the current assets
+     * @brief Copies top stack element to the current assets
      */
-    void Back()
+    void Top()
     {
         if (!m_assetStack.empty())
         {
@@ -190,7 +194,7 @@ public:
 
 private:
     Assets m_asset;
-    std::vector<Assets> m_assetStack;
+    std::deque<Assets> m_assetStack;
 };
 
 template <>
