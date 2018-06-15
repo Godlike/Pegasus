@@ -181,7 +181,7 @@ public:
 
     /**
      * @brief Return reference to the sphere instance
-     * @return sphere instance
+     * @return shape instance
      */
     arion::Sphere& GetShape() const;
 };
@@ -208,7 +208,7 @@ public:
 
     /**
      * @brief Returns reference to the box instance
-     * @return box instance
+     * @return shape instance
      */
     arion::Box& GetShape() const;
 };
