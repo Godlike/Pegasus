@@ -403,57 +403,70 @@ void DrawUi()
             }
         }
 
+        ImGui::Text("Objects count: %i ", g_objects.size());
+        static int makeNumber = 1;
+        ImGui::InputInt("Amount", &makeNumber);
+
         if (ImGui::Button("Make"))
         {
-            if (g_objects.size() < demo.maxObjects)
+            float objectPosition[3] = { position[0], position[1], position[2] };
+            for (uint16_t i = 0; i < makeNumber; ++i)
             {
-                pegasus::mechanics::Body body;
-                body.material.SetMass(mass);
-                body.linearMotion.position = glm::make_vec3(position);
-                body.linearMotion.velocity = glm::make_vec3(&velocity[1]);
-                if (!epona::fp::IsZero(glm::length(body.linearMotion.velocity)))
+                if (g_objects.size() < demo.maxObjects)
                 {
-                    body.linearMotion.velocity = glm::normalize(body.linearMotion.velocity);
-                }
-                velocity[1] = static_cast<float>(body.linearMotion.velocity[0]);
-                velocity[2] = static_cast<float>(body.linearMotion.velocity[1]);
-                velocity[3] = static_cast<float>(body.linearMotion.velocity[2]);
-                body.linearMotion.velocity *= static_cast<double>(velocity[0]);
+                    //Linear motion data
+                    pegasus::mechanics::Body body;
+                    body.material.SetMass(mass);
+                    body.linearMotion.position = glm::make_vec3(objectPosition);
+                    body.linearMotion.velocity = glm::make_vec3(&velocity[1]);
+                    if (!epona::fp::IsZero(glm::length(body.linearMotion.velocity)))
+                    {
+                        body.linearMotion.velocity = glm::normalize(body.linearMotion.velocity);
+                    }
+                    velocity[1] = static_cast<float>(body.linearMotion.velocity[0]);
+                    velocity[2] = static_cast<float>(body.linearMotion.velocity[1]);
+                    velocity[3] = static_cast<float>(body.linearMotion.velocity[2]);
+                    body.linearMotion.velocity *= static_cast<double>(velocity[0]);
 
-                const auto bodyType = (currentPrimitiveBodyType == 0)
-                    ? pegasus::scene::Primitive::Type::STATIC
-                    : pegasus::scene::Primitive::Type::DYNAMIC;
+                    //Angular motion data
+                    glm::vec3 const axis{ angleAxis[1], angleAxis[2], angleAxis[3] };
+                    glm::vec3 const axisNormalized = epona::fp::IsZero(glm::length(axis)) ? axis : glm::normalize(axis);
+                    angleAxis[1] = axisNormalized.x;
+                    angleAxis[2] = axisNormalized.y;
+                    angleAxis[3] = axisNormalized.z;
 
-                if (currentPrimitiveType == 0)
-                {
-                    g_objects.push_back(&demo.MakeSphere(body, sphereRadius, bodyType));
-                }
-                else
-                {
-                    g_objects.push_back(&demo.MakeBox(
-                        body, { boxSides[0], 0, 0 }, { 0, boxSides[1], 0 }, { 0, 0, boxSides[2] }, bodyType
+                    glm::dvec3 const avd{glm::make_vec3(&angularVelocity[1])};
+                    glm::dvec3 const avdNorm = epona::fp::IsZero(glm::length(avd)) ? avd : glm::normalize(avd);
+                    angularVelocity[1] = static_cast<float>(avdNorm.x);
+                    angularVelocity[2] = static_cast<float>(avdNorm.y);
+                    angularVelocity[3] = static_cast<float>(avdNorm.z);
+
+                    body.angularMotion.velocity = avdNorm * static_cast<double>(angularVelocity[0]);
+                    body.angularMotion.orientation = glm::dquat(
+                        glm::angleAxis(static_cast<double>(angleAxis[0]), glm::dvec3(glm::make_vec3(&angleAxis[1]))
                     ));
+
+                    //Make object
+                    const auto bodyType = (currentPrimitiveBodyType == 0)
+                        ? pegasus::scene::Primitive::Type::STATIC
+                        : pegasus::scene::Primitive::Type::DYNAMIC;
+
+                    if (currentPrimitiveType == 0)
+                    {
+                        g_objects.push_back(&demo.MakeSphere(body, sphereRadius, bodyType));
+                    }
+                    else
+                    {
+                        g_objects.push_back(&demo.MakeBox(
+                            body, { boxSides[0], 0, 0 }, { 0, boxSides[1], 0 }, { 0, 0, boxSides[2] }, bodyType
+                        ));
+                    }
+
+                    //Increment position if more than one body
+                    objectPosition[0] += static_cast<float>(std::rand() % 100 / 1e6);
+                    objectPosition[1] += static_cast<float>(sphereRadius * 2.0f + 1e-3);
+                    objectPosition[2] += static_cast<float>(std::rand() % 100 / 1e6);
                 }
-
-                //Orientation
-                glm::vec3 const axis{ angleAxis[1], angleAxis[2], angleAxis[3] };
-                glm::vec3 const axisNormalized = epona::fp::IsZero(glm::length(axis)) ? axis : glm::normalize(axis);
-                angleAxis[1] = axisNormalized.x;
-                angleAxis[2] = axisNormalized.y;
-                angleAxis[3] = axisNormalized.z;
-
-                glm::dvec3 const avd{glm::make_vec3(&angularVelocity[1])};
-                glm::dvec3 const avdNorm = epona::fp::IsZero(glm::length(avd)) ? avd : glm::normalize(avd);
-                angularVelocity[1] = static_cast<float>(avdNorm.x);
-                angularVelocity[2] = static_cast<float>(avdNorm.y);
-                angularVelocity[3] = static_cast<float>(avdNorm.z);
-
-                body = g_objects.back()->physicalPrimitive->GetBody();
-                body.angularMotion.velocity = avdNorm * static_cast<double>(angularVelocity[0]);
-                body.angularMotion.orientation = glm::dquat(
-                    glm::angleAxis(static_cast<double>(angleAxis[0]), glm::dvec3(glm::make_vec3(&angleAxis[1]))
-                ));
-                g_objects.back()->physicalPrimitive->SetBody(body);
             }
         }
 
