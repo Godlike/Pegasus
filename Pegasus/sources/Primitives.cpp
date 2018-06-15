@@ -51,6 +51,7 @@ Primitive::Primitive(Scene& scene, Type type, mechanics::Body body)
 Plane::Plane(Scene& scene, Type type, mechanics::Body body, arion::Plane plane)
     : Primitive(scene, type, body)
 {
+    InitializeShape(plane, body);
     m_shapeHandle = m_pScene->MakeShape<arion::Plane>();
     m_pScene->GetShape<arion::Plane>(m_shapeHandle) = plane;
     MakeObject<arion::Plane>();
@@ -70,6 +71,7 @@ arion::Plane& Plane::GetShape() const
 Sphere::Sphere(Scene& scene, Type type, mechanics::Body body, arion::Sphere sphere)
     : Primitive(scene, type, body)
 {
+    InitializeShape(sphere, body);
     m_shapeHandle = m_pScene->MakeShape<arion::Sphere>();
     m_pScene->GetShape<arion::Sphere>(m_shapeHandle) = sphere;
     MakeObject<arion::Sphere>();
@@ -89,6 +91,7 @@ arion::Sphere& Sphere::GetShape() const
 Box::Box(Scene& scene, Type type, mechanics::Body body, arion::Box box)
     : Primitive(scene, type, body)
 {
+    InitializeShape(box, body);
     m_shapeHandle = m_pScene->MakeShape<arion::Box>();
     m_pScene->GetShape<arion::Box>(m_shapeHandle) = box;
     MakeObject<arion::Box>();

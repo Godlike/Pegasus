@@ -130,6 +130,17 @@ protected:
             break;
         }
     }
+
+    /**
+     * @brief Initializes shape data with corresponding body data
+     * @param[in, out]  shape shape data
+     * @param[in]       body body data
+     */
+    void InitializeShape(arion::SimpleShape& shape, mechanics::Body const& body)
+    {
+        shape.centerOfMass = body.linearMotion.position;
+        shape.orientation = body.angularMotion.orientation;
+    }
 };
 
 /**
