@@ -403,7 +403,7 @@ void DrawUi()
             }
         }
 
-        ImGui::Text("Objects count: %i ", g_objects.size());
+        ImGui::Text("Objects count: %lu", g_objects.size());
         static int makeNumber = 1;
         ImGui::InputInt("Amount", &makeNumber);
 

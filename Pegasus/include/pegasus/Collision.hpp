@@ -221,6 +221,13 @@ private:
                     continue;
                 }
 
+                if (   epona::fp::IsEqual(aShape->centerOfMass.x, bShape->centerOfMass.x)
+                    && epona::fp::IsEqual(aShape->centerOfMass.y, bShape->centerOfMass.y)
+                    && epona::fp::IsEqual(aShape->centerOfMass.z, bShape->centerOfMass.z))
+                {
+                    continue;
+                }
+
                 std::pair<Shape const*, Shape const*> const key = std::make_pair(std::min(aShape, bShape), std::max(aShape, bShape));
                 if (Intersect(aShape, bShape)
                     && registeredContacts.find(key) == registeredContacts.end())
@@ -275,6 +282,13 @@ private:
                     std::max(static_cast<void const*>(aShape), static_cast<void const*>(bShape))
                 );
 
+                if (   epona::fp::IsEqual(aShape->centerOfMass.x, bShape->centerOfMass.x)
+                    && epona::fp::IsEqual(aShape->centerOfMass.y, bShape->centerOfMass.y)
+                    && epona::fp::IsEqual(aShape->centerOfMass.z, bShape->centerOfMass.z))
+                {
+                    continue;
+                }
+
                 if (Intersect(aShape, bShape)
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
@@ -310,7 +324,7 @@ public:
      * @param contacts contacts information
      * @param duration delta time of the frame
      */
-    void Resolve(std::vector<Contact> contacts, double duration);
+    void Resolve(std::vector<Contact>& contacts, double duration);
 
     /**
      * @brief Resolves cached contacts

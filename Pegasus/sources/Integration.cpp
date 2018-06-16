@@ -70,6 +70,15 @@ void IntegrateBody(
         double duration
     )
 {
+    {
+        double const maxSpeed = 100;
+        double const speed = glm::length(linearMotion.velocity);
+        if (epona::fp::IsGreater(speed, epona::fp::g_floatingPointThreshold))
+        {
+            linearMotion.velocity = glm::normalize(linearMotion.velocity) * glm::min(speed, maxSpeed);
+        }
+    }
+
     glm::dvec3 const resultingAcceleration = ::IntegrateLinearAcceleration(
         linearMotion.acceleration, linearMotion.force, material.GetInverseMass());
     linearMotion.position = ::IntegrateLinearPosition(
@@ -79,6 +88,15 @@ void IntegrateBody(
     linearMotion.velocity = ::IntegrateLinearDamping(
         linearMotion.velocity, material.damping, duration);
     linearMotion.force = glm::dvec3(0);
+
+    {
+        if (epona::fp::IsZero(linearMotion.velocity.x))
+            linearMotion.velocity.x = 0;
+        if (epona::fp::IsZero(linearMotion.velocity.y))
+            linearMotion.velocity.y = 0;
+        if (epona::fp::IsZero(linearMotion.velocity.z))
+            linearMotion.velocity.z = 0;
+    }
 }
 
 /**
@@ -144,6 +162,15 @@ void IntegrateBody(
         double duration
     )
 {
+    {
+        double const maxSpeed = 100;
+        double const speed = glm::length(angularMotion.velocity);
+        if (epona::fp::IsGreater(speed, epona::fp::g_floatingPointThreshold))
+        {
+            angularMotion.velocity = glm::normalize(angularMotion.velocity) * glm::min(speed, maxSpeed);
+        }
+    }
+
     glm::dvec3 const resultingAcceleration = ::IntegrateAngularAcceleration(
         angularMotion.acceleration, angularMotion.torque, material.GetInverseMomentOfInertia());
     angularMotion.orientation = ::IntegrateAngularDisplacement(
@@ -153,6 +180,15 @@ void IntegrateBody(
     angularMotion.velocity = ::IntegrateAngularDamping(
         angularMotion.velocity, material.damping, duration);
     angularMotion.torque = glm::dvec3(0, 0, 0);
+
+    {
+        if (epona::fp::IsZero(angularMotion.velocity.x))
+            angularMotion.velocity.x = 0;
+        if (epona::fp::IsZero(angularMotion.velocity.y))
+            angularMotion.velocity.y = 0;
+        if (epona::fp::IsZero(angularMotion.velocity.z))
+            angularMotion.velocity.z = 0;
+    }
 }
 } // namespace ::
 
