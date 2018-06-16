@@ -162,8 +162,9 @@ void PrimitiveGroup::BindPrimitive(Primitive& primitive)
 
 void PrimitiveGroup::UnbindPrimitive(Primitive& primitive)
 {
-    if (std::find_if(m_primitives.begin(), m_primitives.end(),
-                        [&primitive](Primitive* p) { return &primitive == p; }) == m_primitives.end())
+    auto primitiveIterator = std::find_if(m_primitives.begin(), m_primitives.end(),
+        [&primitive](Primitive* p) { return &primitive == p; });
+    if (primitiveIterator == m_primitives.end())
     {
         return;
     }
@@ -173,11 +174,7 @@ void PrimitiveGroup::UnbindPrimitive(Primitive& primitive)
         force->Unbind(primitive);
     }
 
-    m_primitives.erase(
-        std::remove_if(m_primitives.begin(), m_primitives.end(),
-                        [&primitive](Primitive* p) { return p == &primitive; }),
-        m_primitives.end()
-    );
+    m_primitives.erase(primitiveIterator, m_primitives.end());
 }
 
 } // namespace scene

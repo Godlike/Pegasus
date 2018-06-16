@@ -185,7 +185,7 @@ private:
     collision::Resolver m_resolver;
 
     /**
-     * @brief Calculates force applied to the binded bodies
+     * @brief Calculates force applied to the bound bodies
      * @tparam Force type of the force
      */
     template < typename Force >

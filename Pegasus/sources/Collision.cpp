@@ -259,7 +259,7 @@ void Resolver::SolveConstraints(
     assert(!glm::isnan(contact.deltaVelocity.nwA.x + contact.deltaVelocity.nwA.y + contact.deltaVelocity.nwA.z));
     assert(!glm::isnan(contact.deltaVelocity.nB.x + contact.deltaVelocity.nB.y + contact.deltaVelocity.nB.z));
     assert(!glm::isnan(contact.deltaVelocity.nwB.x + contact.deltaVelocity.nwB.y + contact.deltaVelocity.nwB.z));
-    
+
     SolveFrictionConstraint(contact, V, rA, rB, contactLambda, frictionLamda1, frictionLamda2);
     assert(!glm::isnan(contact.deltaVelocity.nA.x + contact.deltaVelocity.nA.y + contact.deltaVelocity.nA.z));
     assert(!glm::isnan(contact.deltaVelocity.nwA.x + contact.deltaVelocity.nwA.y + contact.deltaVelocity.nwA.z));
@@ -290,9 +290,9 @@ void Resolver::SolveContactConstraint(
     double const restitution = contact.restitution * glm::max(separationSpeed - restitutionSlop, 0.0);
     double constexpr beta = 0.1;
     double constexpr penetrationSlop = 0.0125;
-    double const baumgarteStabiliationTerm =
+    double const baumgarteStabilizationTerm =
         - (beta / duration) * glm::max(contact.manifold.penetration + penetrationSlop, 0.0) + restitution;
-    contact.lagrangianMultiplier = -(contact.jacobian * V + baumgarteStabiliationTerm)
+    contact.lagrangianMultiplier = -(contact.jacobian * V + baumgarteStabilizationTerm)
         / (contact.jacobian * (contact.inverseEffectiveMass * contact.jacobian));
 
     double const prevTotalLagrangianMultiplier = totalLagrangianMultiplier;

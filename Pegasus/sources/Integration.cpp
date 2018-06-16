@@ -11,7 +11,7 @@ namespace
 {
 
 /**
-* @brief Recalculates position of the body
+* @brief Calculates position of the body
 * @param position current position
 * @param velocity current velocity
 * @param duration delta time
@@ -23,7 +23,7 @@ glm::dvec3 IntegrateLinearPosition(glm::dvec3 position, glm::dvec3 velocity, dou
 }
 
 /**
-* @brief Recalculates acceleration of the body
+* @brief Calculates acceleration of the body
 * @param acceleration currant acceleration
 * @param force total force acting on the body
 * @param inverseMass one divided by mass
@@ -35,7 +35,7 @@ glm::dvec3 IntegrateLinearAcceleration(glm::dvec3 acceleration, glm::dvec3 force
 }
 
 /**
-* @brief Recalculates velocity of the body
+* @brief Calculates velocity of the body
 * @param velocity current velocity
 * @param acceleration current acceleration
 * @param duration delta time
@@ -100,7 +100,7 @@ void IntegrateBody(
 }
 
 /**
- * @brief Recalculates angular acceleration of the body
+ * @brief Calculates angular acceleration of the body
  * @param acceleration angular acceleration
  * @param torque torque applied
  * @param inverseMomentOfInertia inverse moment of inertia
@@ -112,7 +112,7 @@ glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torq
 }
 
 /**
- * @brief Recalculates angular displacement of the body
+ * @brief Calculates angular displacement of the body
  * @param orientation body orientation quatrenion
  * @param velocity angular velocity
  * @param duration delta time
@@ -127,7 +127,7 @@ glm::dquat IntegrateAngularDisplacement(glm::dquat orientation, glm::dvec3 veloc
 }
 
 /**
- * @brief Recalculates angular velocity of the body
+ * @brief Calculates angular velocity of the body
  * @param velocity angular velocity
  * @param resultingAcceleration total acceleration change
  * @param duration delta time

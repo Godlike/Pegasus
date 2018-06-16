@@ -318,9 +318,9 @@ public:
 
     /**
      * @brief Resolves collisions
-     * 
+     *
      * @note This method is inteded to be called once during the pipeline execution
-     * 
+     *
      * @param contacts contacts information
      * @param duration delta time of the frame
      */
@@ -328,20 +328,24 @@ public:
 
     /**
      * @brief Resolves cached contacts
-     * 
+     *
      * @note This method is inteded to be called once during the pipeline execution
      */
     void ResolvePersistantContacts(double duration);
 
 private:
+    //! Factors amount of energy applied during persistent contact resolution
     double const m_persistentFactor = 0.05f;
+    //! Distance between corresponding contact points for them to be from a persistent contact
     double const m_persistentThreshold = 1e-3;
     double const m_persistentThresholdSq = m_persistentThreshold * m_persistentThreshold;
     scene::AssetManager* m_pAssetManager = nullptr;
+    //! Stores contacts calculated during the previous frame
     std::vector<Contact> m_prevContacts;
+    //! Stores persistent contacts
     std::vector<Contact> m_persistentContacts;
 
-    //!Calculates hashes for contacts based on handles
+    //! Calculates hashes for contacts based on handles
     struct ContactHasher
     {
         size_t operator()(Contact const& c) const
@@ -359,6 +363,13 @@ private:
 
     /**
      * @brief Detects contacts existing during multiple frames
+     *
+     * A contact considered persistent if it exists during more than one
+     * frame and the distance between corresponding contact points is changed
+     * within a fixed persistence threshold. This method compares contacts
+     * from the previous frame @see #m_prevContacts with the ones found during
+     * the current frame computation @see @param contacts and fills #m_persistentContacts
+     *
      * @param contacts contact set for search
      */
     void DetectPersistentContacts(
@@ -393,7 +404,7 @@ private:
     );
 
     /**
-     * @brief Reslove friction constraints and updates eatch total lagrangian multiplier
+     * @brief Resolve friction constraints and updates eatch total lagrangian multiplier
      * @param[in, out] contact contact data
      * @param[in] V velocity vector of size 12
      * @param[in] rA contact point vector from the center of the body
