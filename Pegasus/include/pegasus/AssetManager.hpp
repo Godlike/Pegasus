@@ -25,9 +25,6 @@ class AssetManager
 public:
     struct Assets;
 
-    using FrameStackIterator = std::vector<Assets>::iterator;
-    using ConstFrameStackIterator = std::vector<Assets>::const_iterator;
-
     /**
     * @brief Returns a handle for @p T data
     *

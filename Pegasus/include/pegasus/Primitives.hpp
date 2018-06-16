@@ -116,7 +116,7 @@ protected:
      * @tparam Shape collision geometry shape type
      */
     template < typename Shape >
-    void RemoveObject() const
+    void RemoveObject()
     {
         switch (m_type)
         {
@@ -127,6 +127,7 @@ protected:
             m_pScene->RemoveObject<StaticBody, Shape>(m_objectHandle);
             break;
         default:
+            m_objectHandle = ZERO_HANDLE;
             break;
         }
     }
@@ -136,7 +137,7 @@ protected:
      * @param[in, out]  shape shape data
      * @param[in]       body body data
      */
-    void InitializeShape(arion::SimpleShape& shape, mechanics::Body const& body)
+    static void InitializeShape(arion::SimpleShape& shape, mechanics::Body const& body)
     {
         shape.centerOfMass = body.linearMotion.position;
         shape.orientation = body.angularMotion.orientation;
