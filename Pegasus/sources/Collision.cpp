@@ -78,6 +78,8 @@ Contact::Manifold Detector::CalculateContactManifold(
     result.firstTangent = glm::normalize(epona::CalculateOrthogonalVector(manifold.normal));
     result.secondTangent = glm::cross(result.firstTangent, result.normal);
 
+    assert(!isnan(result.points.aWorldSpace.x) && !isnan(result.points.bWorldSpace.x));
+
     return result;
 }
 
@@ -86,7 +88,7 @@ Resolver::Resolver(scene::AssetManager& assetManager)
 {
 }
 
-void Resolver::Resolve(std::vector<Contact> contacts, double duration)
+void Resolver::Resolve(std::vector<Contact>& contacts, double duration)
 {
     //Solve constraints
     double contactLambda  = 0;
@@ -105,9 +107,9 @@ void Resolver::Resolve(std::vector<Contact> contacts, double duration)
     //Resolve constraints
     for (auto& contact : contacts)
     {
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity += contact.deltaVelocity.nA;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nA;
         m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwA;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity += contact.deltaVelocity.nB;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nB;
         m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwB;
     }
 
@@ -245,21 +247,25 @@ void Resolver::SolveConstraints(
 
     glm::dvec3 const rA = contact.manifold.points.aWorldSpace - aBody.linearMotion.position;
     glm::dvec3 const rB = contact.manifold.points.bWorldSpace - bBody.linearMotion.position;
-    SolveContactConstraint(contact, duration, V, rA, rB, contactLambda);
 
     if (!epona::fp::IsZero(glm::length2(aBody.angularMotion.velocity)))
     {
-        contact.manifold.firstTangent = glm::normalize(
-            glm::cross(aBody.angularMotion.velocity, contact.manifold.normal));
-        contact.manifold.secondTangent = glm::normalize(glm::cross(
-            contact.manifold.firstTangent, contact.manifold.normal));
+        contact.manifold.firstTangent  = glm::normalize(glm::cross(aBody.angularMotion.velocity, contact.manifold.normal));
+        contact.manifold.secondTangent = glm::normalize(glm::cross(contact.manifold.firstTangent, contact.manifold.normal));
     }
-    SolveFrictionConstraint(contact, V, rA, rB, contactLambda, frictionLamda1, frictionLamda2);
 
+    SolveContactConstraint(contact, duration, V, rA, rB, contactLambda);
     assert(!glm::isnan(contact.deltaVelocity.nA.x + contact.deltaVelocity.nA.y + contact.deltaVelocity.nA.z));
     assert(!glm::isnan(contact.deltaVelocity.nwA.x + contact.deltaVelocity.nwA.y + contact.deltaVelocity.nwA.z));
     assert(!glm::isnan(contact.deltaVelocity.nB.x + contact.deltaVelocity.nB.y + contact.deltaVelocity.nB.z));
     assert(!glm::isnan(contact.deltaVelocity.nwB.x + contact.deltaVelocity.nwB.y + contact.deltaVelocity.nwB.z));
+    
+    SolveFrictionConstraint(contact, V, rA, rB, contactLambda, frictionLamda1, frictionLamda2);
+    assert(!glm::isnan(contact.deltaVelocity.nA.x + contact.deltaVelocity.nA.y + contact.deltaVelocity.nA.z));
+    assert(!glm::isnan(contact.deltaVelocity.nwA.x + contact.deltaVelocity.nwA.y + contact.deltaVelocity.nwA.z));
+    assert(!glm::isnan(contact.deltaVelocity.nB.x + contact.deltaVelocity.nB.y + contact.deltaVelocity.nB.z));
+    assert(!glm::isnan(contact.deltaVelocity.nwB.x + contact.deltaVelocity.nwB.y + contact.deltaVelocity.nwB.z));
+
 }
 
 void Resolver::SolveContactConstraint(
