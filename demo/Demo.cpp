@@ -27,7 +27,7 @@ bool g_epaHold = false;
 bool g_epaCsoCheckbox = false;
 bool g_collisionPointsCheckbox = false;
 bool g_contactNormalsCheckbox = false;
-bool g_originAxesCheckbox = true;
+bool g_originAxesCheckbox = false;
 bool g_pauseOnCollisionCheckbox = false;
 std::list<pegasus::Demo::Primitive*> g_objects;
 
@@ -350,13 +350,13 @@ void DrawUi()
     {
         ImGui::Begin("Objects", &objectsWindowVisible);
         const char* primitiveRenderComboItems[] = { "Wire", "Solid", "Wire&Solid" };
-        static int currentPrimitiveRenderType = 2;
+        static int currentPrimitiveRenderType = 1;
         ImGui::Combo("Render type", &currentPrimitiveRenderType, primitiveRenderComboItems, IM_ARRAYSIZE(primitiveRenderComboItems));
         auto& render = pegasus::render::Renderer::GetInstance();
         render.primitiveRenderType = static_cast<pegasus::render::Renderer::PrimitiveRenderType>(currentPrimitiveRenderType);
 
         const char* primitiveTypeComboItems[] = { "Sphere", "Box"};
-        static int currentPrimitiveType = 1;
+        static int currentPrimitiveType = 0;
         ImGui::Combo("Primitive type", &currentPrimitiveType, primitiveTypeComboItems, IM_ARRAYSIZE(primitiveTypeComboItems));
 
         const char* primitiveBodyTypeComboItems[] = { "Static", "Dynamic" };
@@ -573,7 +573,7 @@ Demo::Primitive& Demo::MakePlane(mechanics::Body body, glm::dvec3 normal, scene:
         arion::Plane(body.linearMotion.position, body.angularMotion.orientation, normal));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
-    render::Primitive* shape = new render::Plane(model, glm::vec3(0.439, 0.502, 0.565),  normal);
+    render::Primitive* shape = new render::Plane(model, glm::vec3(0.82f, 0.82f, 0.82f),  normal);
     m_primitives.emplace_back(object, shape);
     m_pGravityForce->Bind(*object);
 
@@ -597,7 +597,7 @@ Demo::Primitive& Demo::MakeSphere(mechanics::Body body, double radius, scene::Pr
         arion::Sphere(body.linearMotion.position, body.angularMotion.orientation, radius));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
-    render::Primitive* shape = new render::Sphere(model, glm::vec3(0.439, 0.502, 0.565), radius);
+    render::Primitive* shape = new render::Sphere(model, glm::vec3(0.667, 0.223, 0.223), radius);
     m_primitives.emplace_back(object, shape);
     m_pGravityForce->Bind(*object);
     m_pDragForce->Bind(*object);
@@ -625,7 +625,7 @@ Demo::Primitive& Demo::MakeBox(
         arion::Box(body.linearMotion.position, body.angularMotion.orientation, i, j, k));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
-    render::Primitive* shape = new render::Box(model, glm::vec3(0.439, 0.502, 0.565), render::Box::Axes{i, j, k});
+    render::Primitive* shape = new render::Box(model, glm::vec3(0.667, 0.223, 0.223), render::Box::Axes{i, j, k});
     m_primitives.emplace_back(object, shape);
     m_pGravityForce->Bind(*object);
     m_pDragForce->Bind(*object);
