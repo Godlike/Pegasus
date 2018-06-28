@@ -250,8 +250,17 @@ void Resolver::SolveConstraints(
 
     if (!epona::fp::IsZero(glm::length2(aBody.angularMotion.velocity)))
     {
-        contact.manifold.firstTangent  = glm::normalize(glm::cross(aBody.angularMotion.velocity, contact.manifold.normal));
-        contact.manifold.secondTangent = glm::normalize(glm::cross(contact.manifold.firstTangent, contact.manifold.normal));
+        glm::dvec3 const velocityCrossNormal = glm::cross(aBody.angularMotion.velocity, contact.manifold.normal);
+        glm::dvec3 const tangentCrossNormal  = glm::cross(contact.manifold.firstTangent, contact.manifold.normal);
+        
+        contact.manifold.firstTangent  = glm::normalize(velocityCrossNormal);
+        contact.manifold.secondTangent = glm::normalize(tangentCrossNormal);
+
+        //contact.manifold.firstTangent  = glm::normalize(glm::cross(aBody.angularMotion.velocity, contact.manifold.normal));
+        //contact.manifold.secondTangent = glm::normalize(glm::cross(contact.manifold.firstTangent, contact.manifold.normal));
+
+        assert(!glm::isnan(contact.manifold.firstTangent.x));
+        assert(!glm::isnan(contact.manifold.secondTangent.x));
     }
 
     SolveContactConstraint(contact, duration, V, rA, rB, contactLambda);
@@ -332,6 +341,11 @@ void Resolver::SolveFrictionConstraint(
         contact.tangentLagrangianMultiplier1 = totalTangentLagrangianMultiplier1 - previousLagrangianMultiplierSum;
 
         contact.deltaVelocity += contact.inverseEffectiveMass * J * contact.tangentLagrangianMultiplier1;
+
+        assert(!glm::isnan(contact.deltaVelocity.nA.x + contact.deltaVelocity.nA.y + contact.deltaVelocity.nA.z));
+        assert(!glm::isnan(contact.deltaVelocity.nwA.x + contact.deltaVelocity.nwA.y + contact.deltaVelocity.nwA.z));
+        assert(!glm::isnan(contact.deltaVelocity.nB.x + contact.deltaVelocity.nB.y + contact.deltaVelocity.nB.z));
+        assert(!glm::isnan(contact.deltaVelocity.nwB.x + contact.deltaVelocity.nwB.y + contact.deltaVelocity.nwB.z));
     }
 
     {
@@ -353,6 +367,11 @@ void Resolver::SolveFrictionConstraint(
         contact.tangentLagrangianMultiplier2 = totalTangentLagrangianMultiplier2 - previousLagrangianMultiplierSum;
 
         contact.deltaVelocity += contact.inverseEffectiveMass * J * contact.tangentLagrangianMultiplier2;
+
+        assert(!glm::isnan(contact.deltaVelocity.nA.x + contact.deltaVelocity.nA.y + contact.deltaVelocity.nA.z));
+        assert(!glm::isnan(contact.deltaVelocity.nwA.x + contact.deltaVelocity.nwA.y + contact.deltaVelocity.nwA.z));
+        assert(!glm::isnan(contact.deltaVelocity.nB.x + contact.deltaVelocity.nB.y + contact.deltaVelocity.nB.z));
+        assert(!glm::isnan(contact.deltaVelocity.nwB.x + contact.deltaVelocity.nwB.y + contact.deltaVelocity.nwB.z));
     }
 }
 
