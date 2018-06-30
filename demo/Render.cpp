@@ -809,7 +809,7 @@ glm::vec3 LineSegment::GetEnd() const
 
 Plane::Plane(glm::mat4 model, glm::vec3 color, glm::vec3 normal)
     : m_normal(normal)
-    , m_sideLength(35.0)
+    , m_sideLength(100.0)
 {
     mesh::Mesh& mesh = m_pRenderer->GetMesh(m_meshHandle);
     mesh = mesh::CreatePlane(m_normal, m_sideLength);
