@@ -127,9 +127,10 @@ protected:
             m_pScene->RemoveObject<StaticBody, Shape>(m_objectHandle);
             break;
         default:
-            m_objectHandle = ZERO_HANDLE;
             break;
         }
+
+        m_objectHandle = ZERO_HANDLE;
     }
 
     /**

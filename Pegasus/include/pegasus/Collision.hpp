@@ -367,8 +367,8 @@ private:
      * A contact considered persistent if it exists during more than one
      * frame and the distance between corresponding contact points is changed
      * within a fixed persistence threshold. This method compares contacts
-     * from the previous frame @see #m_prevContacts with the ones found during
-     * the current frame computation @see @param contacts and fills #m_persistentContacts
+     * from the previous frame #m_prevContacts with the ones found during
+     * the current frame computation @param contacts and fills #m_persistentContacts
      *
      * @param contacts contact set for search
      */
