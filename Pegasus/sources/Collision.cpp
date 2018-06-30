@@ -78,6 +78,7 @@ Contact::Manifold Detector::CalculateContactManifold(
     result.firstTangent = glm::normalize(epona::CalculateOrthogonalVector(manifold.normal));
     result.secondTangent = glm::cross(result.firstTangent, result.normal);
 
+    assert(glm::length2(manifold.normal));
     assert(!isnan(result.points.aWorldSpace.x) && !isnan(result.points.bWorldSpace.x));
 
     return result;
@@ -251,16 +252,16 @@ void Resolver::SolveConstraints(
     if (!epona::fp::IsZero(glm::length2(aBody.angularMotion.velocity)))
     {
         glm::dvec3 const velocityCrossNormal = glm::cross(aBody.angularMotion.velocity, contact.manifold.normal);
-        glm::dvec3 const tangentCrossNormal  = glm::cross(contact.manifold.firstTangent, contact.manifold.normal);
+        if (!epona::fp::IsZero(glm::length2(velocityCrossNormal)))
+        {
+            contact.manifold.firstTangent  = glm::normalize(velocityCrossNormal);
+        }
         
-        contact.manifold.firstTangent  = glm::normalize(velocityCrossNormal);
-        contact.manifold.secondTangent = glm::normalize(tangentCrossNormal);
-
-        //contact.manifold.firstTangent  = glm::normalize(glm::cross(aBody.angularMotion.velocity, contact.manifold.normal));
-        //contact.manifold.secondTangent = glm::normalize(glm::cross(contact.manifold.firstTangent, contact.manifold.normal));
-
-        assert(!glm::isnan(contact.manifold.firstTangent.x));
-        assert(!glm::isnan(contact.manifold.secondTangent.x));
+        glm::dvec3 const tangentCrossNormal  = glm::cross(contact.manifold.firstTangent, contact.manifold.normal);
+        if (!epona::fp::IsZero(glm::length2(tangentCrossNormal)))
+        {
+            contact.manifold.secondTangent = glm::normalize(tangentCrossNormal);
+        }
     }
 
     SolveContactConstraint(contact, duration, V, rA, rB, contactLambda);
@@ -301,8 +302,11 @@ void Resolver::SolveContactConstraint(
     double constexpr penetrationSlop = 0.0125;
     double const baumgarteStabilizationTerm =
         - (beta / duration) * glm::max(contact.manifold.penetration + penetrationSlop, 0.0) + restitution;
+
+    double const lagrangianMultiplierDevider = contact.jacobian * (contact.inverseEffectiveMass * contact.jacobian)
+        + epona::fp::g_floatingPointThreshold;
     contact.lagrangianMultiplier = -(contact.jacobian * V + baumgarteStabilizationTerm)
-        / (contact.jacobian * (contact.inverseEffectiveMass * contact.jacobian));
+        / lagrangianMultiplierDevider;
 
     double const prevTotalLagrangianMultiplier = totalLagrangianMultiplier;
     totalLagrangianMultiplier += contact.lagrangianMultiplier;
@@ -330,7 +334,8 @@ void Resolver::SolveFrictionConstraint(
     };
 
     {
-        double const lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
+        double lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
+        lagrangianMultiplier = isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
 
         double const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier1;
         totalTangentLagrangianMultiplier1 += lagrangianMultiplier;
@@ -356,7 +361,8 @@ void Resolver::SolveFrictionConstraint(
             glm::cross( rB, contact.manifold.secondTangent),
         };
 
-        double const lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
+        double lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
+        lagrangianMultiplier = isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
 
         double const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier2;
         totalTangentLagrangianMultiplier2 += lagrangianMultiplier;
