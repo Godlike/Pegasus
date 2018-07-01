@@ -303,10 +303,10 @@ void Resolver::SolveContactConstraint(
     double const baumgarteStabilizationTerm =
         - (beta / duration) * glm::max(contact.manifold.penetration + penetrationSlop, 0.0) + restitution;
 
-    double const lagrangianMultiplierDevider = contact.jacobian * (contact.inverseEffectiveMass * contact.jacobian)
+    double const lagrangianMultiplierDivisor = contact.jacobian * (contact.inverseEffectiveMass * contact.jacobian)
         + epona::fp::g_floatingPointThreshold;
     contact.lagrangianMultiplier = -(contact.jacobian * V + baumgarteStabilizationTerm)
-        / lagrangianMultiplierDevider;
+        / lagrangianMultiplierDivisor;
 
     double const prevTotalLagrangianMultiplier = totalLagrangianMultiplier;
     totalLagrangianMultiplier += contact.lagrangianMultiplier;
