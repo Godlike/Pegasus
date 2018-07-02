@@ -67,6 +67,17 @@ int main(int argc, char** argv)
     plane.linearMotion.position = glm::dvec3(0, -5, 0);
     demo.MakePlane(plane, glm::vec3(0, 1, 0), pegasus::scene::Primitive::Type::STATIC);
 
+    //double const radius = 0.5;
+    //pegasus::mechanics::Body body;
+    //for (uint32_t i = 0; i < demo.maxObjects; ++i)
+    //{
+    //    double const y = body.linearMotion.position.y + radius + radius;
+    //    body.linearMotion.position = glm::dvec3((rand() % 100) / 1000., 0, (rand() % 100) / 1000.);
+    //    body.linearMotion.position.y += y;
+    //    demo.MakeBox(body, { radius, 0, 0 }, { 0, radius, 0 }, { 0, 0, radius }, pegasus::scene::Primitive::Type::DYNAMIC);
+    //    //demo.MakeSphere(body, radius, pegasus::scene::Primitive::Type::DYNAMIC);
+    //}
+
     while (demo.IsValid())
     {
         demo.RunFrame();

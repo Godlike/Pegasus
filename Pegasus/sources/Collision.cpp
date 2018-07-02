@@ -6,6 +6,34 @@
 #include <pegasus/Integration.hpp>
 #include <pegasus/Collision.hpp>
 
+namespace
+{
+
+glm::dvec3 Safe(glm::dvec3 vec)
+{
+    if (isnan(vec.x) || isinf(vec.x))
+        vec.x = 0;
+    if (isnan(vec.y) || isinf(vec.y))
+        vec.y = 0;
+    if (isnan(vec.z) || isinf(vec.z))
+        vec.z = 0;
+
+    return vec;
+}
+
+glm::dvec3 Clip(glm::dvec3 vec)
+{
+    vec = ::Safe(vec);
+    
+    double const length = glm::length(vec);
+    if (length > 10.0)
+    {
+        vec = glm::normalize(vec) * 10.0;
+    }
+
+    return vec;
+}
+}
 
 namespace pegasus
 {
@@ -108,10 +136,10 @@ void Resolver::Resolve(std::vector<Contact>& contacts, double duration)
     //Resolve constraints
     for (auto& contact : contacts)
     {
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nA;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwA;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nB;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwB;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity  += ::Clip(contact.deltaVelocity.nA );
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += ::Clip(contact.deltaVelocity.nwA);
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += ::Clip(contact.deltaVelocity.nB );
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += ::Clip(contact.deltaVelocity.nwB);
     }
 
     //Save currenct contacts for use in the next frame
@@ -145,10 +173,10 @@ void Resolver::ResolvePersistantContacts(double duration)
     //Resolve constraints
     for (auto& contact : m_persistentContacts)
     {
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nA  * m_persistentFactor;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwA * m_persistentFactor;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nB  * m_persistentFactor;
-        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwB * m_persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).linearMotion.velocity  += ::Clip(contact.deltaVelocity.nA)  * m_persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += ::Clip(contact.deltaVelocity.nwA) * m_persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += ::Clip(contact.deltaVelocity.nB)  * m_persistentFactor;
+        m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += ::Clip(contact.deltaVelocity.nwB) * m_persistentFactor;
     }
 }
 
