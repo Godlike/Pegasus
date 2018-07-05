@@ -156,8 +156,8 @@ namespace
 {
 bool IsPersistent(Contact::Manifold::ContactPoints const& a, Contact::Manifold::ContactPoints const& b, double persistentThresholdSq)
 {
-    glm::dvec3 const curPoint = (a.aWorldSpace + b.bWorldSpace) * 0.5;
-    glm::dvec3 const prevPoint = (a.aWorldSpace + b.bWorldSpace) * 0.5;
+    glm::dvec3 const curPoint = (a.aWorldSpace + a.bWorldSpace) * 0.5;
+    glm::dvec3 const prevPoint = (b.aWorldSpace + b.bWorldSpace) * 0.5;
 
     return glm::distance2(curPoint, prevPoint) < persistentThresholdSq;
 }
