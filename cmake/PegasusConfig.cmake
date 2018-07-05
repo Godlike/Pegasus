@@ -10,6 +10,10 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PEGASUS_ROOT}/Pegasus/cmake")
 
+#GLM
+include(GlmConfig)
+find_package(GLM)
+
 #Build flags
 if (UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Werror -pedantic")
@@ -19,10 +23,6 @@ elseif(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14 /MP /W3")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
-
-#GLM
-include(GlmConfig)
-find_package(GLM)
 
 set(PEGASUS_INCLUDE_DIR
     ${PEGASUS_ROOT}
