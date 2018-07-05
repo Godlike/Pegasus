@@ -79,7 +79,7 @@ Contact::Manifold Detector::CalculateContactManifold(
     result.secondTangent = glm::cross(result.firstTangent, result.normal);
 
     assert(glm::length2(manifold.normal));
-    assert(!isnan(result.points.aWorldSpace.x) && !isnan(result.points.bWorldSpace.x));
+    assert(!glm::isnan(result.points.aWorldSpace.x) && !glm::isnan(result.points.bWorldSpace.x));
 
     return result;
 }
@@ -256,7 +256,7 @@ void Resolver::SolveConstraints(
         {
             contact.manifold.firstTangent  = glm::normalize(velocityCrossNormal);
         }
-        
+
         glm::dvec3 const tangentCrossNormal  = glm::cross(contact.manifold.firstTangent, contact.manifold.normal);
         if (!epona::fp::IsZero(glm::length2(tangentCrossNormal)))
         {
@@ -335,7 +335,7 @@ void Resolver::SolveFrictionConstraint(
 
     {
         double lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
-        lagrangianMultiplier = isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
+        lagrangianMultiplier = glm::isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
 
         double const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier1;
         totalTangentLagrangianMultiplier1 += lagrangianMultiplier;
@@ -362,7 +362,7 @@ void Resolver::SolveFrictionConstraint(
         };
 
         double lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
-        lagrangianMultiplier = isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
+        lagrangianMultiplier = glm::isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
 
         double const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier2;
         totalTangentLagrangianMultiplier2 += lagrangianMultiplier;
