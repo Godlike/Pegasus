@@ -26,6 +26,17 @@ matrix:
         - g++-6
     env:
     - COMPILER=g++-6
+    - CMAKE_BUILD_TYPE=Debug
+  - compiler: gcc
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-6
+    env:
+    - COMPILER=g++-6
+    - CMAKE_BUILD_TYPE=Release
   - compiler: clang
     addons:
       apt:
@@ -38,6 +49,20 @@ matrix:
     env:
     - COMPILER=clang++-3.9
     - COMPILER_FLAGS=-stdlib=libc++
+    - CMAKE_BUILD_TYPE=Debug
+  - compiler: clang
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-precise-3.9
+        packages:
+        - libc++-dev
+        - clang-3.9
+    env:
+    - COMPILER=clang++-3.9
+    - COMPILER_FLAGS=-stdlib=libc++
+    - CMAKE_BUILD_TYPE=Release
 
 git:
   submodules: false
