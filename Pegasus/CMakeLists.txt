@@ -5,6 +5,7 @@
 cmake_minimum_required (VERSION 3.1)
 
 include(PegasusConfig)
+include(PegasusBuildFlags)
 
 project(${PEGASUS_NAME})
 set(CMAKE_CXX_STANDARD 14)

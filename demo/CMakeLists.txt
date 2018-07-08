@@ -6,31 +6,27 @@ cmake_minimum_required (VERSION 3.1)
 
 project(PegasusDemo)
 
-#GLBINDING
-include(GlbindingConfig)
-add_subdirectory(${GLBINDING_SOURCE_DIR} ${GLBINDING_BINARY_DIR})
-include_directories(${GLBINDING_INCLUDE_DIR})
-
-#GLFW
-include(GlfwConfig)
-add_subdirectory(${GLFW_SOURCE_DIR} ${GLFW_BINARY_DIR})
-include_directories(${GLFW_INCLUDE_DIR})
-
-#IMGUI
-include(ImguiConfig)
-include_directories(${IMGUI_INCLUDE_DIR})
-
 #Target
 include(PegasusConfig)
+
 set(PEGASUS_DEMO_INCLUDE_DIR
     ${PEGASUS_ROOT}/demo
 )
+
 include_directories (
     ${PEGASUS_INCLUDE_DIR}
     ${EPONA_INCLUDE_DIR}
     ${ARION_INCLUDE_DIR}
     ${PEGASUS_DEMO_INCLUDE_DIR}
 )
+
+#IMGUI
+include(ImguiConfig)
+add_subdirectory(imgui)
+include_directories(${IMGUI_INCLUDE_DIR})
+
+include(PegasusBuildFlags)
+
 set(DEMO_HEADERS
     Demo.hpp
     Render.hpp
@@ -45,12 +41,10 @@ set(DEMO_SOURCES
 add_executable (${PROJECT_NAME}
     ${DEMO_SOURCES}
     ${DEMO_HEADERS}
-    ${IMGUI_SOURCES}
 )
+
 target_link_libraries(${PROJECT_NAME}
-    ${OPENGL_LIBRARIES}
-    ${GLBINDING_LIB}
-    ${GLFW_LIB}
+    PegasusDemo_imgui
     ${PEGASUS_LIB}
     ${EPONA_LIB}
     ${ARION_LIB}
