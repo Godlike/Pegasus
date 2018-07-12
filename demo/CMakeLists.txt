@@ -20,9 +20,11 @@ include_directories (
     ${PEGASUS_DEMO_INCLUDE_DIR}
 )
 
+#dependencies (glfw, glbindings, imgui)
+add_subdirectory(dependencies)
+
 #IMGUI
 include(ImguiConfig)
-add_subdirectory(imgui)
 include_directories(${IMGUI_INCLUDE_DIR})
 
 include(PegasusBuildFlags)
@@ -44,7 +46,7 @@ add_executable (${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-    PegasusDemo_imgui
+    PegasusDemo_dependencies
     ${PEGASUS_LIB}
     ${EPONA_LIB}
     ${ARION_LIB}

@@ -4,7 +4,7 @@
 
 cmake_minimum_required (VERSION 3.1)
 
-project(PegasusDemo_imgui)
+project(PegasusDemo_dependencies)
 
 #GLBINDING
 include(GlbindingConfig)
@@ -21,9 +21,9 @@ include(ImguiConfig)
 include_directories(${IMGUI_INCLUDE_DIR})
 
 add_library(${PROJECT_NAME} STATIC
-    ${PEGASUS_ROOT}/demo/imgui/imgui.cpp
-    ${PEGASUS_ROOT}/demo/imgui/imgui_draw.cpp
-    ${PEGASUS_ROOT}/demo/imgui/imgui_impl_glfw_gl3.cpp
+    imgui/imgui.cpp
+    imgui/imgui_draw.cpp
+    imgui/imgui_impl_glfw_gl3.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
