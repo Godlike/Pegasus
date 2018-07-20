@@ -28,7 +28,7 @@ group_defaults:
 
 groups:
   regular:
-    required: 2
+    required: 1
 
     teams:
       - coders
