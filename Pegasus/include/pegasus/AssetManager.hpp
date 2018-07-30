@@ -86,7 +86,10 @@ public:
      * @brief Returns body buffer
      * @return physical body buffer
      */
-    std::vector<Asset<mechanics::Body>>& GetBodies();
+    inline std::vector<Asset<mechanics::Body>>& GetBodies()
+    {
+        return m_asset.m_bodies;
+    }
 
     /**
      * @brief Returns @t Shape buffer

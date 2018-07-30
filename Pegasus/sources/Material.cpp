@@ -48,11 +48,6 @@ void Material::SetInverseMomentOfInertia(glm::mat3 inverseMomentOfInertia)
     m_inverseMomentOfInertia = inverseMomentOfInertia;
 }
 
-bool Material::HasInfiniteMass() const
-{
-    return m_inverseMass == 0;
-}
-
 float Material::GetMass() const
 {
     return m_mass;
