@@ -20,30 +20,30 @@ namespace pegasus
 namespace force
 {
 
-StaticField::StaticField(glm::dvec3 force)
+StaticField::StaticField(glm::vec3 force)
     : m_force(force)
 {
 }
 
-glm::dvec3 StaticField::CalculateForce(mechanics::Body const& body) const
+glm::vec3 StaticField::CalculateForce(mechanics::Body const& body) const
 {
     return m_force * body.material.GetMass();
 }
 
-SquareDistanceSource::SquareDistanceSource(double magnitude, glm::dvec3 centerOfMass)
+SquareDistanceSource::SquareDistanceSource(float magnitude, glm::vec3 centerOfMass)
     : centerOfMass(centerOfMass)
     , m_magnitude(magnitude)
 {
 }
 
-glm::dvec3 SquareDistanceSource::CalculateForce(mechanics::Body const& body) const
+glm::vec3 SquareDistanceSource::CalculateForce(mechanics::Body const& body) const
 {
-    double const distance = glm::distance(body.linearMotion.position, centerOfMass);
-    glm::dvec3 force{ 0 };
+    float const distance = glm::distance(body.linearMotion.position, centerOfMass);
+    glm::vec3 force{ 0 };
 
     if (!epona::fp::IsZero(distance))
     {
-        glm::dvec3 const direction = glm::normalize(centerOfMass - body.linearMotion.position);
+        glm::vec3 const direction = glm::normalize(centerOfMass - body.linearMotion.position);
 
         if (!epona::fp::IsZero(glm::length(direction)))
         {
@@ -54,57 +54,57 @@ glm::dvec3 SquareDistanceSource::CalculateForce(mechanics::Body const& body) con
     return force;
 }
 
-Drag::Drag(double k1, double k2)
+Drag::Drag(float k1, float k2)
     : m_k1(k1)
     , m_k2(k2)
 {
 }
 
-glm::dvec3 Drag::CalculateForce(mechanics::Body const& body) const
+glm::vec3 Drag::CalculateForce(mechanics::Body const& body) const
 {
-    double const speedSq = glm::length2(body.linearMotion.velocity);
+    float const speedSq = glm::length2(body.linearMotion.velocity);
     if (epona::fp::IsZero(speedSq) || std::isinf(speedSq))
     {
-        return glm::dvec3{ 0 };
+        return glm::vec3{ 0 };
     }
 
-    double const dragFactor = m_k1 * glm::sqrt(speedSq) + m_k2 * speedSq;
-    glm::dvec3 const force = -glm::normalize(body.linearMotion.velocity) * dragFactor;
+    float const dragFactor = m_k1 * glm::sqrt(speedSq) + m_k2 * speedSq;
+    glm::vec3 const force = -glm::normalize(body.linearMotion.velocity) * dragFactor;
 
     return force;
 }
 
 Spring::Spring(
-    glm::dvec3 anchor, double springConstant, double restLength)
+    glm::vec3 anchor, float springConstant, float restLength)
     : m_anchor(anchor)
     , m_springConstant(springConstant)
     , m_restLength(restLength)
 {
 }
 
-glm::dvec3 Spring::CalculateForce(mechanics::Body const& body) const
+glm::vec3 Spring::CalculateForce(mechanics::Body const& body) const
 {
-    glm::dvec3 const direction = body.linearMotion.position - m_anchor;
-    double const magnitude = m_springConstant * std::fabs(glm::length(direction) - m_restLength);
+    glm::vec3 const direction = body.linearMotion.position - m_anchor;
+    float const magnitude = m_springConstant * std::fabs(glm::length(direction) - m_restLength);
 
     return glm::normalize(direction) * -magnitude;
 }
 
-Bungee::Bungee(glm::dvec3 anchor, double springConstant, double restLength)
+Bungee::Bungee(glm::vec3 anchor, float springConstant, float restLength)
     : m_anchor(anchor)
     , m_springConstant(springConstant)
     , m_restLength(restLength)
 {
 }
 
-glm::dvec3 Bungee::CalculateForce(mechanics::Body const& body) const
+glm::vec3 Bungee::CalculateForce(mechanics::Body const& body) const
 {
-    glm::dvec3 force = body.linearMotion.position - m_anchor;
+    glm::vec3 force = body.linearMotion.position - m_anchor;
 
-    double magnitude = glm::length(force);
+    float magnitude = glm::length(force);
     if (magnitude <= m_restLength)
     {
-        return glm::dvec3();
+        return glm::vec3();
     }
 
     magnitude = m_springConstant * (magnitude - m_restLength);
@@ -114,7 +114,7 @@ glm::dvec3 Bungee::CalculateForce(mechanics::Body const& body) const
 }
 
 Buoyancy::Buoyancy(
-    double maxDepth, double volume, double waterWight, double liquidDensity)
+    float maxDepth, float volume, float waterWight, float liquidDensity)
     : m_maxDepth(maxDepth)
     , m_volume(volume)
     , m_waterHeight(waterWight)
@@ -122,16 +122,16 @@ Buoyancy::Buoyancy(
 {
 }
 
-glm::dvec3 Buoyancy::CalculateForce(mechanics::Body const& body) const
+glm::vec3 Buoyancy::CalculateForce(mechanics::Body const& body) const
 {
-    double const depth = body.linearMotion.position.y;
+    float const depth = body.linearMotion.position.y;
 
     if (depth >= m_waterHeight + m_maxDepth)
     {
-        return glm::dvec3();
+        return glm::vec3();
     }
 
-    glm::dvec3 force;
+    glm::vec3 force;
     if (depth <= m_waterHeight - m_maxDepth)
     {
         force.y = m_liquidDensity * m_volume;

@@ -29,17 +29,17 @@ public:
      * @brief Constructs static field force instance
      * @param force direction and magnitude of the field force
      */
-    explicit StaticField(glm::dvec3 force);
+    explicit StaticField(glm::vec3 force);
 
     /**
      * @brief Calculates force applied to the body
      * @param body body of interest
      * @return applied force
      */
-    glm::dvec3 CalculateForce(mechanics::Body const& body) const;
+    glm::vec3 CalculateForce(mechanics::Body const& body) const;
 
 private:
-    glm::dvec3 m_force;
+    glm::vec3 m_force;
 };
 
 /**
@@ -55,7 +55,7 @@ public:
      * @param magnitude    the magnitude of the force
      * @param centerOfMass the source of the force
      */
-    explicit SquareDistanceSource(double magnitude, glm::dvec3 centerOfMass);
+    explicit SquareDistanceSource(float magnitude, glm::vec3 centerOfMass);
 
     /**
      * @brief Calculates force that is acting on the given body
@@ -70,13 +70,13 @@ public:
      * @param body target body
      * @return force acting on the targe body
      */
-    glm::dvec3 CalculateForce(mechanics::Body const& body) const;
+    glm::vec3 CalculateForce(mechanics::Body const& body) const;
 
     //!Center of mass of the force
-    glm::dvec3 centerOfMass;
+    glm::vec3 centerOfMass;
 
 private:
-    double m_magnitude;
+    float m_magnitude;
 };
 
 /**
@@ -92,7 +92,7 @@ public:
      * @param k1 first factor of drag
      * @param k2 second factor of drag
      */
-    Drag(double k1, double k2);
+    Drag(float k1, float k2);
 
     /**
      * @brief Calculates drag force acting on the body
@@ -103,11 +103,11 @@ public:
      * @param body body data
      * @return drag force
      */
-    glm::dvec3 CalculateForce(mechanics::Body const& body) const;
+    glm::vec3 CalculateForce(mechanics::Body const& body) const;
 
 private:
-    double m_k1;
-    double m_k2;
+    float m_k1;
+    float m_k2;
 };
 
 /**
@@ -126,19 +126,19 @@ public:
      * @param springConstant spring constant
      * @param restLength rest length of the spring
      */
-    Spring(glm::dvec3 anchor, double springConstant, double restLength);
+    Spring(glm::vec3 anchor, float springConstant, float restLength);
 
     /**
      * @brief Calculates current spring force acting on the body
      * @param body body attached to the other end of the spring
      * @return force acting on the body
      */
-    glm::dvec3 CalculateForce(mechanics::Body const& body) const;
+    glm::vec3 CalculateForce(mechanics::Body const& body) const;
 
 private:
-    glm::dvec3 m_anchor;
-    double m_springConstant;
-    double m_restLength;
+    glm::vec3 m_anchor;
+    float m_springConstant;
+    float m_restLength;
 };
 
 /**
@@ -158,19 +158,19 @@ public:
      * @param springConstant spring constant
      * @param restLength spring rest length
      */
-    Bungee(glm::dvec3 anchor, double springConstant, double restLength);
+    Bungee(glm::vec3 anchor, float springConstant, float restLength);
 
     /**
      * @brief Calculates bungee force
      * @param body attached to the bungee
      * @return force vector
      */
-    glm::dvec3 CalculateForce(mechanics::Body const& body) const;
+    glm::vec3 CalculateForce(mechanics::Body const& body) const;
 
 private:
-    glm::dvec3 m_anchor;
-    double m_springConstant;
-    double m_restLength;
+    glm::vec3 m_anchor;
+    float m_springConstant;
+    float m_restLength;
 };
 
 /**
@@ -188,20 +188,20 @@ public:
      * @param waterWight reservoir water weight
      * @param liquidDensity density of the liquid in the reservoir
      */
-    Buoyancy(double maxDepth, double volume, double waterWight, double liquidDensity);
+    Buoyancy(float maxDepth, float volume, float waterWight, float liquidDensity);
 
     /**
      * @brief Calculates current buoyancy force
      * @param body body in the reservoir
      * @return buoyancy force
      */
-    glm::dvec3 CalculateForce(mechanics::Body const& body) const;
+    glm::vec3 CalculateForce(mechanics::Body const& body) const;
 
 private:
-    double m_maxDepth;
-    double m_volume;
-    double m_waterHeight;
-    double m_liquidDensity;
+    float m_maxDepth;
+    float m_volume;
+    float m_waterHeight;
+    float m_liquidDensity;
 };
 } // namespace force
 } // namespace pegasus

@@ -32,7 +32,7 @@ public:
      * @brief Runs physical simulation with the given duration
      * @param duration delta time of the integration in seconds
      */
-    void ComputeFrame(double duration);
+    void ComputeFrame(float duration);
 
     /**
      * @brief Makes new body instance and returns its handle
@@ -177,7 +177,7 @@ public:
 
     AssetManager& GetAssets();
 
-    double forceDuration = 1.0;
+    float forceDuration = 1.0;
 
 private:
     AssetManager m_assetManager;
@@ -189,7 +189,7 @@ private:
      * @tparam Force type of the force
      */
     template < typename Force >
-    void ApplyForce(double duration)
+    void ApplyForce(float duration)
     {
         for (Asset<ForceBind>& asset : m_assetManager.GetForceBinds<Force>())
         {
@@ -226,27 +226,27 @@ private:
      * @brief Resolves registered collisions
      * @param duration delta time of the frame
      */
-    void ResolveCollisions(double duration);
+    void ResolveCollisions(float duration);
 
     /**
      * @brief Applies initial impulses to resolve cached persistent contacts
      */
-    void ApplyCollisionCache(double duration);
+    void ApplyCollisionCache(float duration);
 
     /**
      * @brief Applies all registered forces to the bodies
      */
-    void ApplyForces(double duration);
+    void ApplyForces(float duration);
 
     /**
      * @brief Updates physical properties of the bodies within given duration
      * @param duration delta time of the frame
      */
-    void Integrate(double duration);
+    void Integrate(float duration);
 };
 
 template <>
-inline void Scene::ApplyForce<force::Drag>(double duration)
+inline void Scene::ApplyForce<force::Drag>(float duration)
 {
     for (Asset<ForceBind>& asset : m_assetManager.GetForceBinds<force::Drag>())
     {
@@ -256,7 +256,7 @@ inline void Scene::ApplyForce<force::Drag>(double duration)
             mechanics::Body& body = GetBody(asset.data.body);
             body.linearMotion.force += force.CalculateForce(body) * duration;
 
-            glm::dvec3 const velocity = body.linearMotion.velocity;
+            glm::vec3 const velocity = body.linearMotion.velocity;
             body.linearMotion.velocity = body.angularMotion.velocity;
             body.angularMotion.torque += force.CalculateForce(body) * duration;
             body.linearMotion.velocity = velocity;

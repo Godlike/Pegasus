@@ -18,12 +18,12 @@ namespace integration
  * @param appliedForce applied force
  * @return total force
  */
-inline glm::dvec3 IntegrateForce(glm::dvec3 accumulatedForce, glm::dvec3 appliedForce)
+inline glm::vec3 IntegrateForce(glm::vec3 accumulatedForce, glm::vec3 appliedForce)
 {
     return accumulatedForce + appliedForce;
 }
 
-inline glm::dvec3 IntegrateTorque(glm::dvec3 accumulatedTorque, glm::dvec3 appliedTorque)
+inline glm::vec3 IntegrateTorque(glm::vec3 accumulatedTorque, glm::vec3 appliedTorque)
 {
     return IntegrateForce(accumulatedTorque, appliedTorque);
 }
@@ -33,7 +33,7 @@ inline glm::dvec3 IntegrateTorque(glm::dvec3 accumulatedTorque, glm::dvec3 appli
  * @param[in,out] body point mass data
  * @param[in] duration delta time
  */
-void Integrate(mechanics::Body& body, double duration);
+void Integrate(mechanics::Body& body, float duration);
 } // namespace integration
 } // namespace pegasus
 

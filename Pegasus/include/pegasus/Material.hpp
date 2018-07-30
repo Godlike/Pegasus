@@ -24,7 +24,7 @@ struct Material
      * @brief Sets mass of the body
      * @param mass mass
      */
-    void SetMass(double mass);
+    void SetMass(float mass);
 
     /**
      * @brief Sets body mass, and inverse mass equal to 0
@@ -51,41 +51,41 @@ struct Material
      * @brief Returns mass of the body
      * @return mass of the body
      */
-    double GetMass() const;
+    float GetMass() const;
 
     /**
      * @brief Returns inverse mass of the body
      * @return inverse mass
      */
-    double GetInverseMass() const;
+    float GetInverseMass() const;
 
     /**
      * @brief Returns moment of inertia of the body
      * @return moment of inertia
      */
-    glm::dmat3 GetMomentOfInertia() const;
+    glm::mat3 GetMomentOfInertia() const;
 
     /**
      * @brief Returns inverse moment of inertia of the body
      * @return inverse moment of inertia
      */
-    glm::dmat3 GetInverseMomentOfInertia() const;
+    glm::mat3 GetInverseMomentOfInertia() const;
 
     //!Body's motion bumping factor
-    double damping;
+    float damping;
 
 private:
     //!Body's moment of inertia
-    glm::dmat3 m_momentOfInertia;
+    glm::mat3 m_momentOfInertia;
 
     //!Body's inverse moment of inertia
-    glm::dmat3 m_inverseMomentOfInertia;
+    glm::mat3 m_inverseMomentOfInertia;
 
     //!Body's mass
-    double m_mass;
+    float m_mass;
 
     //!Used to represent a body with an infinite mass by setting this value to 0
-    double m_inverseMass;
+    float m_inverseMass;
 };
 
 } // namespace mechanics

@@ -17,7 +17,7 @@ namespace
 * @param duration delta time
 * @return new position
 */
-glm::dvec3 IntegrateLinearPosition(glm::dvec3 position, glm::dvec3 velocity, double duration)
+glm::vec3 IntegrateLinearPosition(glm::vec3 position, glm::vec3 velocity, float duration)
 {
     return position + velocity * duration;
 }
@@ -29,7 +29,7 @@ glm::dvec3 IntegrateLinearPosition(glm::dvec3 position, glm::dvec3 velocity, dou
 * @param inverseMass one divided by mass
 * @return new acceleration
 */
-glm::dvec3 IntegrateLinearAcceleration(glm::dvec3 acceleration, glm::dvec3 force, double inverseMass)
+glm::vec3 IntegrateLinearAcceleration(glm::vec3 acceleration, glm::vec3 force, float inverseMass)
 {
     return acceleration + force * inverseMass;
 }
@@ -41,7 +41,7 @@ glm::dvec3 IntegrateLinearAcceleration(glm::dvec3 acceleration, glm::dvec3 force
 * @param duration delta time
 * @return new velocity
 */
-glm::dvec3 IntegrateLinearVelocity(glm::dvec3 velocity, glm::dvec3 acceleration, double duration)
+glm::vec3 IntegrateLinearVelocity(glm::vec3 velocity, glm::vec3 acceleration, float duration)
 {
     return velocity + acceleration * duration;
 }
@@ -53,7 +53,7 @@ glm::dvec3 IntegrateLinearVelocity(glm::dvec3 velocity, glm::dvec3 acceleration,
 * @param duration delta time
 * @return new velocity
 */
-glm::dvec3 IntegrateLinearDamping(glm::dvec3 velocity, double damping, double duration)
+glm::vec3 IntegrateLinearDamping(glm::vec3 velocity, float damping, float duration)
 {
     return velocity * glm::pow(damping, duration);
 }
@@ -67,19 +67,19 @@ glm::dvec3 IntegrateLinearDamping(glm::dvec3 velocity, double damping, double du
 void IntegrateBody(
         pegasus::mechanics::Material& material,
         pegasus::mechanics::Body::LinearMotion& linearMotion,
-        double duration
+        float duration
     )
 {
     {
-        double const maxSpeed = 100;
-        double const speed = glm::length(linearMotion.velocity);
+        float const maxSpeed = 100;
+        float const speed = glm::length(linearMotion.velocity);
         if (epona::fp::IsGreater(speed, epona::fp::g_floatingPointThreshold))
         {
             linearMotion.velocity = glm::normalize(linearMotion.velocity) * glm::min(speed, maxSpeed);
         }
     }
 
-    glm::dvec3 const resultingAcceleration = ::IntegrateLinearAcceleration(
+    glm::vec3 const resultingAcceleration = ::IntegrateLinearAcceleration(
         linearMotion.acceleration, linearMotion.force, material.GetInverseMass());
     linearMotion.position = ::IntegrateLinearPosition(
         linearMotion.position, linearMotion.velocity, duration);
@@ -87,7 +87,7 @@ void IntegrateBody(
         linearMotion.velocity, resultingAcceleration, duration);
     linearMotion.velocity = ::IntegrateLinearDamping(
         linearMotion.velocity, material.damping, duration);
-    linearMotion.force = glm::dvec3(0);
+    linearMotion.force = glm::vec3(0);
 
     {
         if (epona::fp::IsZero(linearMotion.velocity.x))
@@ -106,7 +106,7 @@ void IntegrateBody(
  * @param inverseMomentOfInertia inverse moment of inertia
  * @return angular acceleration
  */
-glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torque, glm::dmat3 inverseMomentOfInertia)
+glm::vec3 IntegrateAngularAcceleration(glm::vec3 acceleration, glm::vec3 torque, glm::mat3 inverseMomentOfInertia)
 {
     return acceleration + inverseMomentOfInertia * torque;
 }
@@ -118,10 +118,10 @@ glm::dvec3 IntegrateAngularAcceleration(glm::dvec3 acceleration, glm::dvec3 torq
  * @param duration delta time
  * @return angular displacement
  */
-glm::dquat IntegrateAngularDisplacement(glm::dquat orientation, glm::dvec3 velocity, double duration)
+glm::quat IntegrateAngularDisplacement(glm::quat orientation, glm::vec3 velocity, float duration)
 {
-    glm::dquat const velocityQuad{ 0, velocity.x, velocity.y, velocity.z };
-    glm::dquat const displacement{ glm::normalize(orientation + duration * velocityQuad * 0.5 * orientation) };
+    glm::quat const velocityQuad{ 0, velocity.x, velocity.y, velocity.z };
+    glm::quat const displacement{ glm::normalize(orientation + duration * velocityQuad * 0.5f * orientation) };
 
     return displacement;
 }
@@ -133,7 +133,7 @@ glm::dquat IntegrateAngularDisplacement(glm::dquat orientation, glm::dvec3 veloc
  * @param duration delta time
  * @return angular velocity
  */
-glm::dvec3 IntegrateAngularVelocity(glm::dvec3 velocity, glm::dvec3 resultingAcceleration, double duration)
+glm::vec3 IntegrateAngularVelocity(glm::vec3 velocity, glm::vec3 resultingAcceleration, float duration)
 {
     return velocity + resultingAcceleration * duration;
 }
@@ -145,7 +145,7 @@ glm::dvec3 IntegrateAngularVelocity(glm::dvec3 velocity, glm::dvec3 resultingAcc
  * @param duration delta time
  * @return angular velocity
  */
-glm::dvec3 IntegrateAngularDamping(glm::dvec3 velocity, double damping, double duration)
+glm::vec3 IntegrateAngularDamping(glm::vec3 velocity, float damping, float duration)
 {
     return velocity * glm::pow(damping, duration);
 }
@@ -159,19 +159,19 @@ glm::dvec3 IntegrateAngularDamping(glm::dvec3 velocity, double damping, double d
 void IntegrateBody(
         pegasus::mechanics::Material& material,
         pegasus::mechanics::Body::AngularMotion& angularMotion,
-        double duration
+        float duration
     )
 {
     {
-        double const maxSpeed = 100;
-        double const speed = glm::length(angularMotion.velocity);
+        float const maxSpeed = 100;
+        float const speed = glm::length(angularMotion.velocity);
         if (epona::fp::IsGreater(speed, epona::fp::g_floatingPointThreshold))
         {
             angularMotion.velocity = glm::normalize(angularMotion.velocity) * glm::min(speed, maxSpeed);
         }
     }
 
-    glm::dvec3 const resultingAcceleration = ::IntegrateAngularAcceleration(
+    glm::vec3 const resultingAcceleration = ::IntegrateAngularAcceleration(
         angularMotion.acceleration, angularMotion.torque, material.GetInverseMomentOfInertia());
     angularMotion.orientation = ::IntegrateAngularDisplacement(
         angularMotion.orientation, angularMotion.velocity, duration);
@@ -179,7 +179,7 @@ void IntegrateBody(
         angularMotion.velocity, resultingAcceleration, duration);
     angularMotion.velocity = ::IntegrateAngularDamping(
         angularMotion.velocity, material.damping, duration);
-    angularMotion.torque = glm::dvec3(0, 0, 0);
+    angularMotion.torque = glm::vec3(0, 0, 0);
 
     {
         if (epona::fp::IsZero(angularMotion.velocity.x))
@@ -196,7 +196,7 @@ namespace pegasus
 {
 namespace integration
 {
-void Integrate(mechanics::Body& body, double duration)
+void Integrate(mechanics::Body& body, float duration)
 {
     ::IntegrateBody(body.material, body.linearMotion, duration);
     ::IntegrateBody(body.material, body.angularMotion, duration);

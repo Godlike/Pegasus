@@ -19,7 +19,7 @@ Material::Material()
 {
 }
 
-void Material::SetMass(double mass)
+void Material::SetMass(float mass)
 {
     if (mass > 0)
     {
@@ -32,8 +32,8 @@ void Material::SetInfiniteMass()
 {
     m_mass = 0;
     m_inverseMass = 0;
-    m_momentOfInertia = glm::dmat3(0);
-    m_inverseMomentOfInertia = glm::dmat3(0);
+    m_momentOfInertia = glm::mat3(0);
+    m_inverseMomentOfInertia = glm::mat3(0);
 }
 
 void Material::SetMomentOfInertia(glm::mat3 momentOfInertia)
@@ -53,22 +53,22 @@ bool Material::HasInfiniteMass() const
     return m_inverseMass == 0;
 }
 
-double Material::GetMass() const
+float Material::GetMass() const
 {
     return m_mass;
 }
 
-double Material::GetInverseMass() const
+float Material::GetInverseMass() const
 {
     return m_inverseMass;
 }
 
-glm::dmat3 Material::GetMomentOfInertia() const
+glm::mat3 Material::GetMomentOfInertia() const
 {
     return m_momentOfInertia;
 }
 
-glm::dmat3 Material::GetInverseMomentOfInertia() const
+glm::mat3 Material::GetInverseMomentOfInertia() const
 {
     return m_inverseMomentOfInertia;
 }

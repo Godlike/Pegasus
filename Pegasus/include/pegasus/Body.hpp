@@ -28,10 +28,10 @@ struct Body
     {
         LinearMotion();
 
-        glm::dvec3 position;
-        glm::dvec3 velocity;
-        glm::dvec3 acceleration;
-        glm::dvec3 force;
+        glm::vec3 position;
+        glm::vec3 velocity;
+        glm::vec3 acceleration;
+        glm::vec3 force;
     };
 
     /**
@@ -41,10 +41,10 @@ struct Body
     {
         AngularMotion();
 
-        glm::dquat orientation;
-        glm::dvec3 velocity;
-        glm::dvec3 acceleration;
-        glm::dvec3 torque;
+        glm::quat orientation;
+        glm::vec3 velocity;
+        glm::vec3 acceleration;
+        glm::vec3 torque;
     };
 
     Body();
@@ -60,13 +60,13 @@ struct Body
  * @param  mass   sphere's mass
  * @return 3d moment of inertia
  */
-inline glm::dmat3 CalculateSolidSphereMomentOfInertia(double radius, double mass)
+inline glm::mat3 CalculateSolidSphereMomentOfInertia(float radius, float mass)
 {
-    double const factor = 2.0 / 5.0;
-    double const rSq = glm::pow2(radius);
-    double const inertia = (factor * mass * rSq);
+    float const factor = 2.0f / 5.0f;
+    float const rSq = glm::pow2(radius);
+    float const inertia = (factor * mass * rSq);
 
-    return glm::dmat3{
+    return glm::mat3{
         inertia, 0, 0,
         0, inertia, 0,
         0, 0, inertia,
@@ -81,14 +81,14 @@ inline glm::dmat3 CalculateSolidSphereMomentOfInertia(double radius, double mass
  * @param  mass   cuboid's mass
  * @return 3d moment of inertia
  */
-inline glm::dmat3 CalculateSolidCuboidMomentOfInertia(double width, double height, double depth, double mass)
+inline glm::mat3 CalculateSolidCuboidMomentOfInertia(float width, float height, float depth, float mass)
 {
-    double const massFraction = 1.0 / 12.0 * mass;
-    double const widthSq  = glm::pow2(width);
-    double const heightSq = glm::pow2(height);
-    double const depthSq  = glm::pow2(depth);
+    float const massFraction = 1.0f / 12.0f * mass;
+    float const widthSq  = glm::pow2(width);
+    float const heightSq = glm::pow2(height);
+    float const depthSq  = glm::pow2(depth);
 
-    return glm::dmat3{
+    return glm::mat3{
         (massFraction * (heightSq + depthSq)), 0, 0,
         0, (massFraction * (widthSq + depthSq)),  0,
         0, 0, (massFraction * (widthSq + heightSq)),
