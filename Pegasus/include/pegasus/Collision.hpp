@@ -24,10 +24,10 @@ struct Contact
     //!Stores constraint velocity vector of size 12
     struct Velocity
     {
-        glm::dvec3 vA;
-        glm::dvec3 wA;
-        glm::dvec3 vB;
-        glm::dvec3 wB;
+        glm::vec3 vA;
+        glm::vec3 wA;
+        glm::vec3 vB;
+        glm::vec3 wB;
     };
 
     //!Stores Jacobian vector of size 12 and defines operations on it
@@ -43,17 +43,17 @@ struct Contact
             return *this;
         }
 
-        double operator*(Jacobian const& j) const
+        float operator*(Jacobian const& j) const
         {
             return glm::dot(nA, j.nA) + glm::dot(nwA, j.nwA) + glm::dot(nB, j.nB) + glm::dot(nwB, j.nwB);
         }
 
-        double operator*(Velocity const& v) const
+        float operator*(Velocity const& v) const
         {
             return glm::dot(nA, v.vA) + glm::dot(nwA, v.wA) + glm::dot(nB, v.vB) + glm::dot(nwB, v.wB);
         }
 
-        Jacobian operator*(double s) const
+        Jacobian operator*(float s) const
         {
             return {
                 nA  * s,
@@ -63,10 +63,10 @@ struct Contact
             };
         }
 
-        glm::dvec3 nA;
-        glm::dvec3 nwA;
-        glm::dvec3 nB;
-        glm::dvec3 nwB;
+        glm::vec3 nA;
+        glm::vec3 nwA;
+        glm::vec3 nB;
+        glm::vec3 nwB;
     };
 
     //!Stores constraint mass matrix and provides operations on it
@@ -82,18 +82,18 @@ struct Contact
             };
         }
 
-        glm::dmat3 massA;
-        glm::dmat3 inertiaA;
-        glm::dmat3 massB;
-        glm::dmat3 inertiaB;
+        glm::mat3 massA;
+        glm::mat3 inertiaA;
+        glm::mat3 massB;
+        glm::mat3 inertiaB;
     };
 
     //!Stores contact manifold with tangent vectors
     struct Manifold : arion::intersection::ContactManifold
     {
         //!Friction tangent vectors
-        glm::dvec3 firstTangent;
-        glm::dvec3 secondTangent;
+        glm::vec3 firstTangent;
+        glm::vec3 secondTangent;
     };
 
     //!Constructs contact instance
@@ -101,8 +101,8 @@ struct Contact
         scene::Handle aHandle,
         scene::Handle bHandle,
         Manifold manifold,
-        double restitution,
-        double friction
+        float restitution,
+        float friction
     );
 
     //!Handles
@@ -113,8 +113,8 @@ struct Contact
     Manifold manifold;
 
     //!Factors responsible for calculating the amount of energy lost to the deformation
-    double restitution;
-    double friction;
+    float restitution;
+    float friction;
 
     //!Contact constraint resolution data
     Jacobian deltaVelocity;
@@ -123,9 +123,9 @@ struct Contact
     //!Jacobian for effective mass matrix
     Jacobian jacobian;
     //!Total lagrangian multipliers
-    double lagrangianMultiplier;
-    double tangentLagrangianMultiplier1;
-    double tangentLagrangianMultiplier2;
+    float lagrangianMultiplier;
+    float tangentLagrangianMultiplier1;
+    float tangentLagrangianMultiplier2;
 };
 
 /**
@@ -149,8 +149,8 @@ public:
     std::vector<Contact> Detect();
 
     //!Default restitution factor for collision manifests
-    double const restitutionCoefficient = 0.35; //Wood
-    double const frictionCoefficient    = 0.6;  //Wood
+    float const restitutionCoefficient = 0.35f; //Wood
+    float const frictionCoefficient    = 0.6f;  //Wood
 
 private:
     scene::AssetManager* m_pAssetManager = nullptr;
@@ -324,21 +324,21 @@ public:
      * @param contacts contacts information
      * @param duration delta time of the frame
      */
-    void Resolve(std::vector<Contact>& contacts, double duration);
+    void Resolve(std::vector<Contact>& contacts, float duration);
 
     /**
      * @brief Resolves cached contacts
      *
      * @note This method is inteded to be called once during the pipeline execution
      */
-    void ResolvePersistantContacts(double duration);
+    void ResolvePersistantContacts(float duration);
 
 private:
     //! Factors amount of energy applied during persistent contact resolution
-    double const m_persistentFactor = 0.05f;
+    float const m_persistentFactor = 0.05f;
     //! Distance between corresponding contact points for them to be from a persistent contact
-    double const m_persistentThreshold = 1e-3;
-    double const m_persistentThresholdSq = m_persistentThreshold * m_persistentThreshold;
+    float const m_persistentThreshold = 1e-3f;
+    float const m_persistentThresholdSq = m_persistentThreshold * m_persistentThreshold;
     scene::AssetManager* m_pAssetManager = nullptr;
     //! Stores contacts calculated during the previous frame
     std::vector<Contact> m_prevContacts;
@@ -385,8 +385,8 @@ private:
      * @param[in,out] frictionLamda2 lagrangian multiplier for friction constraint
      */
     void SolveConstraints(
-        Contact& contact, double duration,
-        double& contactLambda, double& frictionLamda1, double& frictionLamda2
+        Contact& contact, float duration,
+        float& contactLambda, float& frictionLamda1, float& frictionLamda2
     ) const;
 
     /**
@@ -399,8 +399,8 @@ private:
      * @param[in] totalLagrangianMultiplier total lagrangian multiplier for contact constraint
      */
     static void SolveContactConstraint(
-        Contact& contact, double duration,
-        Contact::Velocity const& V, glm::dvec3 const& rA, glm::dvec3 const& rB, double& totalLagrangianMultiplier
+        Contact& contact, float duration,
+        Contact::Velocity const& V, glm::vec3 const& rA, glm::vec3 const& rB, float& totalLagrangianMultiplier
     );
 
     /**
@@ -415,8 +415,8 @@ private:
      */
     static void SolveFrictionConstraint(
         Contact& contact,
-        Contact::Velocity const& V, glm::dvec3 const& rA,  glm::dvec3 const& rB,
-        double& totalLagrangianMultiplier, double& totalTangentLagrangianMultiplier1, double& totalTangentLagrangianMultiplier2
+        Contact::Velocity const& V, glm::vec3 const& rA,  glm::vec3 const& rB,
+        float& totalLagrangianMultiplier, float& totalTangentLagrangianMultiplier1, float& totalTangentLagrangianMultiplier2
     );
 };
 

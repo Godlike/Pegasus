@@ -16,8 +16,8 @@ Contact::Contact(
     scene::Handle aHandle,
     scene::Handle bHandle,
     Manifold manifold,
-    double restitution,
-    double friction
+    float restitution,
+    float friction
 )
     : aBodyHandle(aHandle)
     , bBodyHandle(bHandle)
@@ -89,12 +89,12 @@ Resolver::Resolver(scene::AssetManager& assetManager)
 {
 }
 
-void Resolver::Resolve(std::vector<Contact>& contacts, double duration)
+void Resolver::Resolve(std::vector<Contact>& contacts, float duration)
 {
     //Solve constraints
-    double contactLambda  = 0;
-    double frictionLamda1 = 0;
-    double frictionLamda2 = 0;
+    float contactLambda  = 0;
+    float frictionLamda1 = 0;
+    float frictionLamda2 = 0;
     for (auto& contact : contacts)
     {
         SolveConstraints(
@@ -118,16 +118,16 @@ void Resolver::Resolve(std::vector<Contact>& contacts, double duration)
     m_prevContacts = std::move(contacts);
 }
 
-void Resolver::ResolvePersistantContacts(double duration)
+void Resolver::ResolvePersistantContacts(float duration)
 {
     //Solve constraints
     for (auto& contact : m_persistentContacts)
     {
-        double const lagrangianMultiplier = contact.lagrangianMultiplier;
-        double const tangentLagrangianMultiplier1 = contact.tangentLagrangianMultiplier1;
-        double const tangentLagrangianMultiplier2 = contact.tangentLagrangianMultiplier2;
+        float const lagrangianMultiplier = contact.lagrangianMultiplier;
+        float const tangentLagrangianMultiplier1 = contact.tangentLagrangianMultiplier1;
+        float const tangentLagrangianMultiplier2 = contact.tangentLagrangianMultiplier2;
 
-        double constexpr reduction = 0.01f;
+        float constexpr reduction = 0.01f;
         contact.lagrangianMultiplier *= reduction;
         contact.tangentLagrangianMultiplier1 *= reduction;
         contact.tangentLagrangianMultiplier2 *= reduction;
@@ -154,10 +154,10 @@ void Resolver::ResolvePersistantContacts(double duration)
 
 namespace
 {
-bool IsPersistent(Contact::Manifold::ContactPoints const& a, Contact::Manifold::ContactPoints const& b, double persistentThresholdSq)
+bool IsPersistent(Contact::Manifold::ContactPoints const& a, Contact::Manifold::ContactPoints const& b, float persistentThresholdSq)
 {
-    glm::dvec3 const curPoint = (a.aWorldSpace + a.bWorldSpace) * 0.5;
-    glm::dvec3 const prevPoint = (b.aWorldSpace + b.bWorldSpace) * 0.5;
+    glm::vec3 const curPoint = (a.aWorldSpace + a.bWorldSpace) * 0.5f;
+    glm::vec3 const prevPoint = (b.aWorldSpace + b.bWorldSpace) * 0.5f;
 
     return glm::distance2(curPoint, prevPoint) < persistentThresholdSq;
 }
@@ -223,10 +223,10 @@ void Resolver::DetectPersistentContacts(std::vector<Contact> const& contacts)
 
 void Resolver::SolveConstraints(
     Contact& contact,
-    double duration,
-    double& contactLambda,
-    double& frictionLamda1,
-    double& frictionLamda2
+    float duration,
+    float& contactLambda,
+    float& frictionLamda1,
+    float& frictionLamda2
 ) const
 {
     mechanics::Body const& aBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle);
@@ -240,24 +240,24 @@ void Resolver::SolveConstraints(
     };
 
     contact.inverseEffectiveMass = Contact::MassMatrix {
-        aBody.material.HasInfiniteMass() ? glm::dmat3(0) : glm::inverse(glm::dmat3(aBody.material.GetMass())),
+        aBody.material.HasInfiniteMass() ? glm::mat3(0) : glm::inverse(glm::mat3(aBody.material.GetMass())),
         aBody.material.GetInverseMomentOfInertia(),
-        bBody.material.HasInfiniteMass() ? glm::dmat3(0) : glm::inverse(glm::dmat3(bBody.material.GetMass())),
+        bBody.material.HasInfiniteMass() ? glm::mat3(0) : glm::inverse(glm::mat3(bBody.material.GetMass())),
         bBody.material.GetInverseMomentOfInertia(),
     };
 
-    glm::dvec3 const rA = contact.manifold.points.aWorldSpace - aBody.linearMotion.position;
-    glm::dvec3 const rB = contact.manifold.points.bWorldSpace - bBody.linearMotion.position;
+    glm::vec3 const rA = contact.manifold.points.aWorldSpace - aBody.linearMotion.position;
+    glm::vec3 const rB = contact.manifold.points.bWorldSpace - bBody.linearMotion.position;
 
     if (!epona::fp::IsZero(glm::length2(aBody.angularMotion.velocity)))
     {
-        glm::dvec3 const velocityCrossNormal = glm::cross(aBody.angularMotion.velocity, contact.manifold.normal);
+        glm::vec3 const velocityCrossNormal = glm::cross(aBody.angularMotion.velocity, contact.manifold.normal);
         if (!epona::fp::IsZero(glm::length2(velocityCrossNormal)))
         {
             contact.manifold.firstTangent  = glm::normalize(velocityCrossNormal);
         }
 
-        glm::dvec3 const tangentCrossNormal  = glm::cross(contact.manifold.firstTangent, contact.manifold.normal);
+        glm::vec3 const tangentCrossNormal  = glm::cross(contact.manifold.firstTangent, contact.manifold.normal);
         if (!epona::fp::IsZero(glm::length2(tangentCrossNormal)))
         {
             contact.manifold.secondTangent = glm::normalize(tangentCrossNormal);
@@ -280,11 +280,11 @@ void Resolver::SolveConstraints(
 
 void Resolver::SolveContactConstraint(
     Contact& contact,
-    double duration,
+    float duration,
     Contact::Velocity const& V,
-    glm::dvec3 const& rA,
-    glm::dvec3 const& rB,
-    double& totalLagrangianMultiplier
+    glm::vec3 const& rA,
+    glm::vec3 const& rB,
+    float& totalLagrangianMultiplier
 )
 {
     contact.jacobian = Contact::Jacobian {
@@ -294,23 +294,23 @@ void Resolver::SolveContactConstraint(
         glm::cross( rB, contact.manifold.normal),
     };
 
-    double const separationSpeed =
+    float const separationSpeed =
         -glm::dot(V.vB + glm::cross(V.wB, rB) - (V.vA + glm::cross(V.wA, rA)), contact.manifold.normal);
-    double constexpr restitutionSlop = 0.5;
-    double const restitution = contact.restitution * glm::max(separationSpeed - restitutionSlop, 0.0);
-    double constexpr beta = 0.1;
-    double constexpr penetrationSlop = 0.0125;
-    double const baumgarteStabilizationTerm =
-        - (beta / duration) * glm::max(contact.manifold.penetration + penetrationSlop, 0.0) + restitution;
+    float constexpr restitutionSlop = 0.5f;
+    float const restitution = contact.restitution * glm::max(separationSpeed - restitutionSlop, 0.0f);
+    float constexpr beta = 0.1f;
+    float constexpr penetrationSlop = 0.0125f;
+    float const baumgarteStabilizationTerm =
+        - (beta / duration) * glm::max(contact.manifold.penetration + penetrationSlop, 0.0f) + restitution;
 
-    double const lagrangianMultiplierDivisor = contact.jacobian * (contact.inverseEffectiveMass * contact.jacobian)
+    float const lagrangianMultiplierDivisor = contact.jacobian * (contact.inverseEffectiveMass * contact.jacobian)
         + epona::fp::g_floatingPointThreshold;
     contact.lagrangianMultiplier = -(contact.jacobian * V + baumgarteStabilizationTerm)
         / lagrangianMultiplierDivisor;
 
-    double const prevTotalLagrangianMultiplier = totalLagrangianMultiplier;
+    float const prevTotalLagrangianMultiplier = totalLagrangianMultiplier;
     totalLagrangianMultiplier += contact.lagrangianMultiplier;
-    totalLagrangianMultiplier = glm::max(0.0, totalLagrangianMultiplier);
+    totalLagrangianMultiplier = glm::max(0.0f, totalLagrangianMultiplier);
     contact.lagrangianMultiplier = totalLagrangianMultiplier - prevTotalLagrangianMultiplier;
 
     contact.deltaVelocity = contact.inverseEffectiveMass * contact.jacobian * contact.lagrangianMultiplier;
@@ -319,11 +319,11 @@ void Resolver::SolveContactConstraint(
 void Resolver::SolveFrictionConstraint(
     Contact& contact,
     Contact::Velocity const& V,
-    glm::dvec3 const& rA,
-    glm::dvec3 const& rB,
-    double& totalLagrangianMultiplier,
-    double& totalTangentLagrangianMultiplier1,
-    double& totalTangentLagrangianMultiplier2
+    glm::vec3 const& rA,
+    glm::vec3 const& rB,
+    float& totalLagrangianMultiplier,
+    float& totalTangentLagrangianMultiplier1,
+    float& totalTangentLagrangianMultiplier2
 )
 {
     Contact::Jacobian J {
@@ -334,10 +334,10 @@ void Resolver::SolveFrictionConstraint(
     };
 
     {
-        double lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
+        float lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
         lagrangianMultiplier = glm::isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
 
-        double const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier1;
+        float const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier1;
         totalTangentLagrangianMultiplier1 += lagrangianMultiplier;
         totalTangentLagrangianMultiplier1 = glm::max(
             glm::min(totalTangentLagrangianMultiplier1, totalLagrangianMultiplier * contact.friction),
@@ -361,10 +361,10 @@ void Resolver::SolveFrictionConstraint(
             glm::cross( rB, contact.manifold.secondTangent),
         };
 
-        double lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
+        float lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
         lagrangianMultiplier = glm::isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
 
-        double const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier2;
+        float const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier2;
         totalTangentLagrangianMultiplier2 += lagrangianMultiplier;
         totalTangentLagrangianMultiplier2 = glm::max(
             glm::min(totalTangentLagrangianMultiplier2, totalLagrangianMultiplier * contact.friction),

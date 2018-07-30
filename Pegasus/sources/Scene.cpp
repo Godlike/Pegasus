@@ -19,7 +19,7 @@ Scene::Scene()
 {
 }
 
-void Scene::ComputeFrame(double duration)
+void Scene::ComputeFrame(float duration)
 {
     ApplyCollisionCache(duration);
 
@@ -50,25 +50,25 @@ AssetManager& Scene::GetAssets()
     return m_assetManager;
 }
 
-void Scene::ResolveCollisions(double duration)
+void Scene::ResolveCollisions(float duration)
 {
     std::vector<collision::Contact> contacts = m_detector.Detect();
     Debug::CollisionDetectionCall(contacts);
     m_resolver.Resolve(contacts, duration);
 }
 
-void Scene::ApplyCollisionCache(double duration)
+void Scene::ApplyCollisionCache(float duration)
 {
     m_resolver.ResolvePersistantContacts(duration);
 }
 
-void Scene::ApplyForces(double duration)
+void Scene::ApplyForces(float duration)
 {
     //Clear previously applied forces
     for (Asset<mechanics::Body>& asset : m_assetManager.GetBodies())
     {
-        asset.data.linearMotion.force = glm::dvec3(0);
-        asset.data.angularMotion.torque = glm::dvec3(0);
+        asset.data.linearMotion.force = glm::vec3(0);
+        asset.data.angularMotion.torque = glm::vec3(0);
     }
 
     //Reapply forces
@@ -80,7 +80,7 @@ void Scene::ApplyForces(double duration)
     ApplyForce<force::Buoyancy>(duration);
 }
 
-void Scene::Integrate(double duration)
+void Scene::Integrate(float duration)
 {
     for (Asset<mechanics::Body>& asset : m_assetManager.GetBodies())
     {
