@@ -45,7 +45,10 @@ struct Material
      * @brief Checks if the body has an infinite mass
      * @return @c true if the mass is infinite, @c false otherwise
      */
-    bool HasInfiniteMass() const;
+    inline bool HasInfiniteMass() const
+    {
+        return m_inverseMass == 0;
+    }
 
     /**
      * @brief Returns mass of the body

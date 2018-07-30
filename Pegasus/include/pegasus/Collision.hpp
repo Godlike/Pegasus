@@ -154,37 +154,16 @@ public:
 
 private:
     scene::AssetManager* m_pAssetManager = nullptr;
-    arion::intersection::SimpleShapeIntersectionDetector m_simpleShapeDetector;
 
     struct ObjectHasher
     {
         template < typename ObjectTypeA, typename ObjectTypeB = ObjectTypeA >
         size_t operator()(std::pair<ObjectTypeA const*, ObjectTypeB const*> data) const
         {
-            return std::hash<ObjectTypeA const*>()(data.first)
-                ^ std::hash<ObjectTypeB const*>()(data.second);
+            return reinterpret_cast<size_t>(data.first)
+                ^ reinterpret_cast<size_t>(data.second);
         }
     };
-
-    /**
-     * @brief Checks if two shapes are intersecting
-     * @param aShape first shape
-     * @param bShape second shape
-     * @return @c true if shapes are intersecting, @c false otherwise
-     */
-    bool Intersect(
-        arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
-    );
-
-    /**
-     * @brief Calculates contact manifold for two intersecting shapes
-     * @param aShape first shape
-     * @param bShape second shapes
-     * @return contact manifold
-     */
-    Contact::Manifold CalculateContactManifold(
-        arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
-    );
 
     /**
      * @brief Detects collisions in the given set of rigid bodies
@@ -195,7 +174,6 @@ private:
     template < typename Object, typename Shape >
     void Detect(std::vector<Contact>& contacts)
     {
-        std::unordered_set<std::pair<Shape const*, Shape const*>, ObjectHasher> registeredContacts;
         std::vector<scene::Asset<scene::RigidBody>>& objects = m_pAssetManager->GetObjects<Object, Shape>();
 
         for (scene::Asset<scene::RigidBody> aObject : objects)
@@ -228,17 +206,27 @@ private:
                     continue;
                 }
 
-                std::pair<Shape const*, Shape const*> const key = std::make_pair(std::min(aShape, bShape), std::max(aShape, bShape));
-                if (Intersect(aShape, bShape)
-                    && registeredContacts.find(key) == registeredContacts.end())
+                static arion::intersection::Cache<Shape, Shape> cache;
+
+                if (arion::intersection::CalculateIntersection<Shape, Shape>(aShape, bShape, &cache))
                 {
+                    auto const manifold = arion::intersection::CalculateContactManifold<Shape, Shape>(aShape, bShape, &cache);
+                    assert(!glm::isnan(manifold.points.aWorldSpace.x));
+                    assert(!glm::isnan(manifold.points.bWorldSpace.x));
+
+                    static Contact::Manifold contactManifold;
+                    contactManifold.points = manifold.points;
+                    contactManifold.normal = manifold.normal;
+                    contactManifold.penetration = manifold.penetration;
+                    contactManifold.firstTangent = glm::normalize(epona::CalculateOrthogonalVector(manifold.normal));
+                    contactManifold.secondTangent = glm::cross(contactManifold.firstTangent, contactManifold.normal);
+
                     contacts.emplace_back(
                         aObject.data.body, bObject.data.body,
-                        CalculateContactManifold(aShape, bShape),
+                        contactManifold,
                         restitutionCoefficient,
                         frictionCoefficient
                     );
-                    registeredContacts.insert(key);
                 }
             }
         }
@@ -277,10 +265,6 @@ private:
 
                 ShapeA const* aShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<ShapeA>(), aObject.data.shape);
                 ShapeB const* bShape = &m_pAssetManager->GetAsset(m_pAssetManager->GetShapes<ShapeB>(), bObject.data.shape);
-                std::pair<void const*, void const*> const key = std::make_pair(
-                    std::min(static_cast<void const*>(aShape), static_cast<void const*>(bShape)),
-                    std::max(static_cast<void const*>(aShape), static_cast<void const*>(bShape))
-                );
 
                 if (   epona::fp::IsEqual(aShape->centerOfMass.x, bShape->centerOfMass.x)
                     && epona::fp::IsEqual(aShape->centerOfMass.y, bShape->centerOfMass.y)
@@ -289,12 +273,24 @@ private:
                     continue;
                 }
 
-                if (Intersect(aShape, bShape)
+                static arion::intersection::Cache<ShapeA, ShapeB> cache;
+                std::pair<void const*, void const*> const key = { aShape, bShape };
+
+                if (arion::intersection::CalculateIntersection<ShapeA, ShapeB>(aShape, bShape, &cache)
                     && registeredContacts.find(key) == registeredContacts.end())
                 {
+                    auto const manifold = arion::intersection::CalculateContactManifold<ShapeA, ShapeB>(aShape, bShape, &cache);
+
+                    static Contact::Manifold contactManifold;
+                    contactManifold.points = manifold.points;
+                    contactManifold.normal = manifold.normal;
+                    contactManifold.penetration = manifold.penetration;
+                    contactManifold.firstTangent = glm::normalize(epona::CalculateOrthogonalVector(manifold.normal));
+                    contactManifold.secondTangent = glm::cross(contactManifold.firstTangent, contactManifold.normal);
+
                     contacts.emplace_back(
                         aObject.data.body, bObject.data.body,
-                        CalculateContactManifold(aShape, bShape),
+                        contactManifold,
                         restitutionCoefficient,
                         frictionCoefficient
                     );

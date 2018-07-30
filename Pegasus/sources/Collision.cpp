@@ -60,30 +60,6 @@ std::vector<Contact> Detector::Detect()
     return contacts;
 }
 
-bool Detector::Intersect(arion::SimpleShape const* aShape, arion::SimpleShape const* bShape)
-{
-    return m_simpleShapeDetector.CalculateIntersection(aShape, bShape);
-}
-
-Contact::Manifold Detector::CalculateContactManifold(
-        arion::SimpleShape const* aShape, arion::SimpleShape const* bShape
-    )
-{
-    auto const manifold = m_simpleShapeDetector.CalculateContactManifold(aShape, bShape);
-
-    Contact::Manifold result;
-    result.points = manifold.points;
-    result.normal = manifold.normal;
-    result.penetration = manifold.penetration;
-    result.firstTangent = glm::normalize(epona::CalculateOrthogonalVector(manifold.normal));
-    result.secondTangent = glm::cross(result.firstTangent, result.normal);
-
-    assert(glm::length2(manifold.normal));
-    assert(!glm::isnan(result.points.aWorldSpace.x) && !glm::isnan(result.points.bWorldSpace.x));
-
-    return result;
-}
-
 Resolver::Resolver(scene::AssetManager& assetManager)
     : m_pAssetManager(&assetManager)
 {
@@ -255,12 +231,14 @@ void Resolver::SolveConstraints(
         if (!epona::fp::IsZero(glm::length2(velocityCrossNormal)))
         {
             contact.manifold.firstTangent  = glm::normalize(velocityCrossNormal);
+            assert(!glm::isnan(contact.manifold.firstTangent.x));
         }
 
         glm::vec3 const tangentCrossNormal  = glm::cross(contact.manifold.firstTangent, contact.manifold.normal);
         if (!epona::fp::IsZero(glm::length2(tangentCrossNormal)))
         {
             contact.manifold.secondTangent = glm::normalize(tangentCrossNormal);
+            assert(!glm::isnan(contact.manifold.secondTangent.x));
         }
     }
 
