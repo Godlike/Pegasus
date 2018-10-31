@@ -74,7 +74,7 @@ struct Material
      */
     glm::mat3 GetInverseMomentOfInertia() const;
 
-    //!Body's motion bumping factor
+    //!Body's motion damping factor
     float damping;
 
 private:
