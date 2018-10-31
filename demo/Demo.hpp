@@ -149,7 +149,7 @@ public:
     void Remove(Primitive& object);
 
     //! Maximum number of particles in the demo
-    uint32_t const maxObjects = 5000;
+    uint32_t const maxObjects = 1000;
 
     //! Physics calculation state
     bool calculatePhysics = true;

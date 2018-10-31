@@ -326,6 +326,8 @@ public:
      * @brief Resolves cached contacts
      *
      * @note This method is inteded to be called once during the pipeline execution
+     *
+     * @param duration delta time of the frame
      */
     void ResolvePersistantContacts(float duration);
 

@@ -260,6 +260,15 @@ inline void Scene::ApplyForce<force::Drag>(float duration)
             body.linearMotion.velocity = body.angularMotion.velocity;
             body.angularMotion.torque += force.CalculateForce(body) * duration;
             body.linearMotion.velocity = velocity;
+
+            {
+                if (epona::fp::IsZero(body.angularMotion.torque.x))
+                    body.angularMotion.torque.x = 0;
+                if (epona::fp::IsZero(body.angularMotion.torque.y))
+                    body.angularMotion.torque.y = 0;
+                if (epona::fp::IsZero(body.angularMotion.torque.z))
+                    body.angularMotion.torque.z = 0;
+            }
         }
     }
 }

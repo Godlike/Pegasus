@@ -191,6 +191,10 @@ void IntegrateBody(
         if (epona::fp::IsZero(angularMotion.velocity.z))
             angularMotion.velocity.z = 0;
     }
+
+    assert(!std::isinf(angularMotion.velocity.x)
+        && !std::isinf(angularMotion.velocity.y)
+        && !std::isinf(angularMotion.velocity.z));
 }
 } // namespace ::
 
