@@ -49,8 +49,8 @@ void CollisionDetectionDebugCallback(
 
         for (auto& contact : contacts)
         {
-            contactPoints.push_back(&demo.MakeSphere(contact.manifold.points.aWorldSpace, 0.05, { 1, 0, 0 }));
-            contactPoints.push_back(&demo.MakeSphere(contact.manifold.points.bWorldSpace, 0.05, { 0, 1, 0 }));
+            contactPoints.push_back(&demo.MakeSphere(contact.manifold.points.aWorldSpace, 0.05f, { 1, 0, 0 }));
+            contactPoints.push_back(&demo.MakeSphere(contact.manifold.points.bWorldSpace, 0.05f, { 0, 1, 0 }));
         }
     }
 
@@ -168,7 +168,7 @@ void EpaDebugCallback(
             triangles.emplace_back(polytopeVertices[indices[0]], polytopeVertices[indices[1]], polytopeVertices[indices[2]]);
         }
         epaPolytope = &demo.MakeTriangleCollection({}, { 0, 1, 0 }, triangles);
-        sphere = &demo.MakeSphere(supportVertex, 0.05, { 1, 1, 1 });
+        sphere = &demo.MakeSphere(supportVertex, 0.05f, { 1, 1, 1 });
         normal = &demo.MakeLine({}, { 1, 1, 1 }, supportVertex, supportVertex + direction);
     }
 
@@ -201,7 +201,7 @@ void EpaDebugCallback(
         //Draw CSO vertices
         for (uint8_t i = 0; i < csoVertices.size(); ++i)
         {
-            csoPrimitives.push_back(&demo.MakeSphere(csoVertices[i], 0.03, { 1, 0, 0 }));
+            csoPrimitives.push_back(&demo.MakeSphere(csoVertices[i], 0.03f, { 1, 0, 0 }));
         }
     }
 
@@ -296,9 +296,9 @@ void DrawUi()
                 axes.push_back(&demo.MakeLine({}, { 1, 0, 0 }, { 0, 0, 0 }, { 1, 0, 0 }));
                 axes.push_back(&demo.MakeLine({}, { 0, 1, 0 }, { 0, 0, 0 }, { 0, 1, 0 }));
                 axes.push_back(&demo.MakeLine({}, { 0, 0, 1 }, { 0, 0, 0 }, { 0, 0, 1 }));
-                axes.push_back(&demo.MakeSphere({ 1, 0, 0 }, 0.05, { 1, 0, 0 }));
-                axes.push_back(&demo.MakeSphere({ 0, 1, 0 }, 0.05, { 0, 1, 0 }));
-                axes.push_back(&demo.MakeSphere({ 0, 0, 1 }, 0.05, { 0, 0, 1 }));
+                axes.push_back(&demo.MakeSphere({ 1, 0, 0 }, 0.05f, { 1, 0, 0 }));
+                axes.push_back(&demo.MakeSphere({ 0, 1, 0 }, 0.05f, { 0, 1, 0 }));
+                axes.push_back(&demo.MakeSphere({ 0, 0, 1 }, 0.05f, { 0, 0, 1 }));
                 axes.push_back(&demo.MakeLine({}, { 1, 0, 0 }, { 0, 0, 0 }, { -1,  0,  0 }));
                 axes.push_back(&demo.MakeLine({}, { 0, 1, 0 }, { 0, 0, 0 }, { 0, -1,  0 }));
                 axes.push_back(&demo.MakeLine({}, { 0, 0, 1 }, { 0, 0, 0 }, { 0,  0, -1 }));
@@ -316,7 +316,7 @@ void DrawUi()
         ImGui::Checkbox("Pause on collision", &g_pauseOnCollisionCheckbox);
 
         ImGui::Checkbox("Use static frame duration", &demo.useStaticDuration);
-        float duration = static_cast<float>(demo.staticDuration);
+        float duration = demo.staticDuration;
         ImGui::SliderFloat("Duration", &duration, 0.001f, 0.016f);
         demo.staticDuration = duration;
 
@@ -423,10 +423,10 @@ void DrawUi()
                     {
                         body.linearMotion.velocity = glm::normalize(body.linearMotion.velocity);
                     }
-                    velocity[1] = static_cast<float>(body.linearMotion.velocity[0]);
-                    velocity[2] = static_cast<float>(body.linearMotion.velocity[1]);
-                    velocity[3] = static_cast<float>(body.linearMotion.velocity[2]);
-                    body.linearMotion.velocity *= static_cast<double>(velocity[0]);
+                    velocity[1] = body.linearMotion.velocity[0];
+                    velocity[2] = body.linearMotion.velocity[1];
+                    velocity[3] = body.linearMotion.velocity[2];
+                    body.linearMotion.velocity *= velocity[0];
 
                     //Angular motion data
                     glm::vec3 const axis{ angleAxis[1], angleAxis[2], angleAxis[3] };
@@ -435,15 +435,15 @@ void DrawUi()
                     angleAxis[2] = axisNormalized.y;
                     angleAxis[3] = axisNormalized.z;
 
-                    glm::dvec3 const avd{glm::make_vec3(&angularVelocity[1])};
-                    glm::dvec3 const avdNorm = epona::fp::IsZero(glm::length(avd)) ? avd : glm::normalize(avd);
-                    angularVelocity[1] = static_cast<float>(avdNorm.x);
-                    angularVelocity[2] = static_cast<float>(avdNorm.y);
-                    angularVelocity[3] = static_cast<float>(avdNorm.z);
+                    glm::vec3 const avd{glm::make_vec3(&angularVelocity[1])};
+                    glm::vec3 const avdNorm = epona::fp::IsZero(glm::length(avd)) ? avd : glm::normalize(avd);
+                    angularVelocity[1] = avdNorm.x;
+                    angularVelocity[2] = avdNorm.y;
+                    angularVelocity[3] = avdNorm.z;
 
-                    body.angularMotion.velocity = avdNorm * static_cast<double>(angularVelocity[0]);
-                    body.angularMotion.orientation = glm::dquat(
-                        glm::angleAxis(static_cast<double>(angleAxis[0]), glm::dvec3(glm::make_vec3(&angleAxis[1]))
+                    body.angularMotion.velocity = avdNorm * angularVelocity[0];
+                    body.angularMotion.orientation = glm::quat(
+                        glm::angleAxis(angleAxis[0], glm::make_vec3(&angleAxis[1])
                     ));
 
                     //Make object
@@ -463,9 +463,9 @@ void DrawUi()
                     }
 
                     //Increment position if more than one body
-                    objectPosition[0] += static_cast<float>(std::rand() % 100 / 1e6);
-                    objectPosition[1] += static_cast<float>(sphereRadius * 2.0f + 1e-3);
-                    objectPosition[2] += static_cast<float>(std::rand() % 100 / 1e6);
+                    objectPosition[0] += std::rand() % 100 / 1e6f;
+                    objectPosition[1] += sphereRadius * 2.0f + 1e-3f;
+                    objectPosition[2] += std::rand() % 100 / 1e6f;
                 }
             }
         }
@@ -516,14 +516,14 @@ void Demo::RunFrame()
     RenderFrame();
     if (calculatePhysics || calculatePhysicsNextFrame)
     {
-        ComputeFrame(static_cast<double>(deltaTime.count()) / 1e3);
+        ComputeFrame(static_cast<float>(deltaTime.count()) / 1e3f);
         calculatePhysicsNextFrame = false;
     }
 
     std::this_thread::sleep_until(nextFrameTime);
 }
 
-void Demo::ComputeFrame(double duration)
+void Demo::ComputeFrame(float duration)
 {
     //Compute physical data
     duration = useStaticDuration ? staticDuration : duration;
@@ -590,14 +590,14 @@ Demo::Primitive& Demo::MakeTriangle(mechanics::Body body, glm::vec3 color, glm::
     return m_primitives.back();
 }
 
-Demo::Primitive& Demo::MakeSphere(mechanics::Body body, double radius, scene::Primitive::Type type)
+Demo::Primitive& Demo::MakeSphere(mechanics::Body body, float radius, scene::Primitive::Type type)
 {
     body.material.SetMomentOfInertia(mechanics::CalculateSolidSphereMomentOfInertia(radius, body.material.GetMass()));
     scene::Primitive* object = new scene::Sphere(m_scene, type, body,
         arion::Sphere(body.linearMotion.position, body.angularMotion.orientation, radius));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
-    render::Primitive* shape = new render::Sphere(model, glm::vec3(0.667, 0.223, 0.223), radius);
+    render::Primitive* shape = new render::Sphere(model, glm::vec3(0.667f, 0.223f, 0.223f), radius);
     m_primitives.emplace_back(object, shape);
     m_pGravityForce->Bind(*object);
     m_pDragForce->Bind(*object);
@@ -605,7 +605,7 @@ Demo::Primitive& Demo::MakeSphere(mechanics::Body body, double radius, scene::Pr
     return m_primitives.back();
 }
 
-Demo::Primitive& Demo::MakeSphere(glm::dvec3 center, double radius, glm::vec3 color)
+Demo::Primitive& Demo::MakeSphere(glm::dvec3 center, float radius, glm::vec3 color)
 {
     glm::mat4 const model{ glm::translate(glm::mat4(1), glm::vec3(center))
         * glm::mat4(glm::toMat4(glm::dquat(glm::angleAxis(0.0, glm::dvec3{ 0, 0, 0 })))) };
@@ -625,7 +625,7 @@ Demo::Primitive& Demo::MakeBox(
         arion::Box(body.linearMotion.position, body.angularMotion.orientation, i, j, k));
     glm::mat4 const model { glm::translate(glm::mat4(1), glm::vec3(body.linearMotion.position))
         * glm::mat4(glm::toMat4(body.angularMotion.orientation)) };
-    render::Primitive* shape = new render::Box(model, glm::vec3(0.667, 0.223, 0.223), render::Box::Axes{i, j, k});
+    render::Primitive* shape = new render::Box(model, glm::vec3(0.667f, 0.223f, 0.223f), render::Box::Axes{i, j, k});
     m_primitives.emplace_back(object, shape);
     m_pGravityForce->Bind(*object);
     m_pDragForce->Bind(*object);
@@ -676,8 +676,8 @@ Demo::Demo()
 
     m_renderer.drawUiCallback = ::DrawUi;
 
-    m_pGravityForce = std::make_unique<scene::Force<force::StaticField>>(m_scene, force::StaticField(glm::dvec3{ 0, -9.8, 0 }));
-    m_pDragForce = std::make_unique<scene::Force<force::Drag>>(m_scene, force::Drag(0.01, 0.05));
+    m_pGravityForce = std::make_unique<scene::Force<force::StaticField>>(m_scene, force::StaticField(glm::dvec3{ 0, -9.8f, 0 }));
+    m_pDragForce = std::make_unique<scene::Force<force::Drag>>(m_scene, force::Drag(0.01f, 0.05f));
 }
 
 } // namespace pegasus

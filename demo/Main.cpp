@@ -20,16 +20,16 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
         for (uint8_t index = 0; index < demo.maxObjects; ++index)
         {
             pegasus::mechanics::Body body;
-            body.linearMotion.position = glm::dvec3(std::rand() % 150 / 10., std::rand() % 100 / 10., std::rand() % 150 / 10.);
-            body.linearMotion.velocity = glm::dvec3(std::rand() % 10 / 10., std::rand() % 10 / 10., std::rand() % 10 / 10.);
+            body.linearMotion.position = glm::dvec3(std::rand() % 150 / 10.f, std::rand() % 100 / 10.f, std::rand() % 150 / 10.f);
+            body.linearMotion.velocity = glm::dvec3(std::rand() % 10 / 10.f, std::rand() % 10 / 10.f, std::rand() % 10 / 10.f);
 
             static uint8_t isBox = false;
             isBox = !isBox;
             if (isBox)
             {
-                glm::vec3 const k = { 0,0,rand() % 10 / 10. + 0.1 };
-                glm::vec3 const j = { 0,rand() % 10 / 10. + 0.1,0 };
-                glm::vec3 const i = { rand() % 10 / 10. + 0.1,0,0 };
+                glm::vec3 const k = { 0,0,rand() % 10 / 10.f + 0.1f };
+                glm::vec3 const j = { 0,rand() % 10 / 10.f + 0.1f,0 };
+                glm::vec3 const i = { rand() % 10 / 10.f + 0.1f,0,0 };
 
                 g_objects.push_back(&demo.MakeBox(
                     body, i, j, k, pegasus::scene::Primitive::Type::DYNAMIC
@@ -37,7 +37,7 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
             }
             else
             {
-                double const radius = rand() % 10 / 10. + 0.1;
+                float const radius = rand() % 10 / 10.f + 0.1f;
                 g_objects.push_back(&demo.MakeSphere(
                     body, radius, pegasus::scene::Primitive::Type::DYNAMIC
                 ));

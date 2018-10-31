@@ -177,7 +177,7 @@ public:
 
     AssetManager& GetAssets();
 
-    float forceDuration = 1.0;
+    float forceDuration = 1.0f;
 
 private:
     AssetManager m_assetManager;

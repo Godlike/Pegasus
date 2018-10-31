@@ -44,7 +44,7 @@ public:
      * @brief Runs physics calculations with given duration
      * @param duration duration of the physical frame
      */
-    void ComputeFrame(double duration);
+    void ComputeFrame(float duration);
 
     /**
      * @brief Redraws the scene
@@ -102,7 +102,7 @@ public:
      * @param[in] radius radius of the sphere
      * @return a newly created Object
      */
-    Primitive& MakeSphere(mechanics::Body body, double radius, scene::Primitive::Type type);
+    Primitive& MakeSphere(mechanics::Body body, float radius, scene::Primitive::Type type);
 
     /**
     * @brief Creates an object describing a sphere
@@ -114,7 +114,7 @@ public:
     * @param[in] color the color of the mesh
     * @return a newly created Object
     */
-    Primitive& MakeSphere(glm::dvec3 center, double radius, glm::vec3 color);
+    Primitive& MakeSphere(glm::dvec3 center, float radius, glm::vec3 color);
 
     /**
      * @brief Creates an object describing a box
@@ -161,10 +161,10 @@ public:
     bool useStaticDuration = true;
 
     //! Physics frame duration
-    double staticDuration = 0.016;
+    float staticDuration = 0.016f;
 
     //! Physics tick dutation
-    double physicsTick = 0.004;
+    float physicsTick = 0.004f;
 
     /**
      * @brief Represents an instance of the render and physical objects

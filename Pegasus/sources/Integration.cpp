@@ -63,15 +63,16 @@ glm::vec3 IntegrateLinearDamping(glm::vec3 velocity, float damping, float durati
 * @param[in,out] material body material data
 * @param[in,out] linearMotion body linear motion data
 * @param[in] duration delta time
+* @param[in] maxSpeed upper speed bound
 */
 void IntegrateBody(
         pegasus::mechanics::Material& material,
         pegasus::mechanics::Body::LinearMotion& linearMotion,
-        float duration
+        float duration,
+        float maxSpeed = 100
     )
 {
     {
-        float const maxSpeed = 100;
         float const speed = glm::length(linearMotion.velocity);
         if (epona::fp::IsGreater(speed, epona::fp::g_floatingPointThreshold))
         {
@@ -155,15 +156,16 @@ glm::vec3 IntegrateAngularDamping(glm::vec3 velocity, float damping, float durat
  * @param[in, out] material body material data
  * @param[in, out] angularMotion body angular motion data
  * @param[in] duration delta time
+ * @param[in] maxSpeed upper speed bound
  */
 void IntegrateBody(
         pegasus::mechanics::Material& material,
         pegasus::mechanics::Body::AngularMotion& angularMotion,
-        float duration
+        float duration,
+        float maxSpeed = 100
     )
 {
     {
-        float const maxSpeed = 100;
         float const speed = glm::length(angularMotion.velocity);
         if (epona::fp::IsGreater(speed, epona::fp::g_floatingPointThreshold))
         {
