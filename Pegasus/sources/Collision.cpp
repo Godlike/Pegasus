@@ -88,6 +88,13 @@ void Resolver::Resolve(std::vector<Contact>& contacts, float duration)
         m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwA;
         m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nB;
         m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwB;
+
+#ifndef NDEBUG
+        auto a = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity;
+        auto b = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity;
+        assert(!std::isinf(a.x) && !std::isinf(a.y) && !std::isinf(a.z));
+        assert(!std::isinf(b.x) && !std::isinf(b.y) && !std::isinf(b.z));
+#endif
     }
 
     //Save currenct contacts for use in the next frame
@@ -125,6 +132,13 @@ void Resolver::ResolvePersistantContacts(float duration)
         m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwA * m_persistentFactor;
         m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).linearMotion.velocity  += contact.deltaVelocity.nB  * m_persistentFactor;
         m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity += contact.deltaVelocity.nwB * m_persistentFactor;
+
+#ifndef NDEBUG
+        auto a = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle).angularMotion.velocity;
+        auto b = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle).angularMotion.velocity;
+        assert(!std::isinf(a.x) && !std::isinf(a.y) && !std::isinf(a.z));
+        assert(!std::isinf(b.x) && !std::isinf(b.y) && !std::isinf(b.z));
+#endif
     }
 }
 
@@ -207,6 +221,13 @@ void Resolver::SolveConstraints(
 {
     mechanics::Body const& aBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.aBodyHandle);
     mechanics::Body const& bBody = m_pAssetManager->GetAsset(m_pAssetManager->GetBodies(), contact.bBodyHandle);
+
+    assert(!std::isinf(aBody.angularMotion.velocity.x)
+        && !std::isinf(aBody.angularMotion.velocity.y)
+        && !std::isinf(aBody.angularMotion.velocity.z));
+    assert(!std::isinf(bBody.angularMotion.velocity.x)
+        && !std::isinf(bBody.angularMotion.velocity.y)
+        && !std::isinf(bBody.angularMotion.velocity.z));
 
     Contact::Velocity const V {
         aBody.linearMotion.velocity,
