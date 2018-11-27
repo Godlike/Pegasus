@@ -124,13 +124,13 @@ void GjkDebugCallback(
 }
 
 void EpaDebugCallback(
-    epona::QuickhullConvexHull<std::vector<glm::dvec3>>& convexHull,
-    std::vector<glm::dvec3>& polytopeVertices,
+    epona::ConvexHull& convexHull,
+    std::vector<glm::vec3>& polytopeVertices,
     arion::intersection::gjk::Simplex& simplex,
     arion::SimpleShape const& aShape,
     arion::SimpleShape const& bShape,
-    glm::dvec3 supportVertex,
-    glm::dvec3 direction
+    glm::vec3 supportVertex,
+    glm::vec3 direction
 )
 {
     static pegasus::Demo& demo = pegasus::Demo::GetInstance();
@@ -162,10 +162,9 @@ void EpaDebugCallback(
     if (g_epaPolytopeCheckbox)
     {
         std::vector<glm::mat3> triangles;
-        for (auto& face : convexHull.GetFaces())
+        for (auto& face : convexHull.faces)
         {
-            auto indices = face.GetIndices();
-            triangles.emplace_back(polytopeVertices[indices[0]], polytopeVertices[indices[1]], polytopeVertices[indices[2]]);
+            triangles.emplace_back(polytopeVertices[face[0]], polytopeVertices[face[1]], polytopeVertices[face[2]]);
         }
         epaPolytope = &demo.MakeTriangleCollection({}, { 0, 1, 0 }, triangles);
         sphere = &demo.MakeSphere(supportVertex, 0.05f, { 1, 1, 1 });
@@ -179,19 +178,19 @@ void EpaDebugCallback(
         //Calculate box vertices
         auto& aBox = static_cast<arion::Box const&>(aShape);
         auto& bBox = static_cast<arion::Box const&>(bShape);
-        static std::vector<glm::dvec3> aVertices{ 8 }, bVertices{ 8 };
+        static std::vector<glm::vec3> aVertices{ 8 }, bVertices{ 8 };
 
         epona::CalculateBoxVerticesWorld(aBox.iAxis, aBox.jAxis, aBox.kAxis,
             aBox.centerOfMass, glm::toMat3(aBox.orientation), aVertices.begin());
         epona::CalculateBoxVerticesWorld(bBox.iAxis, bBox.jAxis, bBox.kAxis,
             bBox.centerOfMass, glm::toMat3(bBox.orientation), bVertices.begin());
 
-        std::vector<glm::dvec3> csoVertices;
+        std::vector<glm::vec3> csoVertices;
         csoVertices.reserve(8 * 8);
-        for (glm::dvec3 a : aVertices)
+        for (glm::vec3 a : aVertices)
         {
             csoVertices.push_back(a);
-            for (glm::dvec3 b : bVertices)
+            for (glm::vec3 b : bVertices)
             {
                 csoVertices.push_back(b);
                 csoVertices.push_back(a - b);
@@ -213,8 +212,8 @@ void EpaDebugCallback(
 }
 
 void QuickhullConvexHullCallback(
-        epona::QuickhullConvexHull<std::vector<glm::dvec3>>& quickHull,
-        std::vector<glm::dvec3>& vertexBuffer
+        epona::ConvexHull& quickHull,
+        std::vector<glm::vec3>& vertexBuffer
     )
 {
     static pegasus::Demo::Primitive* ch = nullptr;
@@ -231,12 +230,9 @@ void QuickhullConvexHullCallback(
         if (!ch)
         {
             std::vector<glm::mat3> triangles;
-            auto&  faces = quickHull.GetFaces();
-
-            for (auto& face : faces)
+            for (auto& face : quickHull.faces)
             {
-                auto const i = face.GetIndices();
-                triangles.emplace_back(vertexBuffer[i[0]], vertexBuffer[i[1]], vertexBuffer[i[2]]);
+                triangles.emplace_back(vertexBuffer[face[0]], vertexBuffer[face[1]], vertexBuffer[face[2]]);
             }
 
             ch = &demo.MakeTriangleCollection({}, { 1, 1, 0 }, triangles);
@@ -567,7 +563,7 @@ Demo::Primitive& Demo::MakeLine(mechanics::Body body, glm::vec3 color, glm::vec3
     return m_primitives.back();
 }
 
-Demo::Primitive& Demo::MakePlane(mechanics::Body body, glm::dvec3 normal, scene::Primitive::Type type)
+Demo::Primitive& Demo::MakePlane(mechanics::Body body, glm::vec3 normal, scene::Primitive::Type type)
 {
     scene::Primitive* object = new scene::Plane(m_scene, type, body,
         arion::Plane(body.linearMotion.position, body.angularMotion.orientation, normal));
@@ -605,10 +601,10 @@ Demo::Primitive& Demo::MakeSphere(mechanics::Body body, float radius, scene::Pri
     return m_primitives.back();
 }
 
-Demo::Primitive& Demo::MakeSphere(glm::dvec3 center, float radius, glm::vec3 color)
+Demo::Primitive& Demo::MakeSphere(glm::vec3 center, float radius, glm::vec3 color)
 {
     glm::mat4 const model{ glm::translate(glm::mat4(1), glm::vec3(center))
-        * glm::mat4(glm::toMat4(glm::dquat(glm::angleAxis(0.0, glm::dvec3{ 0, 0, 0 })))) };
+        * glm::mat4(glm::toMat4(glm::dquat(glm::angleAxis(0.0f, glm::vec3{ 0, 0, 0 })))) };
     render::Primitive* shape = new render::Sphere(model, color, radius);
     m_primitives.emplace_back(nullptr, shape);
 
@@ -667,16 +663,16 @@ scene::Scene& Demo::GetScene()
 Demo::Demo()
     : m_renderer(render::Renderer::GetInstance())
 {
-    epona::debug::Debug::SetQuickhullConvexHullCallback<std::vector<glm::dvec3>>(::QuickhullConvexHullCallback);
+    epona::debug::Debug::SetQuickhullConvexHullCallback(::QuickhullConvexHullCallback);
 
-    arion::debug::Debug::SetEpaCallback<std::vector<glm::dvec3>>(::EpaDebugCallback);
+    arion::debug::Debug::SetEpaCallback(::EpaDebugCallback);
     arion::debug::Debug::SetGjkCallback(::GjkDebugCallback);
 
     pegasus::Debug::s_collisionDetectionCall = ::CollisionDetectionDebugCallback;
 
     m_renderer.drawUiCallback = ::DrawUi;
 
-    m_pGravityForce = std::make_unique<scene::Force<force::StaticField>>(m_scene, force::StaticField(glm::dvec3{ 0, -9.8f, 0 }));
+    m_pGravityForce = std::make_unique<scene::Force<force::StaticField>>(m_scene, force::StaticField(glm::vec3{ 0, -9.8f, 0 }));
     m_pDragForce = std::make_unique<scene::Force<force::Drag>>(m_scene, force::Drag(0.01f, 0.05f));
 }
 
