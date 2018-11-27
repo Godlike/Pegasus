@@ -76,7 +76,7 @@ public:
      * @param[in] normal normal of the vector
      * @return a newly created Object
      */
-    Primitive& MakePlane(mechanics::Body body, glm::dvec3 normal, scene::Primitive::Type type);
+    Primitive& MakePlane(mechanics::Body body, glm::vec3 normal, scene::Primitive::Type type);
 
     /**
     * @brief Creates an object describing a triangle
@@ -114,7 +114,7 @@ public:
     * @param[in] color the color of the mesh
     * @return a newly created Object
     */
-    Primitive& MakeSphere(glm::dvec3 center, float radius, glm::vec3 color);
+    Primitive& MakeSphere(glm::vec3 center, float radius, glm::vec3 color);
 
     /**
      * @brief Creates an object describing a box
@@ -149,7 +149,7 @@ public:
     void Remove(Primitive& object);
 
     //! Maximum number of particles in the demo
-    uint32_t const maxObjects = 1000;
+    uint32_t const maxObjects = 100;
 
     //! Physics calculation state
     bool calculatePhysics = true;

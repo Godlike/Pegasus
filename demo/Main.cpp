@@ -20,7 +20,7 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
         for (uint8_t index = 0; index < demo.maxObjects; ++index)
         {
             pegasus::mechanics::Body body;
-            body.linearMotion.position = glm::dvec3(std::rand() % 150 / 10.f, std::rand() % 100 / 10.f, std::rand() % 150 / 10.f);
+            body.linearMotion.position = glm::dvec3(std::rand() % 300 / 10.f, std::rand() % 300 / 10.f, std::rand() % 300 / 10.f);
             body.linearMotion.velocity = glm::dvec3(std::rand() % 10 / 10.f, std::rand() % 10 / 10.f, std::rand() % 10 / 10.f);
 
             static uint8_t isBox = false;
@@ -71,5 +71,4 @@ int main(int argc, char** argv)
     {
         demo.RunFrame();
     }
-
 }

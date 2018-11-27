@@ -9,6 +9,7 @@
 #include <pegasus/Body.hpp>
 #include <pegasus/Integration.hpp>
 #include <Epona/FloatingPoint.hpp>
+#include <glm/glm.hpp>
 
 TEST_CASE("Integration", "[integration]")
 {
