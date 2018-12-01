@@ -1,4 +1,4 @@
-# Copyright (C) 2017 by Godlike
+# Copyright (C) 2017-2018 by Godlike
 # This code is licensed under the MIT license (MIT)
 # (http://opensource.org/licenses/MIT)
 
@@ -56,7 +56,6 @@ set(PEGASUS_SOURCES
     sources/Integration.cpp
     sources/Collision.cpp
     sources/Asset.cpp
-    sources/AssetManager.cpp
     sources/Scene.cpp
     sources/Primitives.cpp
     sources/Material.cpp

@@ -1,13 +1,9 @@
 /*
-* Copyright (C) 2018 by Godlike
-* This code is licensed under the MIT license (MIT)
-* (http://opensource.org/licenses/MIT)
-*
-* Copyright (c) Icosagon 2003. All Rights Reserved.
-* This software is distributed under licence. Use of this software
-* implies agreement with all terms and conditions of the accompanying
-* software licence.
-*/
+ * Copyright (c) Icosagon 2003.
+ * Copyright (C) 2017-2018 by Godlike
+ * This code is licensed under the MIT license (MIT)
+ * (http://opensource.org/licenses/MIT)
+ */
 #include <pegasus/Force.hpp>
 #include <pegasus/Integration.hpp>
 #include <Epona/FloatingPoint.hpp>
