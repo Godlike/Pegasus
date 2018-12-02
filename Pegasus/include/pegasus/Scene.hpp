@@ -9,8 +9,9 @@
 #include <pegasus/Body.hpp>
 #include <pegasus/Asset.hpp>
 #include <pegasus/AssetManager.hpp>
-#include <pegasus/Collision.hpp>
 #include <pegasus/Force.hpp>
+#include <pegasus/CollisionDetector.hpp>
+#include <pegasus/CollisionResolver.hpp>
 
 namespace pegasus
 {
@@ -23,11 +24,6 @@ namespace scene
 class Scene
 {
 public:
-    /**
-     * @brief Constructs default scene object
-     */
-    Scene();
-
     /**
      * @brief Runs physical simulation with the given duration
      * @param duration delta time of the integration in seconds
@@ -175,14 +171,16 @@ public:
         m_assetManager.RemoveAsset(m_assetManager.GetForceBinds<Force>(), handle);
     }
 
+    /**
+     * @brief Returns reference to the current asset manager
+     */
     AssetManager& GetAssets();
 
     float forceDuration = 1.0f;
 
 private:
     AssetManager m_assetManager;
-    collision::Detector m_detector;
-    collision::Resolver m_resolver;
+    std::vector<collision::Contact> m_persistentContacts;
 
     /**
      * @brief Calculates force applied to the bound bodies
