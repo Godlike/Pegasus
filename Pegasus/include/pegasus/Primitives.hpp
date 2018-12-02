@@ -7,6 +7,7 @@
 #define PEGASUS_SCENE_PRIMITIVES_HPP
 
 #include <pegasus/Scene.hpp>
+#include <unordered_map>
 
 namespace pegasus
 {

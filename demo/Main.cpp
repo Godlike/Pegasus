@@ -17,7 +17,7 @@ void KeyButtonCallback(GLFWwindow* window, int key, int scancode, int action, in
     switch (key)
     {
     case GLFW_KEY_M:
-        for (uint8_t index = 0; index < demo.maxObjects; ++index)
+        for (uint8_t index = 0; index < 100; ++index)
         {
             pegasus::mechanics::Body body;
             body.linearMotion.position = glm::dvec3(std::rand() % 300 / 10.f, std::rand() % 300 / 10.f, std::rand() % 300 / 10.f);

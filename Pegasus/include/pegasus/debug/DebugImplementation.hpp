@@ -6,7 +6,8 @@
 #ifndef PEGASUS_DEBUG_IMPLEMENTATION_HPP
 #define PEGASUS_DEBUG_IMPLEMENTATION_HPP
 
-#include <pegasus/Collision.hpp>
+#include <pegasus/Contact.hpp>
+#include <vector>
 #include <functional>
 
 namespace pegasus

@@ -13,12 +13,6 @@ namespace pegasus
 namespace scene
 {
 
-Scene::Scene()
-    : m_detector(m_assetManager)
-    , m_resolver(m_assetManager)
-{
-}
-
 void Scene::ComputeFrame(float duration)
 {
     ApplyCollisionCache(duration);
@@ -52,14 +46,16 @@ AssetManager& Scene::GetAssets()
 
 void Scene::ResolveCollisions(float duration)
 {
-    std::vector<collision::Contact> contacts = m_detector.Detect();
+    std::vector<collision::Contact> contacts = collision::DetectContacts(m_assetManager);
     Debug::CollisionDetectionCall(contacts);
-    m_resolver.Resolve(contacts, duration);
+
+    static std::vector<collision::Contact> prevoisContacts;
+    collision::ResolveContacts(m_assetManager, prevoisContacts, m_persistentContacts, contacts, duration);
 }
 
 void Scene::ApplyCollisionCache(float duration)
 {
-    m_resolver.ResolvePersistantContacts(duration);
+    collision::ResolvePersistantContacts(m_assetManager, m_persistentContacts, duration);
 }
 
 void Scene::ApplyForces(float duration)

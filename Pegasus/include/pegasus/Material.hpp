@@ -77,6 +77,12 @@ struct Material
     //!Body's motion damping factor
     float damping;
 
+    //!Body's restitution coefficient
+    float restitutionCoefficient = 0.35f; //Wood
+
+    //!Body's friction coefficient
+    float frictionCoefficient = 0.6f;  //Wood
+
 private:
     //!Body's moment of inertia
     glm::mat3 m_momentOfInertia;
