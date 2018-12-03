@@ -29,11 +29,11 @@ inline void SolveContactConstraint(
     Velocity const& V, glm::vec3 const& rA, glm::vec3 const& rB, float& totalLagrangianMultiplier
 )
 {
-    contact.jacobian = Jacobian{
-    -contact.manifold.normal,
-    glm::cross(-rA, contact.manifold.normal),
-    contact.manifold.normal,
-    glm::cross(rB, contact.manifold.normal),
+    contact.jacobian = Jacobian {
+        -contact.manifold.normal,
+        glm::cross(-rA, contact.manifold.normal),
+        contact.manifold.normal,
+        glm::cross(rB, contact.manifold.normal),
     };
 
     float const separationSpeed =
@@ -64,26 +64,29 @@ inline void SolveContactConstraint(
  * @param[in] V velocity vector of size 12
  * @param[in] rA contact point vector from the center of the body
  * @param[in] rB contact point vector from the center of the body
- * @param[in,out] totalLagrangianMultiplier
- * @param[in,out] totalTangentLagrangianMultiplier1
- * @param[in,out] totalTangentLagrangianMultiplier2
+ * @param[in,out] totalLagrangianMultiplier accumulated value of Lagrangian Multiplier
+ * @param[in,out] totalTangentLagrangianMultiplier1 accumulated value of first tangent Lagrangian Multiplier
+ * @param[in,out] totalTangentLagrangianMultiplier2 accumulated value of second tangent Lagrangian Multiplier
+ * @param[in] maxLagrangianMultiplier clamp value of Lagrangian Multiplier
  */
 inline void SolveFrictionConstraint(
     Contact& contact,
     Velocity const& V, glm::vec3 const& rA, glm::vec3 const& rB,
-    float& totalLagrangianMultiplier, float& totalTangentLagrangianMultiplier1, float& totalTangentLagrangianMultiplier2
+    float& totalLagrangianMultiplier, float& totalTangentLagrangianMultiplier1, float& totalTangentLagrangianMultiplier2,
+    float maxLagrangianMultiplier = 100.f
 )
 {
-    Jacobian J{
-    -contact.manifold.firstTangent,
-    glm::cross(-rA, contact.manifold.firstTangent),
-    contact.manifold.firstTangent,
-    glm::cross(rB, contact.manifold.firstTangent),
+    Jacobian J {
+        -contact.manifold.firstTangent,
+        glm::cross(-rA, contact.manifold.firstTangent),
+        contact.manifold.firstTangent,
+        glm::cross(rB, contact.manifold.firstTangent),
     };
 
     {
         float lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
         lagrangianMultiplier = glm::isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
+        lagrangianMultiplier = lagrangianMultiplier > maxLagrangianMultiplier ? maxLagrangianMultiplier : lagrangianMultiplier;
 
         float const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier1;
         totalTangentLagrangianMultiplier1 += lagrangianMultiplier;
@@ -111,6 +114,7 @@ inline void SolveFrictionConstraint(
 
         float lagrangianMultiplier = -(J * V) / (J * (contact.inverseEffectiveMass * J));
         lagrangianMultiplier = glm::isnan(lagrangianMultiplier) ? 0 : lagrangianMultiplier;
+        lagrangianMultiplier = lagrangianMultiplier > maxLagrangianMultiplier ? maxLagrangianMultiplier : lagrangianMultiplier;
 
         float const previousLagrangianMultiplierSum = totalTangentLagrangianMultiplier2;
         totalTangentLagrangianMultiplier2 += lagrangianMultiplier;
@@ -277,18 +281,18 @@ inline void ResolvePersistantContacts(
     //Solve constraints
     for (auto& contact : persistentContacts)
     {
-        float const lagrangianMultiplier = contact.lagrangianMultiplier;
-        float const tangentLagrangianMultiplier1 = contact.tangentLagrangianMultiplier1;
-        float const tangentLagrangianMultiplier2 = contact.tangentLagrangianMultiplier2;
+        float lagrangianMultiplier = contact.lagrangianMultiplier;
+        float tangentLagrangianMultiplier1 = contact.tangentLagrangianMultiplier1;
+        float tangentLagrangianMultiplier2 = contact.tangentLagrangianMultiplier2;
 
         float constexpr reduction = 0.01f;
-        contact.lagrangianMultiplier *= reduction;
-        contact.tangentLagrangianMultiplier1 *= reduction;
-        contact.tangentLagrangianMultiplier2 *= reduction;
+        lagrangianMultiplier *= reduction;
+        tangentLagrangianMultiplier1 *= reduction;
+        tangentLagrangianMultiplier2 *= reduction;
 
         SolveConstraints(
-            assetManager, contact, duration, contact.lagrangianMultiplier,
-            contact.tangentLagrangianMultiplier1, contact.tangentLagrangianMultiplier2
+            assetManager, contact, duration,
+            lagrangianMultiplier, tangentLagrangianMultiplier1, tangentLagrangianMultiplier2
         );
 
         contact.lagrangianMultiplier = lagrangianMultiplier;
