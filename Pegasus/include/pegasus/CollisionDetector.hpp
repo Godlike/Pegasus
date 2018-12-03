@@ -243,8 +243,8 @@ inline void DetectPersistentContacts(
     {
         auto const indexIt = std::find_if(currentPersistentContactIndices.begin(), currentPersistentContactIndices.end(),
             [&contacts, &persistentContacts, index](size_t i) -> bool {
-            return contacts[i].aBodyHandle == persistentContacts[index].aBodyHandle
-                && contacts[i].bBodyHandle == persistentContacts[index].bBodyHandle;
+                return contacts[i].aBodyHandle == persistentContacts[index].aBodyHandle
+                    && contacts[i].bBodyHandle == persistentContacts[index].bBodyHandle;
         });
 
         if (indexIt == currentPersistentContactIndices.end()
@@ -263,7 +263,7 @@ inline void DetectPersistentContacts(
     {
         auto const contactIterator = std::find_if(persistentContacts.begin(), persistentContacts.end(),
             [&contact](Contact& c) -> bool {
-            return contact.aBodyHandle == c.aBodyHandle && contact.bBodyHandle == c.bBodyHandle;
+                return contact.aBodyHandle == c.aBodyHandle && contact.bBodyHandle == c.bBodyHandle;
         });
 
         if (contactIterator == persistentContacts.end())

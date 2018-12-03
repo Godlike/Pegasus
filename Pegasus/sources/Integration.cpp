@@ -74,7 +74,7 @@ void IntegrateBody(
 {
     {
         float const speed = glm::length(linearMotion.velocity);
-        if (epona::fp::IsGreater(speed, epona::fp::g_floatingPointThreshold))
+        if (epona::fp::IsGreater(speed, maxSpeed))
         {
             linearMotion.velocity = glm::normalize(linearMotion.velocity) * glm::min(speed, maxSpeed);
         }
@@ -167,9 +167,11 @@ void IntegrateBody(
 {
     {
         float const speed = glm::length(angularMotion.velocity);
-        if (epona::fp::IsGreater(speed, epona::fp::g_floatingPointThreshold))
+        if (epona::fp::IsGreater(speed, maxSpeed))
         {
-            angularMotion.velocity = glm::normalize(angularMotion.velocity) * glm::min(speed, maxSpeed);
+            float const minSpeed = glm::min(speed, maxSpeed);
+            glm::vec3 const direction = glm::normalize(angularMotion.velocity);
+            angularMotion.velocity = direction * minSpeed;
         }
     }
 
