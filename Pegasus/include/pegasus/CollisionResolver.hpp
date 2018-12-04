@@ -18,11 +18,11 @@ namespace collision
 /**
  * @brief Resolves contact constraints and updates total lagrangian multiplier
  * @param[in,out] contact contact data
- * @param[in] duration durtaion of the frame
+ * @param[in] duration duration of the frame
  * @param[in] V velocity vector of size 12
  * @param[in] rA contact point vector from the center of the body
  * @param[in] rB contact point vector from the center of the body
- * @param[in] totalLagrangianMultiplier total lagrangian multiplier for contact constraint
+ * @param[in,out] totalLagrangianMultiplier total lagrangian multiplier for contact constraint
  */
 inline void SolveContactConstraint(
     Contact& contact, float duration,
@@ -181,6 +181,8 @@ inline void SolveConstraints(
         {
             contact.manifold.firstTangent = glm::normalize(velocityCrossNormal);
             assert(!glm::isnan(contact.manifold.firstTangent.x));
+            assert(!glm::isnan(contact.manifold.firstTangent.y));
+            assert(!glm::isnan(contact.manifold.firstTangent.z));
         }
 
         glm::vec3 const tangentCrossNormal = glm::cross(contact.manifold.firstTangent, contact.manifold.normal);
@@ -188,6 +190,8 @@ inline void SolveConstraints(
         {
             contact.manifold.secondTangent = glm::normalize(tangentCrossNormal);
             assert(!glm::isnan(contact.manifold.secondTangent.x));
+            assert(!glm::isnan(contact.manifold.secondTangent.y));
+            assert(!glm::isnan(contact.manifold.secondTangent.z));
         }
     }
 
@@ -209,12 +213,12 @@ inline void SolveConstraints(
  *
  * @note This method is inteded to be called once during the pipeline execution
  *
- * @param[in,out] assetManager       asset manager
- * @param[in,out] previousContacts   previous frame contacts
- * @param[in,out] persistentContacts persistent contacts
- * @param[in,out] contacts           contacts information
- * @param[in]     duration           delta time of the frame
- * @param[in]     persistentFactor   factors amount of energy applied during persistent contact resolution
+ * @param[in,out] assetManager        asset manager
+ * @param[in,out] previousContacts    previous frame contacts
+ * @param[in,out] persistentContacts  persistent contacts
+ * @param[in,out] contacts            contacts information
+ * @param[in]     duration            delta time of the frame
+ * @param[in]     persistentThreshold distance between corresponding contact points
  */
 inline void ResolveContacts(
     scene::AssetManager& assetManager,
