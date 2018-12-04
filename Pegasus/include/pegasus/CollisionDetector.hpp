@@ -82,7 +82,11 @@ void DetectContacts(scene::AssetManager& assetManager, std::vector<Contact>& con
             {
                 auto const manifold = arion::intersection::CalculateContactManifold<Shape, Shape>(aShape, bShape, &cache);
                 assert(!glm::isnan(manifold.points.aWorldSpace.x));
+                assert(!glm::isnan(manifold.points.aWorldSpace.y));
+                assert(!glm::isnan(manifold.points.aWorldSpace.z));
                 assert(!glm::isnan(manifold.points.bWorldSpace.x));
+                assert(!glm::isnan(manifold.points.bWorldSpace.y));
+                assert(!glm::isnan(manifold.points.bWorldSpace.z));
 
                 static Manifold contactManifold;
                 contactManifold.points = manifold.points;
@@ -173,6 +177,7 @@ void DetectContacts(scene::AssetManager& assetManager, std::vector<Contact>& con
 
 /**
  * @brief Detects and returns contacts
+ * @param[in,out] assetManager asset manager
  * @return contacts vector
  */
 inline std::vector<Contact> DetectContacts(scene::AssetManager& assetManager)
