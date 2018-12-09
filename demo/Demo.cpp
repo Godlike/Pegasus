@@ -21,6 +21,7 @@
 namespace
 {
 bool g_gjkSimplexCheckbox = false;
+bool g_gjkHoldIntermediateCheckbox = false;
 bool g_epaPolytopeCheckbox = false;
 bool g_gjkHold = false;
 bool g_epaHold = false;
@@ -116,7 +117,7 @@ void GjkDebugCallback(
         }
     }
 
-    g_gjkHold = end && g_gjkSimplexCheckbox;
+    g_gjkHold = (end || g_gjkHoldIntermediateCheckbox) && g_gjkSimplexCheckbox;
     while (g_gjkHold)
     {
         demo.RenderFrame();
@@ -273,6 +274,7 @@ void DrawUi()
     {
         ImGui::Begin("Collision debug", &collisionDebugWindowVisible);
         ImGui::Checkbox("Draw GJK simplex", &g_gjkSimplexCheckbox);
+        ImGui::Checkbox("Draw intermediate GJK simplex", &g_gjkHoldIntermediateCheckbox);
         ImGui::Checkbox("Draw EPA polytope", &g_epaPolytopeCheckbox);
         ImGui::Checkbox("Draw CSO polytope", &g_epaCsoCheckbox);
         ImGui::Checkbox("Draw contact points", &g_collisionPointsCheckbox);
@@ -346,7 +348,7 @@ void DrawUi()
     {
         ImGui::Begin("Objects", &objectsWindowVisible);
         const char* primitiveRenderComboItems[] = { "Wire", "Solid", "Wire&Solid" };
-        static int currentPrimitiveRenderType = 1;
+        static int currentPrimitiveRenderType = 2;
         ImGui::Combo("Render type", &currentPrimitiveRenderType, primitiveRenderComboItems, IM_ARRAYSIZE(primitiveRenderComboItems));
         auto& render = pegasus::render::Renderer::GetInstance();
         render.primitiveRenderType = static_cast<pegasus::render::Renderer::PrimitiveRenderType>(currentPrimitiveRenderType);
@@ -478,12 +480,12 @@ void DrawUi()
         ImGui::End();
     }
 
-    static bool epaGjkHoldWindowVisible = true;
+    static bool gjkEpaHoldWindowVisible = true;
     if (g_epaHold || g_gjkHold)
     {
-        ImGui::Begin("EPA debug", &epaGjkHoldWindowVisible);
-        g_epaHold = !ImGui::Button("Break EPA hold");
-        g_gjkHold = !ImGui::Button("Break GJK hold");
+        ImGui::Begin("GJK EPA icremental debug", &gjkEpaHoldWindowVisible);
+        g_gjkHold = !ImGui::Button("Next GJK iteration");
+        g_epaHold = !ImGui::Button("Next EPA iteration");
         ImGui::End();
     }
 }

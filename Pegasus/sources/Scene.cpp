@@ -15,13 +15,17 @@ namespace scene
 
 void Scene::ComputeFrame(float duration)
 {
-    ApplyCollisionCache(duration);
+    collision::ResolvePersistantContacts(m_assetManager, m_persistentContacts, duration);
 
     ApplyForces(forceDuration);
 
     Integrate(duration);
 
-    ResolveCollisions(duration);
+    m_currentContacts = collision::DetectContacts(m_assetManager);
+    Debug::CollisionDetectionCall(m_currentContacts);
+
+    collision::ResolveContacts(m_assetManager, m_persistentContacts, m_currentContacts, m_previousContacts, duration);
+    m_previousContacts = std::move(m_currentContacts);
 }
 
 Handle Scene::MakeBody()
@@ -42,20 +46,6 @@ void Scene::RemoveBody(Handle handle)
 AssetManager& Scene::GetAssets()
 {
     return m_assetManager;
-}
-
-void Scene::ResolveCollisions(float duration)
-{
-    std::vector<collision::Contact> contacts = collision::DetectContacts(m_assetManager);
-    Debug::CollisionDetectionCall(contacts);
-
-    static std::vector<collision::Contact> prevoisContacts;
-    collision::ResolveContacts(m_assetManager, prevoisContacts, m_persistentContacts, contacts, duration);
-}
-
-void Scene::ApplyCollisionCache(float duration)
-{
-    collision::ResolvePersistantContacts(m_assetManager, m_persistentContacts, duration);
 }
 
 void Scene::ApplyForces(float duration)
