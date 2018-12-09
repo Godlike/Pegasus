@@ -180,7 +180,9 @@ public:
 
 private:
     AssetManager m_assetManager;
+    std::vector<collision::Contact> m_previousContacts;
     std::vector<collision::Contact> m_persistentContacts;
+    std::vector<collision::Contact> m_currentContacts;
 
     /**
      * @brief Calculates force applied to the bound bodies
@@ -219,17 +221,6 @@ private:
             }
         }
     }
-
-    /**
-     * @brief Resolves registered collisions
-     * @param duration delta time of the frame
-     */
-    void ResolveCollisions(float duration);
-
-    /**
-     * @brief Applies initial impulses to resolve cached persistent contacts
-     */
-    void ApplyCollisionCache(float duration);
 
     /**
      * @brief Applies all registered forces to the bodies

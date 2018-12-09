@@ -214,17 +214,17 @@ inline void SolveConstraints(
  * @note This method is inteded to be called once during the pipeline execution
  *
  * @param[in,out] assetManager        asset manager
- * @param[in,out] previousContacts    previous frame contacts
  * @param[in,out] persistentContacts  persistent contacts
  * @param[in,out] contacts            contacts information
+ * @param[in]     previousContacts    previous frame contacts
  * @param[in]     duration            delta time of the frame
  * @param[in]     persistentThreshold distance between corresponding contact points
  */
 inline void ResolveContacts(
     scene::AssetManager& assetManager,
-    std::vector<Contact>& previousContacts,
     std::vector<Contact>& persistentContacts,
     std::vector<Contact>& contacts,
+    std::vector<Contact> const& previousContacts,
     float duration,
     float persistentThreshold = 1e-3f
 )
@@ -261,8 +261,6 @@ inline void ResolveContacts(
         assert(!std::isinf(b.x) && !std::isinf(b.y) && !std::isinf(b.z));
 #endif
     }
-
-    previousContacts = std::move(contacts);
 }
 
 /**
