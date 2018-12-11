@@ -51,11 +51,12 @@ glm::vec3 IntegrateLinearVelocity(glm::vec3 velocity, glm::vec3 acceleration, fl
 * @param velocity current velocity
 * @param damping damping factor
 * @param duration delta time
+* @param minApllySpeed minimum speed required to apply damping
 * @return new velocity
 */
-glm::vec3 IntegrateLinearDamping(glm::vec3 velocity, float damping, float duration)
+glm::vec3 IntegrateLinearDamping(glm::vec3 velocity, float damping, float duration, float minApllySpeed = 1.f)
 {
-    return velocity * glm::pow(damping, duration);
+    return (glm::length2(velocity) > minApllySpeed) ? (velocity * glm::pow(damping, duration)) : velocity;
 }
 
 /**
@@ -76,7 +77,9 @@ void IntegrateBody(
         float const speed = glm::length(linearMotion.velocity);
         if (epona::fp::IsGreater(speed, maxSpeed))
         {
-            linearMotion.velocity = glm::normalize(linearMotion.velocity) * glm::min(speed, maxSpeed);
+            float const minSpeed = glm::min(speed, maxSpeed);
+            glm::vec3 const direction = glm::normalize(linearMotion.velocity);
+            linearMotion.velocity = direction * minSpeed;
         }
     }
 
@@ -98,6 +101,13 @@ void IntegrateBody(
         if (epona::fp::IsZero(linearMotion.velocity.z))
             linearMotion.velocity.z = 0;
     }
+
+    assert(!std::isinf(linearMotion.position.x)
+        && !std::isinf(linearMotion.position.y)
+        && !std::isinf(linearMotion.position.z));
+    assert(!std::isinf(linearMotion.velocity.x)
+        && !std::isinf(linearMotion.velocity.y)
+        && !std::isinf(linearMotion.velocity.z));
 }
 
 /**
@@ -144,11 +154,12 @@ glm::vec3 IntegrateAngularVelocity(glm::vec3 velocity, glm::vec3 resultingAccele
  * @param velocity angular velocity
  * @param damping damping factor
  * @param duration delta time
+ * @param minApllySpeed minimum speed required to apply damping
  * @return angular velocity
  */
-glm::vec3 IntegrateAngularDamping(glm::vec3 velocity, float damping, float duration)
+glm::vec3 IntegrateAngularDamping(glm::vec3 velocity, float damping, float duration, float minApllySpeed = 1.f)
 {
-    return velocity * glm::pow(damping, duration);
+    return (glm::length2(velocity) > minApllySpeed) ? (velocity * glm::pow(damping, duration)) : velocity;
 }
 
 /**
@@ -177,12 +188,9 @@ void IntegrateBody(
 
     glm::vec3 const resultingAcceleration = ::IntegrateAngularAcceleration(
         angularMotion.acceleration, angularMotion.torque, material.GetInverseMomentOfInertia());
-    angularMotion.orientation = ::IntegrateAngularDisplacement(
-        angularMotion.orientation, angularMotion.velocity, duration);
-    angularMotion.velocity = ::IntegrateAngularVelocity(
-        angularMotion.velocity, resultingAcceleration, duration);
-    angularMotion.velocity = ::IntegrateAngularDamping(
-        angularMotion.velocity, material.damping, duration);
+    angularMotion.orientation = ::IntegrateAngularDisplacement(angularMotion.orientation, angularMotion.velocity, duration);
+    angularMotion.velocity = ::IntegrateAngularVelocity(angularMotion.velocity, resultingAcceleration, duration);
+    angularMotion.velocity = ::IntegrateAngularDamping(angularMotion.velocity, material.damping, duration);
     angularMotion.torque = glm::vec3(0, 0, 0);
 
     {
@@ -194,6 +202,10 @@ void IntegrateBody(
             angularMotion.velocity.z = 0;
     }
 
+    assert(!std::isinf(angularMotion.orientation.x)
+        && !std::isinf(angularMotion.orientation.y)
+        && !std::isinf(angularMotion.orientation.z)
+        && !std::isinf(angularMotion.orientation.w));
     assert(!std::isinf(angularMotion.velocity.x)
         && !std::isinf(angularMotion.velocity.y)
         && !std::isinf(angularMotion.velocity.z));
@@ -204,10 +216,12 @@ namespace pegasus
 {
 namespace integration
 {
+
 void Integrate(mechanics::Body& body, float duration)
 {
     ::IntegrateBody(body.material, body.linearMotion, duration);
     ::IntegrateBody(body.material, body.angularMotion, duration);
 }
+
 } // namespace integration
 } // namespace pegasus
