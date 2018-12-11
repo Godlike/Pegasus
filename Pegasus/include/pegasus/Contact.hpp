@@ -20,10 +20,10 @@ namespace collision
  */
 struct Velocity
 {
-    glm::vec3 vA;
-    glm::vec3 wA;
-    glm::vec3 vB;
-    glm::vec3 wB;
+    glm::vec3 vA = { 0, 0, 0 };
+    glm::vec3 wA = { 0, 0, 0 };
+    glm::vec3 vB = { 0, 0, 0 };
+    glm::vec3 wB = { 0, 0, 0 };
 };
 
 /**
@@ -61,10 +61,10 @@ struct Jacobian
         };
     }
 
-    glm::vec3 nA;
-    glm::vec3 nwA;
-    glm::vec3 nB;
-    glm::vec3 nwB;
+    glm::vec3 nA = { 0, 0, 0 };
+    glm::vec3 nwA = { 0, 0, 0 };
+    glm::vec3 nB = { 0, 0, 0 };
+    glm::vec3 nwB = { 0, 0, 0 };
 };
 
 /**
@@ -82,10 +82,10 @@ struct MassMatrix
         };
     }
 
-    glm::mat3 massA;
-    glm::mat3 inertiaA;
-    glm::mat3 massB;
-    glm::mat3 inertiaB;
+    glm::mat3 massA = glm::mat3(1);
+    glm::mat3 inertiaA = glm::mat3(1);
+    glm::mat3 massB = glm::mat3(1);
+    glm::mat3 inertiaB = glm::mat3(1);
 };
 
 /**
@@ -94,8 +94,8 @@ struct MassMatrix
 struct Manifold : arion::intersection::ContactManifold
 {
     //!Friction tangent vectors
-    glm::vec3 firstTangent;
-    glm::vec3 secondTangent;
+    glm::vec3 firstTangent = { 0, 0, 0 };
+    glm::vec3 secondTangent = { 0, 0, 0 };
 };
 
 /**

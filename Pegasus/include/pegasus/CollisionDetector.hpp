@@ -234,8 +234,8 @@ inline void DetectPersistentContacts(
     {
         for (size_t j = 0; j < previousContacts.size(); ++j)
         {
-            if (contacts[i].aBodyHandle == previousContacts[j].aBodyHandle
-                && contacts[i].bBodyHandle == previousContacts[j].bBodyHandle
+            if (((contacts[i].aBodyHandle == previousContacts[j].aBodyHandle && contacts[i].bBodyHandle == previousContacts[j].bBodyHandle)
+                || (contacts[i].aBodyHandle == previousContacts[j].bBodyHandle && contacts[i].bBodyHandle == previousContacts[j].aBodyHandle))
                 && IsPersistent(contacts[i].manifold.points, previousContacts[j].manifold.points, persistentThresholdSq))
             {
                 currentPersistentContactIndices.push_back(i);
@@ -248,8 +248,8 @@ inline void DetectPersistentContacts(
     {
         auto const indexIt = std::find_if(currentPersistentContactIndices.begin(), currentPersistentContactIndices.end(),
             [&contacts, &persistentContacts, index](size_t i) -> bool {
-                return contacts[i].aBodyHandle == persistentContacts[index].aBodyHandle
-                    && contacts[i].bBodyHandle == persistentContacts[index].bBodyHandle;
+                return (contacts[i].aBodyHandle == persistentContacts[index].aBodyHandle && contacts[i].bBodyHandle == persistentContacts[index].bBodyHandle)
+                    || (contacts[i].aBodyHandle == persistentContacts[index].bBodyHandle && contacts[i].bBodyHandle == persistentContacts[index].aBodyHandle);
         });
 
         if (indexIt == currentPersistentContactIndices.end()
@@ -268,7 +268,8 @@ inline void DetectPersistentContacts(
     {
         auto const contactIterator = std::find_if(persistentContacts.begin(), persistentContacts.end(),
             [&contact](Contact& c) -> bool {
-                return contact.aBodyHandle == c.aBodyHandle && contact.bBodyHandle == c.bBodyHandle;
+                return (contact.aBodyHandle == c.aBodyHandle && contact.bBodyHandle == c.bBodyHandle)
+                    || (contact.aBodyHandle == c.bBodyHandle && contact.bBodyHandle == c.aBodyHandle);
         });
 
         if (contactIterator == persistentContacts.end())

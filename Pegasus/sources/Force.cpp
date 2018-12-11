@@ -59,13 +59,19 @@ Drag::Drag(float k1, float k2)
 glm::vec3 Drag::CalculateForce(mechanics::Body const& body) const
 {
     float const speedSq = glm::length2(body.linearMotion.velocity);
-    if (epona::fp::IsZero(speedSq) || std::isinf(speedSq))
+    if (epona::fp::IsZero(speedSq) || std::isinf(speedSq) || std::isnan(speedSq))
     {
         return glm::vec3{ 0 };
     }
 
     float const dragFactor = m_k1 * glm::sqrt(speedSq) + m_k2 * speedSq;
     glm::vec3 const force = -glm::normalize(body.linearMotion.velocity) * dragFactor;
+
+    float const magnitudeSq = glm::length2(force);
+    if (epona::fp::IsZero(magnitudeSq) || std::isinf(magnitudeSq) || std::isnan(magnitudeSq))
+    {
+        return glm::vec3{ 0 };
+    }
 
     return force;
 }
