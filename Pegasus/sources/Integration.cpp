@@ -17,7 +17,7 @@ namespace
 * @param duration delta time
 * @return new position
 */
-glm::vec3 IntegrateLinearPosition(glm::vec3 position, glm::vec3 velocity, float duration)
+inline glm::vec3 IntegrateLinearPosition(glm::vec3 position, glm::vec3 velocity, float duration)
 {
     return position + velocity * duration;
 }
@@ -29,7 +29,7 @@ glm::vec3 IntegrateLinearPosition(glm::vec3 position, glm::vec3 velocity, float 
 * @param inverseMass one divided by mass
 * @return new acceleration
 */
-glm::vec3 IntegrateLinearAcceleration(glm::vec3 acceleration, glm::vec3 force, float inverseMass)
+inline glm::vec3 IntegrateLinearAcceleration(glm::vec3 acceleration, glm::vec3 force, float inverseMass)
 {
     return acceleration + force * inverseMass;
 }
@@ -41,7 +41,7 @@ glm::vec3 IntegrateLinearAcceleration(glm::vec3 acceleration, glm::vec3 force, f
 * @param duration delta time
 * @return new velocity
 */
-glm::vec3 IntegrateLinearVelocity(glm::vec3 velocity, glm::vec3 acceleration, float duration)
+inline glm::vec3 IntegrateLinearVelocity(glm::vec3 velocity, glm::vec3 acceleration, float duration)
 {
     return velocity + acceleration * duration;
 }
@@ -51,12 +51,12 @@ glm::vec3 IntegrateLinearVelocity(glm::vec3 velocity, glm::vec3 acceleration, fl
 * @param velocity current velocity
 * @param damping damping factor
 * @param duration delta time
-* @param minApllySpeed minimum speed required to apply damping
+* @param minApplySpeed minimum speed required to apply damping
 * @return new velocity
 */
-glm::vec3 IntegrateLinearDamping(glm::vec3 velocity, float damping, float duration, float minApllySpeed = 1.f)
+inline glm::vec3 IntegrateLinearDamping(glm::vec3 velocity, float damping, float duration, float minApplySpeed = 1.f)
 {
-    return (glm::length2(velocity) > minApllySpeed) ? (velocity * glm::pow(damping, duration)) : velocity;
+    return (glm::length2(velocity) > minApplySpeed) ? (velocity * glm::pow(damping, duration)) : velocity;
 }
 
 /**
@@ -85,12 +85,10 @@ void IntegrateBody(
 
     glm::vec3 const resultingAcceleration = ::IntegrateLinearAcceleration(
         linearMotion.acceleration, linearMotion.force, material.GetInverseMass());
-    linearMotion.position = ::IntegrateLinearPosition(
-        linearMotion.position, linearMotion.velocity, duration);
-    linearMotion.velocity = ::IntegrateLinearVelocity(
-        linearMotion.velocity, resultingAcceleration, duration);
+    linearMotion.position = ::IntegrateLinearPosition(linearMotion.position, linearMotion.velocity, duration);
     linearMotion.velocity = ::IntegrateLinearDamping(
-        linearMotion.velocity, material.damping, duration);
+        ::IntegrateLinearVelocity(linearMotion.velocity, resultingAcceleration, duration),
+        material.damping, duration);
     linearMotion.force = glm::vec3(0);
 
     {
@@ -117,7 +115,7 @@ void IntegrateBody(
  * @param inverseMomentOfInertia inverse moment of inertia
  * @return angular acceleration
  */
-glm::vec3 IntegrateAngularAcceleration(glm::vec3 acceleration, glm::vec3 torque, glm::mat3 inverseMomentOfInertia)
+inline glm::vec3 IntegrateAngularAcceleration(glm::vec3 acceleration, glm::vec3 torque, glm::mat3 inverseMomentOfInertia)
 {
     return acceleration + inverseMomentOfInertia * torque;
 }
@@ -129,7 +127,7 @@ glm::vec3 IntegrateAngularAcceleration(glm::vec3 acceleration, glm::vec3 torque,
  * @param duration delta time
  * @return angular displacement
  */
-glm::quat IntegrateAngularDisplacement(glm::quat orientation, glm::vec3 velocity, float duration)
+inline glm::quat IntegrateAngularDisplacement(glm::quat orientation, glm::vec3 velocity, float duration)
 {
     glm::quat const velocityQuad{ 0, velocity.x, velocity.y, velocity.z };
     glm::quat const displacement{ glm::normalize(orientation + duration * velocityQuad * 0.5f * orientation) };
@@ -144,7 +142,7 @@ glm::quat IntegrateAngularDisplacement(glm::quat orientation, glm::vec3 velocity
  * @param duration delta time
  * @return angular velocity
  */
-glm::vec3 IntegrateAngularVelocity(glm::vec3 velocity, glm::vec3 resultingAcceleration, float duration)
+inline glm::vec3 IntegrateAngularVelocity(glm::vec3 velocity, glm::vec3 resultingAcceleration, float duration)
 {
     return velocity + resultingAcceleration * duration;
 }
@@ -154,12 +152,12 @@ glm::vec3 IntegrateAngularVelocity(glm::vec3 velocity, glm::vec3 resultingAccele
  * @param velocity angular velocity
  * @param damping damping factor
  * @param duration delta time
- * @param minApllySpeed minimum speed required to apply damping
+ * @param minApplySpeed minimum speed required to apply damping
  * @return angular velocity
  */
-glm::vec3 IntegrateAngularDamping(glm::vec3 velocity, float damping, float duration, float minApllySpeed = 1.f)
+inline glm::vec3 IntegrateAngularDamping(glm::vec3 velocity, float damping, float duration, float minApplySpeed = 1.f)
 {
-    return (glm::length2(velocity) > minApllySpeed) ? (velocity * glm::pow(damping, duration)) : velocity;
+    return (glm::length2(velocity) > minApplySpeed) ? (velocity * glm::pow(damping, duration)) : velocity;
 }
 
 /**
@@ -189,8 +187,9 @@ void IntegrateBody(
     glm::vec3 const resultingAcceleration = ::IntegrateAngularAcceleration(
         angularMotion.acceleration, angularMotion.torque, material.GetInverseMomentOfInertia());
     angularMotion.orientation = ::IntegrateAngularDisplacement(angularMotion.orientation, angularMotion.velocity, duration);
-    angularMotion.velocity = ::IntegrateAngularVelocity(angularMotion.velocity, resultingAcceleration, duration);
-    angularMotion.velocity = ::IntegrateAngularDamping(angularMotion.velocity, material.damping, duration);
+    angularMotion.velocity = ::IntegrateAngularDamping(
+        ::IntegrateAngularVelocity(angularMotion.velocity, resultingAcceleration, duration),
+        material.damping, duration);
     angularMotion.torque = glm::vec3(0, 0, 0);
 
     {
