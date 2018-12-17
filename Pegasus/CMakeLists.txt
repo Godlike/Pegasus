@@ -8,7 +8,14 @@ include(PegasusConfig)
 include(PegasusBuildFlags)
 
 project(${PEGASUS_NAME})
-set(CMAKE_CXX_STANDARD 14)
+
+set(PEGASUS_LIB_ALIAS Pegasus::Physics)
+
+add_library(${PROJECT_NAME} "")
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+add_library(${PEGASUS_LIB_ALIAS} ALIAS ${PROJECT_NAME})
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -78,30 +85,33 @@ if (MSVC)
     )
 endif()
 
-add_library(${PEGASUS_LIB}
-    ${PEGASUS_HEADERS}
-    ${PEGASUS_SOURCES}
-    ${PEGASUS_EXTRA}
+target_sources(${PROJECT_NAME}
+    PRIVATE
+        ${PEGASUS_HEADERS}
+        ${PEGASUS_SOURCES}
+        ${PEGASUS_EXTRA}
 )
 
-target_compile_definitions(${PEGASUS_LIB} PUBLIC
-    ${PEGASUS_DEFINITIONS}
+target_compile_definitions(${PEGASUS_LIB}
+    PUBLIC
+        ${PEGASUS_DEFINITIONS}
 )
 
-target_include_directories(${PEGASUS_LIB} PUBLIC
-    ${EPONA_INCLUDE_DIR}
-    ${ARION_INCLUDE_DIR}
+target_include_directories(${PEGASUS_LIB}
+    PUBLIC
+        $<BUILD_INTERFACE:${PEGASUS_INCLUDE_DIR}>
 )
 
 set_target_properties(
-    ${PEGASUS_LIB}
+    ${PROJECT_NAME}
     PROPERTIES
         VERSION ${PEGASUS_VERSION}
         SOVERSION ${PEGASUS_SOVERSION}
 )
 
-target_link_libraries(${PEGASUS_LIB}
-    ${ARION_LIB}
+target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+        Arion::Collision
 )
 
 install( DIRECTORY ${GLM_INCLUDE_DIR}/glm
@@ -133,22 +143,27 @@ install( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
 include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfigVersion.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     VERSION ${PEGASUS_VERSION}
     COMPATIBILITY SameMajorVersion
 )
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/PegasusPhysicsConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfig.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.gen
 
     @ONLY
 )
 
+file(GENERATE
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+    INPUT ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.gen
+)
+
 install(
     FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/PegasusPhysicsConfigVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION ${PEGASUS_INSTALL_LIBRARY_DIR}
     COMPONENT pegasus_headers
 )
